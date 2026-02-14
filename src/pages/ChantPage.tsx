@@ -3,6 +3,7 @@ import { motion } from "framer-motion";
 import { Play, Pause, SkipBack, SkipForward, RotateCcw, Bookmark, ChevronDown } from "lucide-react";
 import { sampleDashakams, LANGUAGES, type Language } from "@/data/narayaneeyam";
 import { getProgress, saveProgress, updateStreak } from "@/lib/progress";
+import VerseIcons from "@/components/VerseIcons";
 
 export default function ChantPage() {
   const [selectedDashakam, setSelectedDashakam] = useState(1);
@@ -214,12 +215,7 @@ export default function ChantPage() {
                     Verse {verse.paragraph} · {verse.meter}
                   </span>
                   <div className="flex items-center gap-2">
-                    {verse.bell && (
-                      <span className="text-sm" title="Ring bell here">🔔</span>
-                    )}
-                    {verse.prasadam && (
-                      <span className="text-sm" title={verse.prasadam}>🪷</span>
-                    )}
+                    <VerseIcons bell={verse.bell} prasadam={verse.prasadam} />
                     <button className="text-muted-foreground hover:text-secondary transition-colors">
                       <Bookmark className="h-4 w-4" />
                     </button>

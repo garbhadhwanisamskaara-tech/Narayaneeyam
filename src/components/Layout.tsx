@@ -2,6 +2,7 @@ import { Link, useLocation } from "react-router-dom";
 import { motion } from "framer-motion";
 import { BookOpen, Mic, FileText, GraduationCap, LayoutDashboard, Menu, X, CalendarPlus } from "lucide-react";
 import { useState } from "react";
+import logoImg from "@/assets/logo.png";
 
 const navItems = [
   { path: "/", label: "Home", icon: LayoutDashboard },
@@ -22,9 +23,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
       <header className="sticky top-0 z-50 bg-gradient-peacock shadow-peacock">
         <div className="container mx-auto flex items-center justify-between px-4 py-3">
           <Link to="/" className="flex items-center gap-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-full bg-gradient-gold">
-              <span className="font-display text-lg font-bold text-primary">ॐ</span>
-            </div>
+            <img src={logoImg} alt="Narayaneeyam Logo" className="h-10 w-10 rounded-full object-cover" />
             <div>
               <h1 className="font-display text-lg font-semibold text-primary-foreground leading-tight">
                 Sriman Narayaneeyam

@@ -59,7 +59,18 @@ export function generateLessons(
   let weekStart = new Date(startDate);
   let dashakam = dashakamStart;
   let para = 1;
-  const versesPerLesson = Math.max(1, Math.floor(minutesPerClass / 5)); // ~5 min per verse
+
+  // Meter 1 (Sragdharā) = 50 min/dashakam, others = 40 min/dashakam
+  // For simplicity, we estimate ~5 min/verse for Sragdharā, ~4 min/verse for others
+  // Dashakam has ~10 verses, so Sragdharā ≈ 50 min, others ≈ 40 min
+  const getVersesPerLesson = (meterType: number) => {
+    // meterType 1 = Sragdharā (50 min → fewer verses per lesson)
+    const minPerVerse = meterType === 1 ? 5 : 4;
+    return Math.max(1, Math.floor(minutesPerClass / minPerVerse));
+  };
+
+  // Default to meter 1 for lesson generation (actual meter comes from data)
+  const versesPerLesson = getVersesPerLesson(1);
 
   while (dashakam <= dashakamEnd) {
     const dateStr = currentDate.toISOString().split("T")[0];
