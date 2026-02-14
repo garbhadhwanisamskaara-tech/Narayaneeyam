@@ -2,6 +2,7 @@ import { useState } from "react";
 import { motion } from "framer-motion";
 import { Download, Eye } from "lucide-react";
 import { sampleDashakams, LANGUAGES, type Language } from "@/data/narayaneeyam";
+import VerseIcons from "@/components/VerseIcons";
 
 export default function ScriptPage() {
   const [selectedDashakam, setSelectedDashakam] = useState(1);
@@ -161,6 +162,7 @@ export default function ScriptPage() {
                   <span className="text-xs text-muted-foreground font-sans">
                     Verse {verse.paragraph} · Meter: {verse.meter}
                   </span>
+                  <VerseIcons bell={verse.bell} prasadam={verse.prasadam} />
                 </div>
                 <p className="font-body text-lg leading-relaxed whitespace-pre-line text-foreground">
                   {getVerseText(verse, language)}

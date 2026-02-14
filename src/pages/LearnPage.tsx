@@ -5,6 +5,7 @@ import { sampleDashakams, LANGUAGES, type Language } from "@/data/narayaneeyam";
 import { getLessonPlans, type LessonPlan } from "@/lib/lessonPlan";
 import { getProgress, saveProgress, updateStreak } from "@/lib/progress";
 import { Link } from "react-router-dom";
+import VerseIcons from "@/components/VerseIcons";
 
 export default function LearnPage() {
   const [plans, setPlans] = useState<LessonPlan[]>([]);
@@ -202,9 +203,12 @@ export default function LearnPage() {
                         : "border-border bg-card"
                     }`}
                   >
-                    <span className="text-xs text-muted-foreground font-sans mb-2 block">
-                      Verse {verse.paragraph} · {verse.meter}
-                    </span>
+                    <div className="flex items-center justify-between mb-2">
+                      <span className="text-xs text-muted-foreground font-sans">
+                        Verse {verse.paragraph} · {verse.meter}
+                      </span>
+                      <VerseIcons bell={verse.bell} prasadam={verse.prasadam} />
+                    </div>
                     <p className={`font-body text-lg leading-relaxed whitespace-pre-line mb-3 ${
                       idx === highlightIdx && isPlaying ? "text-primary font-semibold" : "text-foreground"
                     }`}>

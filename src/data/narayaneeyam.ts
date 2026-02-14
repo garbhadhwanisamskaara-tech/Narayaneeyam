@@ -65,6 +65,8 @@ export const sampleDashakams: Dashakam[] = [
         meaning_telugu: "ఆ బ్రహ్మము — తీవ్ర ఆనందం మరియు చైతన్యం యొక్క సారాంశం — ఆ వాస్తవం గురువాయూరులో ప్రత్యక్షంగా ప్రకాశిస్తుంది.",
         meaning_malayalam: "ആ ബ്രഹ്മം — തീവ്ര ആനന്ദത്തിന്റെയും ബോധത്തിന്റെയും സാരാംശം — ഗുരുവായൂരിൽ നേരിട്ട് പ്രകാശിക്കുന്നു.",
         meter: "Sragdharā",
+        prasadam: "Pal Payasam",
+        bell: true,
       },
       {
         id: "1-2",
