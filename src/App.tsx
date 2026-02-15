@@ -10,6 +10,7 @@ import LearnPage from "./pages/LearnPage";
 import ScriptPage from "./pages/ScriptPage";
 import LessonPlanPage from "./pages/LessonPlanPage";
 import DashboardPage from "./pages/DashboardPage";
+import PodcastPage from "./pages/PodcastPage";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -28,6 +29,7 @@ const App = () => (
             <Route path="/script" element={<ScriptPage />} />
             <Route path="/lesson-plan" element={<LessonPlanPage />} />
             <Route path="/dashboard" element={<DashboardPage />} />
+            <Route path="/podcast" element={<PodcastPage />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </Layout>
