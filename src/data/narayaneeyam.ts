@@ -7,10 +7,14 @@ export interface Verse {
   tamil: string;
   telugu: string;
   malayalam: string;
+  hindi: string;
+  marathi: string;
   meaning_english: string;
   meaning_tamil: string;
   meaning_telugu: string;
   meaning_malayalam: string;
+  meaning_hindi: string;
+  meaning_marathi: string;
   meter: string;
   prasadam?: string;
   bell?: boolean;
@@ -35,8 +39,8 @@ export interface Dashakam {
 }
 
 export type TransliterationLanguage = "sanskrit" | "english" | "tamil" | "malayalam";
-export type TranslationLanguage = "english" | "tamil" | "malayalam" | "telugu";
-export type Language = "sanskrit" | "english" | "tamil" | "telugu" | "malayalam";
+export type TranslationLanguage = "english" | "tamil" | "malayalam" | "telugu" | "hindi" | "marathi";
+export type Language = "sanskrit" | "english" | "tamil" | "telugu" | "malayalam" | "hindi" | "marathi";
 
 export const TRANSLITERATION_LANGUAGES: { value: TransliterationLanguage; label: string }[] = [
   { value: "sanskrit", label: "Sanskrit (Devanagari)" },
@@ -50,6 +54,8 @@ export const TRANSLATION_LANGUAGES: { value: TranslationLanguage; label: string 
   { value: "tamil", label: "Tamil" },
   { value: "malayalam", label: "Malayalam" },
   { value: "telugu", label: "Telugu" },
+  { value: "hindi", label: "Hindi" },
+  { value: "marathi", label: "Marathi" },
 ];
 
 export const LANGUAGES: { value: Language; label: string }[] = [
@@ -58,6 +64,8 @@ export const LANGUAGES: { value: Language; label: string }[] = [
   { value: "tamil", label: "Tamil" },
   { value: "telugu", label: "Telugu" },
   { value: "malayalam", label: "Malayalam" },
+  { value: "hindi", label: "Hindi" },
+  { value: "marathi", label: "Marathi" },
 ];
 
 function parsePrasadamInfo(raw: string): { verse: number; item: string }[] {
@@ -73,16 +81,348 @@ function parseBellVerses(raw: string): number[] {
   return raw.split(",").map((s) => parseInt(s.trim())).filter((n) => !isNaN(n));
 }
 
-// Helper: check if a verse should show bell icon
 export function verseShouldShowBell(dashakam: Dashakam, verseNumber: number): boolean {
   return dashakam.bell_verses.includes(verseNumber);
 }
 
-// Helper: get prasadam for a verse
 export function getVersePrasadam(dashakam: Dashakam, verseNumber: number): string | undefined {
   const info = dashakam.prasadam_info.find((p) => p.verse === verseNumber);
   return info?.item;
 }
+
+function makeVerse(
+  dashakam: number, paragraph: number,
+  opts: Partial<Verse> & { english: string; meaning_english: string }
+): Verse {
+  return {
+    id: `${dashakam}-${paragraph}`,
+    dashakam, paragraph,
+    sanskrit: opts.sanskrit || "",
+    english: opts.english,
+    tamil: opts.tamil || "",
+    telugu: opts.telugu || "",
+    malayalam: opts.malayalam || "",
+    hindi: opts.hindi || "",
+    marathi: opts.marathi || "",
+    meaning_english: opts.meaning_english,
+    meaning_tamil: opts.meaning_tamil || "",
+    meaning_telugu: opts.meaning_telugu || "",
+    meaning_malayalam: opts.meaning_malayalam || "",
+    meaning_hindi: opts.meaning_hindi || "",
+    meaning_marathi: opts.meaning_marathi || "",
+    meter: opts.meter || "Sragdharā",
+    prasadam: opts.prasadam,
+    bell: opts.bell,
+    benefits: opts.benefits,
+  };
+}
+
+// ============================================
+// DASHAKAM 1 — Glory of the Lord (10 verses)
+// ============================================
+const d1Verses: Verse[] = [
+  makeVerse(1, 1, {
+    sanskrit: "सान्द्रानन्दावबोधात्मकमनुपमितं कालदेशावधिभ्यां\nनिर्मुक्तं नित्यमुक्तं निगमशतसहस्रेण निर्भास्यमानम् ।\nअस्पष्टं दृष्टमात्रे पुनरुरुपुरुषार्थात्मकं ब्रह्म तत्त्वं\nतत्तावद्भाति साक्षाद्गुरुपवनपुरे हन्त भाग्यं जनानाम् ॥",
+    english: "saandraanandaavabOdhaatmakamanupamitaM kaaladeshaavadhibhyaaM\nnirmuktaM nityamuktaM nigamashatasahasreNa nirbhaasyamaanam |\naspaShTaM dR^iShTamaatre punarurupuruShaarthaatmakaM brahma tatvaM\ntattaavadbhaati saakshaadgurupavanapure hanta bhaagyaM janaanaam",
+    tamil: "சாந்த்ராநந்தாவபோதாத்மகமநுபமிதம் காலதேசாவதிப்யாம்\nநிர்முக்தம் நித்யமுக்தம் நிகமசதஸஹஸ்ரேண நிர்பாஸ்யமானம் ।\nஅஸ்பஷ்டம் த்ருஷ்டமாத்ரே புநருருபுருஷார்தாத்மகம் ப்ரஹ்ம தத்வம்\nதத்தாவத்பாதி ஸாக்ஷாத்குருபவநபுரே ஹந்த பாக்யம் ஜநாநாம் ॥",
+    telugu: "సాంద్రానందావబోధాత్మకమనుపమితం కాలదేశావధిభ్యాం\nనిర్ముక్తం నిత్యముక్తం నిగమశతసహస్రేణ నిర్భాస్యమానమ్ ।",
+    malayalam: "സാന്ദ്രാനന്ദാവബോധാത്മകമനുപമിതം കാലദേശാവധിഭ്യാം\nനിർമുക്തം നിത്യമുക്തം നിഗമശതസഹസ്രേണ നിർഭാസ്യമാനം ।\nഅസ്പഷ്ടം ദൃഷ്ടമാത്രേ പുനരുരുപുരുഷാർഥാത്മകം ബ്രഹ്മ തത്ത്വം\nതത്താവദ്ഭാതി സാക്ഷാദ്ഗുരുപവനപുരേ ഹന്ത ഭാഗ്യം ജനാനാം ॥",
+    meaning_english: "It is the greatest good fortune of mankind in this Kali Yuga that the eternal truth which grants us salvation manifests itself as Lord Krishna in the holy shrine of Guruvayoor to bless all true devotees. This embodiment of eternal spiritual bliss is beyond any comparison and transcends all limits of time and space. This eternal truth is free of all illusion and is all-pervading, being the root cause of the entire universe. Even the Vedas cannot fully comprehend or describe it but it can be attained through singleminded devotion by the true Bhakthas of Lord Krishna.",
+    meaning_tamil: "இந்த கலியுகத்தில் மனிதகுலத்தின் மிகப்பெரிய அதிர்ஷ்டம் என்னவென்றால், நமக்கு முக்தி அருளும் நிரந்தர சத்தியம் குருவாயூரில் ஸ்ரீகிருஷ்ணனாக வெளிப்படுகிறது.",
+    meaning_malayalam: "ഈ കലിയുഗത്തിൽ മനുഷ്യരാശിയുടെ ഏറ്റവും വലിയ ഭാഗ്യം, മോക്ഷം നൽകുന്ന ശാശ്വത സത്യം ഗുരുവായൂരിൽ ശ്രീകൃഷ്ണനായി പ്രകടമാകുന്നു.",
+    meter: "Sragdharā", bell: true, prasadam: "Any fruit or water",
+  }),
+  makeVerse(1, 2, {
+    english: "nishsheShaatmaanamenaM gurupavanapuraadhiishamevaashrayaamaH",
+    sanskrit: "एवं दुर्लभ्यवस्तुन्यपि सुलभतया हस्तलब्धे यदन्यत्\nतन्वा वाचा धिया वा भजति बत जनः क्षुद्रतैव स्फुटेयम् ।\nएते तावद्वयं तु स्थिरतरमनसा विश्वपीडापहत्यै\nनिश्शेषात्मानमेनं गुरुपवनपुरेशं भजामो निरन्तम् ॥",
+    tamil: "ஏவம் துர்லப்யவஸ்துந்யபி ஸுலபதயா ஹஸ்தலப்தே யதன்யத்\nதன்வா வாசா தியா வா பஜதி பத ஜநஃ க்ஷுத்ரதைவ ஸ்புடேயம் ।",
+    malayalam: "ഏവം ദുർലഭ്യവസ്തുന്യപി സുലഭതയാ ഹസ്തലബ്ധേ യദന്യത്\nതന്വാ വാചാ ധിയാ വാ ഭജതി ബത ജനഃ ക്ഷുദ്രതൈവ സ്ഫുടേയമ് ।",
+    meaning_english: "Although such an easy access to eternal salvation has been offered to mankind on a silver platter in the form of Lord Krishna at Guruvayoor, common mortals, due to their inherent lowly nature, overlook the eternal benefits of this and go in pursuit of worldly pleasures. May we all realize our folly and serve Him with complete faith as He alone can alleviate all our sorrows.",
+    meter: "Sragdharā",
+  }),
+  makeVerse(1, 3, {
+    english: "tasmin dhanyaa ramante shrutimatimadhure sugrahe vigrahe te",
+    sanskrit: "सत्त्वं यत्तत्पुराणाः परमिह गुणतो जीवहेतुत्रयाणां\nताभ्यामन्यद्विशुद्धं तव तु गुणमयं मायया कल्पितं त्रि ।",
+    tamil: "ஸத்வம் யத்தத்புராணாஃ பரமிஹ குணதோ ஜீவஹேதுத்ரயாணாம்\nதாப்யாமன்யத்விசுத்தம் தவ து குணமயம் மாயயா கல்பிதம் த்ரி ।",
+    malayalam: "സത്ത്വം യത്തത്പുരാണാഃ പരമിഹ ഗുണതോ ജീവഹേതുത്രയാണാം\nതാഭ്യാമന്യദ്വിശുദ്ധം തവ തു ഗുണമയം മാശയാ കൽപിതം ത്രി ।",
+    meaning_english: "The great sage Vyaasa has identified Thy form as Suddha Sathva, unsullied by the evil and impure qualities of Rajas and Tamas. Contemplation of this pure divine form of Lord Krishna will lead us to ultimate bliss and wisdom.",
+    meter: "Sragdharā",
+  }),
+  makeVerse(1, 4, {
+    english: "kasmaannOniShkalastvaM sakala iti vachastvatkalaasveva bhuuman",
+    meaning_english: "Oh Lord Krishna! This unchanging form of Suddha Sathva embodied in Thee, transcending time and space, is the ocean of nectar giving supreme happiness to all true devotees, encompassing all the liberated souls embedded like pure pearls in the waves of this ocean. Hence this incarnation of Thine as Lord Krishna can be called the only complete one, as compared to other revelations of Thy divine form.",
+    meter: "Sragdharā",
+  }),
+  makeVerse(1, 5, {
+    english: "sa tvaM dhR^itvaa dadhaasi svamahimavibhavaakuNTha vaikuNTha ruupam",
+    meaning_english: "Even without any action or reason, Thy glance alone can activate Maya at the beginning of a new kalpa or cycle of creation, spontaneously. Thus, the divine form of the Lord of Vaikunta manifests itself as Maya or Prakruthi without its glory or purity being diminished or tarnished in any way.",
+    meter: "Sragdharā",
+  }),
+  makeVerse(1, 6, {
+    english: "si~nchat sa~nchintakaanaaM vapuranukalaye maarutaagaaranaatha",
+    meaning_english: "Oh Guruvayurappa! I meditate on Thy divine form which is more beautiful than the dark rain clouds and the blue Kalaya flowers, where Goddess Lakshmi plays uninhibitedly, which being the abode of beauty, is the ultimate sanctuary of all true devotees, drowning their hearts in the nectar of supreme bliss.",
+    meter: "Sragdharā",
+  }),
+  makeVerse(1, 7, {
+    english: "netraiH shrOtraishcha piitvaa paramarasasudhaambhOdhipuure rameran",
+    meaning_english: "Oh Supreme One! Earlier, in my ignorance, I had thought that Thy creation was sheer misery to mankind entangling all of us in the cycle of births and deaths; but now I realise how wrong I was. But for this divine miracle of creation, how could our souls be liberated without our eyes and ears drinking the nectar of supreme bliss in a fully conscious state?",
+    meter: "Sragdharā",
+  }),
+  makeVerse(1, 8, {
+    english: "kshudraM taM shakravaaTiidrumamabhilaShati vyarthamarthivrajO(a)yam",
+    meaning_english: "Oh Hari! Thou art ready to shower on us all that we desire and even more by granting liberation to our wretched souls. But due to our total ignorance of this ultimate bliss, we pursue worldly belongings and sensual pleasures. Men long for the Parijata tree in Indra's garden when the Kalpaka Vriksha in the form of Lord Krishna is waiting to grant them salvation.",
+    meter: "Sragdharā",
+  }),
+  makeVerse(1, 9, {
+    english: "stvaM chaatmaaraama evetyatulaguNagaNaadhaara shaure namaste",
+    meaning_english: "Oh Souri! Thou art omnipotent and the embodiment of all virtue and hence Thou hath the unique power to grant supreme bliss to Thy devotees instead of only desired objects, in contrast to other gods. Those who realise this truth are blessed at every step they take towards Thee. Oh Lord Krishna! I pray to Thee for such a blessing.",
+    meter: "Sragdharā",
+  }),
+  makeVerse(1, 10, {
+    english: "tadvaataagaaravaasin murahara bhagavachChabdamukhyaashrayO(a)si",
+    meaning_english: "Oh Lord Murari! Thou art the embodiment of all the six divine qualities of greatness viz., Sri (prosperity), Jnana (knowledge), Vairagya (detachment), Aishwarya (lordliness), Veerya (valour) and Yashas (fame) and hence the word Bhagavath is the most befitting attribution to Thee, who art the resident of the Guruvayur temple.",
+    meter: "Sragdharā", bell: true, prasadam: "Any fruit or water",
+  }),
+];
+
+// ============================================
+// DASHAKAM 2 — Sweetness of the Lord's form (10 verses)
+// ============================================
+const d2Verses: Verse[] = [
+  makeVerse(2, 1, {
+    english: "tvadruupaM vanamaalyahaarapaTala shriivatsadiipraM bhaje",
+    meaning_english: "I pray to the divine form of Lord Krishna adorned by the diamond crown more brilliant than the sun, the upright sandal mark on the forehead, the compassionate eyes, the charming smile, the shapely nose, the cheeks reflecting the light of the earrings brushing against them, the neck resplendent with the Kausthubha jewel and the chest decorated with flower garlands, pearl necklaces and the holy Srivatsa beauty mark.",
+    meter: "Sragdharā",
+  }),
+  makeVerse(2, 2, {
+    english: "aalambe vimalaambujadyutipadaaM muurtiM tavaartichChidam",
+    meaning_english: "I prostrate before this most beautiful form of Lord Krishna with the four shining arms bedecked with shoulder ornaments, bangles, bracelets, rings studded with precious stones, the mace, the conch, the disc, the lotus, the shining yellow silk robe adorning the waist with the gold belt around it and the beautiful lotus feet which are the ultimate refuge of all devotees for the removal of all their sorrows.",
+    meter: "Sragdharā",
+  }),
+  makeVerse(2, 3, {
+    english: "pyaashcharyaM bhuvane na kasya kutukaM puShNaati viShNO vibhO",
+    meaning_english: "Oh Omnipotent One! This supreme divine form of Thine transcends all beauty, radiance and sweetness in all the three worlds and generates intense love in the hearts of all true Bhakthas.",
+    meter: "Sragdharā",
+  }),
+  makeVerse(2, 4, {
+    english: "premasthairyamayaadachaapala balaat chaapalya vaartOdabhuut",
+    meaning_english: "Oh Lord Achutha! Goddess Lakshmi being so attached to Thee cannot remain long with any of her devotees. Hence she has earned the epithet Chapala or Fickleminded one as far as her Bhakthas are concerned. So strong and steadfast is her love for Thee.",
+    meter: "Sragdharā",
+  }),
+  makeVerse(2, 5, {
+    english: "steShveShaa vasati sthiraiva dayitaprastaavadattaadaraa",
+    meaning_english: "Oh Lakshmipathi! Goddess Lakshmi's firm love of Thee makes her shower blessings on all those devotees who are ever praising Thy qualities and worshipping Thee. Her fickleness is only with regard to those who have no love or respect for Thee.",
+    meter: "Sragdharā",
+  }),
+  makeVerse(2, 6, {
+    english: "vyaasi~nchatyapi shiitabaaShpa visarairaanandamuurChOdbhavaiH",
+    meaning_english: "Description of Thy divine form is like nectar to the ears and minds of devotees, drenching their bodies in ecstasy and taking them to the extremes of bliss.",
+    meter: "Sragdharā",
+  }),
+  makeVerse(2, 7, {
+    english: "bhaktirnishramameva vishvapuruShairlabhyaa ramaavallabha",
+    meaning_english: "Oh Lord Krishna! Therefore Bhakthi Yoga or the path of devotion is recommended by great sages to be far superior to Karma Yoga (or path of action) or Jnana Yoga (or path of spiritual knowledge) in the quest for salvation and it can be attained effortlessly through intense love for Thy divine form.",
+    meter: "Sragdharā",
+  }),
+  makeVerse(2, 8, {
+    english: "tvatpremaatmakabhaktireva satataM svaadiiyasii shreyasii",
+    meaning_english: "Oh Most Powerful One! Karma Yoga yields results only in the distant future and Jnana Yoga is beyond the comprehension of ordinary mortals. But devotion to Thee is far more satisfying to our minds.",
+    meter: "Sragdharā",
+  }),
+  makeVerse(2, 9, {
+    english: "shchittaardratvamR^ite vichintya bahubhissiddhyanti janmaantaraiH",
+    meaning_english: "Performance of Karma Yoga is very exhausting and leads us to the path of Jnana or Bhakthi only after our mind has been cleansed of impurities. Philosophical search for eternal truth can lead to salvation only after a painful process of life cycles and rebirths. Is it not then more prudent to adopt the path of Bhakthi directly?",
+    meter: "Sragdharā",
+  }),
+  makeVerse(2, 10, {
+    english: "premaprauDhirasaardrataa drutataraM vaataalayaadhiishvara",
+    meaning_english: "Oh Lord Krishna! Bhakthi is the most superior path to merge with Thee and leads us to the state of pure divinity without delay. I pray to Thee to grant me the ability to be steeped in devotion to Thy lotus feet.",
+    meter: "Sragdharā", bell: true, prasadam: "Any fruit or water",
+  }),
+];
+
+// ============================================
+// DASHAKAM 3 — Qualities of an ideal devotee (10 verses)
+// ============================================
+const d3Verses: Verse[] = [
+  makeVerse(3, 1, {
+    english: "nahaM dhanyaan manye samadhigatasarvaabhilaShitaan",
+    meaning_english: "Oh Varada! Those Bhakthas who constantly chant Thy names and worship Thy divine form have all their righteous wishes fulfilled by Thee and are indeed the most blessed souls.",
+    meter: "Sragdharā",
+  }),
+  makeVerse(3, 2, {
+    english: "nahaM gaayaM gaayaM kuhachana vivatsyaami vijane",
+    meaning_english: "Oh Lord Vishnu! Plagued as I am by diseases both physical and mental I am unable to turn my mind towards Thee. Please have pity on me and help me to sit peacefully in some quiet place chanting Thy innumerable names and worshipping Thy lotus feet.",
+    meter: "Sragdharā",
+  }),
+  makeVerse(3, 3, {
+    english: "bhavadbhaktaa muktaaH sukhagatimasaktaa vidadhate",
+    meaning_english: "Nothing is impossible for one who has been blessed by Thee. Innumerable devotees of Thine have been liberated from their sorrows and worldly ties by Thy mercy. Can I not be one such fortunate devotee of Thine?",
+    meter: "Sragdharā",
+  }),
+  makeVerse(3, 4, {
+    english: "tsadaanandaadvaitaprasaraparimagnaaH kimaparam",
+    meaning_english: "Many great sages like Narada have attained Supreme Bliss by meditating on Thy lotus feet and are now free to wander at will drowned in the complete state of conscious Bliss beyond all limits of time and space. Is there anything more for them to attain?",
+    meter: "Sragdharā",
+  }),
+  makeVerse(3, 5, {
+    english: "bhavenmithyaa rathyaapuruShavachanapraayamakhilam",
+    meaning_english: "Please help me to become more and more devoted to Thee as that is the only remedy for all my woes. There is no doubt at all in my mind about this. For otherwise, all of Vyasa's teachings, Thy divine sayings and even the Vedas will become meaningless like the utterances of a street wanderer.",
+    meter: "Sragdharā",
+  }),
+  makeVerse(3, 6, {
+    english: "nmahaanandaadvaitaM dishati kimataH praarthyamaparam",
+    meaning_english: "Chanting Thy names and singing Thy praises is a sweet pleasure from the start. As devotion becomes more intense it eliminates all suffering and ultimately it leads the mind to the path of supreme knowledge and bliss. What more can a Bhaktha crave for?",
+    meter: "Sragdharā",
+  }),
+  makeVerse(3, 7, {
+    english: "parighraaNe ghraaNaM shravaNamapi te chaarucharite",
+    meaning_english: "Oh Lord! Rid me of all sorrows. May my feet walk joyfully to Thy temple; may my hands serve Thee with fervour; may my eyes be eager to feast on Thy divine image; may my nostrils be pervaded with the scent of the holy Tulsi leaves at Thy feet and may my ears drink in Thy delightful stories.",
+    meter: "Sragdharā",
+  }),
+  makeVerse(3, 8, {
+    english: "yathaa vismaryaasaM durupashamapiiDaaparibhavaan",
+    meaning_english: "May Thy divine form embodying the Supreme Bliss envelop my mind and heart so completely that I am forced to forget all my physical maladies and experience only the thrill of shedding tears of joy in this state.",
+    meter: "Sragdharā",
+  }),
+  makeVerse(3, 9, {
+    english: "bhavadbhaktOttamsaM jhaTiti kuru maaM kamsadamana",
+    meaning_english: "Oh Kamsanthaka! Those who have no love or regard for Thee are thriving all round me. But in spite of my devotion to Thee, I am drowned in sorrow. Oh Varada! Is not Thy reputation of mercy to Thy devotees at stake here? Oh Lord! Please remove my afflictions and make me a worthy devotee of Thee.",
+    meter: "Sragdharā",
+  }),
+  makeVerse(3, 10, {
+    english: "nyathaashakti vyaktaM natinutiniShevaa virachayan",
+    meaning_english: "What else is there for me to pray for? I shall stop lamenting and spend my time doing pooja and singing hymns of praise to Thy lotus feet until Thou doth take pity on me and bless me.",
+    meter: "Sragdharā", bell: true, prasadam: "Any fruit or water",
+  }),
+];
+
+// ============================================
+// DASHAKAM 4 — Practice of Ashtanga Yoga (13 verses)
+// ============================================
+const d4Verses: Verse[] = [
+  makeVerse(4, 1, {
+    english: "spaShTamaShTavidhayOgacharyayaa puShTayaa(a)(a)shu tava tuShTimaapnuyaam",
+    meaning_english: "Oh Lord! Grant me a strong and healthy body to serve Thee; then with Thy blessing I shall surely become proficient in doing the eightfold yoga of concentration.",
+    meter: "Vasantatilakā",
+  }),
+  makeVerse(4, 2, {
+    english: "kurmahe dR^iDhamamii sukhaasanaM pankajaadyamapi vaa bhavatparaaH",
+    meaning_english: "By practising selfcontrol through celibacy, honesty and nonviolence and by observing the daily rituals of bathing, meditation etc., I shall cleanse my body and mind and perform the Padmasana (lotus posture) and other aasanas and worship Thee.",
+    meter: "Vasantatilakā",
+  }),
+  makeVerse(4, 3, {
+    english: "indriyaaNi viShayaadathaapahR^ityaa(a)(a)smahe bhavadupaasanOnmukhaaH",
+    meaning_english: "Chanting the Pranava mantra (OM) continuously and thus controlling the sense organs I shall purify myself and concentrate on Thee.",
+    meter: "Vasantatilakā",
+  }),
+  makeVerse(4, 4, {
+    english: "tena bhaktirasamantaraardrataamudvahema bhavadanghrichintakaaH",
+    meaning_english: "Through repeated effort I shall try to focus my mind on Thy form which is intangible. But by meditating on Thy lotus feet I shall try to capture the ecstasy of true devotion.",
+    meter: "Vasantatilakā",
+  }),
+  makeVerse(4, 5, {
+    english: "ashramaM manasi chintayaamahe dhyaanayOganirataastvadaashrayaaH",
+    meaning_english: "By intense and repeated effort I shall be able to visualise through my mind's eye the loveliness of each and every limb of Thy divine form and effortlessly meditate on it.",
+    meter: "Vasantatilakā",
+  }),
+  makeVerse(4, 6, {
+    english: "saandramOda rasa ruupamaantaraM brahmaruupamayi te(a)vabhaasate",
+    meaning_english: "Oh Lord! Those who concentrate on Thy divine form will be entranced by its beauty and gradually their minds will be transported to a higher level wherein they can comprehend the impersonal Brahman or eternal truth and bliss.",
+    meter: "Vasantatilakā",
+  }),
+  makeVerse(4, 7, {
+    english: "aashritaaH punarataH parichyutaavaarabhemahi cha dhaaraNaadikam",
+    meaning_english: "Oh Viswanatha! Having reached the apex of spiritual concentration which is supreme bliss, we must again, on relaxation, begin afresh the process of Dharana and follow the same steps in ascending order.",
+    meter: "Vasantatilakā",
+  }),
+  makeVerse(4, 8, {
+    english: "muktabhaktakulamaulitaaM gataaH sa~ncharema shukanaaradaadivat",
+    meaning_english: "The constant practice of this process of concentration is in itself an enjoyable experience in the attainment of supreme bliss. Our souls will be liberated by this process and be free to wander about like the most exalted devotees Suka, Narada etc., singing Thy glory.",
+    meter: "Vasantatilakā",
+  }),
+  makeVerse(4, 9, {
+    english: "yOgavashyamanilaM ShaDaashrayairunnayatyaja suShumnayaa shanaiH",
+    meaning_english: "Thus the Yogi who attains Samadhi is able to control his life breath and draw it upward along the Sushumna nerve past the six nerve centres in his quest for salvation.",
+    meter: "Vasantatilakā",
+  }),
+  makeVerse(4, 10, {
+    english: "uurdhvalOkakutukii tu muurdhataH saardhameva karaNairniriiyate",
+    meaning_english: "Then leaving this earthly body those who wish for immediate salvation merge with Thee, while those who wish for the pleasures of the higher worlds go with the sense organs piercing the head.",
+    meter: "Vasantatilakā",
+  }),
+  makeVerse(4, 11, {
+    english: "praapitO ravipadaM bhavatparO mOdavaan dhruvapadaantamiiyate",
+    meaning_english: "Thus Thy devotee who is led to the solar world by the presiding deities of fire, daylight, the waxing fortnight of the moon and the summer solstice goes on to the world of Dhruva.",
+    meter: "Vasantatilakā",
+  }),
+  makeVerse(4, 12, {
+    english: "iiyate bhavadupaashrayastadaa vedasaH padamataH puraiva vaa",
+    meaning_english: "Then, after a long sojourn in Maharloka, Thy devotee, as soon as he is afflicted by the scorching fire issuing forth from the serpent Sesha, or even before that, reaches Satyaloka or the world of Brahma.",
+    meter: "Vasantatilakā",
+  }),
+  makeVerse(4, 13, {
+    english: "sachchidaatmaka bhavadguNOdayaanuchcharantamanilesha paahi maam",
+    meaning_english: "Oh Jagannatha! One who successfully completes this arduous soul-searching journey does not come down again. I am Thy humble devotee singing Thy praises. Please save me, Oh Lord of Guruvayur, who art the embodiment of truth and reality.",
+    meter: "Vasantatilakā", bell: true, prasadam: "Any fruit or water",
+  }),
+];
+
+// ============================================
+// DASHAKAM 5 — Manifestation of the Cosmic Form (10 verses)
+// ============================================
+const d5Verses: Verse[] = [
+  makeVerse(5, 1, {
+    english: "statraikastvamashiShyathaaH kila paraanandaprakaashaatmanaa",
+    meaning_english: "When the earlier great deluge occurred, the world was nonexistent and Maya was merged in Thy Supreme Form undiscernible in any way. There was no life or death and no day or night. Only Thy brilliant form of Supreme Bliss existed.",
+    meter: "Sragdharā",
+  }),
+  makeVerse(5, 2, {
+    english: "nO chet kiM gaganaprasuunasadR^ishaaM bhuuyO bhavetsambhavaH",
+    meaning_english: "Oh Lord! At that point of time everything in the Universe viz. Kala (time), Karma (action), Guna (mood), the Jivathmas (individual souls) all lay merged in Thy supreme form. But they were never nonexistent or imaginary like flowers of the sky. They were ensconced in Thee and re-emerged after the deluge.",
+    meter: "Sragdharā",
+  }),
+  makeVerse(5, 3, {
+    english: "praadurbhuuya guNaanvikaasya vidadhustasyaassahaayakriyaam",
+    meaning_english: "This state lasted for two Parardhas. Then with the desire for creation Thou activated Maya with a single glance and the evolution of the three worlds began. From Maya came Kalashakthi, the hidden resultant Karmas of the Jivas and inborn dispositions (swabhavas). From these evolved the Gunas or moods and helped Maya to manifest as the universe.",
+    meter: "Sragdharā",
+  }),
+  makeVerse(5, 4, {
+    english: "maayaa saa khalu buddhitattvamasR^ijadyO(a)sau mahaanuchyate",
+    meaning_english: "The Vedas describe Thee as a witness to the creation of Maya. Yet Thy form is not enveloped by Maya. Thou art the one and only individual soul reflected on Maya in different forms. Time, action, nature have all been ordained by Thee. The very same Maya, influenced by these forces, created the principle of intelligence called 'Mahat'.",
+    meter: "Sragdharā",
+  }),
+  makeVerse(5, 5, {
+    english: "sampuShTaM triguNaistamO(a)tibahulaM viShNO bhavatpreraNaat",
+    meaning_english: "This principle of intelligence is endowed with the three gunas. The sathvic guna created in the total soul the cognizance of unqualified Self. But this same intelligence being predominantly Tamasic in nature created the cognizance of qualified self viz. ahamkara or egoism in that very soul.",
+    meter: "Sragdharā",
+  }),
+  makeVerse(5, 6, {
+    english: "vahniindraachyutamitrakaan vidhuvidhishriirudrashaariirakaan",
+    meaning_english: "This ahamkara or ego changed into three different forms, the Vaikarika with sathvic quality, and the Thaijasa dominated by Rajas and Tamas. From the Sathvic guna came the presiding deities of senses like Direction (Disha), Air (Vayu), Sun (Surya), Varuna, Aswini Devas, Fire (Agni), Vishnu, Mitra, Prajapathi, Moon (Chandra), Brahma, Rudra and Kshetrajna.",
+    meter: "Sragdharā",
+  }),
+  makeVerse(5, 7, {
+    english: "tanmaatraM nabhasO marutpurapate shabdO(a)jani tvadbalaat",
+    meaning_english: "From the Sathvic part of Ahamkara was created the Anthakarana or internal sense which is a combination of Chitta, mind, intellect and egoism. From the Rajasa part came the set of ten senses and from the Tamasa part Thou created Shabda or sound which is the prime essence of the sky.",
+    meter: "Sragdharā",
+  }),
+  makeVerse(5, 8, {
+    english: "bhuutagraamamimaM tvameva bhagavan praakaashayastaamasaat",
+    meaning_english: "From Shabda Thou created the sky. From that came touch (sparsha); from which air or vayu was born; from that came rupa or form; from rupa came agni or fire; from fire came taste; then came water from taste; from water came smell and from smell earth was formed. Thus Oh Lord Madhava! Thou caused the group of elements to manifest from tamasa egoism with each one of them having the qualities of those created prior to them and hence all of them being interconnected.",
+    meter: "Sragdharā",
+  }),
+  makeVerse(5, 9, {
+    english: "shcheShThaa shaktimudiirya taani ghaTayan hairaNyamaNDaM vyadhaaH",
+    meaning_english: "These groups of elements, senses and their presiding deities did not themselves create the Universe. These deities sang Thy praises in various hymns and Thou entered these fundamentals and by impelling them to combine with one another created the Golden Egg or Hiranyagarbha which is the Universe.",
+    meter: "Sragdharā",
+  }),
+  makeVerse(5, 10, {
+    english: "nirbhaatO(a)si marutpuraadhipa sa maaM traayasva sarvaamayaat",
+    meaning_english: "This Brahmanda or Cosmic Egg lay for a thousand years in the primal water created earlier. Then exploding it, Thou came in the form called Virata Purusha of the fourteen worlds. In that form Thou shone as the total form of all individual souls with thousands of hands, feet and heads. Oh Guruvayurappa! May that divine form of Thine be the saviour of all my ills.",
+    meter: "Sragdharā", bell: true, prasadam: "Any fruit or water",
+  }),
+];
 
 // All 100 Dashakams with metadata from SN_DB
 export const sampleDashakams: Dashakam[] = [
@@ -92,52 +432,37 @@ export const sampleDashakams: Dashakam[] = [
     benefits: "Attainment of devotion and removal of obstacles.", meter: 1, num_verses: 10,
     description: "Description of the divine form of Lord Narayana at Guruvayur",
     bell_verses: [10], prasadam_info: [{ verse: 10, item: "Any fruit or water" }],
-    verses: [
-      {
-        id: "1-1", dashakam: 1, paragraph: 1,
-        sanskrit: "सान्द्रानन्दावबोधात्मकमनुपमितं कालदेशावधिभ्यां\nनिर्मुक्तं नित्यमुक्तं निगमशतसहस्रेण निर्भास्यमानम् ।\nअस्पष्टं दृष्टमात्रे पुनरुरुपुरुषार्थात्मकं ब्रह्म तत्त्वं\nतत्तावद्भाति साक्षाद्गुरुपवनपुरे हन्त भाग्यं जनानाम् ॥",
-        english: "Saandraanandaavabodhaatmakam anupamitam kaaladeshaavadhibhyaam\nNirmuktam nityamuktam nigamashatasahasrena nirbhaasyamaanam |\nAspastam drushtamaatre punarurupurushaartatmakam brahma tattvam\nTattaavadbhaati saakshaad gurupavanupure hanta bhaagyam janaanaam ||",
-        tamil: "சாந்த்ராநந்தாவபோதாத்மகமநுபமிதம் காலதேசாவதிப்யாம்\nநிர்முக்தம் நித்யமுக்தம் நிகமசதஸஹஸ்ரேண நிர்பாஸ்யமானம் ।\nஅஸ்பஷ்டம் த்ருஷ்டமாத்ரே புநருருபுருஷார்தாத்மகம் ப்ரஹ்ம தத்வம்\nதத்தாவத்பாதி ஸாக்ஷாத்குருபவநபுரே ஹந்த பாக்யம் ஜநாநாம் ॥",
-        telugu: "సాంద్రానందావబోధాత్మకమనుపమితం కాలదేశావధిభ్యాం\nనిర్ముక్తం నిత్యముక్తం నిగమశతసహస్రేణ నిర్భాస్యమానమ్ ।\nఅస్పష్టం దృష్టమాత్రే పునరురుపురుషార్థాత్మకం బ్రహ్మ తత్త్వం\nతత్తావద్భాతి సాక్షాద్గురుపవనపురే హన్త భాగ్యం జనానామ్ ॥",
-        malayalam: "സാന്ദ്രാനന്ദാവബോധാത്മകമനുപമിതം കാലദേശാവധിഭ്യാം\nനിർമുക്തം നിത്യമുക്തം നിഗമശതസഹസ്രേണ നിർഭാസ്യമാനം ।\nഅസ്പഷ്ടം ദൃഷ്ടമാത്രേ പുനരുരുപുരുഷാർഥാത്മകം ബ്രഹ്മ തത്ത്വം\nതത്താവദ്ഭാതി സാക്ഷാദ്ഗുരുപവനപുരേ ഹന്ത ഭാഗ്യം ജനാനാം ॥",
-        meaning_english: "That Brahman — the essence of intense bliss and consciousness, incomparable, free from the limitations of time and space, eternally liberated, illuminated by hundreds of thousands of Vedas, not clearly perceived by mere sight, yet the very embodiment of the supreme goal of life — that Reality shines directly in Guruvayur. Oh, the fortune of the people!",
-        meaning_tamil: "அந்த பிரம்மம் — தீவிர ஆனந்தம் மற்றும் உணர்வின் சாரம், ஒப்பிடமுடியாதது, காலம் மற்றும் இடத்தின் வரம்புகளிலிருந்து விடுபட்டது — அந்த உண்மை குருவாயூரில் நேரடியாக ஒளிர்கிறது.",
-        meaning_telugu: "ఆ బ్రహ్మము — తీవ్ర ఆనందం మరియు చైతన్యం యొక్క సారాంశం — ఆ వాస్తవం గురువాయూరులో ప్రత్యక్షంగా ప్రకాశిస్తుంది.",
-        meaning_malayalam: "ആ ബ്രഹ്മം — തീവ്ര ആനന്ദത്തിന്റെയും ബോധത്തിന്റെയും സാരാംശം — ഗുരുവായൂരിൽ നേരിട്ട് പ്രകാശിക്കുന്നു.",
-        meter: "Sragdharā", prasadam: "Any fruit or water", bell: true,
-      },
-      {
-        id: "1-2", dashakam: 1, paragraph: 2,
-        sanskrit: "एवं दुर्लभ्यवस्तुन्यपि सुलभतया हस्तलब्धे यदन्यत्\nतन्वा वाचा धिया वा भजति बत जनः क्षुद्रतैव स्फुटेयम् ।\nएते तावद्वयं तु स्थिरतरमनसा विश्वपीडापहत्यै\nनिश्शेषात्मानमेनं गुरुपवनपुरेशं भजामो निरन्तम् ॥",
-        english: "Evam durlabhyavastunya api sulabhatayaa hastalabdhe yadanyat\nTanvaa vaachaa dhiyaa vaa bhajati bata janah kshudrataiva sphuteyam |\nEte taavadvayam tu sthirataramanasaa vishvapeedaapahatyai\nNishsheshaatmaanam enam gurupavanapuresham bhajaamo nirantam ||",
-        tamil: "ஏவம் துர்லப்யவஸ்துந்யபி ஸுலபதயா ஹஸ்தலப்தே யதன்யத்\nதன்வா வாசா தியா வா பஜதி பத ஜநஃ க்ஷுத்ரதைவ ஸ்புடேயம் ।",
-        telugu: "ఏవం దుర్లభ్యవస్తున్యపి సులభతయా హస్తలబ్ధే యదన్యత్\nతన్వా వాచా ధియా వా భజతి బత జనః క్షుద్రతైవ స్ఫుటేయమ్ ।",
-        malayalam: "ഏവം ദുർലഭ്യവസ്തുന്യപി സുലഭതയാ ഹസ്തലബ്ധേ യദന്യത്\nതന്വാ വാചാ ധിയാ വാ ഭജതി ബത ജനഃ ക്ഷുദ്രതൈവ സ്ഫുടേയമ് ।",
-        meaning_english: "When such a rare treasure is easily available at hand, people still worship other things through body, speech, and mind — how clearly this reveals their pettiness! Let us, with a firm mind, worship the Lord of Guruvayur ceaselessly for the removal of all worldly suffering.",
-        meaning_tamil: "அவ்வாறு அரிதான பொருள் எளிதில் கிடைக்கும்போதும், மக்கள் மற்ற பொருட்களை வணங்குகிறார்கள்.",
-        meaning_telugu: "అంత అరుదైన వస్తువు సులభంగా అందుబాటులో ఉన్నప్పటికీ, ప్రజలు ఇతర వస్తువులను ఆరాధిస్తారు.",
-        meaning_malayalam: "അത്തരം അപൂർവ വസ്തു എളുപ്പത്തിൽ ലഭ്യമാണെങ്കിലും, ജനങ്ങൾ മറ്റ് വസ്തുക്കളെ ആരാധിക്കുന്നു.",
-        meter: "Sragdharā",
-      },
-      {
-        id: "1-3", dashakam: 1, paragraph: 3,
-        sanskrit: "सत्त्वं यत्तत्पुराणाः परमिह गुणतो जीवहेतुत्रयाणां\nताभ्यामन्यद्विशुद्धं तव तु गुणमयं मायया कल्पितं त्रि ।",
-        english: "Sattvam yattattapuraanaah paramihaa gunatoh jeevhahetutrayaanaam\nTaabhyaamanyadvishuddhaam tava tu gunamayam maayayaa kalpitam tri |",
-        tamil: "ஸத்வம் யத்தத்புராணாஃ பரமிஹ குணதோ ஜீவஹேதுத்ரயாணாம்\nதாப்யாமன்யத்விசுத்தம் தவ து குணமயம் மாயயா கல்பிதம் த்ரி ।",
-        telugu: "సత్త్వం యత్తత్పురాణాః పరమిహ గుణతో జీవహేతుత్రయాణాం\nతాభ్యామన్యద్విశుద్ధం తవ తు గుణమయం మాయయా కల్పితం త్రి ।",
-        malayalam: "സത്ത്വം യത്തത്പുരാണാഃ പരമിഹ ഗുണതോ ജീവഹേതുത്രയാണാം\nതാഭ്യാമന്യദ്വിശുദ്ധം തവ തു ഗുണമയം മാശയാ കൽപിതം ത്രി ।",
-        meaning_english: "The ancients declare that Sattva is the highest among the three qualities that cause individual existence. Your quality, different from the other two, is pure. The three qualities are created by Maya.",
-        meaning_tamil: "பண்டைய முனிவர்கள் சத்வம் மூன்று குணங்களில் உயர்ந்தது என்று அறிவிக்கின்றனர்.",
-        meaning_telugu: "ప్రాచీనులు సత్త్వం మూడు గుణాలలో ఉన్నతమైనదని ప్రకటిస్తారు.",
-        meaning_malayalam: "പുരാതനർ സത്ത്വം മൂന്ന് ഗുണങ്ങളിൽ ഏറ്റവും ഉന്നതമെന്ന് പ്രഖ്യാപിക്കുന്നു.",
-        meter: "Sragdharā",
-      },
-    ],
+    verses: d1Verses,
   },
-  { id: 2, title_sanskrit: "भगवतः स्वरूपमाधुर्यं तथा भक्तिमहत्त्वम्", title_english: "Sweetness of the Lord's form", title_transliteration: "bhagavataḥ svarūpamādhuryam tathā bhaktimahattvam", gist: "The sweetness of the Lord's form and superiority of Bhakti.", benefits: "Mental peace and purity of thought.", meter: 1, num_verses: 10, description: "", bell_verses: [10], prasadam_info: [{ verse: 10, item: "Any fruit or water" }], verses: [] },
-  { id: 3, title_sanskrit: "उत्तमभक्तस्य गुणाः", title_english: "Qualities of an ideal devotee", title_transliteration: "uttamabhaktasya guṇāḥ", gist: "Characteristics of a true devotee.", benefits: "Developing dispassion and focus in prayer.", meter: 1, num_verses: 10, description: "", bell_verses: [10], prasadam_info: [{ verse: 10, item: "Any fruit or water" }], verses: [] },
-  { id: 4, title_sanskrit: "योगाभ्यासः तथा योगसिद्धिः", title_english: "Practice of Ashtanga Yoga", title_transliteration: "yogābhyāsaḥ tathā yogasiddhiḥ", gist: "The practice of Yoga and control of breath.", benefits: "Physical health and steady mind.", meter: 4, num_verses: 13, description: "", bell_verses: [13], prasadam_info: [{ verse: 13, item: "Any fruit or water" }], verses: [] },
-  { id: 5, title_sanskrit: "विराट्पुरुषोत्पत्तिः", title_english: "Manifestation of the Cosmic Form", title_transliteration: "virāṭpuruṣotpattiḥ", gist: "The manifestation of the Cosmic Form.", benefits: "Knowledge of the universe's origin.", meter: 1, num_verses: 10, description: "", bell_verses: [10], prasadam_info: [{ verse: 10, item: "Any fruit or water" }], verses: [] },
+  {
+    id: 2, title_sanskrit: "भगवतः स्वरूपमाधुर्यं तथा भक्तिमहत्त्वम्", title_english: "Sweetness of the Lord's form",
+    title_transliteration: "bhagavataḥ svarūpamādhuryam tathā bhaktimahattvam", gist: "The sweetness of the Lord's form and superiority of Bhakti.",
+    benefits: "Mental peace and purity of thought.", meter: 1, num_verses: 10, description: "",
+    bell_verses: [10], prasadam_info: [{ verse: 10, item: "Any fruit or water" }],
+    verses: d2Verses,
+  },
+  {
+    id: 3, title_sanskrit: "उत्तमभक्तस्य गुणाः", title_english: "Qualities of an ideal devotee",
+    title_transliteration: "uttamabhaktasya guṇāḥ", gist: "Characteristics of a true devotee.",
+    benefits: "Developing dispassion and focus in prayer.", meter: 1, num_verses: 10, description: "",
+    bell_verses: [10], prasadam_info: [{ verse: 10, item: "Any fruit or water" }],
+    verses: d3Verses,
+  },
+  {
+    id: 4, title_sanskrit: "योगाभ्यासः तथा योगसिद्धिः", title_english: "Practice of Ashtanga Yoga",
+    title_transliteration: "yogābhyāsaḥ tathā yogasiddhiḥ", gist: "The practice of Yoga and control of breath.",
+    benefits: "Physical health and steady mind.", meter: 4, num_verses: 13, description: "",
+    bell_verses: [13], prasadam_info: [{ verse: 13, item: "Any fruit or water" }],
+    verses: d4Verses,
+  },
+  {
+    id: 5, title_sanskrit: "विराट्पुरुषोत्पत्तिः", title_english: "Manifestation of the Cosmic Form",
+    title_transliteration: "virāṭpuruṣotpattiḥ", gist: "The manifestation of the Cosmic Form.",
+    benefits: "Knowledge of the universe's origin.", meter: 1, num_verses: 10, description: "",
+    bell_verses: [10], prasadam_info: [{ verse: 10, item: "Any fruit or water" }],
+    verses: d5Verses,
+  },
+  // Dashakams 6-100 with metadata, verses to be populated
   { id: 6, title_sanskrit: "विराट्स्वरूपवर्णनम्", title_english: "Description of the Cosmic Form", title_transliteration: "virāṭsvarūpavarṇanam", gist: "Detailed description of the Cosmic Body.", benefits: "Freedom from fear of the unknown.", meter: 6, num_verses: 10, description: "", bell_verses: [10], prasadam_info: [{ verse: 10, item: "Any fruit or water" }], verses: [] },
   { id: 7, title_sanskrit: "सृष्टिक्रमम्", title_english: "The Process of Creation", title_transliteration: "sṛṣṭikramam", gist: "The systematic process of creation.", benefits: "Success in new ventures.", meter: 1, num_verses: 10, description: "", bell_verses: [10], prasadam_info: [{ verse: 10, item: "Any fruit or water" }], verses: [] },
   { id: 8, title_sanskrit: "प्रलयवर्णनम्", title_english: "Description of the Deluge", title_transliteration: "pralayavarṇanam", gist: "The description of the great deluge.", benefits: "Protection during times of chaos.", meter: 6, num_verses: 13, description: "", bell_verses: [13], prasadam_info: [{ verse: 13, item: "Any fruit or water" }], verses: [] },
