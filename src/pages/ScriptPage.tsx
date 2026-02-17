@@ -19,6 +19,7 @@ export default function ScriptPage() {
   const [translationLang, setTranslationLang] = useState<TranslationLanguage>("english");
   const [selectedPara, setSelectedPara] = useState<number | null>(null);
   const [showGist, setShowGist] = useState(false);
+  const [showBenefit, setShowBenefit] = useState(false);
 
   const dashakam = sampleDashakams.find((d) => d.id === selectedDashakam);
   const verses = dashakam?.verses || [];
@@ -163,28 +164,40 @@ export default function ScriptPage() {
                 {dashakam.title_sanskrit}
               </h2>
               <p className="text-gold-light font-sans text-sm">{dashakam.title_english}</p>
-              {dashakam.benefits && (
-                <p className="text-primary-foreground/70 text-xs font-sans mt-1">✨ {dashakam.benefits}</p>
-              )}
               {dashakam.remarks && (
                 <p className="text-gold-light/80 text-xs font-sans mt-1 italic">Note: {dashakam.remarks}</p>
               )}
-              <button
-                onClick={() => setShowGist(!showGist)}
-                className="mt-3 inline-flex items-center gap-1 rounded-lg bg-primary-foreground/10 px-3 py-1.5 text-xs text-gold-light font-sans hover:bg-primary-foreground/20 transition-colors"
-              >
-                {showGist ? <ChevronUp className="h-3 w-3" /> : <ChevronDown className="h-3 w-3" />}
-                {showGist ? "Hide Gist" : "View Gist"}
-              </button>
+              <div className="mt-3 flex items-center gap-2">
+                <button
+                  onClick={() => setShowGist(!showGist)}
+                  className="inline-flex items-center gap-1 rounded-lg bg-primary-foreground/10 px-3 py-1.5 text-xs text-gold-light font-sans hover:bg-primary-foreground/20 transition-colors"
+                >
+                  {showGist ? <ChevronUp className="h-3 w-3" /> : <ChevronDown className="h-3 w-3" />}
+                  {showGist ? "Hide Gist" : "View Gist"}
+                </button>
+                {dashakam.benefits && (
+                  <button
+                    onClick={() => setShowBenefit(!showBenefit)}
+                    className="inline-flex items-center gap-1 rounded-lg bg-primary-foreground/10 px-3 py-1.5 text-xs text-gold-light font-sans hover:bg-primary-foreground/20 transition-colors"
+                  >
+                    {showBenefit ? <ChevronUp className="h-3 w-3" /> : <ChevronDown className="h-3 w-3" />}
+                    {showBenefit ? "Hide Benefit" : "View Benefit"}
+                  </button>
+                )}
+              </div>
             </div>
             <AnimatePresence>
               {showGist && (
-                <motion.div
-                  initial={{ height: 0, opacity: 0 }} animate={{ height: "auto", opacity: 1 }} exit={{ height: 0, opacity: 0 }}
-                  className="overflow-hidden"
-                >
+                <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: "auto", opacity: 1 }} exit={{ height: 0, opacity: 0 }} className="overflow-hidden">
                   <div className="rounded-b-xl border border-t-0 border-border bg-card p-4">
                     <p className="text-sm text-foreground font-sans leading-relaxed">{dashakam.gist}</p>
+                  </div>
+                </motion.div>
+              )}
+              {showBenefit && dashakam.benefits && (
+                <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: "auto", opacity: 1 }} exit={{ height: 0, opacity: 0 }} className="overflow-hidden">
+                  <div className="rounded-b-xl border border-t-0 border-border bg-card p-4">
+                    <p className="text-sm text-foreground font-sans leading-relaxed">✨ {dashakam.benefits}</p>
                   </div>
                 </motion.div>
               )}
