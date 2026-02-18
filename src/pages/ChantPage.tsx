@@ -49,7 +49,7 @@ export default function ChantPage() {
       const audio = new Audio(currentVerse.audio);
       audioRef.current = audio;
       audio.playbackRate = speed;
-      audio.play().catch(() => {});
+      audio.play().catch((err) => console.error("Audio play error:", err));
       audio.onended = () => {
         if (highlightedVerse >= displayVerses.length - 1) {
           setIsPlaying(false);

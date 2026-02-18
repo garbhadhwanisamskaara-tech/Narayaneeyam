@@ -115,6 +115,7 @@ function makeVerse(
     prasadam: opts.prasadam,
     bell: opts.bell,
     benefits: opts.benefits,
+    audio: opts.audio,
   };
 }
 
