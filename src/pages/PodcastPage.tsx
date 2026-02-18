@@ -31,12 +31,23 @@ export default function PodcastPage() {
     if (hasAudio) {
       const verses = dashakam.verses.filter((v) => v.audio);
       if (currentVerseIdx >= verses.length) {
-        handleNext();
+        // Done playing all verses
+        setProgress(0);
+        setCurrentVerseIdx(0);
+        if (playMode === "loop") {
+          // restart same dashakam
+        } else if (currentDashakam < 100 && (playMode === "all" || playMode === "continue")) {
+          setCurrentDashakam((prev) => prev + 1);
+        } else {
+          setIsPlaying(false);
+        }
         return;
       }
-      const audio = new Audio(verses[currentVerseIdx].audio!);
+      const audioUrl = verses[currentVerseIdx].audio!;
+      console.log("Playing audio:", audioUrl);
+      const audio = new Audio(audioUrl);
       audioRef.current = audio;
-      audio.play().catch(() => {});
+      audio.play().catch((err) => console.error("Audio play error:", err));
       
       const updateProgress = () => {
         if (audio.duration) setProgress((audio.currentTime / audio.duration) * (100 / verses.length) + (currentVerseIdx / verses.length) * 100);
@@ -48,13 +59,16 @@ export default function PodcastPage() {
       // Simulated playback fallback
       intervalRef.current = setInterval(() => {
         setProgress((prev) => {
-          if (prev >= 100) { handleNext(); return 0; }
+          if (prev >= 100) {
+            setIsPlaying(false);
+            return 0;
+          }
           return prev + 0.5;
         });
       }, 200);
       return () => { if (intervalRef.current) clearInterval(intervalRef.current); };
     }
-  }, [isPlaying, currentDashakam, currentVerseIdx, playMode]);
+  }, [isPlaying, currentDashakam, currentVerseIdx, playMode, hasAudio]);
 
   const handleNext = useCallback(() => {
     setProgress(0);
