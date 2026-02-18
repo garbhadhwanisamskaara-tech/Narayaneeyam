@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useCallback } from "react";
 import { motion } from "framer-motion";
 import { Play, Pause, SkipBack, SkipForward, Repeat, ListMusic, Volume2 } from "lucide-react";
 import { sampleDashakams } from "@/data/narayaneeyam";
@@ -12,6 +12,8 @@ export default function PodcastPage() {
   const [playMode, setPlayMode] = useState<PlayMode>("single");
   const [progress, setProgress] = useState(0);
   const [showPlaylist, setShowPlaylist] = useState(false);
+  const [currentVerseIdx, setCurrentVerseIdx] = useState(0);
+  const audioRef = useRef<HTMLAudioElement | null>(null);
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   useEffect(() => {
@@ -19,26 +21,46 @@ export default function PodcastPage() {
     if (saved.lastDashakam) setCurrentDashakam(saved.lastDashakam);
   }, []);
 
+  const dashakam = sampleDashakams.find((d) => d.id === currentDashakam);
+  const hasAudio = dashakam?.verses.some((v) => v.audio);
+
+  // Real audio playback for dashakams with audio
   useEffect(() => {
-    if (isPlaying) {
+    if (!isPlaying || !dashakam) return;
+
+    if (hasAudio) {
+      const verses = dashakam.verses.filter((v) => v.audio);
+      if (currentVerseIdx >= verses.length) {
+        handleNext();
+        return;
+      }
+      const audio = new Audio(verses[currentVerseIdx].audio!);
+      audioRef.current = audio;
+      audio.play().catch(() => {});
+      
+      const updateProgress = () => {
+        if (audio.duration) setProgress((audio.currentTime / audio.duration) * (100 / verses.length) + (currentVerseIdx / verses.length) * 100);
+      };
+      audio.addEventListener("timeupdate", updateProgress);
+      audio.onended = () => setCurrentVerseIdx((prev) => prev + 1);
+      return () => { audio.pause(); audio.removeEventListener("timeupdate", updateProgress); audio.onended = null; };
+    } else {
+      // Simulated playback fallback
       intervalRef.current = setInterval(() => {
         setProgress((prev) => {
-          if (prev >= 100) {
-            handleNext();
-            return 0;
-          }
+          if (prev >= 100) { handleNext(); return 0; }
           return prev + 0.5;
         });
       }, 200);
-    } else {
-      if (intervalRef.current) clearInterval(intervalRef.current);
+      return () => { if (intervalRef.current) clearInterval(intervalRef.current); };
     }
-    return () => { if (intervalRef.current) clearInterval(intervalRef.current); };
-  }, [isPlaying, currentDashakam, playMode]);
+  }, [isPlaying, currentDashakam, currentVerseIdx, playMode]);
 
-  const handleNext = () => {
+  const handleNext = useCallback(() => {
     setProgress(0);
-    if (playMode === "loop") return; // stay on same
+    setCurrentVerseIdx(0);
+    if (audioRef.current) audioRef.current.pause();
+    if (playMode === "loop") return;
     if (currentDashakam < 100) {
       setCurrentDashakam((prev) => prev + 1);
       saveProgress({ lastDashakam: currentDashakam + 1, lastPage: "/podcast" });
@@ -47,17 +69,18 @@ export default function PodcastPage() {
     } else {
       setIsPlaying(false);
     }
-  };
+  }, [currentDashakam, playMode]);
 
   const handlePrev = () => {
     setProgress(0);
+    setCurrentVerseIdx(0);
+    if (audioRef.current) audioRef.current.pause();
     if (currentDashakam > 1) {
       setCurrentDashakam((prev) => prev - 1);
       saveProgress({ lastDashakam: currentDashakam - 1, lastPage: "/podcast" });
     }
   };
 
-  const dashakam = sampleDashakams.find((d) => d.id === currentDashakam);
 
   const playModes: { value: PlayMode; label: string }[] = [
     { value: "single", label: "Single" },
@@ -112,7 +135,9 @@ export default function PodcastPage() {
             </button>
             <button
               onClick={() => {
+                if (isPlaying && audioRef.current) audioRef.current.pause();
                 setIsPlaying(!isPlaying);
+                if (!isPlaying) setCurrentVerseIdx(0);
                 saveProgress({ lastDashakam: currentDashakam, lastPage: "/podcast" });
               }}
               className="flex h-14 w-14 items-center justify-center rounded-full bg-gradient-gold text-primary shadow-gold transition-transform hover:scale-110"
@@ -141,9 +166,15 @@ export default function PodcastPage() {
             ))}
           </div>
 
-          <p className="text-center text-xs text-primary-foreground/40 mt-4 font-sans">
-            🎵 Audio playback is simulated — upload MP3 files to enable real playback
-          </p>
+          {hasAudio ? (
+            <p className="text-center text-xs text-primary-foreground/40 mt-4 font-sans">
+              🎵 Real audio playback — Verse {currentVerseIdx + 1} of {dashakam?.verses.filter(v => v.audio).length}
+            </p>
+          ) : (
+            <p className="text-center text-xs text-primary-foreground/40 mt-4 font-sans">
+              🎵 Audio playback is simulated — upload MP3 files to enable real playback
+            </p>
+          )}
         </div>
 
         {/* Playlist Toggle */}
@@ -162,8 +193,10 @@ export default function PodcastPage() {
               <button
                 key={d.id}
                 onClick={() => {
+                  if (audioRef.current) audioRef.current.pause();
                   setCurrentDashakam(d.id);
                   setProgress(0);
+                  setCurrentVerseIdx(0);
                   saveProgress({ lastDashakam: d.id, lastPage: "/podcast" });
                 }}
                 className={`w-full flex items-center gap-3 px-4 py-3 text-left text-sm font-sans border-b border-border last:border-b-0 transition-colors ${

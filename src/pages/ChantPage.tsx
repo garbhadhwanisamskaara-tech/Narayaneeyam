@@ -1,6 +1,6 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Play, Pause, SkipBack, SkipForward, RotateCcw, Bookmark, ChevronDown, ChevronUp } from "lucide-react";
+import { Play, Pause, SkipBack, SkipForward, RotateCcw, Bookmark, ChevronDown, ChevronUp, Volume2 } from "lucide-react";
 import {
   sampleDashakams,
   TRANSLITERATION_LANGUAGES,
@@ -25,7 +25,7 @@ export default function ChantPage() {
   const [highlightedVerse, setHighlightedVerse] = useState(0);
   const [speed, setSpeed] = useState(1);
   const [loopCount, setLoopCount] = useState(1);
-
+  const audioRef = useRef<HTMLAudioElement | null>(null);
   const dashakam = sampleDashakams.find((d) => d.id === selectedDashakam);
   const verses = dashakam?.verses || [];
   const displayVerses = selectedPara
@@ -41,20 +41,40 @@ export default function ChantPage() {
     saveProgress({ lastDashakam: selectedDashakam, lastPage: "/chant" });
   }, [selectedDashakam]);
 
+  // Real audio playback
   useEffect(() => {
     if (!isPlaying || displayVerses.length === 0) return;
-    const interval = setInterval(() => {
-      setHighlightedVerse((prev) => {
-        if (prev >= displayVerses.length - 1) {
+    const currentVerse = displayVerses[highlightedVerse];
+    if (currentVerse?.audio) {
+      const audio = new Audio(currentVerse.audio);
+      audioRef.current = audio;
+      audio.playbackRate = speed;
+      audio.play().catch(() => {});
+      audio.onended = () => {
+        if (highlightedVerse >= displayVerses.length - 1) {
           setIsPlaying(false);
           updateStreak();
-          return 0;
+          setHighlightedVerse(0);
+        } else {
+          setHighlightedVerse((prev) => prev + 1);
         }
-        return prev + 1;
-      });
-    }, 4000 / speed);
-    return () => clearInterval(interval);
-  }, [isPlaying, displayVerses.length, speed]);
+      };
+      return () => { audio.pause(); audio.onended = null; };
+    } else {
+      // Fallback simulated timing for verses without audio
+      const interval = setInterval(() => {
+        setHighlightedVerse((prev) => {
+          if (prev >= displayVerses.length - 1) {
+            setIsPlaying(false);
+            updateStreak();
+            return 0;
+          }
+          return prev + 1;
+        });
+      }, 4000 / speed);
+      return () => clearInterval(interval);
+    }
+  }, [isPlaying, highlightedVerse, displayVerses.length, speed]);
 
   const getVerseText = (verse: typeof verses[0]) => verse[translitLang] || verse.sanskrit;
   const getMeaning = (verse: typeof verses[0]) => {
@@ -205,14 +225,20 @@ export default function ChantPage() {
         {/* Audio Player Bar */}
         <div className="sticky bottom-0 bg-gradient-peacock rounded-t-xl p-4 shadow-peacock">
           <div className="flex items-center justify-center gap-4">
-            <button onClick={() => setHighlightedVerse(Math.max(0, highlightedVerse - 1))} className="text-primary-foreground/70 hover:text-primary-foreground p-2"><SkipBack className="h-5 w-5" /></button>
-            <button onClick={() => setHighlightedVerse(0)} className="text-primary-foreground/70 hover:text-primary-foreground p-2" title="Restart"><RotateCcw className="h-5 w-5" /></button>
-            <button onClick={() => setIsPlaying(!isPlaying)} className="flex h-12 w-12 items-center justify-center rounded-full bg-gradient-gold text-primary shadow-gold transition-transform hover:scale-110">
+            <button onClick={() => { if (audioRef.current) audioRef.current.pause(); setHighlightedVerse(Math.max(0, highlightedVerse - 1)); }} className="text-primary-foreground/70 hover:text-primary-foreground p-2"><SkipBack className="h-5 w-5" /></button>
+            <button onClick={() => { if (audioRef.current) audioRef.current.pause(); setHighlightedVerse(0); }} className="text-primary-foreground/70 hover:text-primary-foreground p-2" title="Restart"><RotateCcw className="h-5 w-5" /></button>
+            <button onClick={() => { if (isPlaying && audioRef.current) audioRef.current.pause(); setIsPlaying(!isPlaying); }} className="flex h-12 w-12 items-center justify-center rounded-full bg-gradient-gold text-primary shadow-gold transition-transform hover:scale-110">
               {isPlaying ? <Pause className="h-6 w-6" /> : <Play className="h-6 w-6 ml-0.5" />}
             </button>
-            <button onClick={() => setHighlightedVerse(Math.min(displayVerses.length - 1, highlightedVerse + 1))} className="text-primary-foreground/70 hover:text-primary-foreground p-2"><SkipForward className="h-5 w-5" /></button>
+            <button onClick={() => { if (audioRef.current) audioRef.current.pause(); setHighlightedVerse(Math.min(displayVerses.length - 1, highlightedVerse + 1)); }} className="text-primary-foreground/70 hover:text-primary-foreground p-2"><SkipForward className="h-5 w-5" /></button>
           </div>
-          <p className="text-center text-xs text-primary-foreground/60 mt-2 font-sans">Audio playback is simulated — Admin: upload audio files to enable real playback</p>
+          {displayVerses.some(v => v.audio) ? (
+            <p className="text-center text-xs text-primary-foreground/60 mt-2 font-sans flex items-center justify-center gap-1">
+              <Volume2 className="h-3 w-3" /> Real audio playback active for verses with audio
+            </p>
+          ) : (
+            <p className="text-center text-xs text-primary-foreground/60 mt-2 font-sans">Audio playback is simulated — Admin: upload audio files to enable real playback</p>
+          )}
         </div>
       </motion.div>
     </div>
