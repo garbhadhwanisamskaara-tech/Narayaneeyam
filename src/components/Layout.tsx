@@ -24,7 +24,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
       <header className="sticky top-0 z-50 bg-gradient-peacock shadow-peacock">
         <div className="container mx-auto flex items-center justify-between px-4 py-3">
           <Link to="/" className="flex items-center gap-3">
-            <div className="h-10 w-10 rounded-full border-2 border-secondary p-0.5">
+            <div className="h-10 w-10 rounded-full overflow-hidden">
               <img src={logoImg} alt="Narayaneeyam Logo" className="h-full w-full rounded-full object-cover" />
             </div>
             <div>

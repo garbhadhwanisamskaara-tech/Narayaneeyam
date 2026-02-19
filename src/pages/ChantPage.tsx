@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Play, Pause, SkipBack, SkipForward, RotateCcw, Bookmark, ChevronDown, ChevronUp, Volume2 } from "lucide-react";
 import {
@@ -12,6 +12,7 @@ import {
 } from "@/data/narayaneeyam";
 import { getProgress, saveProgress, updateStreak } from "@/lib/progress";
 import VerseIcons from "@/components/VerseIcons";
+import { Slider } from "@/components/ui/slider";
 
 export default function ChantPage() {
   const [selectedDashakam, setSelectedDashakam] = useState(1);
@@ -25,7 +26,11 @@ export default function ChantPage() {
   const [highlightedVerse, setHighlightedVerse] = useState(0);
   const [speed, setSpeed] = useState(1);
   const [loopCount, setLoopCount] = useState(1);
+  const [currentLoopIteration, setCurrentLoopIteration] = useState(0);
+  const [verseProgress, setVerseProgress] = useState(0); // 0-100 progress within current verse
   const audioRef = useRef<HTMLAudioElement | null>(null);
+  const pausedRef = useRef(false); // track if we paused vs stopped
+  const gapTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const dashakam = sampleDashakams.find((d) => d.id === selectedDashakam);
   const verses = dashakam?.verses || [];
   const displayVerses = selectedPara
@@ -41,40 +46,102 @@ export default function ChantPage() {
     saveProgress({ lastDashakam: selectedDashakam, lastPage: "/chant" });
   }, [selectedDashakam]);
 
+  const advanceToNextVerse = useCallback(() => {
+    if (highlightedVerse >= displayVerses.length - 1) {
+      const nextLoop = currentLoopIteration + 1;
+      if (nextLoop < loopCount) {
+        setCurrentLoopIteration(nextLoop);
+        setHighlightedVerse(0);
+        setVerseProgress(0);
+      } else {
+        setIsPlaying(false);
+        updateStreak();
+        setHighlightedVerse(0);
+        setVerseProgress(0);
+        setCurrentLoopIteration(0);
+      }
+    } else {
+      // 1.5 sec gap between verses
+      setVerseProgress(0);
+      gapTimerRef.current = setTimeout(() => {
+        setHighlightedVerse((prev) => prev + 1);
+      }, 1500);
+    }
+  }, [highlightedVerse, displayVerses.length, loopCount, currentLoopIteration]);
+
   // Real audio playback
   useEffect(() => {
     if (!isPlaying || displayVerses.length === 0) return;
+    
+    // If we have a paused audio for the same verse, just resume it
+    if (pausedRef.current && audioRef.current && !audioRef.current.ended) {
+      audioRef.current.playbackRate = speed;
+      audioRef.current.play().catch((err) => console.error("Audio play error:", err));
+      pausedRef.current = false;
+      
+      const audio = audioRef.current;
+      const updateProgress = () => {
+        if (audio.duration) setVerseProgress((audio.currentTime / audio.duration) * 100);
+      };
+      audio.addEventListener("timeupdate", updateProgress);
+      audio.onended = () => advanceToNextVerse();
+      return () => { audio.removeEventListener("timeupdate", updateProgress); audio.onended = null; };
+    }
+    
     const currentVerse = displayVerses[highlightedVerse];
     if (currentVerse?.audio) {
       const audio = new Audio(currentVerse.audio);
       audioRef.current = audio;
       audio.playbackRate = speed;
+      pausedRef.current = false;
       audio.play().catch((err) => console.error("Audio play error:", err));
-      audio.onended = () => {
-        if (highlightedVerse >= displayVerses.length - 1) {
-          setIsPlaying(false);
-          updateStreak();
-          setHighlightedVerse(0);
-        } else {
-          setHighlightedVerse((prev) => prev + 1);
-        }
+      
+      const updateProgress = () => {
+        if (audio.duration) setVerseProgress((audio.currentTime / audio.duration) * 100);
       };
-      return () => { audio.pause(); audio.onended = null; };
+      audio.addEventListener("timeupdate", updateProgress);
+      audio.onended = () => advanceToNextVerse();
+      return () => { audio.pause(); audio.removeEventListener("timeupdate", updateProgress); audio.onended = null; };
     } else {
       // Fallback simulated timing for verses without audio
       const interval = setInterval(() => {
-        setHighlightedVerse((prev) => {
-          if (prev >= displayVerses.length - 1) {
-            setIsPlaying(false);
-            updateStreak();
+        setVerseProgress((prev) => {
+          if (prev >= 100) {
+            advanceToNextVerse();
             return 0;
           }
-          return prev + 1;
+          return prev + (speed * 2.5);
         });
-      }, 4000 / speed);
+      }, 100);
       return () => clearInterval(interval);
     }
-  }, [isPlaying, highlightedVerse, displayVerses.length, speed]);
+  }, [isPlaying, highlightedVerse, displayVerses.length, speed, advanceToNextVerse]);
+
+  // Cleanup gap timer
+  useEffect(() => {
+    return () => { if (gapTimerRef.current) clearTimeout(gapTimerRef.current); };
+  }, []);
+
+  const handlePlayPause = () => {
+    if (isPlaying) {
+      // Pause - keep position
+      if (audioRef.current) {
+        audioRef.current.pause();
+        pausedRef.current = true;
+      }
+      setIsPlaying(false);
+    } else {
+      setIsPlaying(true);
+    }
+  };
+
+  const handleSeekVerse = (value: number[]) => {
+    const seekTo = value[0];
+    setVerseProgress(seekTo);
+    if (audioRef.current && audioRef.current.duration) {
+      audioRef.current.currentTime = (seekTo / 100) * audioRef.current.duration;
+    }
+  };
 
   const getVerseText = (verse: typeof verses[0]) => verse[translitLang] || verse.sanskrit;
   const getMeaning = (verse: typeof verses[0]) => {
@@ -83,7 +150,7 @@ export default function ChantPage() {
   };
 
   return (
-    <div className="container mx-auto px-4 py-8">
+    <div className="container mx-auto px-4 py-8 select-none" onContextMenu={(e) => e.preventDefault()}>
       <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
         <div className="mb-8">
           <h1 className="font-display text-3xl font-bold text-foreground mb-2">Chant with Me</h1>
@@ -94,7 +161,7 @@ export default function ChantPage() {
         <div className="flex flex-wrap gap-3 mb-6 rounded-xl bg-card border border-border p-4">
           <div className="flex flex-col gap-1">
             <label className="text-xs text-muted-foreground font-sans">Dashakam</label>
-            <select value={selectedDashakam} onChange={(e) => { setSelectedDashakam(Number(e.target.value)); setSelectedPara(null); setHighlightedVerse(0); setShowGist(false); }}
+            <select value={selectedDashakam} onChange={(e) => { setSelectedDashakam(Number(e.target.value)); setSelectedPara(null); setHighlightedVerse(0); setShowGist(false); setVerseProgress(0); if (audioRef.current) { audioRef.current.pause(); audioRef.current = null; } pausedRef.current = false; }}
               className="rounded-lg border border-border bg-background px-3 py-2 text-sm font-sans text-foreground">
               {sampleDashakams.map((d) => (<option key={d.id} value={d.id}>{d.id}. {d.title_english}</option>))}
             </select>
@@ -129,7 +196,7 @@ export default function ChantPage() {
 
           <div className="flex flex-col gap-1">
             <label className="text-xs text-muted-foreground font-sans">Speed</label>
-            <select value={speed} onChange={(e) => setSpeed(Number(e.target.value))}
+            <select value={speed} onChange={(e) => { setSpeed(Number(e.target.value)); if (audioRef.current) audioRef.current.playbackRate = Number(e.target.value); }}
               className="rounded-lg border border-border bg-background px-3 py-2 text-sm font-sans text-foreground">
               <option value={0.5}>0.5×</option><option value={0.75}>0.75×</option><option value={1}>1×</option><option value={1.25}>1.25×</option><option value={1.5}>1.5×</option>
             </select>
@@ -211,6 +278,18 @@ export default function ChantPage() {
                 <p className={`font-body text-lg leading-relaxed whitespace-pre-line transition-colors ${idx === highlightedVerse && isPlaying ? "text-primary font-semibold" : "text-foreground"}`}>
                   {getVerseText(verse)}
                 </p>
+                {/* Verse seek bar - shown for active verse */}
+                {idx === highlightedVerse && verse.audio && (
+                  <div className="mt-3">
+                    <Slider
+                      value={[verseProgress]}
+                      onValueChange={handleSeekVerse}
+                      max={100}
+                      step={0.5}
+                      className="w-full"
+                    />
+                  </div>
+                )}
                 {showMeaning && (
                   <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: "auto" }} className="mt-4 border-t border-border pt-3">
                     <p className="text-xs text-muted-foreground font-sans uppercase tracking-wide mb-1">Translation ({translationLang})</p>
@@ -225,19 +304,23 @@ export default function ChantPage() {
         {/* Audio Player Bar */}
         <div className="sticky bottom-0 bg-gradient-peacock rounded-t-xl p-4 shadow-peacock">
           <div className="flex items-center justify-center gap-4">
-            <button onClick={() => { if (audioRef.current) audioRef.current.pause(); setHighlightedVerse(Math.max(0, highlightedVerse - 1)); }} className="text-primary-foreground/70 hover:text-primary-foreground p-2"><SkipBack className="h-5 w-5" /></button>
-            <button onClick={() => { if (audioRef.current) audioRef.current.pause(); setHighlightedVerse(0); }} className="text-primary-foreground/70 hover:text-primary-foreground p-2" title="Restart"><RotateCcw className="h-5 w-5" /></button>
-            <button onClick={() => { if (isPlaying && audioRef.current) audioRef.current.pause(); setIsPlaying(!isPlaying); }} className="flex h-12 w-12 items-center justify-center rounded-full bg-gradient-gold text-primary shadow-gold transition-transform hover:scale-110">
+            <button onClick={() => { if (audioRef.current) { audioRef.current.pause(); audioRef.current = null; } pausedRef.current = false; setVerseProgress(0); setHighlightedVerse(Math.max(0, highlightedVerse - 1)); }} className="text-primary-foreground/70 hover:text-primary-foreground p-2"><SkipBack className="h-5 w-5" /></button>
+            <button onClick={() => { if (audioRef.current) { audioRef.current.pause(); audioRef.current = null; } pausedRef.current = false; setVerseProgress(0); setHighlightedVerse(0); setCurrentLoopIteration(0); }} className="text-primary-foreground/70 hover:text-primary-foreground p-2" title="Restart"><RotateCcw className="h-5 w-5" /></button>
+            <button onClick={handlePlayPause} className="flex h-12 w-12 items-center justify-center rounded-full bg-gradient-gold text-primary shadow-gold transition-transform hover:scale-110">
               {isPlaying ? <Pause className="h-6 w-6" /> : <Play className="h-6 w-6 ml-0.5" />}
             </button>
-            <button onClick={() => { if (audioRef.current) audioRef.current.pause(); setHighlightedVerse(Math.min(displayVerses.length - 1, highlightedVerse + 1)); }} className="text-primary-foreground/70 hover:text-primary-foreground p-2"><SkipForward className="h-5 w-5" /></button>
+            <button onClick={() => { if (audioRef.current) { audioRef.current.pause(); audioRef.current = null; } pausedRef.current = false; setVerseProgress(0); setHighlightedVerse(Math.min(displayVerses.length - 1, highlightedVerse + 1)); }} className="text-primary-foreground/70 hover:text-primary-foreground p-2"><SkipForward className="h-5 w-5" /></button>
+          </div>
+          <div className="text-center text-xs text-primary-foreground/60 mt-2 font-sans">
+            Verse {highlightedVerse + 1} of {displayVerses.length}
+            {loopCount > 1 && ` · Loop ${currentLoopIteration + 1}/${loopCount}`}
           </div>
           {displayVerses.some(v => v.audio) ? (
-            <p className="text-center text-xs text-primary-foreground/60 mt-2 font-sans flex items-center justify-center gap-1">
-              <Volume2 className="h-3 w-3" /> Real audio playback active for verses with audio
+            <p className="text-center text-xs text-primary-foreground/60 mt-1 font-sans flex items-center justify-center gap-1">
+              <Volume2 className="h-3 w-3" /> Real audio playback active
             </p>
           ) : (
-            <p className="text-center text-xs text-primary-foreground/60 mt-2 font-sans">Audio playback is simulated — Admin: upload audio files to enable real playback</p>
+            <p className="text-center text-xs text-primary-foreground/60 mt-1 font-sans">Audio playback is simulated — Admin: upload audio files to enable real playback</p>
           )}
         </div>
       </motion.div>

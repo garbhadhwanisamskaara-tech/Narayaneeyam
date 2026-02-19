@@ -3,6 +3,7 @@ import { motion } from "framer-motion";
 import { Play, Pause, SkipBack, SkipForward, Repeat, ListMusic, Volume2 } from "lucide-react";
 import { sampleDashakams } from "@/data/narayaneeyam";
 import { getProgress, saveProgress } from "@/lib/progress";
+import { Slider } from "@/components/ui/slider";
 
 type PlayMode = "single" | "loop" | "all" | "continue";
 
@@ -15,45 +16,88 @@ export default function PodcastPage() {
   const [currentVerseIdx, setCurrentVerseIdx] = useState(0);
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const pausedRef = useRef(false);
+  const gapTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
     const saved = getProgress();
     if (saved.lastDashakam) setCurrentDashakam(saved.lastDashakam);
   }, []);
 
+  // Cleanup gap timer
+  useEffect(() => {
+    return () => { if (gapTimerRef.current) clearTimeout(gapTimerRef.current); };
+  }, []);
+
   const dashakam = sampleDashakams.find((d) => d.id === currentDashakam);
-  const hasAudio = dashakam?.verses.some((v) => v.audio);
+  const audioVerses = dashakam?.verses.filter((v) => v.audio) || [];
+  const hasAudio = audioVerses.length > 0;
+
+  const advanceToNextVerse = useCallback(() => {
+    const nextIdx = currentVerseIdx + 1;
+    if (nextIdx >= audioVerses.length) {
+      // Done with all verses
+      if (playMode === "loop") {
+        setCurrentVerseIdx(0);
+        setProgress(0);
+      } else if (playMode === "all" || playMode === "continue") {
+        if (currentDashakam < 100) {
+          setCurrentDashakam((prev) => prev + 1);
+          setCurrentVerseIdx(0);
+          setProgress(0);
+        } else {
+          setIsPlaying(false);
+        }
+      } else {
+        setIsPlaying(false);
+        setProgress(100);
+      }
+    } else {
+      // 1.5 sec gap between verses
+      gapTimerRef.current = setTimeout(() => {
+        setCurrentVerseIdx(nextIdx);
+      }, 1500);
+    }
+  }, [currentVerseIdx, audioVerses.length, playMode, currentDashakam]);
 
   // Real audio playback for dashakams with audio
   useEffect(() => {
     if (!isPlaying || !dashakam) return;
 
     if (hasAudio) {
-      const verses = dashakam.verses.filter((v) => v.audio);
-      if (currentVerseIdx >= verses.length) {
-        // Done playing all verses
-        setProgress(0);
-        setCurrentVerseIdx(0);
-        if (playMode === "loop") {
-          // restart same dashakam
-        } else if (currentDashakam < 100 && (playMode === "all" || playMode === "continue")) {
-          setCurrentDashakam((prev) => prev + 1);
-        } else {
-          setIsPlaying(false);
-        }
+      if (currentVerseIdx >= audioVerses.length) {
+        advanceToNextVerse();
         return;
       }
-      const audioUrl = verses[currentVerseIdx].audio!;
-      console.log("Playing audio:", audioUrl);
+
+      // Resume paused audio
+      if (pausedRef.current && audioRef.current && !audioRef.current.ended) {
+        audioRef.current.play().catch((err) => console.error("Audio play error:", err));
+        pausedRef.current = false;
+        const audio = audioRef.current;
+        const updateProgress = () => {
+          if (audio.duration) {
+            setProgress((audio.currentTime / audio.duration) * (100 / audioVerses.length) + (currentVerseIdx / audioVerses.length) * 100);
+          }
+        };
+        audio.addEventListener("timeupdate", updateProgress);
+        audio.onended = () => advanceToNextVerse();
+        return () => { audio.removeEventListener("timeupdate", updateProgress); audio.onended = null; };
+      }
+
+      const audioUrl = audioVerses[currentVerseIdx].audio!;
       const audio = new Audio(audioUrl);
       audioRef.current = audio;
+      pausedRef.current = false;
       audio.play().catch((err) => console.error("Audio play error:", err));
       
       const updateProgress = () => {
-        if (audio.duration) setProgress((audio.currentTime / audio.duration) * (100 / verses.length) + (currentVerseIdx / verses.length) * 100);
+        if (audio.duration) {
+          setProgress((audio.currentTime / audio.duration) * (100 / audioVerses.length) + (currentVerseIdx / audioVerses.length) * 100);
+        }
       };
       audio.addEventListener("timeupdate", updateProgress);
-      audio.onended = () => setCurrentVerseIdx((prev) => prev + 1);
+      audio.onended = () => advanceToNextVerse();
       return () => { audio.pause(); audio.removeEventListener("timeupdate", updateProgress); audio.onended = null; };
     } else {
       // Simulated playback fallback
@@ -68,12 +112,26 @@ export default function PodcastPage() {
       }, 200);
       return () => { if (intervalRef.current) clearInterval(intervalRef.current); };
     }
-  }, [isPlaying, currentDashakam, currentVerseIdx, playMode, hasAudio]);
+  }, [isPlaying, currentDashakam, currentVerseIdx, playMode, hasAudio, advanceToNextVerse]);
+
+  const handlePlayPause = () => {
+    if (isPlaying) {
+      if (audioRef.current) {
+        audioRef.current.pause();
+        pausedRef.current = true;
+      }
+      setIsPlaying(false);
+    } else {
+      setIsPlaying(true);
+      saveProgress({ lastDashakam: currentDashakam, lastPage: "/podcast" });
+    }
+  };
 
   const handleNext = useCallback(() => {
+    if (audioRef.current) { audioRef.current.pause(); audioRef.current = null; }
+    pausedRef.current = false;
     setProgress(0);
     setCurrentVerseIdx(0);
-    if (audioRef.current) audioRef.current.pause();
     if (playMode === "loop") return;
     if (currentDashakam < 100) {
       setCurrentDashakam((prev) => prev + 1);
@@ -86,15 +144,33 @@ export default function PodcastPage() {
   }, [currentDashakam, playMode]);
 
   const handlePrev = () => {
+    if (audioRef.current) { audioRef.current.pause(); audioRef.current = null; }
+    pausedRef.current = false;
     setProgress(0);
     setCurrentVerseIdx(0);
-    if (audioRef.current) audioRef.current.pause();
     if (currentDashakam > 1) {
       setCurrentDashakam((prev) => prev - 1);
       saveProgress({ lastDashakam: currentDashakam - 1, lastPage: "/podcast" });
     }
   };
 
+  const handleSeek = (value: number[]) => {
+    const seekTo = value[0];
+    if (hasAudio && audioRef.current && audioRef.current.duration) {
+      // Calculate which verse this seek falls into
+      const verseIdx = Math.floor((seekTo / 100) * audioVerses.length);
+      const withinVerse = ((seekTo / 100) * audioVerses.length - verseIdx);
+      if (verseIdx !== currentVerseIdx && verseIdx < audioVerses.length) {
+        // Need to switch verse
+        if (audioRef.current) { audioRef.current.pause(); audioRef.current = null; }
+        pausedRef.current = false;
+        setCurrentVerseIdx(verseIdx);
+      } else if (audioRef.current.duration) {
+        audioRef.current.currentTime = withinVerse * audioRef.current.duration;
+      }
+    }
+    setProgress(seekTo);
+  };
 
   const playModes: { value: PlayMode; label: string }[] = [
     { value: "single", label: "Single" },
@@ -104,7 +180,7 @@ export default function PodcastPage() {
   ];
 
   return (
-    <div className="container mx-auto px-4 py-8">
+    <div className="container mx-auto px-4 py-8 select-none" onContextMenu={(e) => e.preventDefault()}>
       <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
         <div className="mb-8">
           <h1 className="font-display text-3xl font-bold text-foreground mb-2">Podcast</h1>
@@ -126,16 +202,22 @@ export default function PodcastPage() {
                 <p className="text-primary-foreground/60 font-sans text-xs mt-1">{dashakam.title_sanskrit}</p>
               </>
             )}
+            {hasAudio && (
+              <p className="text-gold-light font-sans text-lg font-semibold mt-3">
+                Verse {currentVerseIdx + 1}
+              </p>
+            )}
           </div>
 
-          {/* Progress Bar */}
-          <div className="mb-4">
-            <div className="h-1.5 rounded-full bg-primary-foreground/20 overflow-hidden">
-              <div
-                className="h-full rounded-full bg-gradient-gold transition-all duration-200"
-                style={{ width: `${progress}%` }}
-              />
-            </div>
+          {/* Progress Bar - Seekable */}
+          <div className="mb-4 px-2">
+            <Slider
+              value={[progress]}
+              onValueChange={handleSeek}
+              max={100}
+              step={0.5}
+              className="w-full"
+            />
             <div className="flex justify-between mt-1 text-xs text-primary-foreground/50 font-sans">
               <span>{Math.floor(progress * 0.06)}:{String(Math.floor((progress * 3.6) % 60)).padStart(2, "0")}</span>
               <span>~6:00</span>
@@ -148,12 +230,7 @@ export default function PodcastPage() {
               <SkipBack className="h-6 w-6" />
             </button>
             <button
-              onClick={() => {
-                if (isPlaying && audioRef.current) audioRef.current.pause();
-                setIsPlaying(!isPlaying);
-                if (!isPlaying) setCurrentVerseIdx(0);
-                saveProgress({ lastDashakam: currentDashakam, lastPage: "/podcast" });
-              }}
+              onClick={handlePlayPause}
               className="flex h-14 w-14 items-center justify-center rounded-full bg-gradient-gold text-primary shadow-gold transition-transform hover:scale-110"
             >
               {isPlaying ? <Pause className="h-7 w-7" /> : <Play className="h-7 w-7 ml-0.5" />}
@@ -182,7 +259,7 @@ export default function PodcastPage() {
 
           {hasAudio ? (
             <p className="text-center text-xs text-primary-foreground/40 mt-4 font-sans">
-              🎵 Real audio playback — Verse {currentVerseIdx + 1} of {dashakam?.verses.filter(v => v.audio).length}
+              🎵 Real audio playback — Verse {currentVerseIdx + 1} of {audioVerses.length}
             </p>
           ) : (
             <p className="text-center text-xs text-primary-foreground/40 mt-4 font-sans">
@@ -207,7 +284,8 @@ export default function PodcastPage() {
               <button
                 key={d.id}
                 onClick={() => {
-                  if (audioRef.current) audioRef.current.pause();
+                  if (audioRef.current) { audioRef.current.pause(); audioRef.current = null; }
+                  pausedRef.current = false;
                   setCurrentDashakam(d.id);
                   setProgress(0);
                   setCurrentVerseIdx(0);
