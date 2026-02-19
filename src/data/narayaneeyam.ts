@@ -372,6 +372,16 @@ const d4Verses: Verse[] = [
   makeVerse(4, 13, {
     english: "sachchidaatmaka bhavadguNOdayaanuchcharantamanilesha paahi maam",
     meaning_english: "Oh Jagannatha! One who successfully completes this arduous soul-searching journey does not come down again. I am Thy humble devotee singing Thy praises. Please save me, Oh Lord of Guruvayur, who art the embodiment of truth and reality.",
+    meter: "Vasantatilakā",
+  }),
+  makeVerse(4, 14, {
+    english: "tattadaatmakatayaa vishan sukhii yaati te padamanaavR^itaM vibhO",
+    meaning_english: "Oh Lord! The Brahmanda is encased in seven covers viz. the five elements, earth, water, fire, air, ether and then intellect and illusion. Thy devotee breaks through all these barriers experiencing the pleasures in each of these and finally attains salvation at Thy lotus feet.",
+    meter: "Vasantatilakā",
+  }),
+  makeVerse(4, 15, {
+    english: "sachchidaatmaka bhavadguNOdayaanuchcharantamanilesha paahi maam",
+    meaning_english: "Oh Jagannatha! One who successfully completes this arduous soul-searching journey does not come down again. I am Thy humble devotee singing Thy praises. Please save me, Oh Lord of Guruvayur, who art the embodiment of truth and reality.",
     meter: "Vasantatilakā", bell: true, prasadam: "Any fruit or water",
   }),
 ];
@@ -459,8 +469,8 @@ export const sampleDashakams: Dashakam[] = [
   {
     id: 4, title_sanskrit: "योगाभ्यासः तथा योगसिद्धिः", title_english: "Practice of Ashtanga Yoga",
     title_transliteration: "yogābhyāsaḥ tathā yogasiddhiḥ", gist: "The practice of Yoga and control of breath.",
-    benefits: "Physical health and steady mind.", meter: 4, num_verses: 13, description: "",
-    bell_verses: [13], prasadam_info: [{ verse: 13, item: "Any fruit or water" }],
+    benefits: "Physical health and steady mind.", meter: 4, num_verses: 15, description: "",
+    bell_verses: [15], prasadam_info: [{ verse: 15, item: "Any fruit or water" }],
     verses: d4Verses,
   },
   {
