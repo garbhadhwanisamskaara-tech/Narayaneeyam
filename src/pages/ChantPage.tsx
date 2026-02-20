@@ -10,7 +10,8 @@ import {
   type TransliterationLanguage,
   type TranslationLanguage,
 } from "@/data/narayaneeyam";
-import { getProgress, saveProgress, updateStreak } from "@/lib/progress";
+import { getProgress, saveProgress } from "@/lib/progress";
+import { updateStreakSupabase, markVerseCompleted } from "@/lib/supabaseProgress";
 import VerseIcons from "@/components/VerseIcons";
 import { Slider } from "@/components/ui/slider";
 
@@ -55,7 +56,7 @@ export default function ChantPage() {
         setVerseProgress(0);
       } else {
         setIsPlaying(false);
-        updateStreak();
+        updateStreakSupabase();
         setHighlightedVerse(0);
         setVerseProgress(0);
         setCurrentLoopIteration(0);
