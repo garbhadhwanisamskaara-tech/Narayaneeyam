@@ -60,7 +60,7 @@ export default function VerseIcons({ bell, prasadam }: VerseIconsProps) {
           <Tooltip>
             <TooltipTrigger asChild>
               <span className="flex h-8 w-8 items-center justify-center rounded-full border border-gold/40 bg-card text-lg cursor-default hover:border-gold hover:scale-110 transform transition-all">
-                🪷
+                🍚
               </span>
             </TooltipTrigger>
             <TooltipContent>

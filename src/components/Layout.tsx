@@ -33,7 +33,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
               <h1 className="font-display text-lg font-semibold text-primary-foreground leading-tight">
                 Sriman Narayaneeyam
               </h1>
-              <p className="text-xs text-gold-light font-sans">Chant · Learn · Grow</p>
+              <p className="text-xs text-gold-light font-sans">Chant · Learn · Grow · Podcast</p>
             </div>
           </Link>
 
@@ -45,7 +45,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
                 <Link
                   key={item.path}
                   to={item.path}
-                  className={`relative flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-sans transition-colors ${
+                  className={`relative flex items-center gap-2 px-3 py-2 text-sm font-sans transition-colors ${
                     isActive
                       ? "text-secondary font-semibold"
                       : "text-primary-foreground/70 hover:text-primary-foreground"
@@ -55,8 +55,8 @@ export default function Layout({ children }: { children: React.ReactNode }) {
                   {item.label}
                   {isActive && (
                     <motion.div
-                      layoutId="nav-indicator"
-                      className="absolute inset-0 rounded-lg bg-primary-foreground/15 border border-secondary/30"
+                      layoutId="nav-underline"
+                      className="absolute bottom-0 left-2 right-2 h-0.5 rounded-full bg-secondary"
                       transition={{ type: "spring", bounce: 0.2, duration: 0.6 }}
                     />
                   )}
@@ -121,7 +121,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
                   onClick={() => setMobileOpen(false)}
                   className={`flex items-center gap-3 rounded-lg px-3 py-3 text-sm font-sans ${
                     isActive
-                      ? "text-secondary bg-primary-foreground/10 font-semibold"
+                      ? "text-secondary font-semibold border-l-2 border-secondary"
                       : "text-primary-foreground/70"
                   }`}
                 >
