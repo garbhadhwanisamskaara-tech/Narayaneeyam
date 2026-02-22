@@ -1,8 +1,9 @@
 import { Link, useLocation } from "react-router-dom";
 import { motion } from "framer-motion";
-import { BookOpen, Mic, FileText, GraduationCap, LayoutDashboard, Menu, X, CalendarPlus, Headphones } from "lucide-react";
+import { BookOpen, Mic, FileText, GraduationCap, LayoutDashboard, Menu, X, CalendarPlus, Headphones, LogIn, LogOut, User } from "lucide-react";
 import { useState } from "react";
 import logoImg from "@/assets/logo.png";
+import { useAuth } from "@/contexts/AuthContext";
 
 const navItems = [
   { path: "/", label: "Home", icon: LayoutDashboard },
@@ -17,6 +18,7 @@ const navItems = [
 export default function Layout({ children }: { children: React.ReactNode }) {
   const location = useLocation();
   const [mobileOpen, setMobileOpen] = useState(false);
+  const { user, displayName, signOut, loading } = useAuth();
 
   return (
     <div className="min-h-screen bg-background">
@@ -45,7 +47,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
                   to={item.path}
                   className={`relative flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-sans transition-colors ${
                     isActive
-                      ? "text-secondary"
+                      ? "text-secondary font-semibold"
                       : "text-primary-foreground/70 hover:text-primary-foreground"
                   }`}
                 >
@@ -54,7 +56,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
                   {isActive && (
                     <motion.div
                       layoutId="nav-indicator"
-                      className="absolute inset-0 rounded-lg bg-primary-foreground/10"
+                      className="absolute inset-0 rounded-lg bg-primary-foreground/15 border border-secondary/30"
                       transition={{ type: "spring", bounce: 0.2, duration: 0.6 }}
                     />
                   )}
@@ -62,6 +64,37 @@ export default function Layout({ children }: { children: React.ReactNode }) {
               );
             })}
           </nav>
+
+          {/* User Profile / Auth */}
+          <div className="hidden lg:flex items-center gap-3">
+            {!loading && user ? (
+              <div className="flex items-center gap-3">
+                <div className="flex items-center gap-2 rounded-lg bg-primary-foreground/10 px-3 py-1.5">
+                  <div className="flex h-7 w-7 items-center justify-center rounded-full bg-secondary text-secondary-foreground">
+                    <User className="h-4 w-4" />
+                  </div>
+                  <span className="text-sm font-sans text-primary-foreground font-medium max-w-[120px] truncate">
+                    {displayName}
+                  </span>
+                </div>
+                <button
+                  onClick={() => signOut()}
+                  className="flex items-center gap-1 rounded-lg px-2 py-1.5 text-xs font-sans text-primary-foreground/60 hover:text-primary-foreground transition-colors"
+                  title="Sign out"
+                >
+                  <LogOut className="h-4 w-4" />
+                </button>
+              </div>
+            ) : !loading ? (
+              <Link
+                to="/auth"
+                className="flex items-center gap-2 rounded-lg bg-secondary/90 px-4 py-2 text-sm font-sans font-semibold text-secondary-foreground hover:bg-secondary transition-colors"
+              >
+                <LogIn className="h-4 w-4" />
+                Sign In
+              </Link>
+            ) : null}
+          </div>
 
           {/* Mobile hamburger */}
           <button
@@ -88,7 +121,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
                   onClick={() => setMobileOpen(false)}
                   className={`flex items-center gap-3 rounded-lg px-3 py-3 text-sm font-sans ${
                     isActive
-                      ? "text-secondary bg-primary-foreground/10"
+                      ? "text-secondary bg-primary-foreground/10 font-semibold"
                       : "text-primary-foreground/70"
                   }`}
                 >
@@ -97,6 +130,33 @@ export default function Layout({ children }: { children: React.ReactNode }) {
                 </Link>
               );
             })}
+
+            {/* Mobile auth */}
+            <div className="mt-2 pt-2 border-t border-primary-foreground/10">
+              {user ? (
+                <div className="flex items-center justify-between px-3 py-3">
+                  <div className="flex items-center gap-2">
+                    <User className="h-4 w-4 text-secondary" />
+                    <span className="text-sm font-sans text-primary-foreground">{displayName}</span>
+                  </div>
+                  <button
+                    onClick={() => { signOut(); setMobileOpen(false); }}
+                    className="text-xs text-primary-foreground/60 font-sans"
+                  >
+                    Sign Out
+                  </button>
+                </div>
+              ) : (
+                <Link
+                  to="/auth"
+                  onClick={() => setMobileOpen(false)}
+                  className="flex items-center gap-3 rounded-lg px-3 py-3 text-sm font-sans text-secondary"
+                >
+                  <LogIn className="h-4 w-4" />
+                  Sign In / Sign Up
+                </Link>
+              )}
+            </div>
           </motion.nav>
         )}
       </header>
