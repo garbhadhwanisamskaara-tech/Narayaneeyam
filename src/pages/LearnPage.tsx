@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Play, Pause, RotateCcw, ChevronRight, ChevronDown, ChevronUp } from "lucide-react";
 import {
@@ -12,8 +12,104 @@ import {
 } from "@/data/narayaneeyam";
 import { getLessonPlans, type LessonPlan } from "@/lib/lessonPlan";
 import { getProgress, saveProgress, updateStreak } from "@/lib/progress";
+import {
+  getVerseTimestamp,
+  getActivePhraseAtTime,
+  DEFAULT_SILENCE_GAP_SEC,
+  DEFAULT_REPEAT_COUNT,
+  calcSilenceDuration,
+} from "@/lib/audioTimestamps";
 import { Link } from "react-router-dom";
 import VerseIcons from "@/components/VerseIcons";
+
+// ─── Sub-components ──────────────────────────────────────────────────────────
+
+function LearnControls({
+  plans, activePlan, currentLessonIdx, translitLang, translationLang,
+  showMeaning, repeatCount, silenceGapSec,
+  onPlanChange, onLessonChange, onTranslitChange, onTranslationChange,
+  onToggleMeaning, onRepeatChange, onGapChange,
+}: {
+  plans: LessonPlan[];
+  activePlan: LessonPlan | null;
+  currentLessonIdx: number;
+  translitLang: TransliterationLanguage;
+  translationLang: TranslationLanguage;
+  showMeaning: boolean;
+  repeatCount: number;
+  silenceGapSec: number;
+  onPlanChange: (id: string) => void;
+  onLessonChange: (idx: number) => void;
+  onTranslitChange: (v: TransliterationLanguage) => void;
+  onTranslationChange: (v: TranslationLanguage) => void;
+  onToggleMeaning: () => void;
+  onRepeatChange: (n: number) => void;
+  onGapChange: (n: number) => void;
+}) {
+  return (
+    <div className="flex flex-wrap gap-3 mb-6 rounded-xl bg-card border border-border p-4">
+      <div className="flex flex-col gap-1">
+        <label className="text-xs text-muted-foreground font-sans">Lesson Plan</label>
+        <select value={activePlan?.id || ""} onChange={(e) => onPlanChange(e.target.value)}
+          className="rounded-lg border border-border bg-background px-3 py-2 text-sm font-sans text-foreground">
+          <option value="">Select a plan...</option>
+          {plans.map((p) => (<option key={p.id} value={p.id}>Dashakam {p.dashakamStart}-{p.dashakamEnd} ({p.lessons.length} lessons)</option>))}
+        </select>
+      </div>
+
+      {activePlan && (
+        <div className="flex flex-col gap-1">
+          <label className="text-xs text-muted-foreground font-sans">Lesson</label>
+          <select value={currentLessonIdx} onChange={(e) => onLessonChange(Number(e.target.value))}
+            className="rounded-lg border border-border bg-background px-3 py-2 text-sm font-sans text-foreground">
+            {activePlan.lessons.map((l, i) => (<option key={l.id} value={i}>Lesson {i + 1}: D{l.dashakam}, P{l.paragraphs.join(",")}{l.completed ? " ✓" : ""}</option>))}
+          </select>
+        </div>
+      )}
+
+      <div className="flex flex-col gap-1">
+        <label className="text-xs text-muted-foreground font-sans">Transliteration</label>
+        <select value={translitLang} onChange={(e) => onTranslitChange(e.target.value as TransliterationLanguage)}
+          className="rounded-lg border border-border bg-background px-3 py-2 text-sm font-sans text-foreground">
+          {TRANSLITERATION_LANGUAGES.map((l) => (<option key={l.value} value={l.value}>{l.label}</option>))}
+        </select>
+      </div>
+
+      <div className="flex flex-col gap-1">
+        <label className="text-xs text-muted-foreground font-sans">Translation</label>
+        <select value={translationLang} onChange={(e) => onTranslationChange(e.target.value as TranslationLanguage)}
+          className="rounded-lg border border-border bg-background px-3 py-2 text-sm font-sans text-foreground">
+          {TRANSLATION_LANGUAGES.map((l) => (<option key={l.value} value={l.value}>{l.label}</option>))}
+        </select>
+      </div>
+
+      <div className="flex flex-col gap-1">
+        <label className="text-xs text-muted-foreground font-sans">Repeats</label>
+        <select value={repeatCount} onChange={(e) => onRepeatChange(Number(e.target.value))}
+          className="rounded-lg border border-border bg-background px-3 py-2 text-sm font-sans text-foreground">
+          {[1, 2, 3, 4, 5].map((n) => (<option key={n} value={n}>{n}× ({n * silenceGapSec}s gap)</option>))}
+        </select>
+      </div>
+
+      <div className="flex flex-col gap-1">
+        <label className="text-xs text-muted-foreground font-sans">Gap (sec)</label>
+        <select value={silenceGapSec} onChange={(e) => onGapChange(Number(e.target.value))}
+          className="rounded-lg border border-border bg-background px-3 py-2 text-sm font-sans text-foreground">
+          {[3, 5, 7, 10].map((n) => (<option key={n} value={n}>{n}s</option>))}
+        </select>
+      </div>
+
+      <div className="flex flex-col gap-1 justify-end">
+        <button onClick={onToggleMeaning}
+          className={`rounded-lg px-3 py-2 text-sm font-sans transition-colors ${showMeaning ? "bg-primary text-primary-foreground" : "border border-border bg-background text-foreground hover:bg-muted"}`}>
+          {showMeaning ? "Hide Meaning" : "Show Meaning"}
+        </button>
+      </div>
+    </div>
+  );
+}
+
+// ─── Main Page ───────────────────────────────────────────────────────────────
 
 export default function LearnPage() {
   const [plans, setPlans] = useState<LessonPlan[]>([]);
@@ -24,30 +120,19 @@ export default function LearnPage() {
   const [showMeaning, setShowMeaning] = useState(true);
   const [showGist, setShowGist] = useState(false);
   const [showBenefit, setShowBenefit] = useState(false);
+
+  // Audio / playback state
   const [isPlaying, setIsPlaying] = useState(false);
   const [highlightIdx, setHighlightIdx] = useState(0);
-  const [loopCount, setLoopCount] = useState(2);
+  const [highlightPhrase, setHighlightPhrase] = useState(-1); // -1 = whole verse
+  const [repeatCount, setRepeatCount] = useState(DEFAULT_REPEAT_COUNT);
+  const [silenceGapSec, setSilenceGapSec] = useState(DEFAULT_SILENCE_GAP_SEC);
 
-  useEffect(() => {
-    setPlans(getLessonPlans());
-  }, []);
+  const audioRef = useRef<HTMLAudioElement | null>(null);
+  const gapTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const inGapRef = useRef(false);
 
-  useEffect(() => {
-    if (!isPlaying) return;
-    const lesson = activePlan?.lessons[currentLessonIdx];
-    if (!lesson) return;
-    const dashakam = sampleDashakams.find((d) => d.id === lesson.dashakam);
-    const verses = dashakam?.verses.filter((v) => lesson.paragraphs.includes(v.paragraph)) || [];
-    if (verses.length === 0) return;
-
-    const interval = setInterval(() => {
-      setHighlightIdx((prev) => {
-        if (prev >= verses.length - 1) { setIsPlaying(false); updateStreak(); return 0; }
-        return prev + 1;
-      });
-    }, 6000);
-    return () => clearInterval(interval);
-  }, [isPlaying, activePlan, currentLessonIdx]);
+  useEffect(() => { setPlans(getLessonPlans()); }, []);
 
   const currentLesson = activePlan?.lessons[currentLessonIdx];
   const dashakam = currentLesson ? sampleDashakams.find((d) => d.id === currentLesson.dashakam) : null;
@@ -58,6 +143,116 @@ export default function LearnPage() {
     const key = `meaning_${translationLang}` as keyof typeof verse;
     return (verse[key] as string) || verse.meaning_english;
   };
+
+  // Split verse text into lines/phrases for line-level highlighting
+  const getVerseLines = (verse: typeof lessonVerses[0]) => {
+    const text = getVerseText(verse);
+    return text.split("\n").filter(Boolean);
+  };
+
+  const clearGapTimer = useCallback(() => {
+    if (gapTimerRef.current) { clearTimeout(gapTimerRef.current); gapTimerRef.current = null; }
+    inGapRef.current = false;
+  }, []);
+
+  // Stop everything
+  const stopPlayback = useCallback(() => {
+    if (audioRef.current) { audioRef.current.pause(); audioRef.current = null; }
+    clearGapTimer();
+    setIsPlaying(false);
+    setHighlightPhrase(-1);
+  }, [clearGapTimer]);
+
+  // Advance: after a phrase/line finishes → insert silence gap → next phrase or next verse
+  const advancePhrase = useCallback(() => {
+    const verse = lessonVerses[highlightIdx];
+    if (!verse) return;
+
+    const vt = dashakam ? getVerseTimestamp(dashakam.id, verse.paragraph) : undefined;
+    const phraseCount = vt?.phraseEndTimes.length || getVerseLines(verse).length || 1;
+    const nextPhrase = highlightPhrase + 1;
+
+    if (nextPhrase < phraseCount) {
+      // Silence gap before next phrase
+      inGapRef.current = true;
+      const gapMs = calcSilenceDuration(repeatCount, silenceGapSec) * 1000;
+      gapTimerRef.current = setTimeout(() => {
+        inGapRef.current = false;
+        setHighlightPhrase(nextPhrase);
+      }, gapMs);
+    } else {
+      // Move to next verse
+      if (highlightIdx < lessonVerses.length - 1) {
+        inGapRef.current = true;
+        const gapMs = calcSilenceDuration(repeatCount, silenceGapSec) * 1000;
+        gapTimerRef.current = setTimeout(() => {
+          inGapRef.current = false;
+          setHighlightIdx((prev) => prev + 1);
+          setHighlightPhrase(0);
+        }, gapMs);
+      } else {
+        // All done
+        stopPlayback();
+        updateStreak();
+      }
+    }
+  }, [highlightIdx, highlightPhrase, lessonVerses, dashakam, repeatCount, silenceGapSec, stopPlayback]);
+
+  // Audio playback effect: play current verse audio, use timeupdate for phrase highlighting
+  useEffect(() => {
+    if (!isPlaying || lessonVerses.length === 0 || inGapRef.current) return;
+
+    const verse = lessonVerses[highlightIdx];
+    if (!verse) return;
+
+    if (verse.audio) {
+      const audio = new Audio(verse.audio);
+      audioRef.current = audio;
+      audio.play().catch((e) => console.error("Audio error:", e));
+
+      const vt = dashakam ? getVerseTimestamp(dashakam.id, verse.paragraph) : undefined;
+
+      const onTimeUpdate = () => {
+        if (vt && vt.phraseEndTimes.length > 0) {
+          const phraseIdx = getActivePhraseAtTime(dashakam!.id, verse.paragraph, audio.currentTime);
+          setHighlightPhrase(phraseIdx);
+        }
+      };
+      audio.addEventListener("timeupdate", onTimeUpdate);
+      audio.onended = () => advancePhrase();
+
+      return () => {
+        audio.pause();
+        audio.removeEventListener("timeupdate", onTimeUpdate);
+        audio.onended = null;
+      };
+    } else {
+      // Fallback: simulate 4s per phrase, then advance
+      const lines = getVerseLines(verse);
+      const phraseCount = lines.length || 1;
+      if (highlightPhrase < 0) setHighlightPhrase(0);
+
+      const timer = setTimeout(() => {
+        advancePhrase();
+      }, 4000);
+      return () => clearTimeout(timer);
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isPlaying, highlightIdx, highlightPhrase, lessonVerses.length]);
+
+  // Cleanup
+  useEffect(() => { return () => { stopPlayback(); }; }, [stopPlayback]);
+
+  const handlePlayPause = () => {
+    if (isPlaying) {
+      stopPlayback();
+    } else {
+      setHighlightPhrase(0);
+      setIsPlaying(true);
+    }
+  };
+
+  // ─── Empty state ─────────────────────────────────────────────────────────────
 
   if (plans.length === 0) {
     return (
@@ -73,70 +268,31 @@ export default function LearnPage() {
     );
   }
 
+  // ─── Main render ─────────────────────────────────────────────────────────────
+
   return (
     <div className="container mx-auto px-4 py-8">
       <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
         <div className="mb-8">
           <h1 className="font-display text-3xl font-bold text-foreground mb-2">Learn with Me</h1>
-          <p className="text-muted-foreground font-sans">Guided learning with meaning, practice loops, and progress tracking</p>
+          <p className="text-muted-foreground font-sans">Guided learning with meaning, practice loops, and silence gaps for repetition</p>
         </div>
 
-        {/* Controls */}
-        <div className="flex flex-wrap gap-3 mb-6 rounded-xl bg-card border border-border p-4">
-          <div className="flex flex-col gap-1">
-            <label className="text-xs text-muted-foreground font-sans">Lesson Plan</label>
-            <select value={activePlan?.id || ""} onChange={(e) => { const plan = plans.find((p) => p.id === e.target.value); setActivePlan(plan || null); setCurrentLessonIdx(0); }}
-              className="rounded-lg border border-border bg-background px-3 py-2 text-sm font-sans text-foreground">
-              <option value="">Select a plan...</option>
-              {plans.map((p) => (<option key={p.id} value={p.id}>Dashakam {p.dashakamStart}-{p.dashakamEnd} ({p.lessons.length} lessons)</option>))}
-            </select>
-          </div>
-
-          {activePlan && (
-            <div className="flex flex-col gap-1">
-              <label className="text-xs text-muted-foreground font-sans">Lesson</label>
-              <select value={currentLessonIdx} onChange={(e) => { setCurrentLessonIdx(Number(e.target.value)); setHighlightIdx(0); }}
-                className="rounded-lg border border-border bg-background px-3 py-2 text-sm font-sans text-foreground">
-                {activePlan.lessons.map((l, i) => (<option key={l.id} value={i}>Lesson {i + 1}: Dashakam {l.dashakam}, Para {l.paragraphs.join(",")}{l.completed ? " ✓" : ""}</option>))}
-              </select>
-            </div>
-          )}
-
-          <div className="flex flex-col gap-1">
-            <label className="text-xs text-muted-foreground font-sans">Transliteration</label>
-            <select value={translitLang} onChange={(e) => setTranslitLang(e.target.value as TransliterationLanguage)}
-              className="rounded-lg border border-border bg-background px-3 py-2 text-sm font-sans text-foreground">
-              {TRANSLITERATION_LANGUAGES.map((l) => (<option key={l.value} value={l.value}>{l.label}</option>))}
-            </select>
-          </div>
-
-          <div className="flex flex-col gap-1">
-            <label className="text-xs text-muted-foreground font-sans">Translation</label>
-            <select value={translationLang} onChange={(e) => setTranslationLang(e.target.value as TranslationLanguage)}
-              className="rounded-lg border border-border bg-background px-3 py-2 text-sm font-sans text-foreground">
-              {TRANSLATION_LANGUAGES.map((l) => (<option key={l.value} value={l.value}>{l.label}</option>))}
-            </select>
-          </div>
-
-          <div className="flex flex-col gap-1">
-            <label className="text-xs text-muted-foreground font-sans">Loop</label>
-            <select value={loopCount} onChange={(e) => setLoopCount(Number(e.target.value))}
-              className="rounded-lg border border-border bg-background px-3 py-2 text-sm font-sans text-foreground">
-              {[1, 2, 3, 5].map((n) => (<option key={n} value={n}>{n}×</option>))}
-            </select>
-          </div>
-
-          <div className="flex flex-col gap-1 justify-end">
-            <button onClick={() => setShowMeaning(!showMeaning)}
-              className={`rounded-lg px-3 py-2 text-sm font-sans transition-colors ${showMeaning ? "bg-primary text-primary-foreground" : "border border-border bg-background text-foreground hover:bg-muted"}`}>
-              {showMeaning ? "Hide Meaning" : "Show Meaning"}
-            </button>
-          </div>
-        </div>
+        <LearnControls
+          plans={plans} activePlan={activePlan} currentLessonIdx={currentLessonIdx}
+          translitLang={translitLang} translationLang={translationLang}
+          showMeaning={showMeaning} repeatCount={repeatCount} silenceGapSec={silenceGapSec}
+          onPlanChange={(id) => { const plan = plans.find((p) => p.id === id); setActivePlan(plan || null); setCurrentLessonIdx(0); stopPlayback(); setHighlightIdx(0); }}
+          onLessonChange={(idx) => { setCurrentLessonIdx(idx); stopPlayback(); setHighlightIdx(0); }}
+          onTranslitChange={setTranslitLang} onTranslationChange={setTranslationLang}
+          onToggleMeaning={() => setShowMeaning(!showMeaning)}
+          onRepeatChange={setRepeatCount} onGapChange={setSilenceGapSec}
+        />
 
         {/* Learning Content */}
         {currentLesson && dashakam ? (
           <>
+            {/* Dashakam header */}
             <div className="mb-6">
               <div className="rounded-xl bg-gradient-peacock p-5">
                 <h2 className="font-display text-xl font-semibold text-primary-foreground">Dashakam {currentLesson.dashakam}: {dashakam.title_english}</h2>
@@ -174,42 +330,73 @@ export default function LearnPage() {
               </AnimatePresence>
             </div>
 
+            {/* Silence gap indicator */}
+            {isPlaying && inGapRef.current && (
+              <div className="mb-4 rounded-lg bg-secondary/10 border border-secondary/30 p-3 text-center animate-pulse">
+                <p className="text-sm font-sans text-secondary font-medium">🔇 Silence gap — repeat/practice this phrase ({calcSilenceDuration(repeatCount, silenceGapSec)}s)</p>
+              </div>
+            )}
+
+            {/* Verses */}
             <div className="space-y-4 mb-24">
               {lessonVerses.length === 0 ? (
                 <div className="rounded-xl bg-card border border-border p-8 text-center">
                   <p className="text-muted-foreground font-sans">No verse data for this lesson yet. Admin needs to upload content.</p>
                 </div>
               ) : (
-                lessonVerses.map((verse, idx) => (
-                  <motion.div key={verse.id}
-                    className={`rounded-xl border p-5 transition-all duration-500 ${idx === highlightIdx && isPlaying ? "border-secondary bg-secondary/10 shadow-gold" : "border-border bg-card"}`}>
-                    <div className="flex items-center justify-between mb-2">
-                      <span className="text-xs text-muted-foreground font-sans">Verse {verse.paragraph} · {verse.meter}</span>
-                      <VerseIcons bell={verseShouldShowBell(dashakam, verse.paragraph)} prasadam={getVersePrasadam(dashakam, verse.paragraph)} />
-                    </div>
-                    <p className={`font-body text-lg leading-relaxed whitespace-pre-line mb-3 ${idx === highlightIdx && isPlaying ? "text-primary font-semibold" : "text-foreground"}`}>
-                      {getVerseText(verse)}
-                    </p>
-                    {showMeaning && (
-                      <div className="border-t border-border pt-3">
-                        <p className="text-xs text-muted-foreground font-sans uppercase tracking-wide mb-1">Translation ({translationLang})</p>
-                        <p className="text-sm text-muted-foreground font-sans leading-relaxed">{getMeaning(verse)}</p>
+                lessonVerses.map((verse, idx) => {
+                  const lines = getVerseLines(verse);
+                  const isActiveVerse = idx === highlightIdx && isPlaying;
+
+                  return (
+                    <motion.div key={verse.id}
+                      className={`rounded-xl border p-5 transition-all duration-500 ${isActiveVerse ? "border-secondary bg-secondary/10 shadow-gold" : "border-border bg-card"}`}>
+                      <div className="flex items-center justify-between mb-2">
+                        <span className="text-xs text-muted-foreground font-sans">Verse {verse.paragraph} · {verse.meter}</span>
+                        <VerseIcons bell={verseShouldShowBell(dashakam, verse.paragraph)} prasadam={getVersePrasadam(dashakam, verse.paragraph)} />
                       </div>
-                    )}
-                  </motion.div>
-                ))
+
+                      {/* Line-by-line rendering with phrase highlighting */}
+                      <div className="font-body text-lg leading-relaxed mb-3 space-y-1">
+                        {lines.map((line, lineIdx) => (
+                          <p key={lineIdx}
+                            className={`whitespace-pre-line transition-all duration-300 ${
+                              isActiveVerse && lineIdx === highlightPhrase
+                                ? "text-primary font-semibold scale-[1.01] origin-left"
+                                : isActiveVerse && lineIdx < highlightPhrase
+                                ? "text-muted-foreground"
+                                : "text-foreground"
+                            }`}>
+                            {line}
+                          </p>
+                        ))}
+                      </div>
+
+                      {showMeaning && (
+                        <div className="border-t border-border pt-3">
+                          <p className="text-xs text-muted-foreground font-sans uppercase tracking-wide mb-1">Translation ({translationLang})</p>
+                          <p className="text-sm text-muted-foreground font-sans leading-relaxed">{getMeaning(verse)}</p>
+                        </div>
+                      )}
+                    </motion.div>
+                  );
+                })
               )}
             </div>
 
             {/* Player */}
             <div className="fixed bottom-0 left-0 right-0 bg-gradient-peacock p-4 shadow-peacock">
               <div className="flex items-center justify-center gap-4">
-                <button onClick={() => setHighlightIdx(0)} className="text-primary-foreground/70 hover:text-primary-foreground p-2"><RotateCcw className="h-5 w-5" /></button>
-                <button onClick={() => setIsPlaying(!isPlaying)} className="flex h-12 w-12 items-center justify-center rounded-full bg-gradient-gold text-primary shadow-gold transition-transform hover:scale-110">
+                <button onClick={() => { stopPlayback(); setHighlightIdx(0); }} className="text-primary-foreground/70 hover:text-primary-foreground p-2"><RotateCcw className="h-5 w-5" /></button>
+                <button onClick={handlePlayPause} className="flex h-12 w-12 items-center justify-center rounded-full bg-gradient-gold text-primary shadow-gold transition-transform hover:scale-110">
                   {isPlaying ? <Pause className="h-6 w-6" /> : <Play className="h-6 w-6 ml-0.5" />}
                 </button>
               </div>
-              <p className="text-center text-xs text-primary-foreground/60 mt-2 font-sans">Learning mode: Audio plays with pauses for repetition</p>
+              <p className="text-center text-xs text-primary-foreground/60 mt-2 font-sans">
+                Verse {highlightIdx + 1}/{lessonVerses.length}
+                {isPlaying && highlightPhrase >= 0 && ` · Line ${highlightPhrase + 1}`}
+                {` · ${repeatCount}× repeats (${silenceGapSec}s gaps)`}
+              </p>
             </div>
           </>
         ) : (
