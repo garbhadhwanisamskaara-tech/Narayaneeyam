@@ -4,6 +4,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Mic, GraduationCap, FileText, CalendarPlus, Flame, BookOpen, Headphones, ChevronDown, ChevronUp } from "lucide-react";
 import { getProgress } from "@/lib/progress";
 import heroBg from "@/assets/hero-bg.jpg";
+import FestivalBanner from "@/components/FestivalBanner";
 
 const features = [
   { path: "/chant", icon: Mic, title: "Chant with Me", desc: "Chant along with synchronized text highlighting" },
@@ -66,8 +67,13 @@ export default function Index() {
         </div>
       </section>
 
+      {/* Festival Banner */}
+      <section className="container mx-auto px-4 -mt-4 relative z-20">
+        <FestivalBanner />
+      </section>
+
       {/* Feature Cards */}
-      <section className="container mx-auto px-4 -mt-8 relative z-10 pb-8">
+      <section className="container mx-auto px-4 -mt-4 relative z-10 pb-8">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
           {features.map((f, i) => (
             <motion.div key={f.path} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 + i * 0.1 }}>
