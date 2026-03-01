@@ -14,6 +14,7 @@ import DashboardPage from "./pages/DashboardPage";
 import PodcastPage from "./pages/PodcastPage";
 import AuthPage from "./pages/AuthPage";
 import AdminFestivalsPage from "./pages/AdminFestivalsPage";
+import AdminRoute from "./components/AdminRoute";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -35,7 +36,7 @@ const App = () => (
               <Route path="/lesson-plan" element={<LessonPlanPage />} />
               <Route path="/dashboard" element={<DashboardPage />} />
               <Route path="/podcast" element={<PodcastPage />} />
-              <Route path="/admin/festivals" element={<AdminFestivalsPage />} />
+              <Route path="/admin/festivals" element={<AdminRoute><AdminFestivalsPage /></AdminRoute>} />
               <Route path="*" element={<NotFound />} />
             </Routes>
           </Layout>
