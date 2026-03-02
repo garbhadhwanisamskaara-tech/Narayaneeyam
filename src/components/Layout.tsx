@@ -23,7 +23,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
 
   // Force auth: redirect to /auth if not logged in and not already on /auth
   useEffect(() => {
-    if (!loading && !user && location.pathname !== "/auth") {
+    if (!loading && !user && location.pathname !== "/auth" && location.pathname !== "/reset-password") {
       navigate("/auth", { replace: true });
     }
   }, [loading, user, location.pathname, navigate]);

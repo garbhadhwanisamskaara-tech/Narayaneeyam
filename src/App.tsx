@@ -15,6 +15,7 @@ import PodcastPage from "./pages/PodcastPage";
 import AuthPage from "./pages/AuthPage";
 import AdminFestivalsPage from "./pages/AdminFestivalsPage";
 import AdminRoute from "./components/AdminRoute";
+import ResetPasswordPage from "./pages/ResetPasswordPage";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -30,6 +31,7 @@ const App = () => (
             <Routes>
               <Route path="/" element={<Index />} />
               <Route path="/auth" element={<AuthPage />} />
+              <Route path="/reset-password" element={<ResetPasswordPage />} />
               <Route path="/chant" element={<ChantPage />} />
               <Route path="/learn" element={<LearnPage />} />
               <Route path="/script" element={<ScriptPage />} />
