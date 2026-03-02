@@ -1,7 +1,7 @@
 import { Link, useLocation } from "react-router-dom";
 import { motion } from "framer-motion";
 import { BookOpen, Mic, FileText, GraduationCap, LayoutDashboard, Menu, X, CalendarPlus, Headphones, LogIn, LogOut, User } from "lucide-react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import logoImg from "@/assets/logo.png";
 import { useAuth } from "@/contexts/AuthContext";
 
@@ -19,6 +19,26 @@ export default function Layout({ children }: { children: React.ReactNode }) {
   const location = useLocation();
   const [mobileOpen, setMobileOpen] = useState(false);
   const { user, displayName, signOut, loading } = useAuth();
+
+  // Global content protection: block keyboard shortcuts for print/screenshot
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "PrintScreen") { e.preventDefault(); return; }
+      if ((e.ctrlKey || e.metaKey) && ["p", "s", "u"].includes(e.key.toLowerCase())) { e.preventDefault(); }
+      if ((e.ctrlKey || e.metaKey) && e.shiftKey && ["i", "j", "c"].includes(e.key.toLowerCase())) { e.preventDefault(); }
+      if (e.key === "F12") { e.preventDefault(); }
+    };
+    const handleContext = (e: MouseEvent) => e.preventDefault();
+    const handleDrag = (e: DragEvent) => e.preventDefault();
+    document.addEventListener("keydown", handleKeyDown);
+    document.addEventListener("contextmenu", handleContext);
+    document.addEventListener("dragstart", handleDrag);
+    return () => {
+      document.removeEventListener("keydown", handleKeyDown);
+      document.removeEventListener("contextmenu", handleContext);
+      document.removeEventListener("dragstart", handleDrag);
+    };
+  }, []);
 
   return (
     <div className="min-h-screen bg-background">

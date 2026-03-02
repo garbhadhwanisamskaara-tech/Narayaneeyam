@@ -134,6 +134,25 @@ export default function LearnPage() {
 
   useEffect(() => { setPlans(getLessonPlans()); }, []);
 
+  // Restore last learn position
+  useEffect(() => {
+    const saved = getProgress();
+    if (saved.learnState && plans.length > 0) {
+      const plan = plans.find((p) => p.id === saved.learnState!.planId);
+      if (plan) {
+        setActivePlan(plan);
+        setCurrentLessonIdx(saved.learnState!.lessonIdx);
+      }
+    }
+  }, [plans]);
+
+  // Save learn position on changes
+  useEffect(() => {
+    if (activePlan) {
+      saveProgress({ learnState: { planId: activePlan.id, lessonIdx: currentLessonIdx } });
+    }
+  }, [activePlan, currentLessonIdx]);
+
   const currentLesson = activePlan?.lessons[currentLessonIdx];
   const dashakam = currentLesson ? sampleDashakams.find((d) => d.id === currentLesson.dashakam) : null;
   const lessonVerses = dashakam?.verses.filter((v) => currentLesson?.paragraphs.includes(v.paragraph)) || [];

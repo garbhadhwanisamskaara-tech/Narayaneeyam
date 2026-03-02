@@ -15,6 +15,10 @@ export interface UserProgress {
   preferredLanguage: string;
   chantSpeed: number;
   loopCount: number;
+  // Per-page resume state
+  chantState?: { dashakam: number; para: number | null; verse: number };
+  learnState?: { planId: string; lessonIdx: number };
+  podcastState?: { dashakam: number; verseIdx: number; playMode: string };
 }
 
 const STORAGE_KEY = "narayaneeyam_progress";
