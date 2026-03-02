@@ -1,4 +1,4 @@
-import { Link, useLocation } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import { BookOpen, Mic, FileText, GraduationCap, LayoutDashboard, Menu, X, CalendarPlus, Headphones, LogIn, LogOut, User } from "lucide-react";
 import { useState, useEffect } from "react";
@@ -17,8 +17,16 @@ const navItems = [
 
 export default function Layout({ children }: { children: React.ReactNode }) {
   const location = useLocation();
+  const navigate = useNavigate();
   const [mobileOpen, setMobileOpen] = useState(false);
   const { user, displayName, signOut, loading } = useAuth();
+
+  // Force auth: redirect to /auth if not logged in and not already on /auth
+  useEffect(() => {
+    if (!loading && !user && location.pathname !== "/auth") {
+      navigate("/auth", { replace: true });
+    }
+  }, [loading, user, location.pathname, navigate]);
 
   // Global content protection: block keyboard shortcuts for print/screenshot
   useEffect(() => {
