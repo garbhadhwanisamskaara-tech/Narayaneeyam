@@ -39,14 +39,26 @@ export default function ChantPage() {
     ? verses.filter((v) => v.paragraph === selectedPara)
     : verses;
 
+  // Restore last position
   useEffect(() => {
     const progress = getProgress();
-    setSelectedDashakam(progress.lastDashakam || 1);
+    if (progress.chantState) {
+      setSelectedDashakam(progress.chantState.dashakam);
+      setSelectedPara(progress.chantState.para);
+      setHighlightedVerse(progress.chantState.verse);
+    } else {
+      setSelectedDashakam(progress.lastDashakam || 1);
+    }
   }, []);
 
+  // Save position on changes
   useEffect(() => {
-    saveProgress({ lastDashakam: selectedDashakam, lastPage: "/chant" });
-  }, [selectedDashakam]);
+    saveProgress({
+      lastDashakam: selectedDashakam,
+      lastPage: "/chant",
+      chantState: { dashakam: selectedDashakam, para: selectedPara, verse: highlightedVerse },
+    });
+  }, [selectedDashakam, selectedPara, highlightedVerse]);
 
   const advanceToNextVerse = useCallback(() => {
     if (highlightedVerse >= displayVerses.length - 1) {

@@ -19,10 +19,26 @@ export default function PodcastPage() {
   const pausedRef = useRef(false);
   const gapTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
+  // Restore last position
   useEffect(() => {
     const saved = getProgress();
-    if (saved.lastDashakam) setCurrentDashakam(saved.lastDashakam);
+    if (saved.podcastState) {
+      setCurrentDashakam(saved.podcastState.dashakam);
+      setCurrentVerseIdx(saved.podcastState.verseIdx);
+      setPlayMode(saved.podcastState.playMode as PlayMode);
+    } else if (saved.lastDashakam) {
+      setCurrentDashakam(saved.lastDashakam);
+    }
   }, []);
+
+  // Save position on changes
+  useEffect(() => {
+    saveProgress({
+      lastDashakam: currentDashakam,
+      lastPage: "/podcast",
+      podcastState: { dashakam: currentDashakam, verseIdx: currentVerseIdx, playMode },
+    });
+  }, [currentDashakam, currentVerseIdx, playMode]);
 
   // Cleanup gap timer
   useEffect(() => {
