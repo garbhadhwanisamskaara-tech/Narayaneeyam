@@ -100,8 +100,20 @@ export default function Layout({ children }: { children: React.ReactNode }) {
             })}
           </nav>
 
-          {/* User Profile / Auth */}
+          {/* Theme Toggle + User Profile / Auth */}
           <div className="hidden lg:flex items-center gap-3">
+            <button
+              onClick={() => {
+                const next = !isDark;
+                setIsDark(next);
+                document.documentElement.classList.toggle("dark", next);
+                localStorage.setItem("theme", next ? "dark" : "light");
+              }}
+              className="flex items-center justify-center rounded-lg p-2 text-primary-foreground/70 hover:text-primary-foreground transition-colors"
+              title={isDark ? "Morning Mode" : "Night Mode"}
+            >
+              {isDark ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
+            </button>
             {!loading && user ? (
               <div className="flex items-center gap-3">
                 <div className="flex items-center gap-2 rounded-lg bg-primary-foreground/10 px-3 py-1.5">
