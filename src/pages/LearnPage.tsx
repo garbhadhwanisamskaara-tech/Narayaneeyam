@@ -239,6 +239,7 @@ export default function LearnPage() {
     if (verse.audio) {
       const audio = new Audio(verse.audio);
       audioRef.current = audio;
+      audio.playbackRate = speed;
       audio.play().catch((e) => console.error("Audio error:", e));
 
       const vt = dashakam ? getVerseTimestamp(dashakam.id, verse.paragraph) : undefined;
