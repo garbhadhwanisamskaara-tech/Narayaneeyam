@@ -189,6 +189,20 @@ export default function Layout({ children }: { children: React.ReactNode }) {
               );
             })}
 
+            {/* Mobile theme toggle */}
+            <button
+              onClick={() => {
+                const next = !isDark;
+                setIsDark(next);
+                document.documentElement.classList.toggle("dark", next);
+                localStorage.setItem("theme", next ? "dark" : "light");
+              }}
+              className="flex items-center gap-3 rounded-lg px-3 py-3 text-sm font-sans text-primary-foreground/70"
+            >
+              {isDark ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
+              {isDark ? "Morning Mode" : "Night Mode"}
+            </button>
+
             {/* Mobile auth */}
             <div className="mt-2 pt-2 border-t border-primary-foreground/10">
               {user ? (
