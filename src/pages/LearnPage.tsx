@@ -26,9 +26,9 @@ import VerseIcons from "@/components/VerseIcons";
 
 function LearnControls({
   plans, activePlan, currentLessonIdx, translitLang, translationLang,
-  showMeaning, repeatCount, silenceGapSec,
+  showMeaning, repeatCount, silenceGapSec, speed,
   onPlanChange, onLessonChange, onTranslitChange, onTranslationChange,
-  onToggleMeaning, onRepeatChange, onGapChange,
+  onToggleMeaning, onRepeatChange, onGapChange, onSpeedChange,
 }: {
   plans: LessonPlan[];
   activePlan: LessonPlan | null;
@@ -38,6 +38,7 @@ function LearnControls({
   showMeaning: boolean;
   repeatCount: number;
   silenceGapSec: number;
+  speed: number;
   onPlanChange: (id: string) => void;
   onLessonChange: (idx: number) => void;
   onTranslitChange: (v: TransliterationLanguage) => void;
@@ -45,6 +46,7 @@ function LearnControls({
   onToggleMeaning: () => void;
   onRepeatChange: (n: number) => void;
   onGapChange: (n: number) => void;
+  onSpeedChange: (n: number) => void;
 }) {
   return (
     <div className="flex flex-wrap gap-3 mb-6 rounded-xl bg-card border border-border p-4">
@@ -80,6 +82,15 @@ function LearnControls({
         <select value={translationLang} onChange={(e) => onTranslationChange(e.target.value as TranslationLanguage)}
           className="rounded-lg border border-border bg-background px-3 py-2 text-sm font-sans text-foreground">
           {TRANSLATION_LANGUAGES.map((l) => (<option key={l.value} value={l.value}>{l.label}</option>))}
+        </select>
+      </div>
+
+      <div className="flex flex-col gap-1">
+        <label className="text-xs text-muted-foreground font-sans">Speed</label>
+        <select value={speed} onChange={(e) => onSpeedChange(Number(e.target.value))}
+          className="rounded-lg border border-border bg-background px-3 py-2 text-sm font-sans text-foreground">
+          <option value={0.75}>0.75×</option>
+          <option value={1}>1×</option>
         </select>
       </div>
 
