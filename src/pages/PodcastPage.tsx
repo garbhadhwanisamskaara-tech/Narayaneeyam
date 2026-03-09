@@ -1,8 +1,9 @@
 import { useState, useRef, useEffect, useCallback } from "react";
 import { motion } from "framer-motion";
 import { Play, Pause, SkipBack, SkipForward, Repeat, ListMusic, Volume2 } from "lucide-react";
-import { sampleDashakams } from "@/data/narayaneeyam";
+import { sampleDashakams, verseShouldShowBell } from "@/data/narayaneeyam";
 import { getProgress, saveProgress } from "@/lib/progress";
+import { playBellAudio, stopBellAudio } from "@/lib/bellAudio";
 import { Slider } from "@/components/ui/slider";
 
 type PlayMode = "single" | "loop" | "all" | "continue";
@@ -14,6 +15,11 @@ export default function PodcastPage() {
   const [progress, setProgress] = useState(0);
   const [showPlaylist, setShowPlaylist] = useState(false);
   const [currentVerseIdx, setCurrentVerseIdx] = useState(0);
+  const [speed, setSpeed] = useState(1);
+  const [loopCount, setLoopCount] = useState(1);
+  const [currentLoop, setCurrentLoop] = useState(0);
+  const [elapsed, setElapsed] = useState(0);
+  const [duration, setDuration] = useState(0);
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const pausedRef = useRef(false);
@@ -49,34 +55,62 @@ export default function PodcastPage() {
   const audioVerses = dashakam?.verses.filter((v) => v.audio) || [];
   const hasAudio = audioVerses.length > 0;
 
+  // Play bell if verse has bell=true, then advance
+  const playBellThenAdvance = useCallback(async (nextAction: () => void) => {
+    const currentVerse = audioVerses[currentVerseIdx];
+    if (currentVerse && dashakam && verseShouldShowBell(dashakam, currentVerse.paragraph)) {
+      await playBellAudio();
+    }
+    nextAction();
+  }, [currentVerseIdx, audioVerses, dashakam]);
+
   const advanceToNextVerse = useCallback(() => {
     const nextIdx = currentVerseIdx + 1;
     if (nextIdx >= audioVerses.length) {
-      // Done with all verses
-      if (playMode === "loop") {
-        setCurrentVerseIdx(0);
-        setProgress(0);
-      } else if (playMode === "all" || playMode === "continue") {
-        if (currentDashakam < 100) {
-          setCurrentDashakam((prev) => prev + 1);
+      // Done with all verses in this dashakam
+      const nextLoop = currentLoop + 1;
+      if (nextLoop < loopCount) {
+        // Play bell for last verse, then restart loop
+        playBellThenAdvance(() => {
+          setCurrentLoop(nextLoop);
           setCurrentVerseIdx(0);
           setProgress(0);
-        } else {
-          setIsPlaying(false);
-        }
+        });
+      } else if (playMode === "loop") {
+        playBellThenAdvance(() => {
+          setCurrentLoop(0);
+          setCurrentVerseIdx(0);
+          setProgress(0);
+        });
+      } else if (playMode === "all" || playMode === "continue") {
+        playBellThenAdvance(() => {
+          if (currentDashakam < 100) {
+            setCurrentDashakam((prev) => prev + 1);
+            setCurrentVerseIdx(0);
+            setCurrentLoop(0);
+            setProgress(0);
+          } else {
+            setIsPlaying(false);
+          }
+        });
       } else {
-        setIsPlaying(false);
-        setProgress(100);
+        playBellThenAdvance(() => {
+          setIsPlaying(false);
+          setProgress(100);
+          setCurrentLoop(0);
+        });
       }
     } else {
-      // 1.5 sec gap between verses
-      gapTimerRef.current = setTimeout(() => {
-        setCurrentVerseIdx(nextIdx);
-      }, 1500);
+      // Bell for current verse, then 1.5s gap, then next verse
+      playBellThenAdvance(() => {
+        gapTimerRef.current = setTimeout(() => {
+          setCurrentVerseIdx(nextIdx);
+        }, 1500);
+      });
     }
-  }, [currentVerseIdx, audioVerses.length, playMode, currentDashakam]);
+  }, [currentVerseIdx, audioVerses.length, playMode, currentDashakam, loopCount, currentLoop, playBellThenAdvance]);
 
-  // Real audio playback for dashakams with audio
+  // Real audio playback
   useEffect(() => {
     if (!isPlaying || !dashakam) return;
 
@@ -88,11 +122,14 @@ export default function PodcastPage() {
 
       // Resume paused audio
       if (pausedRef.current && audioRef.current && !audioRef.current.ended) {
+        audioRef.current.playbackRate = speed;
         audioRef.current.play().catch((err) => console.error("Audio play error:", err));
         pausedRef.current = false;
         const audio = audioRef.current;
         const updateProgress = () => {
           if (audio.duration) {
+            setElapsed(audio.currentTime);
+            setDuration(audio.duration);
             setProgress((audio.currentTime / audio.duration) * (100 / audioVerses.length) + (currentVerseIdx / audioVerses.length) * 100);
           }
         };
@@ -104,11 +141,14 @@ export default function PodcastPage() {
       const audioUrl = audioVerses[currentVerseIdx].audio!;
       const audio = new Audio(audioUrl);
       audioRef.current = audio;
+      audio.playbackRate = speed;
       pausedRef.current = false;
       audio.play().catch((err) => console.error("Audio play error:", err));
-      
+
       const updateProgress = () => {
         if (audio.duration) {
+          setElapsed(audio.currentTime);
+          setDuration(audio.duration);
           setProgress((audio.currentTime / audio.duration) * (100 / audioVerses.length) + (currentVerseIdx / audioVerses.length) * 100);
         }
       };
@@ -128,7 +168,7 @@ export default function PodcastPage() {
       }, 200);
       return () => { if (intervalRef.current) clearInterval(intervalRef.current); };
     }
-  }, [isPlaying, currentDashakam, currentVerseIdx, playMode, hasAudio, advanceToNextVerse]);
+  }, [isPlaying, currentDashakam, currentVerseIdx, playMode, hasAudio, speed, advanceToNextVerse]);
 
   const handlePlayPause = () => {
     if (isPlaying) {
@@ -145,9 +185,11 @@ export default function PodcastPage() {
 
   const handleNext = useCallback(() => {
     if (audioRef.current) { audioRef.current.pause(); audioRef.current = null; }
+    stopBellAudio();
     pausedRef.current = false;
     setProgress(0);
     setCurrentVerseIdx(0);
+    setCurrentLoop(0);
     if (playMode === "loop") return;
     if (currentDashakam < 100) {
       setCurrentDashakam((prev) => prev + 1);
@@ -161,9 +203,11 @@ export default function PodcastPage() {
 
   const handlePrev = () => {
     if (audioRef.current) { audioRef.current.pause(); audioRef.current = null; }
+    stopBellAudio();
     pausedRef.current = false;
     setProgress(0);
     setCurrentVerseIdx(0);
+    setCurrentLoop(0);
     if (currentDashakam > 1) {
       setCurrentDashakam((prev) => prev - 1);
       saveProgress({ lastDashakam: currentDashakam - 1, lastPage: "/podcast" });
@@ -173,11 +217,9 @@ export default function PodcastPage() {
   const handleSeek = (value: number[]) => {
     const seekTo = value[0];
     if (hasAudio && audioRef.current && audioRef.current.duration) {
-      // Calculate which verse this seek falls into
       const verseIdx = Math.floor((seekTo / 100) * audioVerses.length);
       const withinVerse = ((seekTo / 100) * audioVerses.length - verseIdx);
       if (verseIdx !== currentVerseIdx && verseIdx < audioVerses.length) {
-        // Need to switch verse
         if (audioRef.current) { audioRef.current.pause(); audioRef.current = null; }
         pausedRef.current = false;
         setCurrentVerseIdx(verseIdx);
@@ -186,6 +228,12 @@ export default function PodcastPage() {
       }
     }
     setProgress(seekTo);
+  };
+
+  const formatTime = (sec: number) => {
+    const m = Math.floor(sec / 60);
+    const s = Math.floor(sec % 60);
+    return `${m}:${String(s).padStart(2, "0")}`;
   };
 
   const playModes: { value: PlayMode; label: string }[] = [
@@ -225,7 +273,7 @@ export default function PodcastPage() {
             )}
           </div>
 
-          {/* Progress Bar - Seekable */}
+          {/* Progress Bar */}
           <div className="mb-4 px-2">
             <Slider
               value={[progress]}
@@ -235,8 +283,8 @@ export default function PodcastPage() {
               className="w-full"
             />
             <div className="flex justify-between mt-1 text-xs text-primary-foreground/50 font-sans">
-              <span>{Math.floor(progress * 0.06)}:{String(Math.floor((progress * 3.6) % 60)).padStart(2, "0")}</span>
-              <span>~6:00</span>
+              <span>{formatTime(elapsed)}</span>
+              <span>{duration > 0 ? formatTime(duration) : "--:--"}</span>
             </div>
           </div>
 
@@ -254,6 +302,36 @@ export default function PodcastPage() {
             <button onClick={handleNext} className="text-primary-foreground/70 hover:text-primary-foreground p-2 transition-colors">
               <SkipForward className="h-6 w-6" />
             </button>
+          </div>
+
+          {/* Speed + Loop Controls */}
+          <div className="flex justify-center gap-3 mt-4">
+            <div className="flex flex-col items-center gap-1">
+              <label className="text-[10px] text-primary-foreground/50 font-sans">Speed</label>
+              <select
+                value={speed}
+                onChange={(e) => {
+                  const s = Number(e.target.value);
+                  setSpeed(s);
+                  if (audioRef.current) audioRef.current.playbackRate = s;
+                }}
+                className="rounded-lg bg-primary-foreground/10 text-primary-foreground px-2 py-1 text-xs font-sans border-none"
+              >
+                <option value={0.75}>0.75×</option>
+                <option value={1}>1×</option>
+                <option value={1.25}>1.25×</option>
+              </select>
+            </div>
+            <div className="flex flex-col items-center gap-1">
+              <label className="text-[10px] text-primary-foreground/50 font-sans">Loop</label>
+              <select
+                value={loopCount}
+                onChange={(e) => setLoopCount(Number(e.target.value))}
+                className="rounded-lg bg-primary-foreground/10 text-primary-foreground px-2 py-1 text-xs font-sans border-none"
+              >
+                {[1, 2, 3, 4, 5].map((n) => (<option key={n} value={n}>{n}×</option>))}
+              </select>
+            </div>
           </div>
 
           {/* Mode Selector */}
@@ -275,7 +353,8 @@ export default function PodcastPage() {
 
           {hasAudio ? (
             <p className="text-center text-xs text-primary-foreground/40 mt-4 font-sans">
-              🎵 Real audio playback — Verse {currentVerseIdx + 1} of {audioVerses.length}
+              🎵 Verse {currentVerseIdx + 1} of {audioVerses.length}
+              {loopCount > 1 && ` · Loop ${currentLoop + 1}/${loopCount}`}
             </p>
           ) : (
             <p className="text-center text-xs text-primary-foreground/40 mt-4 font-sans">
@@ -301,10 +380,12 @@ export default function PodcastPage() {
                 key={d.id}
                 onClick={() => {
                   if (audioRef.current) { audioRef.current.pause(); audioRef.current = null; }
+                  stopBellAudio();
                   pausedRef.current = false;
                   setCurrentDashakam(d.id);
                   setProgress(0);
                   setCurrentVerseIdx(0);
+                  setCurrentLoop(0);
                   saveProgress({ lastDashakam: d.id, lastPage: "/podcast" });
                 }}
                 className={`w-full flex items-center gap-3 px-4 py-3 text-left text-sm font-sans border-b border-border last:border-b-0 transition-colors ${

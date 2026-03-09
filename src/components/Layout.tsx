@@ -1,9 +1,10 @@
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
-import { BookOpen, Mic, FileText, GraduationCap, LayoutDashboard, Menu, X, CalendarPlus, Headphones, LogIn, LogOut, User } from "lucide-react";
+import { BookOpen, Mic, FileText, GraduationCap, LayoutDashboard, Menu, X, CalendarPlus, Headphones, LogIn, LogOut, User, Sun, Moon } from "lucide-react";
 import { useState, useEffect } from "react";
 import logoImg from "@/assets/logo.png";
 import { useAuth } from "@/contexts/AuthContext";
+import BottomNav from "@/components/BottomNav";
 
 const navItems = [
   { path: "/", label: "Home", icon: LayoutDashboard },
@@ -19,6 +20,12 @@ export default function Layout({ children }: { children: React.ReactNode }) {
   const location = useLocation();
   const navigate = useNavigate();
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [isDark, setIsDark] = useState(() => {
+    if (typeof window !== "undefined") {
+      return document.documentElement.classList.contains("dark") || localStorage.getItem("theme") === "dark";
+    }
+    return false;
+  });
   const { user, displayName, signOut, loading } = useAuth();
 
   // Force auth: redirect to /auth if not logged in and not already on /auth
@@ -27,6 +34,17 @@ export default function Layout({ children }: { children: React.ReactNode }) {
       navigate("/auth", { replace: true });
     }
   }, [loading, user, location.pathname, navigate]);
+
+  // Apply saved theme on mount
+  useEffect(() => {
+    const saved = localStorage.getItem("theme");
+    if (saved === "dark") {
+      document.documentElement.classList.add("dark");
+      setIsDark(true);
+    } else {
+      document.documentElement.classList.remove("dark");
+    }
+  }, []);
 
   // Global content protection: block keyboard shortcuts for print/screenshot
   useEffect(() => {
@@ -93,8 +111,20 @@ export default function Layout({ children }: { children: React.ReactNode }) {
             })}
           </nav>
 
-          {/* User Profile / Auth */}
+          {/* Theme Toggle + User Profile / Auth */}
           <div className="hidden lg:flex items-center gap-3">
+            <button
+              onClick={() => {
+                const next = !isDark;
+                setIsDark(next);
+                document.documentElement.classList.toggle("dark", next);
+                localStorage.setItem("theme", next ? "dark" : "light");
+              }}
+              className="flex items-center justify-center rounded-lg p-2 text-primary-foreground/70 hover:text-primary-foreground transition-colors"
+              title={isDark ? "Morning Mode" : "Night Mode"}
+            >
+              {isDark ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
+            </button>
             {!loading && user ? (
               <div className="flex items-center gap-3">
                 <div className="flex items-center gap-2 rounded-lg bg-primary-foreground/10 px-3 py-1.5">
@@ -159,6 +189,20 @@ export default function Layout({ children }: { children: React.ReactNode }) {
               );
             })}
 
+            {/* Mobile theme toggle */}
+            <button
+              onClick={() => {
+                const next = !isDark;
+                setIsDark(next);
+                document.documentElement.classList.toggle("dark", next);
+                localStorage.setItem("theme", next ? "dark" : "light");
+              }}
+              className="flex items-center gap-3 rounded-lg px-3 py-3 text-sm font-sans text-primary-foreground/70"
+            >
+              {isDark ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
+              {isDark ? "Morning Mode" : "Night Mode"}
+            </button>
+
             {/* Mobile auth */}
             <div className="mt-2 pt-2 border-t border-primary-foreground/10">
               {user ? (
@@ -189,7 +233,8 @@ export default function Layout({ children }: { children: React.ReactNode }) {
         )}
       </header>
 
-      <main>{children}</main>
+      <main className="pb-16 lg:pb-0">{children}</main>
+      <BottomNav />
     </div>
   );
 }
