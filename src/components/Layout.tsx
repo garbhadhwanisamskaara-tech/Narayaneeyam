@@ -196,7 +196,8 @@ export default function Layout({ children }: { children: React.ReactNode }) {
         )}
       </header>
 
-      <main>{children}</main>
+      <main className="pb-16 lg:pb-0">{children}</main>
+      <BottomNav />
     </div>
   );
 }
