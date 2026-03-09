@@ -35,6 +35,17 @@ export default function Layout({ children }: { children: React.ReactNode }) {
     }
   }, [loading, user, location.pathname, navigate]);
 
+  // Apply saved theme on mount
+  useEffect(() => {
+    const saved = localStorage.getItem("theme");
+    if (saved === "dark") {
+      document.documentElement.classList.add("dark");
+      setIsDark(true);
+    } else {
+      document.documentElement.classList.remove("dark");
+    }
+  }, []);
+
   // Global content protection: block keyboard shortcuts for print/screenshot
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
