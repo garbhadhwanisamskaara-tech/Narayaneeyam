@@ -137,7 +137,7 @@ export default function LearnPage() {
   const [highlightIdx, setHighlightIdx] = useState(0);
   const [highlightPhrase, setHighlightPhrase] = useState(-1); // -1 = whole verse
   const [repeatCount, setRepeatCount] = useState(DEFAULT_REPEAT_COUNT);
-  const [silenceGapSec, setSilenceGapSec] = useState(DEFAULT_SILENCE_GAP_SEC);
+  const [speed, setSpeed] = useState(1);
 
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const gapTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
