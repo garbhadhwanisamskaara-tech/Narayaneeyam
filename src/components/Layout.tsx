@@ -28,12 +28,12 @@ export default function Layout({ children }: { children: React.ReactNode }) {
   });
   const { user, displayName, signOut, loading } = useAuth();
 
-  // Force auth: redirect to /auth if not logged in and not already on /auth
-  useEffect(() => {
-    if (!loading && !user && location.pathname !== "/auth" && location.pathname !== "/reset-password") {
-      navigate("/auth", { replace: true });
-    }
-  }, [loading, user, location.pathname, navigate]);
+  // Auth redirect disabled for development
+  // useEffect(() => {
+  //   if (!loading && !user && location.pathname !== "/auth" && location.pathname !== "/reset-password") {
+  //     navigate("/auth", { replace: true });
+  //   }
+  // }, [loading, user, location.pathname, navigate]);
 
   // Apply saved theme on mount
   useEffect(() => {
