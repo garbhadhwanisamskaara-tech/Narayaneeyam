@@ -169,7 +169,7 @@ const d1Verses: Verse[] = [
     english: "si~nchat sa~nchintakaanaaM vapuranukalaye maarutaagaaranaatha",
     meaning_english: "Oh Guruvayurappa! I meditate on Thy divine form which is more beautiful than the dark rain clouds and the blue Kalaya flowers, where Goddess Lakshmi plays uninhibitedly, which being the abode of beauty, is the ultimate sanctuary of all true devotees, drowning their hearts in the nectar of supreme bliss.",
     meter: "Sragdharā",
-    audio: "/audio/Snd1v6.m4a",
+    audio: "/audio/SL001-06.m4a",
   }),
   makeVerse(1, 7, {
     english: "netraiH shrOtraishcha piitvaa paramarasasudhaambhOdhipuure rameran",
