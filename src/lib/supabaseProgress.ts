@@ -100,9 +100,10 @@ export async function saveLessonPlanToDB(plan: Omit<SupabaseLessonPlan, "id" | "
 }
 
 export async function deleteLessonPlanFromDB(id: string) {
+  if (!supabase) return;
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return;
-  await supabase.from("lesson_plans").delete().eq("id", id).eq("user_id", user.id);
+  await (supabase as any).from("lesson_plans").delete().eq("id", id).eq("user_id", user.id);
 }
 
 /** Mark a lesson as completed and advance the pointer in schedule_json */
