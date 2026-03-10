@@ -151,7 +151,7 @@ const d1Verses: Verse[] = [
     malayalam: "സത്ത്വം യത്തത്പുരാണാഃ പരമിഹ ഗുണതോ ജീവഹേതുത്രയാണാം\nതാഭ്യാമന്യദ്വിശുദ്ധം തവ തു ഗുണമയം മാശയാ കൽപിതം ത്രി ।",
     meaning_english: "The great sage Vyaasa has identified Thy form as Suddha Sathva, unsullied by the evil and impure qualities of Rajas and Tamas. Contemplation of this pure divine form of Lord Krishna will lead us to ultimate bliss and wisdom.",
     meter: "Sragdharā",
-    audio: "/audio/Snd1v3.m4a",
+    audio: "/audio/SL001-03.m4a",
   }),
   makeVerse(1, 4, {
     english: "kasmaannOniShkalastvaM sakala iti vachastvatkalaasveva bhuuman",
