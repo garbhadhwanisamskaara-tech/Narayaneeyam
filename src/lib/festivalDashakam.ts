@@ -38,7 +38,7 @@ function saveLocalFestivals(festivals: FestivalDashakam[]) {
 export async function getAllFestivals(): Promise<FestivalDashakam[]> {
   if (supabase) {
     try {
-      const { data } = await supabase
+      const { data } = await (supabase as any)
         .from("festival_dashakams")
         .select("*")
         .order("festival_date", { ascending: true });
