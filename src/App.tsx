@@ -14,6 +14,7 @@ import DashboardPage from "./pages/DashboardPage";
 import PodcastPage from "./pages/PodcastPage";
 import AuthPage from "./pages/AuthPage";
 import AdminFestivalsPage from "./pages/AdminFestivalsPage";
+import AdminContentPage from "./pages/AdminContentPage";
 import AdminRoute from "./components/AdminRoute";
 import ResetPasswordPage from "./pages/ResetPasswordPage";
 import NotFound from "./pages/NotFound";
@@ -39,6 +40,7 @@ const App = () => (
               <Route path="/dashboard" element={<DashboardPage />} />
               <Route path="/podcast" element={<PodcastPage />} />
               <Route path="/admin/festivals" element={<AdminRoute><AdminFestivalsPage /></AdminRoute>} />
+              <Route path="/admin/content" element={<AdminRoute><AdminContentPage /></AdminRoute>} />
               <Route path="*" element={<NotFound />} />
             </Routes>
           </Layout>

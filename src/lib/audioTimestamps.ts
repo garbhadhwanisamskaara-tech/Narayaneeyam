@@ -5,8 +5,8 @@
  * 1. Line-level timestamps (phraseEndTimes) — used in Learn module for silence gaps
  * 2. Verse-level timestamps (verseEndTimes) — used in Chant/Learn for lyric highlighting
  *
- * Audio naming: /public/audio/Snd{dashakam}v{verse}.m4a  (per-verse files)
- *               /public/audio/Snd{dashakam}.m4a           (full dashakam file for Podcast/Chant)
+ * Audio naming: /public/audio/SL{DDD}-{VV}.m4a  (per-verse files)
+ *               /public/audio/SL{DDD}.m4a       (full dashakam file for Podcast/Chant)
  */
 
 export interface PhraseTimestamp {
@@ -104,7 +104,7 @@ export function getActivePhraseAtTime(dashakamId: number, verseNumber: number, c
 
 registerTimestamps({
   dashakam: 1,
-  audioFile: "/audio/Snd1.m4a",
+  audioFile: "/audio/SL001.m4a",
   totalDuration: 0, // to be filled by admin
   verses: [
     { verse: 1, startTime: 0, endTime: 0, phraseEndTimes: [] },

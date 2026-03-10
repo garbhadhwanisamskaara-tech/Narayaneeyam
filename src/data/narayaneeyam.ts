@@ -133,7 +133,7 @@ const d1Verses: Verse[] = [
     meaning_tamil: "இந்த கலியுகத்தில் மனிதகுலத்தின் மிகப்பெரிய அதிர்ஷ்டம் என்னவென்றால், நமக்கு முக்தி அருளும் நிரந்தர சத்தியம் குருவாயூரில் ஸ்ரீகிருஷ்ணனாக வெளிப்படுகிறது.",
     meaning_malayalam: "ഈ കലിയുഗത്തിൽ മനുഷ്യരാശിയുടെ ഏറ്റവും വലിയ ഭാഗ്യം, മോക്ഷം നൽകുന്ന ശാശ്വത സത്യം ഗുരുവായൂരിൽ ശ്രീകൃഷ്ണനായി പ്രകടമാകുന്നു.",
     meter: "Sragdharā", bell: true, prasadam: "Any fruit or water",
-    audio: "/audio/Snd1v1.m4a",
+    audio: "/audio/SL001-01.m4a",
   }),
   makeVerse(1, 2, {
     english: "nishsheShaatmaanamenaM gurupavanapuraadhiishamevaashrayaamaH",
@@ -142,7 +142,7 @@ const d1Verses: Verse[] = [
     malayalam: "ഏവം ദുർലഭ്യവസ്തുന്യപി സുലഭതയാ ഹസ്തലബ്ധേ യദന്യത്\nതന്വാ വാചാ ധിയാ വാ ഭജതി ബത ജനഃ ക്ഷുദ്രതൈവ സ്ഫുടേയമ് ।",
     meaning_english: "Although such an easy access to eternal salvation has been offered to mankind on a silver platter in the form of Lord Krishna at Guruvayoor, common mortals, due to their inherent lowly nature, overlook the eternal benefits of this and go in pursuit of worldly pleasures. May we all realize our folly and serve Him with complete faith as He alone can alleviate all our sorrows.",
     meter: "Sragdharā",
-    audio: "/audio/Snd1v2.m4a",
+    audio: "/audio/SL001-02.m4a",
   }),
   makeVerse(1, 3, {
     english: "tasmin dhanyaa ramante shrutimatimadhure sugrahe vigrahe te",
@@ -151,25 +151,25 @@ const d1Verses: Verse[] = [
     malayalam: "സത്ത്വം യത്തത്പുരാണാഃ പരമിഹ ഗുണതോ ജീവഹേതുത്രയാണാം\nതാഭ്യാമന്യദ്വിശുദ്ധം തവ തു ഗുണമയം മാശയാ കൽപിതം ത്രി ।",
     meaning_english: "The great sage Vyaasa has identified Thy form as Suddha Sathva, unsullied by the evil and impure qualities of Rajas and Tamas. Contemplation of this pure divine form of Lord Krishna will lead us to ultimate bliss and wisdom.",
     meter: "Sragdharā",
-    audio: "/audio/Snd1v3.m4a",
+    audio: "/audio/SL001-03.m4a",
   }),
   makeVerse(1, 4, {
     english: "kasmaannOniShkalastvaM sakala iti vachastvatkalaasveva bhuuman",
     meaning_english: "Oh Lord Krishna! This unchanging form of Suddha Sathva embodied in Thee, transcending time and space, is the ocean of nectar giving supreme happiness to all true devotees, encompassing all the liberated souls embedded like pure pearls in the waves of this ocean. Hence this incarnation of Thine as Lord Krishna can be called the only complete one, as compared to other revelations of Thy divine form.",
     meter: "Sragdharā",
-    audio: "/audio/Snd1v4.m4a",
+    audio: "/audio/SL001-04.m4a",
   }),
   makeVerse(1, 5, {
     english: "sa tvaM dhR^itvaa dadhaasi svamahimavibhavaakuNTha vaikuNTha ruupam",
     meaning_english: "Even without any action or reason, Thy glance alone can activate Maya at the beginning of a new kalpa or cycle of creation, spontaneously. Thus, the divine form of the Lord of Vaikunta manifests itself as Maya or Prakruthi without its glory or purity being diminished or tarnished in any way.",
     meter: "Sragdharā",
-    audio: "/audio/Snd1v5.m4a",
+    audio: "/audio/SL001-05.m4a",
   }),
   makeVerse(1, 6, {
     english: "si~nchat sa~nchintakaanaaM vapuranukalaye maarutaagaaranaatha",
     meaning_english: "Oh Guruvayurappa! I meditate on Thy divine form which is more beautiful than the dark rain clouds and the blue Kalaya flowers, where Goddess Lakshmi plays uninhibitedly, which being the abode of beauty, is the ultimate sanctuary of all true devotees, drowning their hearts in the nectar of supreme bliss.",
     meter: "Sragdharā",
-    audio: "/audio/Snd1v6.m4a",
+    audio: "/audio/SL001-06.m4a",
   }),
   makeVerse(1, 7, {
     english: "netraiH shrOtraishcha piitvaa paramarasasudhaambhOdhipuure rameran",
