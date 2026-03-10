@@ -142,7 +142,7 @@ const d1Verses: Verse[] = [
     malayalam: "ഏവം ദുർലഭ്യവസ്തുന്യപി സുലഭതയാ ഹസ്തലബ്ധേ യദന്യത്\nതന്വാ വാചാ ധിയാ വാ ഭജതി ബത ജനഃ ക്ഷുദ്രതൈവ സ്ഫുടേയമ് ।",
     meaning_english: "Although such an easy access to eternal salvation has been offered to mankind on a silver platter in the form of Lord Krishna at Guruvayoor, common mortals, due to their inherent lowly nature, overlook the eternal benefits of this and go in pursuit of worldly pleasures. May we all realize our folly and serve Him with complete faith as He alone can alleviate all our sorrows.",
     meter: "Sragdharā",
-    audio: "/audio/Snd1v2.m4a",
+    audio: "/audio/SL001-02.m4a",
   }),
   makeVerse(1, 3, {
     english: "tasmin dhanyaa ramante shrutimatimadhure sugrahe vigrahe te",
