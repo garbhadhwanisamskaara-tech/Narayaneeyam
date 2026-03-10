@@ -57,7 +57,7 @@ export async function saveFestival(
     try {
       const { data: { user } } = await supabase.auth.getUser();
       if (user) {
-        const { data } = await supabase
+        const { data } = await (supabase as any)
           .from("festival_dashakams")
           .insert({ ...festival, created_by: user.id })
           .select()
