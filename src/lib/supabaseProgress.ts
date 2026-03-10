@@ -27,9 +27,10 @@ export async function updateStreakSupabase(): Promise<UserProgress> {
   });
 
   // Persist to Supabase if signed in
+  if (!supabase) return updated;
   const { data: { user } } = await supabase.auth.getUser();
   if (user) {
-    await supabase.from("chant_sessions").insert({
+    await (supabase as any).from("chant_sessions").insert({
       user_id: user.id,
       dashakam_id: updated.lastDashakam,
       mode: "chant",
