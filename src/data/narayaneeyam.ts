@@ -163,7 +163,7 @@ const d1Verses: Verse[] = [
     english: "sa tvaM dhR^itvaa dadhaasi svamahimavibhavaakuNTha vaikuNTha ruupam",
     meaning_english: "Even without any action or reason, Thy glance alone can activate Maya at the beginning of a new kalpa or cycle of creation, spontaneously. Thus, the divine form of the Lord of Vaikunta manifests itself as Maya or Prakruthi without its glory or purity being diminished or tarnished in any way.",
     meter: "Sragdharā",
-    audio: "/audio/Snd1v5.m4a",
+    audio: "/audio/SL001-05.m4a",
   }),
   makeVerse(1, 6, {
     english: "si~nchat sa~nchintakaanaaM vapuranukalaye maarutaagaaranaatha",
