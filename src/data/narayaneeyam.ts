@@ -157,7 +157,7 @@ const d1Verses: Verse[] = [
     english: "kasmaannOniShkalastvaM sakala iti vachastvatkalaasveva bhuuman",
     meaning_english: "Oh Lord Krishna! This unchanging form of Suddha Sathva embodied in Thee, transcending time and space, is the ocean of nectar giving supreme happiness to all true devotees, encompassing all the liberated souls embedded like pure pearls in the waves of this ocean. Hence this incarnation of Thine as Lord Krishna can be called the only complete one, as compared to other revelations of Thy divine form.",
     meter: "Sragdharā",
-    audio: "/audio/Snd1v4.m4a",
+    audio: "/audio/SL001-04.m4a",
   }),
   makeVerse(1, 5, {
     english: "sa tvaM dhR^itvaa dadhaasi svamahimavibhavaakuNTha vaikuNTha ruupam",
