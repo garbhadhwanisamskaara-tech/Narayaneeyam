@@ -106,7 +106,7 @@ export async function updateFestival(
 export async function deleteFestival(id: string): Promise<void> {
   if (supabase) {
     try {
-      await supabase.from("festival_dashakams").delete().eq("id", id);
+      await (supabase as any).from("festival_dashakams").delete().eq("id", id);
       return;
     } catch {
       // fallback

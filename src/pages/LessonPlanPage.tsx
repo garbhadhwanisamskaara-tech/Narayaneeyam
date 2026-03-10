@@ -219,9 +219,11 @@ export default function LessonPlanPage() {
   const { toast } = useToast();
 
   useEffect(() => {
-    supabase.auth.getUser().then(({ data: { user } }) => {
-      setIsLoggedIn(!!user);
-    });
+    if (supabase) {
+      supabase.auth.getUser().then(({ data: { user } }) => {
+        setIsLoggedIn(!!user);
+      });
+    }
     setPlans(getLessonPlans());
   }, []);
 
