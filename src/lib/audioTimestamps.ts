@@ -5,8 +5,8 @@
  * 1. Line-level timestamps (phraseEndTimes) — used in Learn module for silence gaps
  * 2. Verse-level timestamps (verseEndTimes) — used in Chant/Learn for lyric highlighting
  *
- * Audio naming: /public/audio/Snd{dashakam}v{verse}.m4a  (per-verse files)
- *               /public/audio/Snd{dashakam}.m4a           (full dashakam file for Podcast/Chant)
+ * Audio naming: /public/audio/SL{DDD}-{VV}.m4a  (per-verse files)
+ *               /public/audio/SL{DDD}.m4a       (full dashakam file for Podcast/Chant)
  */
 
 export interface PhraseTimestamp {
