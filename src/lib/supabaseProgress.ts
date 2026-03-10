@@ -138,7 +138,7 @@ export async function completeLessonAndAdvance(planId: string, lessonIndex: numb
     (l: { completed?: boolean }, i: number) => i > lessonIndex && !l.completed
   );
 
-  const { data: updated } = await supabase
+  const { data: updated } = await (supabase as any)
     .from("lesson_plans")
     .update({
       schedule_json: schedule,

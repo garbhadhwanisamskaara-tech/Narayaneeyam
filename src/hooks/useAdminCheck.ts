@@ -17,10 +17,11 @@ export function useAdminCheck() {
 
     const check = async () => {
       try {
+        if (!supabase) { setIsAdmin(false); setLoading(false); return; }
         const { data } = await supabase.rpc("has_role", {
           _user_id: user.id,
           _role: "admin",
-        });
+        } as any);
         setIsAdmin(!!data);
       } catch {
         setIsAdmin(false);

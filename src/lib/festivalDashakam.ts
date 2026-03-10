@@ -86,7 +86,7 @@ export async function updateFestival(
 ): Promise<void> {
   if (supabase) {
     try {
-      await supabase
+      await (supabase as any)
         .from("festival_dashakams")
         .update({ ...updates, updated_at: new Date().toISOString() })
         .eq("id", id);
