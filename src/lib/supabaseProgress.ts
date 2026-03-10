@@ -88,9 +88,10 @@ export async function getLessonPlansFromDB(): Promise<SupabaseLessonPlan[]> {
 }
 
 export async function saveLessonPlanToDB(plan: Omit<SupabaseLessonPlan, "id" | "created_at" | "updated_at">) {
+  if (!supabase) return null;
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return null;
-  const { data } = await supabase
+  const { data } = await (supabase as any)
     .from("lesson_plans")
     .insert({ ...plan, user_id: user.id })
     .select()
