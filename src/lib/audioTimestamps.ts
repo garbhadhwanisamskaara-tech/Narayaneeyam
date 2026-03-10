@@ -104,7 +104,7 @@ export function getActivePhraseAtTime(dashakamId: number, verseNumber: number, c
 
 registerTimestamps({
   dashakam: 1,
-  audioFile: "/audio/Snd1.m4a",
+  audioFile: "/audio/SL001.m4a",
   totalDuration: 0, // to be filled by admin
   verses: [
     { verse: 1, startTime: 0, endTime: 0, phraseEndTimes: [] },
