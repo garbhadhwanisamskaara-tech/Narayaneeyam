@@ -38,7 +38,7 @@ function saveLocalFestivals(festivals: FestivalDashakam[]) {
 export async function getAllFestivals(): Promise<FestivalDashakam[]> {
   if (supabase) {
     try {
-      const { data } = await supabase
+      const { data } = await (supabase as any)
         .from("festival_dashakams")
         .select("*")
         .order("festival_date", { ascending: true });
@@ -57,7 +57,7 @@ export async function saveFestival(
     try {
       const { data: { user } } = await supabase.auth.getUser();
       if (user) {
-        const { data } = await supabase
+        const { data } = await (supabase as any)
           .from("festival_dashakams")
           .insert({ ...festival, created_by: user.id })
           .select()
@@ -86,7 +86,7 @@ export async function updateFestival(
 ): Promise<void> {
   if (supabase) {
     try {
-      await supabase
+      await (supabase as any)
         .from("festival_dashakams")
         .update({ ...updates, updated_at: new Date().toISOString() })
         .eq("id", id);
@@ -106,7 +106,7 @@ export async function updateFestival(
 export async function deleteFestival(id: string): Promise<void> {
   if (supabase) {
     try {
-      await supabase.from("festival_dashakams").delete().eq("id", id);
+      await (supabase as any).from("festival_dashakams").delete().eq("id", id);
       return;
     } catch {
       // fallback

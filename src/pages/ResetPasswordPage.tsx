@@ -31,6 +31,7 @@ export default function ResetPasswordPage() {
       return;
     }
     setLoading(true);
+    if (!supabase) { setLoading(false); return; }
     const { error } = await supabase.auth.updateUser({ password });
     if (error) {
       toast({ title: "Error", description: error.message, variant: "destructive" });

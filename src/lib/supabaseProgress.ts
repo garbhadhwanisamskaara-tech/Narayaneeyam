@@ -27,9 +27,10 @@ export async function updateStreakSupabase(): Promise<UserProgress> {
   });
 
   // Persist to Supabase if signed in
+  if (!supabase) return updated;
   const { data: { user } } = await supabase.auth.getUser();
   if (user) {
-    await supabase.from("chant_sessions").insert({
+    await (supabase as any).from("chant_sessions").insert({
       user_id: user.id,
       dashakam_id: updated.lastDashakam,
       mode: "chant",
@@ -44,10 +45,11 @@ export async function updateStreakSupabase(): Promise<UserProgress> {
 // ─── Verse completion ─────────────────────────────────────────────────────────
 
 export async function markVerseCompleted(verseId: string, mode: "chant" | "learn" | "script" = "chant") {
+  if (!supabase) return;
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return;
 
-  await supabase.from("user_progress").upsert(
+  await (supabase as any).from("user_progress").upsert(
     {
       user_id: user.id,
       verse_id: verseId,
@@ -74,9 +76,10 @@ export interface SupabaseLessonPlan {
 }
 
 export async function getLessonPlansFromDB(): Promise<SupabaseLessonPlan[]> {
+  if (!supabase) return [];
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return [];
-  const { data } = await supabase
+  const { data } = await (supabase as any)
     .from("lesson_plans")
     .select("*")
     .eq("user_id", user.id)
@@ -85,9 +88,10 @@ export async function getLessonPlansFromDB(): Promise<SupabaseLessonPlan[]> {
 }
 
 export async function saveLessonPlanToDB(plan: Omit<SupabaseLessonPlan, "id" | "created_at" | "updated_at">) {
+  if (!supabase) return null;
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return null;
-  const { data } = await supabase
+  const { data } = await (supabase as any)
     .from("lesson_plans")
     .insert({ ...plan, user_id: user.id })
     .select()
@@ -96,17 +100,19 @@ export async function saveLessonPlanToDB(plan: Omit<SupabaseLessonPlan, "id" | "
 }
 
 export async function deleteLessonPlanFromDB(id: string) {
+  if (!supabase) return;
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return;
-  await supabase.from("lesson_plans").delete().eq("id", id).eq("user_id", user.id);
+  await (supabase as any).from("lesson_plans").delete().eq("id", id).eq("user_id", user.id);
 }
 
 /** Mark a lesson as completed and advance the pointer in schedule_json */
 export async function completeLessonAndAdvance(planId: string, lessonIndex: number) {
+  if (!supabase) return null;
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return null;
 
-  const { data: plan } = await supabase
+  const { data: plan } = await (supabase as any)
     .from("lesson_plans")
     .select("schedule_json")
     .eq("id", planId)
@@ -132,7 +138,7 @@ export async function completeLessonAndAdvance(planId: string, lessonIndex: numb
     (l: { completed?: boolean }, i: number) => i > lessonIndex && !l.completed
   );
 
-  const { data: updated } = await supabase
+  const { data: updated } = await (supabase as any)
     .from("lesson_plans")
     .update({
       schedule_json: schedule,
