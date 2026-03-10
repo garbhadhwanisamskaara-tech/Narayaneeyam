@@ -45,10 +45,11 @@ export async function updateStreakSupabase(): Promise<UserProgress> {
 // ─── Verse completion ─────────────────────────────────────────────────────────
 
 export async function markVerseCompleted(verseId: string, mode: "chant" | "learn" | "script" = "chant") {
+  if (!supabase) return;
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return;
 
-  await supabase.from("user_progress").upsert(
+  await (supabase as any).from("user_progress").upsert(
     {
       user_id: user.id,
       verse_id: verseId,
