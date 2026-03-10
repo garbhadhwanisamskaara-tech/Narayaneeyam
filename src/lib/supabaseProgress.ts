@@ -108,10 +108,11 @@ export async function deleteLessonPlanFromDB(id: string) {
 
 /** Mark a lesson as completed and advance the pointer in schedule_json */
 export async function completeLessonAndAdvance(planId: string, lessonIndex: number) {
+  if (!supabase) return null;
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return null;
 
-  const { data: plan } = await supabase
+  const { data: plan } = await (supabase as any)
     .from("lesson_plans")
     .select("schedule_json")
     .eq("id", planId)
