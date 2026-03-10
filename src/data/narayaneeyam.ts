@@ -133,7 +133,7 @@ const d1Verses: Verse[] = [
     meaning_tamil: "இந்த கலியுகத்தில் மனிதகுலத்தின் மிகப்பெரிய அதிர்ஷ்டம் என்னவென்றால், நமக்கு முக்தி அருளும் நிரந்தர சத்தியம் குருவாயூரில் ஸ்ரீகிருஷ்ணனாக வெளிப்படுகிறது.",
     meaning_malayalam: "ഈ കലിയുഗത്തിൽ മനുഷ്യരാശിയുടെ ഏറ്റവും വലിയ ഭാഗ്യം, മോക്ഷം നൽകുന്ന ശാശ്വത സത്യം ഗുരുവായൂരിൽ ശ്രീകൃഷ്ണനായി പ്രകടമാകുന്നു.",
     meter: "Sragdharā", bell: true, prasadam: "Any fruit or water",
-    audio: "/audio/Snd1v1.m4a",
+    audio: "/audio/SL001-01.m4a",
   }),
   makeVerse(1, 2, {
     english: "nishsheShaatmaanamenaM gurupavanapuraadhiishamevaashrayaamaH",
