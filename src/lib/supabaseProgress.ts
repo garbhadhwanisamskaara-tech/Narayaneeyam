@@ -76,9 +76,10 @@ export interface SupabaseLessonPlan {
 }
 
 export async function getLessonPlansFromDB(): Promise<SupabaseLessonPlan[]> {
+  if (!supabase) return [];
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return [];
-  const { data } = await supabase
+  const { data } = await (supabase as any)
     .from("lesson_plans")
     .select("*")
     .eq("user_id", user.id)
