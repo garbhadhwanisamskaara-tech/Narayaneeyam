@@ -154,13 +154,24 @@ export default function Layout({ children }: { children: React.ReactNode }) {
             ) : null}
           </div>
 
-          {/* Mobile hamburger */}
-          <button
-            className="lg:hidden text-primary-foreground p-2"
-            onClick={() => setMobileOpen(!mobileOpen)}
-          >
-            {mobileOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
-          </button>
+          {/* Mobile: user icon + hamburger */}
+          <div className="lg:hidden flex items-center gap-2">
+            {!loading && user && (
+              <button
+                onClick={() => signOut()}
+                className="text-primary-foreground/70 hover:text-primary-foreground p-2 transition-colors"
+                title="Sign out"
+              >
+                <LogOut className="h-5 w-5" />
+              </button>
+            )}
+            <button
+              className="text-primary-foreground p-2"
+              onClick={() => setMobileOpen(!mobileOpen)}
+            >
+              {mobileOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
+            </button>
+          </div>
         </div>
 
         {/* Mobile Nav */}
