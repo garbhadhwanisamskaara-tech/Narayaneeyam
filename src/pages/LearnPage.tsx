@@ -37,7 +37,6 @@ function LearnControls({
   translationLang: TranslationLanguage;
   showMeaning: boolean;
   repeatCount: number;
-  silenceGapSec: number;
   speed: number;
   onPlanChange: (id: string) => void;
   onLessonChange: (idx: number) => void;
@@ -45,7 +44,6 @@ function LearnControls({
   onTranslationChange: (v: TranslationLanguage) => void;
   onToggleMeaning: () => void;
   onRepeatChange: (n: number) => void;
-  onGapChange: (n: number) => void;
   onSpeedChange: (n: number) => void;
 }) {
   return (
