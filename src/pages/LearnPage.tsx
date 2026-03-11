@@ -15,9 +15,7 @@ import { getProgress, saveProgress, updateStreak } from "@/lib/progress";
 import {
   getVerseTimestamp,
   getActivePhraseAtTime,
-  DEFAULT_SILENCE_GAP_SEC,
   DEFAULT_REPEAT_COUNT,
-  calcSilenceDuration,
 } from "@/lib/audioTimestamps";
 import { Link } from "react-router-dom";
 import VerseIcons from "@/components/VerseIcons";
