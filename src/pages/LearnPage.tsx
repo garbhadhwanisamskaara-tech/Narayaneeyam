@@ -292,13 +292,13 @@ export default function LearnPage() {
         <LearnControls
           plans={plans} activePlan={activePlan} currentLessonIdx={currentLessonIdx}
           translitLang={translitLang} translationLang={translationLang}
-          showMeaning={showMeaning} repeatCount={repeatCount} silenceGapSec={silenceGapSec}
+          showMeaning={showMeaning} repeatCount={repeatCount}
           speed={speed}
           onPlanChange={(id) => { const plan = plans.find((p) => p.id === id); setActivePlan(plan || null); setCurrentLessonIdx(0); stopPlayback(); setHighlightIdx(0); }}
           onLessonChange={(idx) => { setCurrentLessonIdx(idx); stopPlayback(); setHighlightIdx(0); }}
           onTranslitChange={setTranslitLang} onTranslationChange={setTranslationLang}
           onToggleMeaning={() => setShowMeaning(!showMeaning)}
-          onRepeatChange={setRepeatCount} onGapChange={setSilenceGapSec}
+          onRepeatChange={setRepeatCount}
           onSpeedChange={setSpeed}
         />
 
