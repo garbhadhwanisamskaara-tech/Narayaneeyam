@@ -26,9 +26,9 @@ import VerseIcons from "@/components/VerseIcons";
 
 function LearnControls({
   plans, activePlan, currentLessonIdx, translitLang, translationLang,
-  showMeaning, repeatCount, silenceGapSec, speed,
+  showMeaning, repeatCount, speed,
   onPlanChange, onLessonChange, onTranslitChange, onTranslationChange,
-  onToggleMeaning, onRepeatChange, onGapChange, onSpeedChange,
+  onToggleMeaning, onRepeatChange, onSpeedChange,
 }: {
   plans: LessonPlan[];
   activePlan: LessonPlan | null;
