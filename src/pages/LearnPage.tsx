@@ -96,15 +96,7 @@ function LearnControls({
         <label className="text-xs text-muted-foreground font-sans">Repeats</label>
         <select value={repeatCount} onChange={(e) => onRepeatChange(Number(e.target.value))}
           className="rounded-lg border border-border bg-background px-3 py-2 text-sm font-sans text-foreground">
-          {[1, 2, 3, 4, 5].map((n) => (<option key={n} value={n}>{n}× ({n * silenceGapSec}s gap)</option>))}
-        </select>
-      </div>
-
-      <div className="flex flex-col gap-1">
-        <label className="text-xs text-muted-foreground font-sans">Gap (sec)</label>
-        <select value={silenceGapSec} onChange={(e) => onGapChange(Number(e.target.value))}
-          className="rounded-lg border border-border bg-background px-3 py-2 text-sm font-sans text-foreground">
-          {[3, 5, 7, 10].map((n) => (<option key={n} value={n}>{n}s</option>))}
+          {[1, 2, 3, 4, 5].map((n) => (<option key={n} value={n}>{n}×</option>))}
         </select>
       </div>
 
