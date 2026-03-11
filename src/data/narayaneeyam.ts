@@ -7,12 +7,14 @@ export interface Verse {
   tamil: string;
   telugu: string;
   malayalam: string;
+  kannada: string;
   hindi: string;
   marathi: string;
   meaning_english: string;
   meaning_tamil: string;
   meaning_telugu: string;
   meaning_malayalam: string;
+  meaning_kannada: string;
   meaning_hindi: string;
   meaning_marathi: string;
   meter: string;
