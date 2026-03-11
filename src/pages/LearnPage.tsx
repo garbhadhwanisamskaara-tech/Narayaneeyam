@@ -193,30 +193,20 @@ export default function LearnPage() {
     const nextPhrase = highlightPhrase + 1;
 
     if (nextPhrase < phraseCount) {
-      // Silence gap before next phrase
-      inGapRef.current = true;
-      const gapMs = calcSilenceDuration(repeatCount, silenceGapSec) * 1000;
-      gapTimerRef.current = setTimeout(() => {
-        inGapRef.current = false;
-        setHighlightPhrase(nextPhrase);
-      }, gapMs);
+      // Next phrase — no artificial gap, audio already has silence
+      setHighlightPhrase(nextPhrase);
     } else {
       // Move to next verse
       if (highlightIdx < lessonVerses.length - 1) {
-        inGapRef.current = true;
-        const gapMs = calcSilenceDuration(repeatCount, silenceGapSec) * 1000;
-        gapTimerRef.current = setTimeout(() => {
-          inGapRef.current = false;
-          setHighlightIdx((prev) => prev + 1);
-          setHighlightPhrase(0);
-        }, gapMs);
+        setHighlightIdx((prev) => prev + 1);
+        setHighlightPhrase(0);
       } else {
         // All done
         stopPlayback();
         updateStreak();
       }
     }
-  }, [highlightIdx, highlightPhrase, lessonVerses, dashakam, repeatCount, silenceGapSec, stopPlayback]);
+  }, [highlightIdx, highlightPhrase, lessonVerses, dashakam, repeatCount, stopPlayback]);
 
   // Audio playback effect: play current verse audio, use timeupdate for phrase highlighting
   useEffect(() => {
