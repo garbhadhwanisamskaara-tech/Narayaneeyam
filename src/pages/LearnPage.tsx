@@ -403,7 +403,7 @@ export default function LearnPage() {
               <p className="text-center text-xs text-primary-foreground/60 mt-2 font-sans">
                 Verse {highlightIdx + 1}/{lessonVerses.length}
                 {isPlaying && highlightPhrase >= 0 && ` · Line ${highlightPhrase + 1}`}
-                {` · ${repeatCount}× repeats (${silenceGapSec}s gaps)`}
+                {` · ${repeatCount}× repeats`}
               </p>
             </div>
           </>
