@@ -15,9 +15,7 @@ import { getProgress, saveProgress, updateStreak } from "@/lib/progress";
 import {
   getVerseTimestamp,
   getActivePhraseAtTime,
-  DEFAULT_SILENCE_GAP_SEC,
   DEFAULT_REPEAT_COUNT,
-  calcSilenceDuration,
 } from "@/lib/audioTimestamps";
 import { Link } from "react-router-dom";
 import VerseIcons from "@/components/VerseIcons";
@@ -26,9 +24,9 @@ import VerseIcons from "@/components/VerseIcons";
 
 function LearnControls({
   plans, activePlan, currentLessonIdx, translitLang, translationLang,
-  showMeaning, repeatCount, silenceGapSec, speed,
+  showMeaning, repeatCount, speed,
   onPlanChange, onLessonChange, onTranslitChange, onTranslationChange,
-  onToggleMeaning, onRepeatChange, onGapChange, onSpeedChange,
+  onToggleMeaning, onRepeatChange, onSpeedChange,
 }: {
   plans: LessonPlan[];
   activePlan: LessonPlan | null;
@@ -37,7 +35,6 @@ function LearnControls({
   translationLang: TranslationLanguage;
   showMeaning: boolean;
   repeatCount: number;
-  silenceGapSec: number;
   speed: number;
   onPlanChange: (id: string) => void;
   onLessonChange: (idx: number) => void;
@@ -45,7 +42,6 @@ function LearnControls({
   onTranslationChange: (v: TranslationLanguage) => void;
   onToggleMeaning: () => void;
   onRepeatChange: (n: number) => void;
-  onGapChange: (n: number) => void;
   onSpeedChange: (n: number) => void;
 }) {
   return (
@@ -98,15 +94,7 @@ function LearnControls({
         <label className="text-xs text-muted-foreground font-sans">Repeats</label>
         <select value={repeatCount} onChange={(e) => onRepeatChange(Number(e.target.value))}
           className="rounded-lg border border-border bg-background px-3 py-2 text-sm font-sans text-foreground">
-          {[1, 2, 3, 4, 5].map((n) => (<option key={n} value={n}>{n}× ({n * silenceGapSec}s gap)</option>))}
-        </select>
-      </div>
-
-      <div className="flex flex-col gap-1">
-        <label className="text-xs text-muted-foreground font-sans">Gap (sec)</label>
-        <select value={silenceGapSec} onChange={(e) => onGapChange(Number(e.target.value))}
-          className="rounded-lg border border-border bg-background px-3 py-2 text-sm font-sans text-foreground">
-          {[3, 5, 7, 10].map((n) => (<option key={n} value={n}>{n}s</option>))}
+          {[1, 2, 3, 4, 5].map((n) => (<option key={n} value={n}>{n}×</option>))}
         </select>
       </div>
 
@@ -137,7 +125,6 @@ export default function LearnPage() {
   const [highlightIdx, setHighlightIdx] = useState(0);
   const [highlightPhrase, setHighlightPhrase] = useState(-1); // -1 = whole verse
   const [repeatCount, setRepeatCount] = useState(DEFAULT_REPEAT_COUNT);
-  const [silenceGapSec, setSilenceGapSec] = useState(DEFAULT_SILENCE_GAP_SEC);
   const [speed, setSpeed] = useState(1);
 
   const audioRef = useRef<HTMLAudioElement | null>(null);
@@ -204,30 +191,20 @@ export default function LearnPage() {
     const nextPhrase = highlightPhrase + 1;
 
     if (nextPhrase < phraseCount) {
-      // Silence gap before next phrase
-      inGapRef.current = true;
-      const gapMs = calcSilenceDuration(repeatCount, silenceGapSec) * 1000;
-      gapTimerRef.current = setTimeout(() => {
-        inGapRef.current = false;
-        setHighlightPhrase(nextPhrase);
-      }, gapMs);
+      // Next phrase — no artificial gap, audio already has silence
+      setHighlightPhrase(nextPhrase);
     } else {
       // Move to next verse
       if (highlightIdx < lessonVerses.length - 1) {
-        inGapRef.current = true;
-        const gapMs = calcSilenceDuration(repeatCount, silenceGapSec) * 1000;
-        gapTimerRef.current = setTimeout(() => {
-          inGapRef.current = false;
-          setHighlightIdx((prev) => prev + 1);
-          setHighlightPhrase(0);
-        }, gapMs);
+        setHighlightIdx((prev) => prev + 1);
+        setHighlightPhrase(0);
       } else {
         // All done
         stopPlayback();
         updateStreak();
       }
     }
-  }, [highlightIdx, highlightPhrase, lessonVerses, dashakam, repeatCount, silenceGapSec, stopPlayback]);
+  }, [highlightIdx, highlightPhrase, lessonVerses, dashakam, repeatCount, stopPlayback]);
 
   // Audio playback effect: play current verse audio, use timeupdate for phrase highlighting
   useEffect(() => {
@@ -313,13 +290,13 @@ export default function LearnPage() {
         <LearnControls
           plans={plans} activePlan={activePlan} currentLessonIdx={currentLessonIdx}
           translitLang={translitLang} translationLang={translationLang}
-          showMeaning={showMeaning} repeatCount={repeatCount} silenceGapSec={silenceGapSec}
+          showMeaning={showMeaning} repeatCount={repeatCount}
           speed={speed}
           onPlanChange={(id) => { const plan = plans.find((p) => p.id === id); setActivePlan(plan || null); setCurrentLessonIdx(0); stopPlayback(); setHighlightIdx(0); }}
           onLessonChange={(idx) => { setCurrentLessonIdx(idx); stopPlayback(); setHighlightIdx(0); }}
           onTranslitChange={setTranslitLang} onTranslationChange={setTranslationLang}
           onToggleMeaning={() => setShowMeaning(!showMeaning)}
-          onRepeatChange={setRepeatCount} onGapChange={setSilenceGapSec}
+          onRepeatChange={setRepeatCount}
           onSpeedChange={setSpeed}
         />
 
@@ -364,12 +341,7 @@ export default function LearnPage() {
               </AnimatePresence>
             </div>
 
-            {/* Silence gap indicator */}
-            {isPlaying && inGapRef.current && (
-              <div className="mb-4 rounded-lg bg-secondary/10 border border-secondary/30 p-3 text-center animate-pulse">
-                <p className="text-sm font-sans text-secondary font-medium">🔇 Silence gap — repeat/practice this phrase ({calcSilenceDuration(repeatCount, silenceGapSec)}s)</p>
-              </div>
-            )}
+            {/* Silence gap indicator removed — learn audio has built-in silence */}
 
             {/* Verses */}
             <div className="space-y-4 mb-24">
@@ -429,7 +401,7 @@ export default function LearnPage() {
               <p className="text-center text-xs text-primary-foreground/60 mt-2 font-sans">
                 Verse {highlightIdx + 1}/{lessonVerses.length}
                 {isPlaying && highlightPhrase >= 0 && ` · Line ${highlightPhrase + 1}`}
-                {` · ${repeatCount}× repeats (${silenceGapSec}s gaps)`}
+                {` · ${repeatCount}× repeats`}
               </p>
             </div>
           </>

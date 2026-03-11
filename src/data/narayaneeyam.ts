@@ -7,12 +7,14 @@ export interface Verse {
   tamil: string;
   telugu: string;
   malayalam: string;
+  kannada: string;
   hindi: string;
   marathi: string;
   meaning_english: string;
   meaning_tamil: string;
   meaning_telugu: string;
   meaning_malayalam: string;
+  meaning_kannada: string;
   meaning_hindi: string;
   meaning_marathi: string;
   meter: string;
@@ -39,24 +41,43 @@ export interface Dashakam {
   imageUrl?: string;
 }
 
-export type TransliterationLanguage = "sanskrit" | "english" | "tamil" | "malayalam";
-export type TranslationLanguage = "english" | "tamil" | "malayalam" | "telugu" | "hindi" | "marathi";
-export type Language = "sanskrit" | "english" | "tamil" | "telugu" | "malayalam" | "hindi" | "marathi";
+// Full language support in data schema
+export type TransliterationLanguage = "sanskrit" | "english" | "tamil" | "malayalam" | "telugu" | "kannada";
+export type TranslationLanguage = "english" | "tamil" | "malayalam" | "telugu" | "kannada" | "hindi" | "marathi";
+export type Language = "sanskrit" | "english" | "tamil" | "telugu" | "malayalam" | "kannada" | "hindi" | "marathi";
 
-export const TRANSLITERATION_LANGUAGES: { value: TransliterationLanguage; label: string }[] = [
+// All supported transliteration languages (DB schema supports all)
+export const ALL_TRANSLITERATION_LANGUAGES: { value: TransliterationLanguage; label: string }[] = [
   { value: "sanskrit", label: "Sanskrit (Devanagari)" },
   { value: "english", label: "English" },
   { value: "tamil", label: "Tamil" },
   { value: "malayalam", label: "Malayalam" },
+  { value: "telugu", label: "Telugu" },
+  { value: "kannada", label: "Kannada" },
 ];
 
-export const TRANSLATION_LANGUAGES: { value: TranslationLanguage; label: string }[] = [
+// MVP: only these are shown in dropdowns
+export const TRANSLITERATION_LANGUAGES: { value: TransliterationLanguage; label: string }[] = [
+  { value: "sanskrit", label: "Sanskrit (Devanagari)" },
+  { value: "english", label: "English" },
+  { value: "tamil", label: "Tamil" },
+];
+
+// All supported translation languages (DB schema supports all)
+export const ALL_TRANSLATION_LANGUAGES: { value: TranslationLanguage; label: string }[] = [
   { value: "english", label: "English" },
   { value: "tamil", label: "Tamil" },
   { value: "malayalam", label: "Malayalam" },
   { value: "telugu", label: "Telugu" },
+  { value: "kannada", label: "Kannada" },
   { value: "hindi", label: "Hindi" },
   { value: "marathi", label: "Marathi" },
+];
+
+// MVP: only these are shown in dropdowns
+export const TRANSLATION_LANGUAGES: { value: TranslationLanguage; label: string }[] = [
+  { value: "english", label: "English" },
+  { value: "tamil", label: "Tamil" },
 ];
 
 export const LANGUAGES: { value: Language; label: string }[] = [
@@ -103,12 +124,14 @@ function makeVerse(
     tamil: opts.tamil || "",
     telugu: opts.telugu || "",
     malayalam: opts.malayalam || "",
+    kannada: opts.kannada || "",
     hindi: opts.hindi || "",
     marathi: opts.marathi || "",
     meaning_english: opts.meaning_english,
     meaning_tamil: opts.meaning_tamil || "",
     meaning_telugu: opts.meaning_telugu || "",
     meaning_malayalam: opts.meaning_malayalam || "",
+    meaning_kannada: opts.meaning_kannada || "",
     meaning_hindi: opts.meaning_hindi || "",
     meaning_marathi: opts.meaning_marathi || "",
     meter: opts.meter || "Sragdharā",
