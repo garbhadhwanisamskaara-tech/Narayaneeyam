@@ -343,12 +343,7 @@ export default function LearnPage() {
               </AnimatePresence>
             </div>
 
-            {/* Silence gap indicator */}
-            {isPlaying && inGapRef.current && (
-              <div className="mb-4 rounded-lg bg-secondary/10 border border-secondary/30 p-3 text-center animate-pulse">
-                <p className="text-sm font-sans text-secondary font-medium">🔇 Silence gap — repeat/practice this phrase ({calcSilenceDuration(repeatCount, silenceGapSec)}s)</p>
-              </div>
-            )}
+            {/* Silence gap indicator removed — learn audio has built-in silence */}
 
             {/* Verses */}
             <div className="space-y-4 mb-24">
