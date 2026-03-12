@@ -17,6 +17,10 @@ import AdminFestivalsPage from "./pages/AdminFestivalsPage";
 import AdminContentPage from "./pages/AdminContentPage";
 import AdminRoute from "./components/AdminRoute";
 import ResetPasswordPage from "./pages/ResetPasswordPage";
+import DevotionPathwaysPage from "./pages/DevotionPathwaysPage";
+import PrasadamListPage from "./pages/PrasadamListPage";
+import AboutPage from "./pages/AboutPage";
+import UserManualPage from "./pages/UserManualPage";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -39,6 +43,10 @@ const App = () => (
               <Route path="/lesson-plan" element={<LessonPlanPage />} />
               <Route path="/dashboard" element={<DashboardPage />} />
               <Route path="/podcast" element={<PodcastPage />} />
+              <Route path="/devotion-pathways" element={<DevotionPathwaysPage />} />
+              <Route path="/prasadam" element={<PrasadamListPage />} />
+              <Route path="/about" element={<AboutPage />} />
+              <Route path="/user-manual" element={<UserManualPage />} />
               <Route path="/admin/festivals" element={<AdminRoute><AdminFestivalsPage /></AdminRoute>} />
               <Route path="/admin/content" element={<AdminRoute><AdminContentPage /></AdminRoute>} />
               <Route path="*" element={<NotFound />} />
