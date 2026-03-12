@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from "react";
+import { useSearchParams } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { Play, Pause, SkipBack, SkipForward, RotateCcw, Bookmark, ChevronDown, ChevronUp, Volume2 } from "lucide-react";
 import {
@@ -17,6 +18,7 @@ import VerseIcons from "@/components/VerseIcons";
 import { Slider } from "@/components/ui/slider";
 
 export default function ChantPage() {
+  const [searchParams] = useSearchParams();
   const [selectedDashakam, setSelectedDashakam] = useState(1);
   const [selectedPara, setSelectedPara] = useState<number | null>(null);
   const [translitLang, setTranslitLang] = useState<TransliterationLanguage>("sanskrit");
@@ -29,9 +31,9 @@ export default function ChantPage() {
   const [speed, setSpeed] = useState(1);
   const [loopCount, setLoopCount] = useState(1);
   const [currentLoopIteration, setCurrentLoopIteration] = useState(0);
-  const [verseProgress, setVerseProgress] = useState(0); // 0-100 progress within current verse
+  const [verseProgress, setVerseProgress] = useState(0);
   const audioRef = useRef<HTMLAudioElement | null>(null);
-  const pausedRef = useRef(false); // track if we paused vs stopped
+  const pausedRef = useRef(false);
   const gapTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const dashakam = sampleDashakams.find((d) => d.id === selectedDashakam);
   const verses = dashakam?.verses || [];
@@ -39,8 +41,16 @@ export default function ChantPage() {
     ? verses.filter((v) => v.paragraph === selectedPara)
     : verses;
 
-  // Restore last position
+  // Restore last position or use query param
   useEffect(() => {
+    const qd = searchParams.get("dashakam");
+    if (qd) {
+      const num = parseInt(qd, 10);
+      if (num >= 1 && num <= 100) {
+        setSelectedDashakam(num);
+        return;
+      }
+    }
     const progress = getProgress();
     if (progress.chantState) {
       setSelectedDashakam(progress.chantState.dashakam);
