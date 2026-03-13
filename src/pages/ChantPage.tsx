@@ -104,29 +104,54 @@ export default function ChantPage() {
       audioRef.current.playbackRate = speed;
       audioRef.current.play().catch((err) => console.error("Audio play error:", err));
       pausedRef.current = false;
+      logAudioEvent("audio_play", selectedDashakam, displayVerses[highlightedVerse]?.paragraph || 0, "resume");
       
       const audio = audioRef.current;
       const updateProgress = () => {
         if (audio.duration) setVerseProgress((audio.currentTime / audio.duration) * 100);
       };
       audio.addEventListener("timeupdate", updateProgress);
-      audio.onended = () => advanceToNextVerse();
+      audio.onended = () => {
+        logAudioEvent("audio_complete", selectedDashakam, displayVerses[highlightedVerse]?.paragraph || 0, currentVerse?.audio || "");
+        advanceToNextVerse();
+      };
       return () => { audio.removeEventListener("timeupdate", updateProgress); audio.onended = null; };
     }
     
     const currentVerse = displayVerses[highlightedVerse];
     if (currentVerse?.audio) {
+      const loadStart = performance.now();
       const audio = new Audio(currentVerse.audio);
       audioRef.current = audio;
       audio.playbackRate = speed;
       pausedRef.current = false;
-      audio.play().catch((err) => console.error("Audio play error:", err));
+
+      audio.addEventListener("canplaythrough", () => {
+        const loadTime = Math.round(performance.now() - loadStart);
+        const eventType = loadTime > 1500 ? "audio_load_slow" : "audio_load";
+        logAudioEvent(eventType, selectedDashakam, currentVerse.paragraph, currentVerse.audio!, { load_time_ms: loadTime });
+      }, { once: true });
+
+      audio.addEventListener("error", () => {
+        const errMsg = audio.error?.message || "Unknown audio error";
+        logAudioEvent("audio_error", selectedDashakam, currentVerse.paragraph, currentVerse.audio!, { error_message: errMsg });
+        captureAudioError(new Error(errMsg), { dashakam: selectedDashakam, verse: currentVerse.paragraph, audio_file: currentVerse.audio });
+      });
+
+      audio.play().catch((err) => {
+        console.error("Audio play error:", err);
+        logAudioEvent("audio_error", selectedDashakam, currentVerse.paragraph, currentVerse.audio!, { error_message: String(err) });
+      });
+      logAudioEvent("audio_play", selectedDashakam, currentVerse.paragraph, currentVerse.audio!);
       
       const updateProgress = () => {
         if (audio.duration) setVerseProgress((audio.currentTime / audio.duration) * 100);
       };
       audio.addEventListener("timeupdate", updateProgress);
-      audio.onended = () => advanceToNextVerse();
+      audio.onended = () => {
+        logAudioEvent("audio_complete", selectedDashakam, currentVerse.paragraph, currentVerse.audio!);
+        advanceToNextVerse();
+      };
       return () => { audio.pause(); audio.removeEventListener("timeupdate", updateProgress); audio.onended = null; };
     } else {
       // Fallback simulated timing for verses without audio
