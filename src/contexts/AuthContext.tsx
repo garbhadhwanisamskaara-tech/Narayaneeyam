@@ -1,5 +1,7 @@
 import { createContext, useContext, useEffect, useState, type ReactNode } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { logEvent } from "@/services/eventLogger";
+import { setSentryUser } from "@/monitoring/sentry";
 import type { User, Session } from "@supabase/supabase-js";
 
 interface AuthContextType {
@@ -29,6 +31,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       setSession(session);
       setUser(session?.user ?? null);
+      setSentryUser(session?.user?.id ?? null, session?.user?.email ?? undefined);
       setLoading(false);
     });
 
@@ -54,17 +57,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         emailRedirectTo: window.location.origin,
       },
     });
+    if (!error) logEvent("user_signup");
     return { error: error as Error | null };
   };
 
   const signIn = async (email: string, password: string) => {
     if (!supabase) return { error: new Error("Backend not configured") };
     const { error } = await supabase.auth.signInWithPassword({ email, password });
+    if (!error) logEvent("user_login");
     return { error: error as Error | null };
   };
 
   const signOut = async () => {
     if (!supabase) return;
+    logEvent("user_logout");
     await supabase.auth.signOut();
   };
 
