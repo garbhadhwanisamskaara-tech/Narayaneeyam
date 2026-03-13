@@ -173,15 +173,16 @@ export default function ChantPage() {
     return () => { if (gapTimerRef.current) clearTimeout(gapTimerRef.current); };
   }, []);
 
-  const handlePlayPause = () => {
+  const000 handlePlayPause = () => {
     if (isPlaying) {
-      // Pause - keep position
       if (audioRef.current) {
         audioRef.current.pause();
         pausedRef.current = true;
       }
+      logAudioEvent("audio_pause", selectedDashakam, displayVerses[highlightedVerse]?.paragraph || 0, "");
       setIsPlaying(false);
     } else {
+      logEvent("chant_started", { dashakam: selectedDashakam });
       setIsPlaying(true);
     }
   };
