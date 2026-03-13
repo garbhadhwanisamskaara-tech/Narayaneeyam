@@ -57,6 +57,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         emailRedirectTo: window.location.origin,
       },
     });
+    if (!error) logEvent("user_signup");
     return { error: error as Error | null };
   };
 
