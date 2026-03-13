@@ -173,7 +173,7 @@ export default function ChantPage() {
     return () => { if (gapTimerRef.current) clearTimeout(gapTimerRef.current); };
   }, []);
 
-  const000 handlePlayPause = () => {
+  const handlePlayPause = () => {
     if (isPlaying) {
       if (audioRef.current) {
         audioRef.current.pause();
