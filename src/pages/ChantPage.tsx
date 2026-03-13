@@ -2,6 +2,8 @@ import { useState, useEffect, useRef, useCallback } from "react";
 import { useSearchParams } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { Play, Pause, SkipBack, SkipForward, RotateCcw, Bookmark, ChevronDown, ChevronUp, Volume2 } from "lucide-react";
+import { logEvent, logAudioEvent } from "@/services/eventLogger";
+import { captureAudioError } from "@/monitoring/sentry";
 import {
   sampleDashakams,
   TRANSLITERATION_LANGUAGES,
