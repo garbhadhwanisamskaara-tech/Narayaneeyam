@@ -21,6 +21,7 @@ import DevotionPathwaysPage from "./pages/DevotionPathwaysPage";
 import PrasadamListPage from "./pages/PrasadamListPage";
 import AboutPage from "./pages/AboutPage";
 import UserManualPage from "./pages/UserManualPage";
+import FounderDashboard from "./pages/FounderDashboard";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -49,6 +50,7 @@ const App = () => (
               <Route path="/user-manual" element={<UserManualPage />} />
               <Route path="/admin/festivals" element={<AdminRoute><AdminFestivalsPage /></AdminRoute>} />
               <Route path="/admin/content" element={<AdminRoute><AdminContentPage /></AdminRoute>} />
+              <Route path="/admin/dashboard" element={<FounderDashboard />} />
               <Route path="*" element={<NotFound />} />
             </Routes>
           </Layout>
