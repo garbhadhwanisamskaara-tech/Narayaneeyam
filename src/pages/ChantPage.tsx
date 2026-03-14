@@ -403,6 +403,25 @@ export default function ChantPage() {
           )}
         </div>
       </motion.div>
+
+      <RemoveBottomSheet
+        open={!!removeTarget}
+        onClose={() => setRemoveTarget(null)}
+        onConfirm={() => {
+          if (!removeTarget) return;
+          if (removeTarget.type === "bookmark") {
+            const entry = { verseId: removeTarget.verseId, dashakam: removeTarget.dashakam, verse: removeTarget.verse, mode: "chant" as const, savedAt: "" };
+            removeBookmark(removeTarget.verseId);
+            // toast with undo handled inline
+          } else {
+            removeFavourite(removeTarget.verseId);
+          }
+          setRemoveTarget(null);
+        }}
+        type={removeTarget?.type || "bookmark"}
+        dashakam={removeTarget?.dashakam || 0}
+        verse={removeTarget?.verse || 0}
+      />
     </div>
   );
 }

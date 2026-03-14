@@ -125,6 +125,11 @@ export default function DashboardPage() {
           ))}
         </div>
 
+        {/* Bookmarks & Favourites */}
+        <div className="mb-8">
+          <DashboardCollectionCards />
+        </div>
+
         {/* Module Cards */}
         <div className="space-y-3 mb-8">
           {modules.map((m, i) => (
