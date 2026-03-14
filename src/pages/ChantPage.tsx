@@ -39,9 +39,12 @@ export default function ChantPage() {
   const [loopCount, setLoopCount] = useState(1);
   const [currentLoopIteration, setCurrentLoopIteration] = useState(0);
   const [verseProgress, setVerseProgress] = useState(0);
+  const [removeTarget, setRemoveTarget] = useState<{ type: "bookmark" | "favourite"; verseId: string; dashakam: number; verse: number } | null>(null);
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const pausedRef = useRef(false);
   const gapTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const { isBookmarked, addBookmark, removeBookmark, undoRemoveBookmark } = useBookmarks();
+  const { isFavourited, addFavourite, removeFavourite, undoRemoveFavourite } = useFavourites();
   const dashakam = sampleDashakams.find((d) => d.id === selectedDashakam);
   const verses = dashakam?.verses || [];
   const displayVerses = selectedPara
