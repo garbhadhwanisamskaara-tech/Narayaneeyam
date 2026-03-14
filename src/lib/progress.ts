@@ -1,5 +1,21 @@
 // Progress tracking using localStorage (will move to DB with Cloud)
 
+export interface BookmarkEntry {
+  verseId: string;
+  dashakam: number;
+  verse: number;
+  mode: "chant" | "learn" | "podcast" | "script" | "dashboard";
+  savedAt: string;
+}
+
+export interface FavouriteEntry {
+  verseId: string;
+  dashakam: number;
+  verse: number;
+  sanskrit: string;
+  savedAt: string;
+}
+
 export interface UserProgress {
   lastDashakam: number;
   lastParagraph: number;
@@ -12,6 +28,8 @@ export interface UserProgress {
   lastSessionDate: string;
   totalSessions: number;
   bookmarks: string[];
+  bookmarkEntries: BookmarkEntry[];
+  favouriteEntries: FavouriteEntry[];
   preferredLanguage: string;
   chantSpeed: number;
   loopCount: number;
@@ -35,6 +53,8 @@ const defaultProgress: UserProgress = {
   lastSessionDate: "",
   totalSessions: 0,
   bookmarks: [],
+  bookmarkEntries: [],
+  favouriteEntries: [],
   preferredLanguage: "english",
   chantSpeed: 1,
   loopCount: 1,

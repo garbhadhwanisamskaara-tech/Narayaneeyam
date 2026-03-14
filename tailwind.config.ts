@@ -66,6 +66,8 @@ export default {
           DEFAULT: "hsl(var(--cream))",
           dark: "hsl(var(--cream-dark))",
         },
+        "bookmark-gold": "hsl(var(--bookmark-gold))",
+        "favourite-rose": "hsl(var(--favourite-rose))",
         sidebar: {
           DEFAULT: "hsl(var(--sidebar-background))",
           foreground: "hsl(var(--sidebar-foreground))",
