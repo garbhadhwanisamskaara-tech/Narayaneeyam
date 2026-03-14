@@ -1,9 +1,14 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { useSearchParams } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
-import { Play, Pause, SkipBack, SkipForward, RotateCcw, Bookmark, ChevronDown, ChevronUp, Volume2 } from "lucide-react";
+import { Play, Pause, SkipBack, SkipForward, RotateCcw, ChevronDown, ChevronUp, Volume2 } from "lucide-react";
 import { logEvent, logAudioEvent } from "@/services/eventLogger";
 import { captureAudioError } from "@/monitoring/sentry";
+import { useBookmarks } from "@/hooks/useBookmarks";
+import { useFavourites } from "@/hooks/useFavourites";
+import BookmarkButton from "@/components/BookmarkButton";
+import FavouriteButton from "@/components/FavouriteButton";
+import RemoveBottomSheet from "@/components/RemoveBottomSheet";
 import {
   sampleDashakams,
   TRANSLITERATION_LANGUAGES,
@@ -34,9 +39,12 @@ export default function ChantPage() {
   const [loopCount, setLoopCount] = useState(1);
   const [currentLoopIteration, setCurrentLoopIteration] = useState(0);
   const [verseProgress, setVerseProgress] = useState(0);
+  const [removeTarget, setRemoveTarget] = useState<{ type: "bookmark" | "favourite"; verseId: string; dashakam: number; verse: number } | null>(null);
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const pausedRef = useRef(false);
   const gapTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const { isBookmarked, addBookmark, removeBookmark, undoRemoveBookmark } = useBookmarks();
+  const { isFavourited, addFavourite, removeFavourite, undoRemoveFavourite } = useFavourites();
   const dashakam = sampleDashakams.find((d) => d.id === selectedDashakam);
   const verses = dashakam?.verses || [];
   const displayVerses = selectedPara
@@ -322,9 +330,28 @@ export default function ChantPage() {
                 className={`rounded-xl border p-5 transition-all duration-500 ${idx === highlightedVerse && isPlaying ? "border-secondary bg-secondary/10 shadow-gold" : "border-border bg-card"}`}>
                 <div className="flex items-start justify-between mb-3">
                   <span className="text-xs text-muted-foreground font-sans">Verse {verse.paragraph} · {verse.meter}</span>
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-1">
                     <VerseIcons bell={dashakam ? verseShouldShowBell(dashakam, verse.paragraph) : false} prasadam={dashakam ? getVersePrasadam(dashakam, verse.paragraph) : undefined} />
-                    <button className="text-muted-foreground hover:text-secondary transition-colors"><Bookmark className="h-4 w-4" /></button>
+                    <BookmarkButton
+                      active={isBookmarked(verse.id)}
+                      onClick={() => {
+                        if (isBookmarked(verse.id)) {
+                          setRemoveTarget({ type: "bookmark", verseId: verse.id, dashakam: verse.dashakam, verse: verse.paragraph });
+                        } else {
+                          addBookmark({ verseId: verse.id, dashakam: verse.dashakam, verse: verse.paragraph, mode: "chant" });
+                        }
+                      }}
+                    />
+                    <FavouriteButton
+                      active={isFavourited(verse.id)}
+                      onClick={() => {
+                        if (isFavourited(verse.id)) {
+                          setRemoveTarget({ type: "favourite", verseId: verse.id, dashakam: verse.dashakam, verse: verse.paragraph });
+                        } else {
+                          addFavourite({ verseId: verse.id, dashakam: verse.dashakam, verse: verse.paragraph, sanskrit: verse.sanskrit || verse.english });
+                        }
+                      }}
+                    />
                   </div>
                 </div>
                 <p className={`font-body text-lg leading-relaxed whitespace-pre-line transition-colors ${idx === highlightedVerse && isPlaying ? "text-primary font-semibold" : "text-foreground"}`}>
@@ -376,6 +403,25 @@ export default function ChantPage() {
           )}
         </div>
       </motion.div>
+
+      <RemoveBottomSheet
+        open={!!removeTarget}
+        onClose={() => setRemoveTarget(null)}
+        onConfirm={() => {
+          if (!removeTarget) return;
+          if (removeTarget.type === "bookmark") {
+            const entry = { verseId: removeTarget.verseId, dashakam: removeTarget.dashakam, verse: removeTarget.verse, mode: "chant" as const, savedAt: "" };
+            removeBookmark(removeTarget.verseId);
+            // toast with undo handled inline
+          } else {
+            removeFavourite(removeTarget.verseId);
+          }
+          setRemoveTarget(null);
+        }}
+        type={removeTarget?.type || "bookmark"}
+        dashakam={removeTarget?.dashakam || 0}
+        verse={removeTarget?.verse || 0}
+      />
     </div>
   );
 }
