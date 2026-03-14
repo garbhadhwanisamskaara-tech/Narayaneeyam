@@ -330,9 +330,28 @@ export default function ChantPage() {
                 className={`rounded-xl border p-5 transition-all duration-500 ${idx === highlightedVerse && isPlaying ? "border-secondary bg-secondary/10 shadow-gold" : "border-border bg-card"}`}>
                 <div className="flex items-start justify-between mb-3">
                   <span className="text-xs text-muted-foreground font-sans">Verse {verse.paragraph} · {verse.meter}</span>
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-1">
                     <VerseIcons bell={dashakam ? verseShouldShowBell(dashakam, verse.paragraph) : false} prasadam={dashakam ? getVersePrasadam(dashakam, verse.paragraph) : undefined} />
-                    <button className="text-muted-foreground hover:text-secondary transition-colors"><Bookmark className="h-4 w-4" /></button>
+                    <BookmarkButton
+                      active={isBookmarked(verse.id)}
+                      onClick={() => {
+                        if (isBookmarked(verse.id)) {
+                          setRemoveTarget({ type: "bookmark", verseId: verse.id, dashakam: verse.dashakam, verse: verse.paragraph });
+                        } else {
+                          addBookmark({ verseId: verse.id, dashakam: verse.dashakam, verse: verse.paragraph, mode: "chant" });
+                        }
+                      }}
+                    />
+                    <FavouriteButton
+                      active={isFavourited(verse.id)}
+                      onClick={() => {
+                        if (isFavourited(verse.id)) {
+                          setRemoveTarget({ type: "favourite", verseId: verse.id, dashakam: verse.dashakam, verse: verse.paragraph });
+                        } else {
+                          addFavourite({ verseId: verse.id, dashakam: verse.dashakam, verse: verse.paragraph, sanskrit: verse.sanskrit || verse.english });
+                        }
+                      }}
+                    />
                   </div>
                 </div>
                 <p className={`font-body text-lg leading-relaxed whitespace-pre-line transition-colors ${idx === highlightedVerse && isPlaying ? "text-primary font-semibold" : "text-foreground"}`}>

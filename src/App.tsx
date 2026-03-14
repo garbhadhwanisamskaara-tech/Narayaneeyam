@@ -22,6 +22,8 @@ import PrasadamListPage from "./pages/PrasadamListPage";
 import AboutPage from "./pages/AboutPage";
 import UserManualPage from "./pages/UserManualPage";
 import FounderDashboard from "./pages/FounderDashboard";
+import HeartShelfPage from "./pages/HeartShelfPage";
+import SavedPlacesPage from "./pages/SavedPlacesPage";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -48,6 +50,8 @@ const App = () => (
               <Route path="/prasadam" element={<PrasadamListPage />} />
               <Route path="/about" element={<AboutPage />} />
               <Route path="/user-manual" element={<UserManualPage />} />
+              <Route path="/heart-shelf" element={<HeartShelfPage />} />
+              <Route path="/saved-places" element={<SavedPlacesPage />} />
               <Route path="/admin/festivals" element={<AdminRoute><AdminFestivalsPage /></AdminRoute>} />
               <Route path="/admin/content" element={<AdminRoute><AdminContentPage /></AdminRoute>} />
               <Route path="/admin/dashboard" element={<FounderDashboard />} />

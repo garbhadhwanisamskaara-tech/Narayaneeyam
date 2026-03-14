@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
-import { User, Route, UtensilsCrossed, Info, BookOpenCheck, X, AlertCircle, BarChart3 } from "lucide-react";
+import { User, Route, UtensilsCrossed, Info, BookOpenCheck, X, AlertCircle, BarChart3, Bookmark, Heart } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import ReportIssueDialog from "@/components/ReportIssueDialog";
 
@@ -11,6 +11,8 @@ interface Props {
 
 const menuItems = [
   { path: "/dashboard", label: "Profile", icon: User },
+  { path: "/saved-places", label: "Where you left off", icon: Bookmark },
+  { path: "/heart-shelf", label: "Slokas close to your heart", icon: Heart },
   { path: "/devotion-pathways", label: "Devotion Pathways", icon: Route },
   { path: "/prasadam", label: "Prasadam List", icon: UtensilsCrossed },
   { path: "/admin/dashboard", label: "Founder Dashboard", icon: BarChart3 },
