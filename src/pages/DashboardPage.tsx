@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
+import DashboardCollectionCards from "@/components/DashboardCollectionCards";
 import { Flame, BookOpen, Clock, Mic, GraduationCap, Headphones, Share2 } from "lucide-react";
 import { getProgress, type UserProgress } from "@/lib/progress";
 import { getLessonPlans } from "@/lib/lessonPlan";
