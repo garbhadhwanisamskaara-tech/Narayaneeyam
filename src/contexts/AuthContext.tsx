@@ -94,6 +94,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const signOut = async () => {
     logEvent("user_logout");
+    setIsAdmin(false);
+    setIsFounder(false);
     await supabase.auth.signOut();
   };
 
