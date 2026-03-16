@@ -78,7 +78,7 @@ function SystemHealthItem({ label, status }: { label: string; status: "ok" | "wa
 }
 
 export default function FounderDashboard() {
-  const { isFounder, loading: authLoading } = useFounderCheck();
+  const { isFounder, loading: authLoading } = useAuth();
   const [refreshKey, setRefreshKey] = useState(0);
   const [chartDays, setChartDays] = useState(7);
 
