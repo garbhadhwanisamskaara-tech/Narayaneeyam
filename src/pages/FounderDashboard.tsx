@@ -96,10 +96,11 @@ export default function FounderDashboard() {
 
   const handleRefresh = useCallback(() => setRefreshKey(k => k + 1), []);
 
-  if (authLoading) {
-    return <div className="flex items-center justify-center min-h-[60vh]"><p className="text-muted-foreground font-sans">Checking access…</p></div>;
-  }
-  if (!isFounder) return <Navigate to="/" replace />;
+  // TODO: Re-enable auth check before production
+  // if (authLoading) {
+  //   return <div className="flex items-center justify-center min-h-[60vh]"><p className="text-muted-foreground font-sans">Checking access…</p></div>;
+  // }
+  // if (!isFounder) return <Navigate to="/" replace />;
 
   const today = new Date().toLocaleDateString("en-US", { month: "short", day: "numeric" });
 
