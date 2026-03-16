@@ -6,7 +6,7 @@ import {
   AlertTriangle, Bell, Shield, Activity, Server, Database, Cloud,
   Upload, Plus, MessageSquare, Stethoscope,
 } from "lucide-react";
-import { useFounderCheck } from "@/hooks/useFounderCheck";
+import { useAuth } from "@/contexts/AuthContext";
 import { useUsageMetrics } from "@/hooks/useUsageMetrics";
 import { useAudioHealth } from "@/hooks/useAudioHealth";
 import { useChantAnalytics } from "@/hooks/useChantAnalytics";
