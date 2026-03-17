@@ -35,29 +35,33 @@ const App = () => (
       <Sonner />
       <BrowserRouter>
         <AuthProvider>
-          <Layout>
-            <Routes>
-              <Route path="/" element={<Index />} />
-              <Route path="/auth" element={<AuthPage />} />
-              <Route path="/reset-password" element={<ResetPasswordPage />} />
-              <Route path="/chant" element={<ChantPage />} />
-              <Route path="/learn" element={<LearnPage />} />
-              <Route path="/script" element={<ScriptPage />} />
-              <Route path="/lesson-plan" element={<LessonPlanPage />} />
-              <Route path="/dashboard" element={<DashboardPage />} />
-              <Route path="/podcast" element={<PodcastPage />} />
-              <Route path="/devotion-pathways" element={<DevotionPathwaysPage />} />
-              <Route path="/prasadam" element={<PrasadamListPage />} />
-              <Route path="/about" element={<AboutPage />} />
-              <Route path="/user-manual" element={<UserManualPage />} />
-              <Route path="/heart-shelf" element={<HeartShelfPage />} />
-              <Route path="/saved-places" element={<SavedPlacesPage />} />
-              <Route path="/admin/festivals" element={<AdminRoute><AdminFestivalsPage /></AdminRoute>} />
-              <Route path="/admin/content" element={<AdminRoute><AdminContentPage /></AdminRoute>} />
-              <Route path="/admin/dashboard" element={<FounderDashboard />} />
-              <Route path="*" element={<NotFound />} />
-            </Routes>
-          </Layout>
+          <Routes>
+            <Route path="/auth" element={<AuthPage />} />
+            <Route path="/reset-password" element={<ResetPasswordPage />} />
+            <Route path="/*" element={
+              <Layout>
+                <Routes>
+                  <Route path="/" element={<Index />} />
+                  <Route path="/chant" element={<ChantPage />} />
+                  <Route path="/learn" element={<LearnPage />} />
+                  <Route path="/script" element={<ScriptPage />} />
+                  <Route path="/lesson-plan" element={<LessonPlanPage />} />
+                  <Route path="/dashboard" element={<DashboardPage />} />
+                  <Route path="/podcast" element={<PodcastPage />} />
+                  <Route path="/devotion-pathways" element={<DevotionPathwaysPage />} />
+                  <Route path="/prasadam" element={<PrasadamListPage />} />
+                  <Route path="/about" element={<AboutPage />} />
+                  <Route path="/user-manual" element={<UserManualPage />} />
+                  <Route path="/heart-shelf" element={<HeartShelfPage />} />
+                  <Route path="/saved-places" element={<SavedPlacesPage />} />
+                  <Route path="/admin/festivals" element={<AdminRoute><AdminFestivalsPage /></AdminRoute>} />
+                  <Route path="/admin/content" element={<AdminRoute><AdminContentPage /></AdminRoute>} />
+                  <Route path="/admin/dashboard" element={<AdminRoute><FounderDashboard /></AdminRoute>} />
+                  <Route path="*" element={<NotFound />} />
+                </Routes>
+              </Layout>
+            } />
+          </Routes>
         </AuthProvider>
       </BrowserRouter>
     </TooltipProvider>
