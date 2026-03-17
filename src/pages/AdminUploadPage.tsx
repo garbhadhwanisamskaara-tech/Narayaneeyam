@@ -219,8 +219,8 @@ export default function AdminUploadPage() {
           })}
         </div>
         <div className="flex items-center gap-4 mt-3 text-xs text-muted-foreground">
-          <span className="flex items-center gap-1"><span className="h-3 w-3 rounded-sm bg-emerald-600 inline-block" /> Complete</span>
-          <span className="flex items-center gap-1"><span className="h-3 w-3 rounded-sm bg-amber-500 inline-block" /> Partial</span>
+          <span className="flex items-center gap-1"><span className="h-3 w-3 rounded-sm bg-primary inline-block" /> Complete</span>
+          <span className="flex items-center gap-1"><span className="h-3 w-3 rounded-sm bg-secondary inline-block" /> Partial</span>
           <span className="flex items-center gap-1"><span className="h-3 w-3 rounded-sm bg-destructive inline-block" /> Empty</span>
         </div>
       </section>
