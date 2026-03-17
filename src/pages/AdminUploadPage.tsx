@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { dashakams } from "@/data/narayaneeyam";
+import { sampleDashakams as dashakams } from "@/data/narayaneeyam";
 import { toast } from "@/hooks/use-toast";
 import { Check, AlertTriangle, X, Save, Upload } from "lucide-react";
 
