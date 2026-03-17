@@ -46,25 +46,6 @@ export default function Layout({ children }: { children: React.ReactNode }) {
     }
   }, []);
 
-  // Global content protection: block keyboard shortcuts for print/screenshot
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === "PrintScreen") { e.preventDefault(); return; }
-      if ((e.ctrlKey || e.metaKey) && ["p", "s", "u"].includes(e.key.toLowerCase())) { e.preventDefault(); }
-      if ((e.ctrlKey || e.metaKey) && e.shiftKey && ["i", "j", "c"].includes(e.key.toLowerCase())) { e.preventDefault(); }
-      if (e.key === "F12") { e.preventDefault(); }
-    };
-    const handleContext = (e: MouseEvent) => e.preventDefault();
-    const handleDrag = (e: DragEvent) => e.preventDefault();
-    document.addEventListener("keydown", handleKeyDown);
-    document.addEventListener("contextmenu", handleContext);
-    document.addEventListener("dragstart", handleDrag);
-    return () => {
-      document.removeEventListener("keydown", handleKeyDown);
-      document.removeEventListener("contextmenu", handleContext);
-      document.removeEventListener("dragstart", handleDrag);
-    };
-  }, []);
 
   return (
     <div className="min-h-screen bg-background">
