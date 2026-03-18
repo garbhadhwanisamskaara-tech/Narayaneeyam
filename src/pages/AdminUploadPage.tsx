@@ -2,7 +2,20 @@ import { useState, useEffect, useCallback, Fragment } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { sampleDashakams as localDashakams } from "@/data/narayaneeyam";
 import { toast } from "@/hooks/use-toast";
-import { Check, AlertTriangle, X, Save, Upload, BookOpen, FileText, Music } from "lucide-react";
+import { Check, AlertTriangle, X, Save, Upload, BookOpen, FileText, Music, Globe } from "lucide-react";
+
+/* ── constants ── */
+const LANGUAGES = [
+  { code: "en", label: "EN" },
+  { code: "ta", label: "TA" },
+  { code: "ml", label: "ML" },
+  { code: "te", label: "TE" },
+  { code: "hi", label: "HI" },
+  { code: "mr", label: "MR" },
+  { code: "kn", label: "KN" },
+] as const;
+
+type LangCode = (typeof LANGUAGES)[number]["code"];
 
 /* ── types ── */
 interface UploadProgress {
@@ -10,7 +23,23 @@ interface UploadProgress {
   chant_uploaded: number;
   learn_uploaded: number;
   scripts_complete?: number;
+  translations_complete?: boolean;
   is_complete: boolean;
+}
+
+interface LangContent {
+  transliteration_text: string;
+  translation_text: string;
+  prasadam_text: string;
+  dirty: boolean;
+}
+
+interface SlokaData {
+  id?: string;
+  sloka_num: number;
+  sloka_verse: number;
+  auto_play: boolean;
+  dirty: boolean;
 }
 
 interface VerseRow {
@@ -25,6 +54,13 @@ interface VerseRow {
   sanskrit_script: string;
   meter: string;
   scriptDirty: boolean;
+  // language content per lang code
+  langContent: Record<LangCode, LangContent>;
+  langLoaded: Set<LangCode>;
+  activeLang: LangCode;
+  // sloka
+  sloka: SlokaData;
+  sloka_id: string | null;
 }
 
 interface DashakamDetails {
@@ -44,6 +80,16 @@ const emptyDetails: DashakamDetails = {
   image_url: "",
   is_published: false,
 };
+
+const emptyLangContent = (): Record<LangCode, LangContent> => {
+  const m: any = {};
+  LANGUAGES.forEach((l) => {
+    m[l.code] = { transliteration_text: "", translation_text: "", prasadam_text: "", dirty: false };
+  });
+  return m;
+};
+
+const emptySloka: SlokaData = { sloka_num: 0, sloka_verse: 0, auto_play: true, dirty: false };
 
 /* ── helpers ── */
 function statusColor(p: UploadProgress | undefined): string {
@@ -66,13 +112,15 @@ export default function AdminUploadPage() {
   const [verses, setVerses] = useState<VerseRow[]>([]);
   const [saving, setSaving] = useState<number | null>(null);
   const [savingScript, setSavingScript] = useState<number | null>(null);
+  const [savingLang, setSavingLang] = useState<string | null>(null); // "verseNo-lang"
+  const [savingSloka, setSavingSloka] = useState<number | null>(null);
 
   // Dashakam details
   const [details, setDetails] = useState<DashakamDetails>(emptyDetails);
   const [detailsDirty, setDetailsDirty] = useState(false);
   const [savingDetails, setSavingDetails] = useState(false);
 
-  // Expanded script rows
+  // Expanded rows
   const [expandedVerse, setExpandedVerse] = useState<number | null>(null);
 
   /* ── load progress grid ── */
@@ -114,7 +162,6 @@ export default function AdminUploadPage() {
         is_published: !!data.is_published,
       });
     } else {
-      // Pre-fill from local data
       const local = localDashakams.find((d) => d.id === dNo);
       setDetails({
         dashakam_name: local?.title_english ?? "",
@@ -154,11 +201,16 @@ export default function AdminUploadPage() {
         chant_audio_file: a?.chant_audio_file ?? "",
         learn_audio_file: a?.learn_audio_file ?? "",
         has_bell: s?.has_bell ?? (dk?.bell_verses?.includes(v) ?? false),
-        has_sloka: false,
+        has_sloka: !!a?.sloka_id,
         dirty: false,
         sanskrit_script: s?.sanskrit_script ?? "",
         meter: s?.meter ?? "",
         scriptDirty: false,
+        langContent: emptyLangContent(),
+        langLoaded: new Set(),
+        activeLang: "en",
+        sloka: { ...emptySloka },
+        sloka_id: a?.sloka_id ?? null,
       });
     }
     setVerses(rows);
@@ -171,6 +223,90 @@ export default function AdminUploadPage() {
     loadDetails(dNo);
   };
 
+  /* ── load language content for a verse+lang ── */
+  const loadLangContent = useCallback(async (dNo: number, vNo: number, lang: LangCode) => {
+    const [{ data: langRow }, { data: prasRow }] = await Promise.all([
+      supabase.from("language_script").select("*")
+        .eq("dashakam_no", dNo).eq("verse_no", vNo).eq("language_code", lang).maybeSingle(),
+      supabase.from("prasadam").select("*")
+        .eq("dashakam_no", dNo).eq("verse_no", vNo).eq("language_code", lang).maybeSingle(),
+    ]);
+
+    setVerses((prev) =>
+      prev.map((v) => {
+        if (v.verse_no !== vNo) return v;
+        const updated = { ...v };
+        updated.langContent = { ...v.langContent };
+        updated.langContent[lang] = {
+          transliteration_text: langRow?.transliteration_text ?? "",
+          translation_text: langRow?.translation_text ?? "",
+          prasadam_text: prasRow?.prasadam_text ?? "",
+          dirty: false,
+        };
+        updated.langLoaded = new Set(v.langLoaded);
+        updated.langLoaded.add(lang);
+        return updated;
+      })
+    );
+  }, []);
+
+  /* ── load sloka data for a verse ── */
+  const loadSlokaData = useCallback(async (slokaId: string, vNo: number) => {
+    const { data } = await supabase.from("slokas").select("*").eq("id", slokaId).maybeSingle();
+    if (data) {
+      setVerses((prev) =>
+        prev.map((v) => {
+          if (v.verse_no !== vNo) return v;
+          return {
+            ...v,
+            sloka: {
+              id: data.id,
+              sloka_num: data.sloka_num ?? 0,
+              sloka_verse: data.sloka_verse ?? 0,
+              auto_play: data.auto_play ?? true,
+              dirty: false,
+            },
+          };
+        })
+      );
+    }
+  }, []);
+
+  /* ── load all lang existence indicators for a dashakam ── */
+  const [langExistence, setLangExistence] = useState<Record<string, Set<LangCode>>>({});
+
+  const loadLangExistence = useCallback(async (dNo: number) => {
+    const { data } = await supabase
+      .from("language_script")
+      .select("verse_no, language_code")
+      .eq("dashakam_no", dNo);
+    const map: Record<string, Set<LangCode>> = {};
+    data?.forEach((r: any) => {
+      const key = String(r.verse_no);
+      if (!map[key]) map[key] = new Set();
+      map[key].add(r.language_code as LangCode);
+    });
+    setLangExistence(map);
+  }, []);
+
+  // Load lang existence when dashakam changes
+  useEffect(() => {
+    if (selectedDashakam) loadLangExistence(selectedDashakam);
+  }, [selectedDashakam, loadLangExistence]);
+
+  // When expanding a verse, load its active lang + sloka
+  useEffect(() => {
+    if (expandedVerse && selectedDashakam) {
+      const row = verses.find((v) => v.verse_no === expandedVerse);
+      if (row && !row.langLoaded.has(row.activeLang)) {
+        loadLangContent(selectedDashakam, expandedVerse, row.activeLang);
+      }
+      if (row && row.sloka_id && !row.sloka.id) {
+        loadSlokaData(row.sloka_id, expandedVerse);
+      }
+    }
+  }, [expandedVerse, selectedDashakam, verses, loadLangContent, loadSlokaData]);
+
   /* ── update a verse field ── */
   const updateField = (verseNo: number, field: keyof VerseRow, value: any) => {
     setVerses((prev) =>
@@ -182,9 +318,39 @@ export default function AdminUploadPage() {
           [field]: value,
           dirty: isScript ? v.dirty : true,
           scriptDirty: isScript ? true : v.scriptDirty,
-          // has_bell dirties both
           ...(field === "has_bell" ? { dirty: true, scriptDirty: true } : {}),
         };
+      })
+    );
+  };
+
+  const updateLangField = (verseNo: number, lang: LangCode, field: keyof LangContent, value: string) => {
+    setVerses((prev) =>
+      prev.map((v) => {
+        if (v.verse_no !== verseNo) return v;
+        const updated = { ...v };
+        updated.langContent = { ...v.langContent };
+        updated.langContent[lang] = { ...v.langContent[lang], [field]: value, dirty: true };
+        return updated;
+      })
+    );
+  };
+
+  const setActiveLang = (verseNo: number, lang: LangCode) => {
+    setVerses((prev) =>
+      prev.map((v) => (v.verse_no === verseNo ? { ...v, activeLang: lang } : v))
+    );
+    const row = verses.find((v) => v.verse_no === verseNo);
+    if (row && !row.langLoaded.has(lang) && selectedDashakam) {
+      loadLangContent(selectedDashakam, verseNo, lang);
+    }
+  };
+
+  const updateSlokaField = (verseNo: number, field: keyof SlokaData, value: any) => {
+    setVerses((prev) =>
+      prev.map((v) => {
+        if (v.verse_no !== verseNo) return v;
+        return { ...v, sloka: { ...v.sloka, [field]: value, dirty: true } };
       })
     );
   };
@@ -234,7 +400,6 @@ export default function AdminUploadPage() {
         );
       if (audioErr) throw audioErr;
 
-      // Update bell in sanskrit_script too
       const { error: scriptErr } = await supabase
         .from("sanskrit_script")
         .upsert(
@@ -243,7 +408,6 @@ export default function AdminUploadPage() {
         );
       if (scriptErr) throw scriptErr;
 
-      // Update progress
       const chantCount = verses.filter(
         (v) => (v.verse_no === row.verse_no ? row.chant_audio_file : v.chant_audio_file)
       ).length;
@@ -293,7 +457,6 @@ export default function AdminUploadPage() {
         );
       if (error) throw error;
 
-      // Update scripts_complete count in progress
       const scriptsDone = verses.filter((v) =>
         (v.verse_no === row.verse_no ? row.sanskrit_script : v.sanskrit_script)
       ).length;
@@ -312,6 +475,133 @@ export default function AdminUploadPage() {
       toast({ title: "Error", description: err.message, variant: "destructive" });
     } finally {
       setSavingScript(null);
+    }
+  };
+
+  /* ── save language content ── */
+  const saveLangContent = async (row: VerseRow, lang: LangCode) => {
+    const key = `${row.verse_no}-${lang}`;
+    setSavingLang(key);
+    const lc = row.langContent[lang];
+    try {
+      const { error: langErr } = await supabase.from("language_script").upsert(
+        {
+          dashakam_no: row.dashakam_no,
+          verse_no: row.verse_no,
+          language_code: lang,
+          transliteration_text: lc.transliteration_text,
+          translation_text: lc.translation_text,
+        },
+        { onConflict: "dashakam_no,verse_no,language_code" }
+      );
+      if (langErr) throw langErr;
+
+      if (lc.prasadam_text) {
+        const { error: prasErr } = await supabase.from("prasadam").upsert(
+          {
+            dashakam_no: row.dashakam_no,
+            verse_no: row.verse_no,
+            language_code: lang,
+            prasadam_text: lc.prasadam_text,
+          },
+          { onConflict: "dashakam_no,verse_no,language_code" }
+        );
+        if (prasErr) throw prasErr;
+      }
+
+      // Update lang existence
+      setLangExistence((prev) => {
+        const copy = { ...prev };
+        const vKey = String(row.verse_no);
+        if (!copy[vKey]) copy[vKey] = new Set();
+        copy[vKey] = new Set(copy[vKey]);
+        copy[vKey].add(lang);
+        return copy;
+      });
+
+      // Mark clean
+      setVerses((prev) =>
+        prev.map((v) => {
+          if (v.verse_no !== row.verse_no) return v;
+          const updated = { ...v };
+          updated.langContent = { ...v.langContent };
+          updated.langContent[lang] = { ...v.langContent[lang], dirty: false };
+          return updated;
+        })
+      );
+
+      // Check translations_complete: all verses have EN translation
+      if (lang === "en") {
+        const { data: enRows } = await supabase
+          .from("language_script")
+          .select("verse_no")
+          .eq("dashakam_no", row.dashakam_no)
+          .eq("language_code", "en")
+          .not("translation_text", "is", null);
+        const dk = localDashakams.find((d) => d.id === row.dashakam_no);
+        const total = dk?.num_verses ?? 10;
+        const allEn = (enRows?.length ?? 0) >= total;
+        await supabase.from("upload_progress").upsert(
+          { dashakam_no: row.dashakam_no, translations_complete: allEn },
+          { onConflict: "dashakam_no" }
+        );
+        await loadProgress();
+      }
+
+      toast({ title: "Saved", description: `Verse ${row.verse_no} ${lang.toUpperCase()} content saved.` });
+    } catch (err: any) {
+      toast({ title: "Error", description: err.message, variant: "destructive" });
+    } finally {
+      setSavingLang(null);
+    }
+  };
+
+  /* ── save sloka ── */
+  const saveSloka = async (row: VerseRow) => {
+    setSavingSloka(row.verse_no);
+    try {
+      const payload: any = {
+        sloka_num: row.sloka.sloka_num,
+        sloka_verse: row.sloka.sloka_verse,
+        auto_play: row.sloka.auto_play,
+      };
+      if (row.sloka.id) payload.id = row.sloka.id;
+
+      const { data, error } = await supabase
+        .from("slokas")
+        .upsert(payload, { onConflict: "id" })
+        .select("id")
+        .single();
+      if (error) throw error;
+
+      const slokaId = data.id;
+
+      // Update verses_audio with sloka_id
+      const { error: linkErr } = await supabase
+        .from("verses_audio")
+        .upsert(
+          { dashakam_no: row.dashakam_no, verse_no: row.verse_no, sloka_id: slokaId },
+          { onConflict: "dashakam_no,verse_no" }
+        );
+      if (linkErr) throw linkErr;
+
+      setVerses((prev) =>
+        prev.map((v) => {
+          if (v.verse_no !== row.verse_no) return v;
+          return {
+            ...v,
+            has_sloka: true,
+            sloka_id: slokaId,
+            sloka: { ...v.sloka, id: slokaId, dirty: false },
+          };
+        })
+      );
+
+      toast({ title: "Saved", description: `Sloka for verse ${row.verse_no} saved.` });
+    } catch (err: any) {
+      toast({ title: "Error", description: err.message, variant: "destructive" });
+    } finally {
+      setSavingSloka(null);
     }
   };
 
@@ -494,15 +784,15 @@ export default function AdminUploadPage() {
         </section>
       )}
 
-      {/* ── Verse Table with Script Sub-rows ── */}
+      {/* ── Verse Table with Script, Language & Sloka Sub-rows ── */}
       {selectedDashakam && selectedDk && (
         <section>
           <h2 className="font-display text-lg font-semibold text-foreground mb-2">
-            Verses — Audio & Script
+            Verses — Audio, Script & Content
           </h2>
           <p className="text-sm text-muted-foreground mb-4">
             {selectedDk.num_verses} verses · Bell on verse{selectedDk.bell_verses.length > 1 ? "s" : ""} {selectedDk.bell_verses.join(", ")}
-            {" · "}Click a verse number to expand script entry.
+            {" · "}Click a verse number to expand.
           </p>
 
           <div className="overflow-x-auto rounded-lg border border-border">
@@ -526,7 +816,7 @@ export default function AdminUploadPage() {
                         <button
                           onClick={() => setExpandedVerse(expandedVerse === row.verse_no ? null : row.verse_no)}
                           className={`font-semibold transition-colors ${expandedVerse === row.verse_no ? "text-secondary" : "text-foreground hover:text-secondary"}`}
-                          title="Toggle script entry"
+                          title="Toggle expanded view"
                         >
                           {row.verse_no} {expandedVerse === row.verse_no ? "▾" : "▸"}
                         </button>
@@ -581,57 +871,216 @@ export default function AdminUploadPage() {
                       </td>
                     </tr>
 
-                    {/* Script sub-row */}
+                    {/* Expanded sub-rows */}
                     {expandedVerse === row.verse_no && (
-                      <tr className="border-t border-dashed border-border bg-muted/30">
-                        <td className="px-3 py-3" colSpan={6}>
-                          <div className="flex flex-col gap-3 md:flex-row md:items-end">
-                            <div className="flex-1">
-                              <label className="block text-xs font-medium text-muted-foreground mb-1">
-                                Sanskrit Script
-                              </label>
-                              <textarea
-                                value={row.sanskrit_script}
-                                onChange={(e) => updateField(row.verse_no, "sanskrit_script", e.target.value)}
-                                rows={3}
-                                className="w-full rounded border border-input bg-background px-2 py-1 text-xs font-serif focus:ring-1 focus:ring-ring resize-y"
-                                placeholder="Enter Sanskrit verse text…"
-                              />
+                      <>
+                        {/* Script sub-row */}
+                        <tr className="border-t border-dashed border-border bg-muted/30">
+                          <td className="px-3 py-3" colSpan={6}>
+                            <div className="flex items-center gap-2 mb-2">
+                              <FileText className="h-4 w-4 text-primary" />
+                              <span className="text-xs font-semibold text-primary uppercase tracking-wide">Sanskrit Script</span>
                             </div>
-                            <div className="w-full md:w-40">
-                              <label className="block text-xs font-medium text-muted-foreground mb-1">Meter</label>
-                              <input
-                                type="text"
-                                value={row.meter}
-                                onChange={(e) => updateField(row.verse_no, "meter", e.target.value)}
-                                className="w-full rounded border border-input bg-background px-2 py-1 text-xs focus:ring-1 focus:ring-ring"
-                                placeholder="e.g. Anushtubh"
-                              />
+                            <div className="flex flex-col gap-3 md:flex-row md:items-end">
+                              <div className="flex-1">
+                                <label className="block text-xs font-medium text-muted-foreground mb-1">
+                                  Sanskrit Script
+                                </label>
+                                <textarea
+                                  value={row.sanskrit_script}
+                                  onChange={(e) => updateField(row.verse_no, "sanskrit_script", e.target.value)}
+                                  rows={3}
+                                  className="w-full rounded border border-input bg-background px-2 py-1 text-xs font-serif focus:ring-1 focus:ring-ring resize-y"
+                                  placeholder="Enter Sanskrit verse text…"
+                                />
+                              </div>
+                              <div className="w-full md:w-40">
+                                <label className="block text-xs font-medium text-muted-foreground mb-1">Meter</label>
+                                <input
+                                  type="text"
+                                  value={row.meter}
+                                  onChange={(e) => updateField(row.verse_no, "meter", e.target.value)}
+                                  className="w-full rounded border border-input bg-background px-2 py-1 text-xs focus:ring-1 focus:ring-ring"
+                                  placeholder="e.g. Anushtubh"
+                                />
+                              </div>
+                              <div className="flex items-center gap-2">
+                                <input
+                                  type="checkbox"
+                                  checked={row.has_bell}
+                                  onChange={(e) => updateField(row.verse_no, "has_bell", e.target.checked)}
+                                  className="h-4 w-4 rounded border-input text-secondary accent-secondary"
+                                />
+                                <label className="text-xs text-muted-foreground">Bell</label>
+                              </div>
+                              <button
+                                onClick={() => saveScript(row)}
+                                disabled={!row.scriptDirty || savingScript === row.verse_no}
+                                className={`inline-flex items-center gap-1 rounded px-3 py-1.5 text-xs font-medium transition-colors
+                                  ${row.scriptDirty
+                                    ? "bg-primary text-primary-foreground hover:bg-primary/80"
+                                    : "bg-muted text-muted-foreground cursor-not-allowed"
+                                  }`}
+                              >
+                                <Save className="h-3 w-3" />
+                                {savingScript === row.verse_no ? "…" : "Save Script"}
+                              </button>
                             </div>
-                            <div className="flex items-center gap-2">
-                              <input
-                                type="checkbox"
-                                checked={row.has_bell}
-                                onChange={(e) => updateField(row.verse_no, "has_bell", e.target.checked)}
-                                className="h-4 w-4 rounded border-input text-secondary accent-secondary"
-                              />
-                              <label className="text-xs text-muted-foreground">Bell</label>
+                          </td>
+                        </tr>
+
+                        {/* Language content sub-row */}
+                        <tr className="border-t border-dashed border-border bg-card/50">
+                          <td className="px-3 py-3" colSpan={6}>
+                            <div className="flex items-center gap-2 mb-3">
+                              <Globe className="h-4 w-4 text-secondary" />
+                              <span className="text-xs font-semibold text-secondary uppercase tracking-wide">Language Content</span>
                             </div>
-                            <button
-                              onClick={() => saveScript(row)}
-                              disabled={!row.scriptDirty || savingScript === row.verse_no}
-                              className={`inline-flex items-center gap-1 rounded px-3 py-1.5 text-xs font-medium transition-colors
-                                ${row.scriptDirty
-                                  ? "bg-primary text-primary-foreground hover:bg-primary/80"
-                                  : "bg-muted text-muted-foreground cursor-not-allowed"
-                                }`}
-                            >
-                              <Save className="h-3 w-3" />
-                              {savingScript === row.verse_no ? "…" : "Save Script"}
-                            </button>
-                          </div>
-                        </td>
-                      </tr>
+
+                            {/* Language tabs */}
+                            <div className="flex gap-1 mb-4">
+                              {LANGUAGES.map((lang) => {
+                                const hasContent = langExistence[String(row.verse_no)]?.has(lang.code);
+                                const isActive = row.activeLang === lang.code;
+                                return (
+                                  <button
+                                    key={lang.code}
+                                    onClick={() => setActiveLang(row.verse_no, lang.code)}
+                                    className={`relative inline-flex items-center gap-1.5 rounded-md px-3 py-1.5 text-xs font-medium transition-colors
+                                      ${isActive
+                                        ? "bg-secondary text-secondary-foreground"
+                                        : "bg-muted text-muted-foreground hover:bg-muted/80"
+                                      }`}
+                                  >
+                                    <span
+                                      className={`h-2 w-2 rounded-full ${hasContent ? "bg-emerald-500" : "bg-muted-foreground/30"}`}
+                                    />
+                                    {lang.label}
+                                  </button>
+                                );
+                              })}
+                            </div>
+
+                            {/* Active language fields */}
+                            {(() => {
+                              const lang = row.activeLang;
+                              const lc = row.langContent[lang];
+                              const langKey = `${row.verse_no}-${lang}`;
+                              return (
+                                <div className="space-y-3">
+                                  <div>
+                                    <label className="block text-xs font-medium text-muted-foreground mb-1">
+                                      Transliteration ({lang.toUpperCase()})
+                                    </label>
+                                    <textarea
+                                      value={lc.transliteration_text}
+                                      onChange={(e) => updateLangField(row.verse_no, lang, "transliteration_text", e.target.value)}
+                                      rows={3}
+                                      className="w-full rounded border border-input bg-background px-2 py-1 text-xs focus:ring-1 focus:ring-ring resize-y"
+                                      placeholder={`Enter ${lang.toUpperCase()} transliteration…`}
+                                    />
+                                  </div>
+                                  <div>
+                                    <label className="block text-xs font-medium text-muted-foreground mb-1">
+                                      Translation / Meaning ({lang.toUpperCase()})
+                                    </label>
+                                    <textarea
+                                      value={lc.translation_text}
+                                      onChange={(e) => updateLangField(row.verse_no, lang, "translation_text", e.target.value)}
+                                      rows={3}
+                                      className="w-full rounded border border-input bg-background px-2 py-1 text-xs focus:ring-1 focus:ring-ring resize-y"
+                                      placeholder={`Enter ${lang.toUpperCase()} translation…`}
+                                    />
+                                  </div>
+                                  <div className="max-w-md">
+                                    <label className="block text-xs font-medium text-muted-foreground mb-1">
+                                      Prasadam ({lang.toUpperCase()})
+                                    </label>
+                                    <input
+                                      type="text"
+                                      value={lc.prasadam_text}
+                                      onChange={(e) => updateLangField(row.verse_no, lang, "prasadam_text", e.target.value)}
+                                      className="w-full rounded border border-input bg-background px-2 py-1 text-xs focus:ring-1 focus:ring-ring"
+                                      placeholder="Prasadam text…"
+                                    />
+                                  </div>
+                                  <div className="flex justify-end">
+                                    <button
+                                      onClick={() => saveLangContent(row, lang)}
+                                      disabled={!lc.dirty || savingLang === langKey}
+                                      className={`inline-flex items-center gap-1 rounded px-3 py-1.5 text-xs font-medium transition-colors
+                                        ${lc.dirty
+                                          ? "bg-secondary text-secondary-foreground hover:bg-secondary/80"
+                                          : "bg-muted text-muted-foreground cursor-not-allowed"
+                                        }`}
+                                    >
+                                      <Save className="h-3 w-3" />
+                                      {savingLang === langKey ? "…" : `Save ${lang.toUpperCase()}`}
+                                    </button>
+                                  </div>
+                                </div>
+                              );
+                            })()}
+                          </td>
+                        </tr>
+
+                        {/* Sloka sub-row */}
+                        {row.has_sloka && (
+                          <tr className="border-t border-dashed border-border bg-primary/5">
+                            <td className="px-3 py-3" colSpan={6}>
+                              <div className="flex items-center gap-2 mb-3">
+                                <BookOpen className="h-4 w-4 text-primary" />
+                                <span className="text-xs font-semibold text-primary uppercase tracking-wide">Sloka Configuration</span>
+                              </div>
+                              <div className="flex flex-col gap-3 md:flex-row md:items-end">
+                                <div className="w-full md:w-32">
+                                  <label className="block text-xs font-medium text-muted-foreground mb-1">Sloka Number</label>
+                                  <input
+                                    type="number"
+                                    min={1}
+                                    value={row.sloka.sloka_num || ""}
+                                    onChange={(e) => updateSlokaField(row.verse_no, "sloka_num", Number(e.target.value))}
+                                    className="w-full rounded border border-input bg-background px-2 py-1 text-xs focus:ring-1 focus:ring-ring"
+                                  />
+                                </div>
+                                <div className="w-full md:w-32">
+                                  <label className="block text-xs font-medium text-muted-foreground mb-1">Sloka Verse #</label>
+                                  <input
+                                    type="number"
+                                    min={1}
+                                    value={row.sloka.sloka_verse || ""}
+                                    onChange={(e) => updateSlokaField(row.verse_no, "sloka_verse", Number(e.target.value))}
+                                    className="w-full rounded border border-input bg-background px-2 py-1 text-xs focus:ring-1 focus:ring-ring"
+                                  />
+                                </div>
+                                <div className="flex items-center gap-2">
+                                  <label className="text-xs text-muted-foreground">Auto Play</label>
+                                  <button
+                                    onClick={() => updateSlokaField(row.verse_no, "auto_play", !row.sloka.auto_play)}
+                                    className={`relative h-5 w-9 rounded-full transition-colors ${row.sloka.auto_play ? "bg-primary" : "bg-muted"}`}
+                                  >
+                                    <span
+                                      className={`absolute top-0.5 left-0.5 h-4 w-4 rounded-full bg-card shadow transition-transform ${row.sloka.auto_play ? "translate-x-4" : ""}`}
+                                    />
+                                  </button>
+                                </div>
+                                <button
+                                  onClick={() => saveSloka(row)}
+                                  disabled={!row.sloka.dirty || savingSloka === row.verse_no}
+                                  className={`inline-flex items-center gap-1 rounded px-3 py-1.5 text-xs font-medium transition-colors
+                                    ${row.sloka.dirty
+                                      ? "bg-primary text-primary-foreground hover:bg-primary/80"
+                                      : "bg-muted text-muted-foreground cursor-not-allowed"
+                                    }`}
+                                >
+                                  <Save className="h-3 w-3" />
+                                  {savingSloka === row.verse_no ? "…" : "Save Sloka"}
+                                </button>
+                              </div>
+                            </td>
+                          </tr>
+                        )}
+                      </>
                     )}
                   </Fragment>
                 ))}
