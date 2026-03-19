@@ -18,6 +18,7 @@ import {
   type TransliterationLanguage,
   type TranslationLanguage,
 } from "@/data/narayaneeyam";
+import { useDashakam } from "@/hooks/useDashakam";
 import { getProgress, saveProgress } from "@/lib/progress";
 import { updateStreakSupabase, markVerseCompleted } from "@/lib/supabaseProgress";
 import { getActiveVerseAtTime, getTimestamps } from "@/lib/audioTimestamps";
@@ -45,11 +46,46 @@ export default function ChantPage() {
   const gapTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const { isBookmarked, addBookmark, removeBookmark, undoRemoveBookmark } = useBookmarks();
   const { isFavourited, addFavourite, removeFavourite, undoRemoveFavourite } = useFavourites();
-  const dashakam = sampleDashakams.find((d) => d.id === selectedDashakam);
-  const verses = dashakam?.verses || [];
+
+  // Map translitLang/translationLang to a language_code for the hook
+  const langCodeMap: Record<string, string> = {
+    sanskrit: "sa", english: "en", tamil: "ta", malayalam: "ml",
+    telugu: "te", kannada: "kn", hindi: "hi", marathi: "mr",
+  };
+  const selectedLanguage = langCodeMap[translationLang] || "en";
+
+  // Live data from Supabase with static fallback
+  const { dashakamList, verses: dbVerses, loading: dbLoading, staticDashakam } = useDashakam(selectedDashakam, selectedLanguage);
+
+  // Build the dashakam dropdown list — prefer DB list, fallback to static
+  const dropdownList = dashakamList.length > 0
+    ? dashakamList.map((d) => ({ id: d.dashakam_no, title: d.dashakam_name }))
+    : sampleDashakams.map((d) => ({ id: d.id, title: d.title_english }));
+
+  // Use static dashakam for gist/benefits/title (always available)
+  const dashakam = staticDashakam;
+
+  // Convert dbVerses to display format compatible with existing rendering
+  const allVerses = dbVerses.map((mv) => ({
+    id: `${selectedDashakam}-${mv.verse_no}`,
+    dashakam: selectedDashakam,
+    paragraph: mv.verse_no,
+    sanskrit: mv.sanskrit_script,
+    english: mv.transliteration_text,
+    meaning_english: mv.translation_text,
+    meter: mv.meter,
+    audio: mv.chant_audio_file || undefined,
+    bell: mv.has_bell,
+    prasadam: mv.prasadam_text || undefined,
+    // Language-specific fields for transliteration lookup
+    tamil: "", malayalam: "", telugu: "", kannada: "", hindi: "", marathi: "",
+    meaning_tamil: "", meaning_malayalam: "", meaning_telugu: "",
+    meaning_kannada: "", meaning_hindi: "", meaning_marathi: "",
+  }));
+
   const displayVerses = selectedPara
-    ? verses.filter((v) => v.paragraph === selectedPara)
-    : verses;
+    ? allVerses.filter((v) => v.paragraph === selectedPara)
+    : allVerses;
 
   // Restore last position or use query param
   useEffect(() => {
@@ -95,7 +131,6 @@ export default function ChantPage() {
         setCurrentLoopIteration(0);
       }
     } else {
-      // 1.5 sec gap between verses
       setVerseProgress(0);
       gapTimerRef.current = setTimeout(() => {
         setHighlightedVerse((prev) => prev + 1);
@@ -107,12 +142,13 @@ export default function ChantPage() {
   useEffect(() => {
     if (!isPlaying || displayVerses.length === 0) return;
     
-    // If we have a paused audio for the same verse, just resume it
+    const currentVerse = displayVerses[highlightedVerse];
+
     if (pausedRef.current && audioRef.current && !audioRef.current.ended) {
       audioRef.current.playbackRate = speed;
       audioRef.current.play().catch((err) => console.error("Audio play error:", err));
       pausedRef.current = false;
-      logAudioEvent("audio_play", selectedDashakam, displayVerses[highlightedVerse]?.paragraph || 0, "resume");
+      logAudioEvent("audio_play", selectedDashakam, currentVerse?.paragraph || 0, "resume");
       
       const audio = audioRef.current;
       const updateProgress = () => {
@@ -120,13 +156,12 @@ export default function ChantPage() {
       };
       audio.addEventListener("timeupdate", updateProgress);
       audio.onended = () => {
-        logAudioEvent("audio_complete", selectedDashakam, displayVerses[highlightedVerse]?.paragraph || 0, currentVerse?.audio || "");
+        logAudioEvent("audio_complete", selectedDashakam, currentVerse?.paragraph || 0, currentVerse?.audio || "");
         advanceToNextVerse();
       };
       return () => { audio.removeEventListener("timeupdate", updateProgress); audio.onended = null; };
     }
     
-    const currentVerse = displayVerses[highlightedVerse];
     if (currentVerse?.audio) {
       const loadStart = performance.now();
       const audio = new Audio(currentVerse.audio);
@@ -162,7 +197,6 @@ export default function ChantPage() {
       };
       return () => { audio.pause(); audio.removeEventListener("timeupdate", updateProgress); audio.onended = null; };
     } else {
-      // Fallback simulated timing for verses without audio
       const interval = setInterval(() => {
         setVerseProgress((prev) => {
           if (prev >= 100) {
@@ -203,11 +237,14 @@ export default function ChantPage() {
     }
   };
 
-  const getVerseText = (verse: typeof verses[0]) => verse[translitLang] || verse.sanskrit;
-  const getMeaning = (verse: typeof verses[0]) => {
-    const key = `meaning_${translationLang}` as keyof typeof verse;
-    return (verse[key] as string) || verse.meaning_english;
+  const getVerseText = (verse: typeof allVerses[0]) => {
+    if (translitLang === "sanskrit") return verse.sanskrit;
+    if (translitLang === "english") return verse.english;
+    // For other transliteration languages, the DB content is loaded via selectedLanguage
+    return verse.english || verse.sanskrit;
   };
+
+  const getMeaning = (verse: typeof allVerses[0]) => verse.meaning_english;
 
   return (
     <div className="container mx-auto px-4 py-8 select-none" onContextMenu={(e) => e.preventDefault()}>
@@ -223,7 +260,7 @@ export default function ChantPage() {
             <label className="text-xs text-muted-foreground font-sans">Dashakam</label>
             <select value={selectedDashakam} onChange={(e) => { setSelectedDashakam(Number(e.target.value)); setSelectedPara(null); setHighlightedVerse(0); setShowGist(false); setVerseProgress(0); if (audioRef.current) { audioRef.current.pause(); audioRef.current = null; } pausedRef.current = false; }}
               className="rounded-lg border border-border bg-background px-3 py-2 text-sm font-sans text-foreground">
-              {sampleDashakams.map((d) => (<option key={d.id} value={d.id}>{d.id}. {d.title_english}</option>))}
+              {dropdownList.map((d) => (<option key={d.id} value={d.id}>{d.id}. {d.title}</option>))}
             </select>
           </div>
 
@@ -232,7 +269,7 @@ export default function ChantPage() {
             <select value={selectedPara || "all"} onChange={(e) => setSelectedPara(e.target.value === "all" ? null : Number(e.target.value))}
               className="rounded-lg border border-border bg-background px-3 py-2 text-sm font-sans text-foreground">
               <option value="all">All</option>
-              {Array.from({ length: dashakam?.num_verses || 0 }, (_, i) => i + 1).map((n) => (
+              {Array.from({ length: allVerses.length || 0 }, (_, i) => i + 1).map((n) => (
                 <option key={n} value={n}>Para {n}</option>
               ))}
             </select>
@@ -318,67 +355,76 @@ export default function ChantPage() {
           </div>
         )}
 
+        {/* Loading state */}
+        {dbLoading && (
+          <div className="rounded-xl bg-card border border-border p-8 text-center mb-8">
+            <p className="text-muted-foreground font-sans">Loading verses…</p>
+          </div>
+        )}
+
         {/* Verses */}
-        <div className="space-y-4 mb-8">
-          {displayVerses.length === 0 ? (
-            <div className="rounded-xl bg-card border border-border p-8 text-center">
-              <p className="text-muted-foreground font-sans">No verses available for this Dashakam yet. Admin needs to upload content.</p>
-            </div>
-          ) : (
-            displayVerses.map((verse, idx) => (
-              <motion.div key={verse.id} initial={{ opacity: 0, x: -10 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: idx * 0.05 }}
-                className={`rounded-xl border p-5 transition-all duration-500 ${idx === highlightedVerse && isPlaying ? "border-secondary bg-secondary/10 shadow-gold" : "border-border bg-card"}`}>
-                <div className="flex items-start justify-between mb-3">
-                  <span className="text-xs text-muted-foreground font-sans">Verse {verse.paragraph} · {verse.meter}</span>
-                  <div className="flex items-center gap-1">
-                    <VerseIcons bell={dashakam ? verseShouldShowBell(dashakam, verse.paragraph) : false} prasadam={dashakam ? getVersePrasadam(dashakam, verse.paragraph) : undefined} />
-                    <BookmarkButton
-                      active={isBookmarked(verse.id)}
-                      onClick={() => {
-                        if (isBookmarked(verse.id)) {
-                          setRemoveTarget({ type: "bookmark", verseId: verse.id, dashakam: verse.dashakam, verse: verse.paragraph });
-                        } else {
-                          addBookmark({ verseId: verse.id, dashakam: verse.dashakam, verse: verse.paragraph, mode: "chant" });
-                        }
-                      }}
-                    />
-                    <FavouriteButton
-                      active={isFavourited(verse.id)}
-                      onClick={() => {
-                        if (isFavourited(verse.id)) {
-                          setRemoveTarget({ type: "favourite", verseId: verse.id, dashakam: verse.dashakam, verse: verse.paragraph });
-                        } else {
-                          addFavourite({ verseId: verse.id, dashakam: verse.dashakam, verse: verse.paragraph, sanskrit: verse.sanskrit || verse.english });
-                        }
-                      }}
-                    />
+        {!dbLoading && (
+          <div className="space-y-4 mb-8">
+            {displayVerses.length === 0 ? (
+              <div className="rounded-xl bg-card border border-border p-8 text-center">
+                <p className="text-muted-foreground font-sans">No verses available for this Dashakam yet. Admin needs to upload content.</p>
+              </div>
+            ) : (
+              displayVerses.map((verse, idx) => (
+                <motion.div key={verse.id} initial={{ opacity: 0, x: -10 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: idx * 0.05 }}
+                  className={`rounded-xl border p-5 transition-all duration-500 ${idx === highlightedVerse && isPlaying ? "border-secondary bg-secondary/10 shadow-gold" : "border-border bg-card"}`}>
+                  <div className="flex items-start justify-between mb-3">
+                    <span className="text-xs text-muted-foreground font-sans">Verse {verse.paragraph} · {verse.meter}</span>
+                    <div className="flex items-center gap-1">
+                      <VerseIcons bell={verse.bell} prasadam={verse.prasadam} />
+                      <BookmarkButton
+                        active={isBookmarked(verse.id)}
+                        onClick={() => {
+                          if (isBookmarked(verse.id)) {
+                            setRemoveTarget({ type: "bookmark", verseId: verse.id, dashakam: verse.dashakam, verse: verse.paragraph });
+                          } else {
+                            addBookmark({ verseId: verse.id, dashakam: verse.dashakam, verse: verse.paragraph, mode: "chant" });
+                          }
+                        }}
+                      />
+                      <FavouriteButton
+                        active={isFavourited(verse.id)}
+                        onClick={() => {
+                          if (isFavourited(verse.id)) {
+                            setRemoveTarget({ type: "favourite", verseId: verse.id, dashakam: verse.dashakam, verse: verse.paragraph });
+                          } else {
+                            addFavourite({ verseId: verse.id, dashakam: verse.dashakam, verse: verse.paragraph, sanskrit: verse.sanskrit || verse.english });
+                          }
+                        }}
+                      />
+                    </div>
                   </div>
-                </div>
-                <p className={`font-body text-lg leading-relaxed whitespace-pre-line transition-colors ${idx === highlightedVerse && isPlaying ? "text-primary font-semibold" : "text-foreground"}`}>
-                  {getVerseText(verse)}
-                </p>
-                {/* Verse seek bar - shown for active verse */}
-                {idx === highlightedVerse && verse.audio && (
-                  <div className="mt-3">
-                    <Slider
-                      value={[verseProgress]}
-                      onValueChange={handleSeekVerse}
-                      max={100}
-                      step={0.5}
-                      className="w-full"
-                    />
-                  </div>
-                )}
-                {showMeaning && (
-                  <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: "auto" }} className="mt-4 border-t border-border pt-3">
-                    <p className="text-xs text-muted-foreground font-sans uppercase tracking-wide mb-1">Translation ({translationLang})</p>
-                    <p className="text-sm text-muted-foreground font-sans leading-relaxed">{getMeaning(verse)}</p>
-                  </motion.div>
-                )}
-              </motion.div>
-            ))
-          )}
-        </div>
+                  <p className={`font-body text-lg leading-relaxed whitespace-pre-line transition-colors ${idx === highlightedVerse && isPlaying ? "text-primary font-semibold" : "text-foreground"}`}>
+                    {getVerseText(verse)}
+                  </p>
+                  {/* Verse seek bar */}
+                  {idx === highlightedVerse && verse.audio && (
+                    <div className="mt-3">
+                      <Slider
+                        value={[verseProgress]}
+                        onValueChange={handleSeekVerse}
+                        max={100}
+                        step={0.5}
+                        className="w-full"
+                      />
+                    </div>
+                  )}
+                  {showMeaning && (
+                    <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: "auto" }} className="mt-4 border-t border-border pt-3">
+                      <p className="text-xs text-muted-foreground font-sans uppercase tracking-wide mb-1">Translation ({translationLang})</p>
+                      <p className="text-sm text-muted-foreground font-sans leading-relaxed">{getMeaning(verse)}</p>
+                    </motion.div>
+                  )}
+                </motion.div>
+              ))
+            )}
+          </div>
+        )}
 
         {/* Audio Player Bar */}
         <div className="sticky bottom-0 bg-gradient-peacock rounded-t-xl p-4 shadow-peacock">
@@ -410,9 +456,7 @@ export default function ChantPage() {
         onConfirm={() => {
           if (!removeTarget) return;
           if (removeTarget.type === "bookmark") {
-            const entry = { verseId: removeTarget.verseId, dashakam: removeTarget.dashakam, verse: removeTarget.verse, mode: "chant" as const, savedAt: "" };
             removeBookmark(removeTarget.verseId);
-            // toast with undo handled inline
           } else {
             removeFavourite(removeTarget.verseId);
           }
