@@ -102,12 +102,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
           {/* Theme Toggle + User Profile / Auth */}
           <div className="hidden lg:flex items-center gap-3">
             <button
-              onClick={() => {
-                const next = !isDark;
-                setIsDark(next);
-                document.documentElement.classList.toggle("dark", next);
-                localStorage.setItem("theme", next ? "dark" : "light");
-              }}
+              onClick={toggleTheme}
               className="flex items-center justify-center rounded-lg p-2 text-primary-foreground/70 hover:text-primary-foreground transition-colors"
               title={isDark ? "Morning Mode" : "Night Mode"}
             >
