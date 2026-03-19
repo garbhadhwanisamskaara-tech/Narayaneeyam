@@ -28,6 +28,13 @@ export default function Layout({ children }: { children: React.ReactNode }) {
   });
   const { user, displayName, signOut, loading } = useAuth();
 
+  const toggleTheme = () => {
+    const next = !isDark;
+    setIsDark(next);
+    document.documentElement.classList.toggle("dark", next);
+    localStorage.setItem("theme", next ? "dark" : "light");
+  };
+
   // Auth redirect disabled for development
   // useEffect(() => {
   //   if (!loading && !user && location.pathname !== "/auth" && location.pathname !== "/reset-password") {
@@ -95,12 +102,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
           {/* Theme Toggle + User Profile / Auth */}
           <div className="hidden lg:flex items-center gap-3">
             <button
-              onClick={() => {
-                const next = !isDark;
-                setIsDark(next);
-                document.documentElement.classList.toggle("dark", next);
-                localStorage.setItem("theme", next ? "dark" : "light");
-              }}
+              onClick={toggleTheme}
               className="flex items-center justify-center rounded-lg p-2 text-primary-foreground/70 hover:text-primary-foreground transition-colors"
               title={isDark ? "Morning Mode" : "Night Mode"}
             >
@@ -183,12 +185,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
 
             {/* Mobile theme toggle */}
             <button
-              onClick={() => {
-                const next = !isDark;
-                setIsDark(next);
-                document.documentElement.classList.toggle("dark", next);
-                localStorage.setItem("theme", next ? "dark" : "light");
-              }}
+              onClick={toggleTheme}
               className="flex items-center gap-3 rounded-lg px-3 py-3 text-sm font-sans text-primary-foreground/70"
             >
               {isDark ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
