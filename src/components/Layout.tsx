@@ -28,6 +28,13 @@ export default function Layout({ children }: { children: React.ReactNode }) {
   });
   const { user, displayName, signOut, loading } = useAuth();
 
+  const toggleTheme = () => {
+    const next = !isDark;
+    setIsDark(next);
+    document.documentElement.classList.toggle("dark", next);
+    localStorage.setItem("theme", next ? "dark" : "light");
+  };
+
   // Auth redirect disabled for development
   // useEffect(() => {
   //   if (!loading && !user && location.pathname !== "/auth" && location.pathname !== "/reset-password") {
