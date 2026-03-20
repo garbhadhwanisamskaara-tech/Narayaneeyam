@@ -1,45 +1,61 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Download, ChevronDown, ChevronUp } from "lucide-react";
-import {
-  sampleDashakams,
-  TRANSLITERATION_LANGUAGES,
-  TRANSLATION_LANGUAGES,
-  verseShouldShowBell,
-  getVersePrasadam,
-  type TransliterationLanguage,
-  type TranslationLanguage,
-} from "@/data/narayaneeyam";
+import { Download, ChevronDown, ChevronUp, Loader2, BookOpen } from "lucide-react";
+import { sampleDashakams } from "@/data/narayaneeyam";
+import { useDashakam, type MergedVerse } from "@/hooks/useDashakam";
+import { supabase } from "@/integrations/supabase/client";
 import VerseIcons from "@/components/VerseIcons";
+
+const LANGUAGE_OPTIONS = [
+  { code: "sa", label: "Sanskrit" },
+  { code: "en", label: "English" },
+  { code: "ta", label: "Tamil" },
+  { code: "ml", label: "Malayalam" },
+  { code: "te", label: "Telugu" },
+  { code: "hi", label: "Hindi" },
+  { code: "mr", label: "Marathi" },
+  { code: "kn", label: "Kannada" },
+];
 
 export default function ScriptPage() {
   const [selectedDashakam, setSelectedDashakam] = useState(1);
   const [viewMode, setViewMode] = useState<"full" | "para">("full");
-  const [translitLang, setTranslitLang] = useState<TransliterationLanguage>("sanskrit");
-  const [translationLang, setTranslationLang] = useState<TranslationLanguage>("english");
+  const [selectedLangCode, setSelectedLangCode] = useState("en");
   const [selectedPara, setSelectedPara] = useState<number | null>(null);
   const [showGist, setShowGist] = useState(false);
   const [showBenefit, setShowBenefit] = useState(false);
 
-  const dashakam = sampleDashakams.find((d) => d.id === selectedDashakam);
-  const verses = dashakam?.verses || [];
+  const { dashakamList, verses, loading, staticDashakam } = useDashakam(
+    selectedDashakam,
+    selectedLangCode === "sa" ? "en" : selectedLangCode
+  );
+
+  // Determine which verses to display
   const displayVerses =
     viewMode === "para" && selectedPara
-      ? verses.filter((v) => v.paragraph === selectedPara)
+      ? verses.filter((v) => v.verse_no === selectedPara)
       : verses;
 
-  const getVerseText = (verse: typeof verses[0]) => {
-    return verse[translitLang] || verse.sanskrit;
+  const numVerses =
+    dashakamList.find((d) => d.dashakam_no === selectedDashakam)?.num_verses
+    ?? staticDashakam?.num_verses
+    ?? 10;
+
+  const dashakamTitle =
+    dashakamList.find((d) => d.dashakam_no === selectedDashakam)?.dashakam_name
+    ?? staticDashakam?.title_english
+    ?? `Dashakam ${selectedDashakam}`;
+
+  const getVerseText = (verse: MergedVerse) => {
+    if (selectedLangCode === "sa") return verse.sanskrit_script;
+    return verse.transliteration_text || verse.sanskrit_script;
   };
 
-  const getMeaning = (verse: typeof verses[0]) => {
-    const key = `meaning_${translationLang}` as keyof typeof verse;
-    return (verse[key] as string) || verse.meaning_english;
-  };
+  const getMeaning = (verse: MergedVerse) => verse.translation_text || "";
 
   const handleDownload = () => {
     const text = displayVerses
-      .map((v) => `Verse ${v.paragraph}\n${getVerseText(v)}\n\nMeaning:\n${getMeaning(v)}\n`)
+      .map((v) => `Verse ${v.verse_no}\n${getVerseText(v)}\n\nMeaning:\n${getMeaning(v)}\n`)
       .join("\n---\n");
     const blob = new Blob([text], { type: "text/plain" });
     const url = URL.createObjectURL(blob);
@@ -49,6 +65,11 @@ export default function ScriptPage() {
     a.click();
     URL.revokeObjectURL(url);
   };
+
+  // Dropdown list: prefer DB, fall back to static
+  const dropdownList = dashakamList.length > 0
+    ? dashakamList
+    : sampleDashakams.map((d) => ({ dashakam_no: d.id, dashakam_name: d.title_english, num_verses: d.num_verses, remarks: d.remarks ?? null }));
 
   return (
     <div className="container mx-auto px-4 py-8">
@@ -63,32 +84,6 @@ export default function ScriptPage() {
         {/* Controls */}
         <div className="flex flex-wrap gap-3 mb-6 rounded-xl bg-card border border-border p-4">
           <div className="flex flex-col gap-1">
-            <label className="text-xs text-muted-foreground font-sans">Transliteration</label>
-            <select
-              value={translitLang}
-              onChange={(e) => setTranslitLang(e.target.value as TransliterationLanguage)}
-              className="rounded-lg border border-border bg-background px-3 py-2 text-sm font-sans text-foreground"
-            >
-              {TRANSLITERATION_LANGUAGES.map((l) => (
-                <option key={l.value} value={l.value}>{l.label}</option>
-              ))}
-            </select>
-          </div>
-
-          <div className="flex flex-col gap-1">
-            <label className="text-xs text-muted-foreground font-sans">Translation</label>
-            <select
-              value={translationLang}
-              onChange={(e) => setTranslationLang(e.target.value as TranslationLanguage)}
-              className="rounded-lg border border-border bg-background px-3 py-2 text-sm font-sans text-foreground"
-            >
-              {TRANSLATION_LANGUAGES.map((l) => (
-                <option key={l.value} value={l.value}>{l.label}</option>
-              ))}
-            </select>
-          </div>
-
-          <div className="flex flex-col gap-1">
             <label className="text-xs text-muted-foreground font-sans">Dashakam</label>
             <select
               value={selectedDashakam}
@@ -99,10 +94,23 @@ export default function ScriptPage() {
               }}
               className="rounded-lg border border-border bg-background px-3 py-2 text-sm font-sans text-foreground"
             >
-              {sampleDashakams.map((d) => (
-                <option key={d.id} value={d.id}>
-                  {d.id}. {d.title_english}
+              {dropdownList.map((d) => (
+                <option key={d.dashakam_no} value={d.dashakam_no}>
+                  {d.dashakam_no}. {d.dashakam_name}
                 </option>
+              ))}
+            </select>
+          </div>
+
+          <div className="flex flex-col gap-1">
+            <label className="text-xs text-muted-foreground font-sans">Language</label>
+            <select
+              value={selectedLangCode}
+              onChange={(e) => setSelectedLangCode(e.target.value)}
+              className="rounded-lg border border-border bg-background px-3 py-2 text-sm font-sans text-foreground"
+            >
+              {LANGUAGE_OPTIONS.map((l) => (
+                <option key={l.code} value={l.code}>{l.label}</option>
               ))}
             </select>
           </div>
@@ -124,22 +132,22 @@ export default function ScriptPage() {
                   viewMode === "para" ? "bg-primary text-primary-foreground" : "bg-background text-foreground"
                 }`}
               >
-                Para-wise
+                Verse by Verse
               </button>
             </div>
           </div>
 
           {viewMode === "para" && (
             <div className="flex flex-col gap-1">
-              <label className="text-xs text-muted-foreground font-sans">Paragraph</label>
+              <label className="text-xs text-muted-foreground font-sans">Verse</label>
               <select
                 value={selectedPara || ""}
                 onChange={(e) => setSelectedPara(Number(e.target.value))}
                 className="rounded-lg border border-border bg-background px-3 py-2 text-sm font-sans text-foreground"
               >
                 <option value="">Select...</option>
-                {Array.from({ length: dashakam?.num_verses || 0 }, (_, i) => i + 1).map((n) => (
-                  <option key={n} value={n}>Para {n}</option>
+                {Array.from({ length: numVerses }, (_, i) => i + 1).map((n) => (
+                  <option key={n} value={n}>Verse {n}</option>
                 ))}
               </select>
             </div>
@@ -157,93 +165,118 @@ export default function ScriptPage() {
         </div>
 
         {/* Dashakam Title + Gist */}
-        {dashakam && (
-          <div className="mb-6">
-            <div className="rounded-xl bg-gradient-peacock p-5">
-              <h2 className="font-display text-xl font-semibold text-primary-foreground">
-                {dashakam.title_sanskrit}
-              </h2>
-              <p className="text-gold-light font-sans text-sm">{dashakam.title_english}</p>
-              {dashakam.remarks && (
-                <p className="text-gold-light/80 text-xs font-sans mt-1 italic">Note: {dashakam.remarks}</p>
-              )}
-              <div className="mt-3 flex items-center gap-2">
+        <div className="mb-6">
+          <div className="rounded-xl bg-gradient-peacock p-5">
+            <h2 className="font-display text-xl font-semibold text-primary-foreground">
+              {staticDashakam?.title_sanskrit || dashakamTitle}
+            </h2>
+            <p className="text-gold-light font-sans text-sm">{dashakamTitle}</p>
+            {staticDashakam?.remarks && (
+              <p className="text-gold-light/80 text-xs font-sans mt-1 italic">Note: {staticDashakam.remarks}</p>
+            )}
+            <div className="mt-3 flex items-center gap-2">
+              <button
+                onClick={() => setShowGist(!showGist)}
+                className="inline-flex items-center gap-1 rounded-lg bg-primary-foreground/10 px-3 py-1.5 text-xs text-gold-light font-sans hover:bg-primary-foreground/20 transition-colors"
+              >
+                {showGist ? <ChevronUp className="h-3 w-3" /> : <ChevronDown className="h-3 w-3" />}
+                {showGist ? "Hide Gist" : "View Gist"}
+              </button>
+              {staticDashakam?.benefits && (
                 <button
-                  onClick={() => setShowGist(!showGist)}
+                  onClick={() => setShowBenefit(!showBenefit)}
                   className="inline-flex items-center gap-1 rounded-lg bg-primary-foreground/10 px-3 py-1.5 text-xs text-gold-light font-sans hover:bg-primary-foreground/20 transition-colors"
                 >
-                  {showGist ? <ChevronUp className="h-3 w-3" /> : <ChevronDown className="h-3 w-3" />}
-                  {showGist ? "Hide Gist" : "View Gist"}
+                  {showBenefit ? <ChevronUp className="h-3 w-3" /> : <ChevronDown className="h-3 w-3" />}
+                  {showBenefit ? "Hide Benefit" : "View Benefit"}
                 </button>
-                {dashakam.benefits && (
-                  <button
-                    onClick={() => setShowBenefit(!showBenefit)}
-                    className="inline-flex items-center gap-1 rounded-lg bg-primary-foreground/10 px-3 py-1.5 text-xs text-gold-light font-sans hover:bg-primary-foreground/20 transition-colors"
-                  >
-                    {showBenefit ? <ChevronUp className="h-3 w-3" /> : <ChevronDown className="h-3 w-3" />}
-                    {showBenefit ? "Hide Benefit" : "View Benefit"}
-                  </button>
-                )}
-              </div>
+              )}
             </div>
-            <AnimatePresence>
-              {showGist && (
-                <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: "auto", opacity: 1 }} exit={{ height: 0, opacity: 0 }} className="overflow-hidden">
-                  <div className="rounded-b-xl border border-t-0 border-border bg-card p-4">
-                    <p className="text-sm text-foreground font-sans leading-relaxed">{dashakam.gist}</p>
-                  </div>
-                </motion.div>
-              )}
-              {showBenefit && dashakam.benefits && (
-                <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: "auto", opacity: 1 }} exit={{ height: 0, opacity: 0 }} className="overflow-hidden">
-                  <div className="rounded-b-xl border border-t-0 border-border bg-card p-4">
-                    <p className="text-sm text-foreground font-sans leading-relaxed">✨ {dashakam.benefits}</p>
-                  </div>
-                </motion.div>
-              )}
-            </AnimatePresence>
+          </div>
+          <AnimatePresence>
+            {showGist && staticDashakam?.gist && (
+              <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: "auto", opacity: 1 }} exit={{ height: 0, opacity: 0 }} className="overflow-hidden">
+                <div className="rounded-b-xl border border-t-0 border-border bg-card p-4">
+                  <p className="text-sm text-foreground font-sans leading-relaxed">{staticDashakam.gist}</p>
+                </div>
+              </motion.div>
+            )}
+            {showBenefit && staticDashakam?.benefits && (
+              <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: "auto", opacity: 1 }} exit={{ height: 0, opacity: 0 }} className="overflow-hidden">
+                <div className="rounded-b-xl border border-t-0 border-border bg-card p-4">
+                  <p className="text-sm text-foreground font-sans leading-relaxed">✨ {staticDashakam.benefits}</p>
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </div>
+
+        {/* Loading state */}
+        {loading && (
+          <div className="flex items-center justify-center py-20">
+            <Loader2 className="h-8 w-8 animate-spin text-primary" />
+            <span className="ml-3 text-muted-foreground font-sans">Loading verses…</span>
           </div>
         )}
 
         {/* Verses Display */}
-        <div className="space-y-4">
-          {displayVerses.length === 0 ? (
-            <div className="rounded-xl bg-card border border-border p-8 text-center">
-              <p className="text-muted-foreground font-sans">
-                No verse content available yet for this Dashakam. Admin needs to upload verse data.
-              </p>
-            </div>
-          ) : (
-            displayVerses.map((verse, idx) => (
-              <motion.div
-                key={verse.id}
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: idx * 0.05 }}
-                className="rounded-xl border border-border bg-card p-6"
-              >
-                <div className="flex items-center justify-between mb-3">
-                  <span className="text-xs text-muted-foreground font-sans">
-                    Verse {verse.paragraph} · Meter: {verse.meter}
-                  </span>
-                  <VerseIcons
-                    bell={dashakam ? verseShouldShowBell(dashakam, verse.paragraph) : false}
-                    prasadam={dashakam ? getVersePrasadam(dashakam, verse.paragraph) : undefined}
-                  />
-                </div>
-                <p className="font-body text-lg leading-relaxed whitespace-pre-line text-foreground mb-4">
-                  {getVerseText(verse)}
-                </p>
-                <div className="border-t border-border pt-3">
-                  <p className="text-xs text-muted-foreground font-sans uppercase tracking-wide mb-1">Translation ({translationLang})</p>
-                  <p className="text-sm text-muted-foreground font-sans leading-relaxed">
-                    {getMeaning(verse)}
+        {!loading && (
+          <div className="space-y-4">
+            {displayVerses.length === 0 ? (
+              <div className="rounded-xl bg-card border border-border p-8 text-center">
+                <BookOpen className="h-10 w-10 text-muted-foreground mx-auto mb-3" />
+                <p className="text-muted-foreground font-sans text-lg">Content coming soon for this dashakam</p>
+                <p className="text-muted-foreground/60 font-sans text-sm mt-1">Check back later as we continue adding content.</p>
+              </div>
+            ) : (
+              displayVerses.map((verse, idx) => (
+                <motion.div
+                  key={verse.verse_no}
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: idx * 0.05 }}
+                  className="rounded-xl border border-border bg-card p-6"
+                >
+                  <div className="flex items-center justify-between mb-3">
+                    <span className="text-xs text-muted-foreground font-sans">
+                      Verse {verse.verse_no} · Meter: {verse.meter}
+                    </span>
+                    <VerseIcons bell={verse.has_bell} prasadam={verse.prasadam_text} />
+                  </div>
+
+                  {/* Sanskrit script — always shown */}
+                  <p className="font-body text-lg leading-relaxed whitespace-pre-line text-foreground mb-3">
+                    {verse.sanskrit_script}
                   </p>
-                </div>
-              </motion.div>
-            ))
-          )}
-        </div>
+
+                  {/* Transliteration — shown if language is not Sanskrit and text exists */}
+                  {selectedLangCode !== "sa" && verse.transliteration_text && (
+                    <div className="border-t border-border pt-3 mb-3">
+                      <p className="text-xs text-muted-foreground font-sans uppercase tracking-wide mb-1">
+                        Transliteration ({LANGUAGE_OPTIONS.find((l) => l.code === selectedLangCode)?.label})
+                      </p>
+                      <p className="font-body text-base leading-relaxed whitespace-pre-line text-foreground/80">
+                        {verse.transliteration_text}
+                      </p>
+                    </div>
+                  )}
+
+                  {/* Translation — shown if text exists */}
+                  {verse.translation_text && (
+                    <div className="border-t border-border pt-3">
+                      <p className="text-xs text-muted-foreground font-sans uppercase tracking-wide mb-1">
+                        Translation ({LANGUAGE_OPTIONS.find((l) => l.code === selectedLangCode)?.label})
+                      </p>
+                      <p className="text-sm text-muted-foreground font-sans leading-relaxed">
+                        {verse.translation_text}
+                      </p>
+                    </div>
+                  )}
+                </motion.div>
+              ))
+            )}
+          </div>
+        )}
       </motion.div>
     </div>
   );
