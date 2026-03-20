@@ -1,15 +1,15 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Play, Pause, RotateCcw, ChevronRight, ChevronDown, ChevronUp } from "lucide-react";
+import { Play, Pause, RotateCcw, ChevronRight, ChevronDown, ChevronUp, Loader2, BookOpen } from "lucide-react";
 import {
   sampleDashakams,
   TRANSLITERATION_LANGUAGES,
   TRANSLATION_LANGUAGES,
-  verseShouldShowBell,
-  getVersePrasadam,
   type TransliterationLanguage,
   type TranslationLanguage,
 } from "@/data/narayaneeyam";
+import { useDashakam, type MergedVerse } from "@/hooks/useDashakam";
+import { supabase } from "@/integrations/supabase/client";
 import { getLessonPlans, type LessonPlan } from "@/lib/lessonPlan";
 import { getProgress, saveProgress, updateStreak } from "@/lib/progress";
 import {
@@ -19,6 +19,12 @@ import {
 } from "@/lib/audioTimestamps";
 import { Link } from "react-router-dom";
 import VerseIcons from "@/components/VerseIcons";
+
+// ─── Language option type ────────────────────────────────────────────────────
+interface LanguageOption {
+  code: string;
+  name: string;
+}
 
 // ─── Sub-components ──────────────────────────────────────────────────────────
 
