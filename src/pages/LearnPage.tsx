@@ -132,10 +132,38 @@ export default function LearnPage() {
   const [highlightPhrase, setHighlightPhrase] = useState(-1); // -1 = whole verse
   const [repeatCount, setRepeatCount] = useState(DEFAULT_REPEAT_COUNT);
   const [speed, setSpeed] = useState(1);
+  const [languages, setLanguages] = useState<LanguageOption[]>([]);
 
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const gapTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const inGapRef = useRef(false);
+
+  const currentLesson = activePlan?.lessons[currentLessonIdx];
+  const selectedDashakam = currentLesson?.dashakam ?? 1;
+
+  // Map UI language to DB language_code
+  const langCodeMap: Record<string, string> = {
+    english: "en", tamil: "ta", malayalam: "ml", telugu: "te",
+    hindi: "hi", marathi: "mr", kannada: "kn", sanskrit: "en",
+  };
+  const selectedLanguage = langCodeMap[translationLang] || "en";
+
+  // Use the shared hook for live data
+  const { dashakamList, verses, loading, error, staticDashakam } = useDashakam(selectedDashakam, selectedLanguage);
+
+  // Fetch active languages from Supabase
+  useEffect(() => {
+    (async () => {
+      const { data } = await supabase
+        .from("languages")
+        .select("code, name")
+        .eq("is_active", true)
+        .order("name");
+      if (data && data.length > 0) {
+        setLanguages(data as LanguageOption[]);
+      }
+    })();
+  }, []);
 
   useEffect(() => { setPlans(getLessonPlans()); }, []);
 
@@ -158,18 +186,16 @@ export default function LearnPage() {
     }
   }, [activePlan, currentLessonIdx]);
 
-  const currentLesson = activePlan?.lessons[currentLessonIdx];
-  const dashakam = currentLesson ? sampleDashakams.find((d) => d.id === currentLesson.dashakam) : null;
-  const lessonVerses = dashakam?.verses.filter((v) => currentLesson?.paragraphs.includes(v.paragraph)) || [];
+  // Filter verses for this lesson's paragraphs
+  const lessonVerses = currentLesson
+    ? verses.filter((v) => currentLesson.paragraphs.includes(v.verse_no))
+    : [];
 
-  const getVerseText = (verse: typeof lessonVerses[0]) => verse[translitLang] || verse.sanskrit;
-  const getMeaning = (verse: typeof lessonVerses[0]) => {
-    const key = `meaning_${translationLang}` as keyof typeof verse;
-    return (verse[key] as string) || verse.meaning_english;
-  };
+  const getVerseText = (verse: MergedVerse) => verse.transliteration_text || verse.sanskrit_script;
+  const getMeaning = (verse: MergedVerse) => verse.translation_text || "";
 
   // Split verse text into lines/phrases for line-level highlighting
-  const getVerseLines = (verse: typeof lessonVerses[0]) => {
+  const getVerseLines = (verse: MergedVerse) => {
     const text = getVerseText(verse);
     return text.split("\n").filter(Boolean);
   };
