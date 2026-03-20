@@ -242,17 +242,20 @@ export default function LearnPage() {
     const verse = lessonVerses[highlightIdx];
     if (!verse) return;
 
-    if (verse.audio) {
-      const audio = new Audio(verse.audio);
+    // Use learn_audio_file for Learn page
+    const audioFile = verse.learn_audio_file;
+
+    if (audioFile) {
+      const audio = new Audio(audioFile);
       audioRef.current = audio;
       audio.playbackRate = speed;
       audio.play().catch((e) => console.error("Audio error:", e));
 
-      const vt = dashakam ? getVerseTimestamp(dashakam.id, verse.paragraph) : undefined;
+      const vt = getVerseTimestamp(selectedDashakam, verse.verse_no);
 
       const onTimeUpdate = () => {
         if (vt && vt.phraseEndTimes.length > 0) {
-          const phraseIdx = getActivePhraseAtTime(dashakam!.id, verse.paragraph, audio.currentTime);
+          const phraseIdx = getActivePhraseAtTime(selectedDashakam, verse.verse_no, audio.currentTime);
           setHighlightPhrase(phraseIdx);
         }
       };
@@ -306,6 +309,11 @@ export default function LearnPage() {
     );
   }
 
+  // Dashakam title from dashakamList or static fallback
+  const dashakamTitle = dashakamList.find((d) => d.dashakam_no === selectedDashakam)?.dashakam_name
+    || staticDashakam?.title_english
+    || `Dashakam ${selectedDashakam}`;
+
   // ─── Main render ─────────────────────────────────────────────────────────────
 
   return (
@@ -329,66 +337,74 @@ export default function LearnPage() {
           onSpeedChange={setSpeed}
         />
 
+        {/* Loading state */}
+        {loading && currentLesson && (
+          <div className="flex items-center justify-center py-20">
+            <Loader2 className="h-8 w-8 animate-spin text-primary" />
+            <span className="ml-3 text-muted-foreground font-sans">Loading verses…</span>
+          </div>
+        )}
+
         {/* Learning Content */}
-        {currentLesson && dashakam ? (
-          <>
-            {/* Dashakam header */}
-            <div className="mb-6">
-              <div className="rounded-xl bg-gradient-peacock p-5">
-                <h2 className="font-display text-xl font-semibold text-primary-foreground">Dashakam {currentLesson.dashakam}: {dashakam.title_english}</h2>
-                <p className="text-gold-light font-sans text-sm">Paragraphs: {currentLesson.paragraphs.join(", ")} · Scheduled: {currentLesson.date}</p>
-                <div className="mt-3 flex items-center gap-2">
-                  <button onClick={() => setShowGist(!showGist)}
-                    className="inline-flex items-center gap-1 rounded-lg bg-primary-foreground/10 px-3 py-1.5 text-xs text-gold-light font-sans hover:bg-primary-foreground/20 transition-colors">
-                    {showGist ? <ChevronUp className="h-3 w-3" /> : <ChevronDown className="h-3 w-3" />}
-                    {showGist ? "Hide Gist" : "View Gist"}
-                  </button>
-                  {dashakam.benefits && (
-                    <button onClick={() => setShowBenefit(!showBenefit)}
-                      className="inline-flex items-center gap-1 rounded-lg bg-primary-foreground/10 px-3 py-1.5 text-xs text-gold-light font-sans hover:bg-primary-foreground/20 transition-colors">
-                      {showBenefit ? <ChevronUp className="h-3 w-3" /> : <ChevronDown className="h-3 w-3" />}
-                      {showBenefit ? "Hide Benefit" : "View Benefit"}
-                    </button>
-                  )}
-                </div>
-              </div>
-              <AnimatePresence>
-                {showGist && (
-                  <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: "auto", opacity: 1 }} exit={{ height: 0, opacity: 0 }} className="overflow-hidden">
-                    <div className="rounded-b-xl border border-t-0 border-border bg-card p-4">
-                      <p className="text-sm text-foreground font-sans leading-relaxed">{dashakam.gist}</p>
-                    </div>
-                  </motion.div>
-                )}
-                {showBenefit && dashakam.benefits && (
-                  <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: "auto", opacity: 1 }} exit={{ height: 0, opacity: 0 }} className="overflow-hidden">
-                    <div className="rounded-b-xl border border-t-0 border-border bg-card p-4">
-                      <p className="text-sm text-foreground font-sans leading-relaxed">✨ {dashakam.benefits}</p>
-                    </div>
-                  </motion.div>
-                )}
-              </AnimatePresence>
+        {!loading && currentLesson ? (
+          lessonVerses.length === 0 ? (
+            <div className="rounded-xl bg-card border border-border p-8 text-center">
+              <BookOpen className="h-10 w-10 text-muted-foreground mx-auto mb-3" />
+              <p className="text-muted-foreground font-sans text-lg">Content coming soon for this dashakam</p>
+              <p className="text-muted-foreground/60 font-sans text-sm mt-1">Check back later as we continue adding content.</p>
             </div>
-
-            {/* Silence gap indicator removed — learn audio has built-in silence */}
-
-            {/* Verses */}
-            <div className="space-y-4 mb-24">
-              {lessonVerses.length === 0 ? (
-                <div className="rounded-xl bg-card border border-border p-8 text-center">
-                  <p className="text-muted-foreground font-sans">No verse data for this lesson yet. Admin needs to upload content.</p>
+          ) : (
+            <>
+              {/* Dashakam header */}
+              <div className="mb-6">
+                <div className="rounded-xl bg-gradient-peacock p-5">
+                  <h2 className="font-display text-xl font-semibold text-primary-foreground">Dashakam {currentLesson.dashakam}: {dashakamTitle}</h2>
+                  <p className="text-gold-light font-sans text-sm">Paragraphs: {currentLesson.paragraphs.join(", ")} · Scheduled: {currentLesson.date}</p>
+                  <div className="mt-3 flex items-center gap-2">
+                    <button onClick={() => setShowGist(!showGist)}
+                      className="inline-flex items-center gap-1 rounded-lg bg-primary-foreground/10 px-3 py-1.5 text-xs text-gold-light font-sans hover:bg-primary-foreground/20 transition-colors">
+                      {showGist ? <ChevronUp className="h-3 w-3" /> : <ChevronDown className="h-3 w-3" />}
+                      {showGist ? "Hide Gist" : "View Gist"}
+                    </button>
+                    {staticDashakam?.benefits && (
+                      <button onClick={() => setShowBenefit(!showBenefit)}
+                        className="inline-flex items-center gap-1 rounded-lg bg-primary-foreground/10 px-3 py-1.5 text-xs text-gold-light font-sans hover:bg-primary-foreground/20 transition-colors">
+                        {showBenefit ? <ChevronUp className="h-3 w-3" /> : <ChevronDown className="h-3 w-3" />}
+                        {showBenefit ? "Hide Benefit" : "View Benefit"}
+                      </button>
+                    )}
+                  </div>
                 </div>
-              ) : (
-                lessonVerses.map((verse, idx) => {
+                <AnimatePresence>
+                  {showGist && staticDashakam?.gist && (
+                    <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: "auto", opacity: 1 }} exit={{ height: 0, opacity: 0 }} className="overflow-hidden">
+                      <div className="rounded-b-xl border border-t-0 border-border bg-card p-4">
+                        <p className="text-sm text-foreground font-sans leading-relaxed">{staticDashakam.gist}</p>
+                      </div>
+                    </motion.div>
+                  )}
+                  {showBenefit && staticDashakam?.benefits && (
+                    <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: "auto", opacity: 1 }} exit={{ height: 0, opacity: 0 }} className="overflow-hidden">
+                      <div className="rounded-b-xl border border-t-0 border-border bg-card p-4">
+                        <p className="text-sm text-foreground font-sans leading-relaxed">✨ {staticDashakam.benefits}</p>
+                      </div>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </div>
+
+              {/* Verses */}
+              <div className="space-y-4 mb-24">
+                {lessonVerses.map((verse, idx) => {
                   const lines = getVerseLines(verse);
                   const isActiveVerse = idx === highlightIdx && isPlaying;
 
                   return (
-                    <motion.div key={verse.id}
+                    <motion.div key={verse.verse_no}
                       className={`rounded-xl border p-5 transition-all duration-500 ${isActiveVerse ? "border-secondary bg-secondary/10 shadow-gold" : "border-border bg-card"}`}>
                       <div className="flex items-center justify-between mb-2">
-                        <span className="text-xs text-muted-foreground font-sans">Verse {verse.paragraph} · {verse.meter}</span>
-                        <VerseIcons bell={verseShouldShowBell(dashakam, verse.paragraph)} prasadam={getVersePrasadam(dashakam, verse.paragraph)} />
+                        <span className="text-xs text-muted-foreground font-sans">Verse {verse.verse_no} · {verse.meter}</span>
+                        <VerseIcons bell={verse.has_bell} prasadam={verse.prasadam_text} />
                       </div>
 
                       {/* Line-by-line rendering with phrase highlighting */}
@@ -415,30 +431,30 @@ export default function LearnPage() {
                       )}
                     </motion.div>
                   );
-                })
-              )}
-            </div>
-
-            {/* Player */}
-            <div className="fixed bottom-0 left-0 right-0 bg-gradient-peacock p-4 shadow-peacock">
-              <div className="flex items-center justify-center gap-4">
-                <button onClick={() => { stopPlayback(); setHighlightIdx(0); }} className="text-primary-foreground/70 hover:text-primary-foreground p-2"><RotateCcw className="h-5 w-5" /></button>
-                <button onClick={handlePlayPause} className="flex h-12 w-12 items-center justify-center rounded-full bg-gradient-gold text-primary shadow-gold transition-transform hover:scale-110">
-                  {isPlaying ? <Pause className="h-6 w-6" /> : <Play className="h-6 w-6 ml-0.5" />}
-                </button>
+                })}
               </div>
-              <p className="text-center text-xs text-primary-foreground/60 mt-2 font-sans">
-                Verse {highlightIdx + 1}/{lessonVerses.length}
-                {isPlaying && highlightPhrase >= 0 && ` · Line ${highlightPhrase + 1}`}
-                {` · ${repeatCount}× repeats`}
-              </p>
-            </div>
-          </>
-        ) : (
+
+              {/* Player */}
+              <div className="fixed bottom-0 left-0 right-0 bg-gradient-peacock p-4 shadow-peacock">
+                <div className="flex items-center justify-center gap-4">
+                  <button onClick={() => { stopPlayback(); setHighlightIdx(0); }} className="text-primary-foreground/70 hover:text-primary-foreground p-2"><RotateCcw className="h-5 w-5" /></button>
+                  <button onClick={handlePlayPause} className="flex h-12 w-12 items-center justify-center rounded-full bg-gradient-gold text-primary shadow-gold transition-transform hover:scale-110">
+                    {isPlaying ? <Pause className="h-6 w-6" /> : <Play className="h-6 w-6 ml-0.5" />}
+                  </button>
+                </div>
+                <p className="text-center text-xs text-primary-foreground/60 mt-2 font-sans">
+                  Verse {highlightIdx + 1}/{lessonVerses.length}
+                  {isPlaying && highlightPhrase >= 0 && ` · Line ${highlightPhrase + 1}`}
+                  {` · ${repeatCount}× repeats`}
+                </p>
+              </div>
+            </>
+          )
+        ) : !loading && !currentLesson ? (
           <div className="rounded-xl bg-card border border-border p-8 text-center">
             <p className="text-muted-foreground font-sans">Select a lesson plan and lesson to begin.</p>
           </div>
-        )}
+        ) : null}
       </motion.div>
     </div>
   );
