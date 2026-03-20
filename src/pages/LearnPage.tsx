@@ -218,25 +218,22 @@ export default function LearnPage() {
     const verse = lessonVerses[highlightIdx];
     if (!verse) return;
 
-    const vt = dashakam ? getVerseTimestamp(dashakam.id, verse.paragraph) : undefined;
+    const vt = getVerseTimestamp(selectedDashakam, verse.verse_no);
     const phraseCount = vt?.phraseEndTimes.length || getVerseLines(verse).length || 1;
     const nextPhrase = highlightPhrase + 1;
 
     if (nextPhrase < phraseCount) {
-      // Next phrase — no artificial gap, audio already has silence
       setHighlightPhrase(nextPhrase);
     } else {
-      // Move to next verse
       if (highlightIdx < lessonVerses.length - 1) {
         setHighlightIdx((prev) => prev + 1);
         setHighlightPhrase(0);
       } else {
-        // All done
         stopPlayback();
         updateStreak();
       }
     }
-  }, [highlightIdx, highlightPhrase, lessonVerses, dashakam, repeatCount, stopPlayback]);
+  }, [highlightIdx, highlightPhrase, lessonVerses, selectedDashakam, repeatCount, stopPlayback]);
 
   // Audio playback effect: play current verse audio, use timeupdate for phrase highlighting
   useEffect(() => {
