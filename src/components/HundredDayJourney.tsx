@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { CheckCircle2, Circle, Play } from "lucide-react";
 import { Progress } from "@/components/ui/progress";
+import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 import {
   getJourneyProgress,
@@ -17,6 +18,7 @@ interface Props {
 
 export default function HundredDayJourney({ allDashakams, onDashakamClick }: Props) {
   const [progress, setProgress] = useState<JourneyProgress | null>(getJourneyProgress);
+  const { user } = useAuth();
 
   const completedSet = new Set(progress?.completions.map((c) => c.dashakam) ?? []);
   const completedCount = completedSet.size;
@@ -28,7 +30,7 @@ export default function HundredDayJourney({ allDashakams, onDashakamClick }: Pro
   };
 
   const handleComplete = (dashakam: number) => {
-    const p = markDayComplete(dashakam);
+    const p = markDayComplete(dashakam, user?.id);
     setProgress({ ...p });
   };
 

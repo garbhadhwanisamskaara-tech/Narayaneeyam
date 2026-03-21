@@ -1,13 +1,15 @@
 /**
- * Static Devotion Pathways data (UI-first, no DB yet).
- * When Lovable Cloud is enabled, this will be replaced by DB queries.
+ * Static Devotion Pathways data with Supabase integration.
+ * Saves to user_progress table when logged in, localStorage fallback for guests.
  */
+
+import { supabase } from "@/integrations/supabase/client";
 
 export interface DevotionPathway {
   id: string;
   name: string;
   description: string;
-  icon: string; // lucide icon name
+  icon: string;
   dashakams: number[];
   display_order: number;
   active: boolean;
@@ -43,13 +45,12 @@ export const FESTIVAL_PATHWAYS: FestivalPathway[] = [
 // ─── Festival Calendar (known dates for 2025-2026) ───────────────────────────
 export interface FestivalCalendarEntry {
   festival_name: string;
-  festival_date: string; // YYYY-MM-DD
+  festival_date: string;
   year: number;
   description: string;
   dashakams: number[];
 }
 
-// Approximate dates — admin can override via DB later
 export const FESTIVAL_CALENDAR_2025: FestivalCalendarEntry[] = [
   { festival_name: "Vaikunta Ekadasi", festival_date: "2025-01-06", year: 2025, description: "The most auspicious Ekadasi", dashakams: [8, 90, 98, 100] },
   { festival_name: "Narayaneeyam Day", festival_date: "2025-11-28", year: 2025, description: "Anniversary of Narayaneeyam composition", dashakams: [1, 100] },
@@ -74,7 +75,6 @@ export function getFestivalCalendar(): FestivalCalendarEntry[] {
   const currentYear = new Date().getFullYear();
   if (currentYear === 2025) return FESTIVAL_CALENDAR_2025;
   if (currentYear === 2026) return FESTIVAL_CALENDAR_2026;
-  // Fallback: return 2026 data adjusted (admin should configure for future years)
   return FESTIVAL_CALENDAR_2026;
 }
 
@@ -138,7 +138,7 @@ export const DEVOTION_PATHWAYS: DevotionPathway[] = [
   },
 ];
 
-// ─── 100-Day Journey progress (localStorage for now) ─────────────────────────
+// ─── 100-Day Journey progress ────────────────────────────────────────────────
 const JOURNEY_KEY = "100day_journey";
 
 export interface JourneyProgress {
@@ -170,13 +170,33 @@ export function startJourney(): JourneyProgress {
   return progress;
 }
 
-export function markDayComplete(dashakam: number): JourneyProgress {
+/**
+ * Mark a dashakam complete. If userId is provided, also saves to Supabase.
+ */
+export function markDayComplete(dashakam: number, userId?: string): JourneyProgress {
   let progress = getJourneyProgress();
   if (!progress) progress = startJourney();
   const today = new Date().toISOString().split("T")[0];
+
   if (!progress.completions.find((c) => c.dashakam === dashakam)) {
     progress.completions.push({ dashakam, date: today });
     saveJourneyProgress(progress);
+
+    // If logged in, also save to Supabase
+    if (userId) {
+      supabase
+        .from("user_progress")
+        .upsert(
+          {
+            user_id: userId,
+            pathway_id: "100-day-journey",
+            dashakam_no: dashakam,
+            completed_date: today,
+          },
+          { onConflict: "user_id,pathway_id,dashakam_no" }
+        )
+        .then(() => {});
+    }
   }
   return progress;
 }
@@ -188,6 +208,5 @@ export function shouldShowJourneyOnDashboard(): boolean {
   const lastDate = new Date(lastCompletion.date);
   const now = new Date();
   const daysSince = Math.floor((now.getTime() - lastDate.getTime()) / (1000 * 60 * 60 * 24));
-  // Show for 7 days after last completion
   return daysSince <= 7;
 }

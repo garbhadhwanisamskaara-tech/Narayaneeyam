@@ -1,36 +1,17 @@
-import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
 import DashboardCollectionCards from "@/components/DashboardCollectionCards";
-import { Flame, BookOpen, Clock, Mic, GraduationCap, Headphones, Share2 } from "lucide-react";
-import { getProgress, type UserProgress } from "@/lib/progress";
+import { Flame, BookOpen, Clock, Mic, GraduationCap, Headphones, Share2, LogIn, Loader2 } from "lucide-react";
+import { getProgress } from "@/lib/progress";
 import { getLessonPlans } from "@/lib/lessonPlan";
 import { TOTAL_VERSES, sampleDashakams } from "@/data/narayaneeyam";
 import { useAuth } from "@/contexts/AuthContext";
-
-function ProgressRing({ percent, size = 80, strokeWidth = 6, color = "hsl(var(--secondary))" }: { percent: number; size?: number; strokeWidth?: number; color?: string }) {
-  const radius = (size - strokeWidth) / 2;
-  const circumference = 2 * Math.PI * radius;
-  const offset = circumference - (percent / 100) * circumference;
-  return (
-    <svg width={size} height={size} className="transform -rotate-90">
-      <circle cx={size / 2} cy={size / 2} r={radius} stroke="hsl(var(--muted))" strokeWidth={strokeWidth} fill="none" />
-      <motion.circle
-        cx={size / 2} cy={size / 2} r={radius}
-        stroke={color} strokeWidth={strokeWidth} fill="none"
-        strokeLinecap="round"
-        initial={{ strokeDashoffset: circumference }}
-        animate={{ strokeDashoffset: offset }}
-        transition={{ duration: 1.2, delay: 0.3 }}
-        strokeDasharray={circumference}
-      />
-    </svg>
-  );
-}
+import { useUserProgress } from "@/hooks/useUserProgress";
+import { Progress } from "@/components/ui/progress";
+import ProgressRing from "@/components/ProgressRing";
 
 function getVerseOfTheDay(): { sanskrit: string; meaning: string; dashakam: number; verse: number } {
   const dayOfYear = Math.floor((Date.now() - new Date(new Date().getFullYear(), 0, 0).getTime()) / 86400000);
-  // Cycle through available verses
   const allVerses = sampleDashakams.flatMap(d => d.verses.map(v => ({ ...v, dashakamId: d.id })));
   if (allVerses.length === 0) {
     return { sanskrit: "ॐ नमो भगवते वासुदेवाय", meaning: "Om, I bow to Lord Vasudeva", dashakam: 1, verse: 1 };
@@ -46,14 +27,19 @@ function getVerseOfTheDay(): { sanskrit: string; meaning: string; dashakam: numb
 }
 
 export default function DashboardPage() {
-  const [progress, setProgress] = useState<UserProgress>(getProgress());
-  const { displayName } = useAuth();
+  const localProgress = getProgress();
+  const { displayName, user } = useAuth();
+  const {
+    completedDashakams,
+    dashakamsCompleted,
+    lastActivity,
+    currentStreak,
+    completionPercentage,
+    loading: progressLoading,
+    isGuest,
+  } = useUserProgress();
   const plans = getLessonPlans();
   const verseOfDay = getVerseOfTheDay();
-
-  const completionPct = TOTAL_VERSES > 0
-    ? Math.round((progress.completedVerses.length / TOTAL_VERSES) * 100)
-    : 0;
 
   const modules = [
     {
@@ -88,6 +74,8 @@ export default function DashboardPage() {
     }
   };
 
+  const recentCompleted = completedDashakams.slice(0, 5);
+
   return (
     <div className="container mx-auto px-4 py-8 pb-24">
       <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
@@ -100,12 +88,39 @@ export default function DashboardPage() {
           </p>
         </div>
 
-        {/* Daily Progress Ring */}
+        {/* Sign-in prompt for guests */}
+        {isGuest && (
+          <motion.div
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="rounded-xl border border-secondary/30 bg-secondary/5 p-5 mb-8"
+          >
+            <div className="flex items-center gap-4">
+              <LogIn className="h-6 w-6 text-secondary shrink-0" />
+              <div className="flex-1">
+                <p className="font-display text-base font-semibold text-foreground">
+                  Sign in to track your progress
+                </p>
+                <p className="text-sm text-muted-foreground font-sans">
+                  Your chanting streak, completed dashakams, and journey progress will be saved across devices.
+                </p>
+              </div>
+              <Link
+                to="/auth"
+                className="rounded-lg bg-gradient-gold px-5 py-2.5 font-sans text-sm font-semibold text-primary shadow-gold transition-transform hover:scale-105 shrink-0"
+              >
+                Sign In
+              </Link>
+            </div>
+          </motion.div>
+        )}
+
+        {/* Progress Summary */}
         <div className="grid grid-cols-3 gap-4 mb-8">
           {[
-            { label: "Verses", pct: completionPct, val: progress.completedVerses.length },
-            { label: "Minutes", pct: Math.min(100, progress.totalChantingMinutes), val: progress.totalChantingMinutes },
-            { label: "Sessions", pct: Math.min(100, progress.totalSessions * 10), val: progress.totalSessions },
+            { label: "Dashakams", pct: completionPercentage, val: dashakamsCompleted },
+            { label: "Streak", pct: Math.min(100, currentStreak * 10), val: currentStreak },
+            { label: "Sessions", pct: Math.min(100, localProgress.totalSessions * 10), val: localProgress.totalSessions },
           ].map((item, i) => (
             <motion.div
               key={item.label}
@@ -124,6 +139,54 @@ export default function DashboardPage() {
             </motion.div>
           ))}
         </div>
+
+        {/* Journey Completion Bar */}
+        {dashakamsCompleted > 0 && (
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.15 }}
+            className="rounded-xl border border-border bg-card p-5 mb-8"
+          >
+            <div className="flex items-center justify-between mb-2">
+              <span className="font-display text-sm font-semibold text-foreground">
+                Journey Progress — {dashakamsCompleted} / 100 Dashakams
+              </span>
+              <span className="text-xs text-muted-foreground font-sans">{completionPercentage}%</span>
+            </div>
+            <Progress value={completionPercentage} className="h-2" />
+            {lastActivity && (
+              <p className="text-xs text-muted-foreground font-sans mt-2">
+                Last activity: {new Date(lastActivity).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" })}
+              </p>
+            )}
+          </motion.div>
+        )}
+
+        {/* Recently Completed */}
+        {recentCompleted.length > 0 && (
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.2 }}
+            className="rounded-xl border border-border bg-card p-5 mb-8"
+          >
+            <h3 className="font-display text-sm font-semibold text-foreground mb-3">Recently Completed</h3>
+            <div className="flex flex-wrap gap-2">
+              {recentCompleted.map((c) => (
+                <span
+                  key={`${c.pathway_id}-${c.dashakam_no}`}
+                  className="inline-flex items-center gap-1.5 rounded-lg bg-primary/10 px-3 py-1.5 text-xs font-sans"
+                >
+                  <span className="font-semibold text-primary">D{c.dashakam_no}</span>
+                  <span className="text-muted-foreground">
+                    {new Date(c.completed_date).toLocaleDateString("en-IN", { day: "numeric", month: "short" })}
+                  </span>
+                </span>
+              ))}
+            </div>
+          </motion.div>
+        )}
 
         {/* Bookmarks & Favourites */}
         <div className="mb-8">
@@ -199,17 +262,19 @@ export default function DashboardPage() {
             </div>
             <div>
               <p className="font-display text-2xl font-bold text-foreground">
-                {progress.currentStreak} Day{progress.currentStreak !== 1 ? "s" : ""} Chanting Streak
+                {currentStreak} Day{currentStreak !== 1 ? "s" : ""} Chanting Streak
               </p>
               <p className="text-sm text-muted-foreground font-sans">
-                Longest: {progress.longestStreak} day{progress.longestStreak !== 1 ? "s" : ""} · Keep the flame alive! 🔥
+                {currentStreak > 0
+                  ? "Keep the flame alive! 🔥"
+                  : "Start chanting today to begin your streak 🪔"}
               </p>
             </div>
           </div>
         </motion.div>
 
         {/* Resume Practice */}
-        {progress.lastSessionDate && (
+        {localProgress.lastSessionDate && (
           <motion.div
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
@@ -220,14 +285,14 @@ export default function DashboardPage() {
               <div>
                 <p className="text-xs text-muted-foreground font-sans uppercase tracking-wide mb-1">Resume Practice</p>
                 <p className="font-display text-lg font-semibold text-foreground">
-                  Dashakam {progress.lastDashakam} — Verse {progress.lastParagraph || 1}
+                  Dashakam {localProgress.lastDashakam} — Verse {localProgress.lastParagraph || 1}
                 </p>
                 <p className="text-xs text-muted-foreground font-sans mt-1">
-                  Last session: {progress.lastSessionDate}
+                  Last session: {localProgress.lastSessionDate}
                 </p>
               </div>
               <Link
-                to={progress.lastPage || "/chant"}
+                to={localProgress.lastPage || "/chant"}
                 className="rounded-lg bg-gradient-gold px-5 py-2.5 font-sans text-sm font-semibold text-primary shadow-gold transition-transform hover:scale-105"
               >
                 Resume
@@ -246,9 +311,9 @@ export default function DashboardPage() {
           <h3 className="font-display text-lg font-semibold text-foreground mb-4">Insights</h3>
           <div className="grid grid-cols-2 gap-3">
             {[
-              { icon: BookOpen, label: "Verses Done", value: `${progress.completedVerses.length} / ${TOTAL_VERSES}` },
-              { icon: Clock, label: "Total Time", value: `${progress.totalChantingMinutes} min` },
-              { icon: Flame, label: "Current Streak", value: `${progress.currentStreak} days` },
+              { icon: BookOpen, label: "Dashakams Done", value: `${dashakamsCompleted} / 100` },
+              { icon: Clock, label: "Total Time", value: `${localProgress.totalChantingMinutes} min` },
+              { icon: Flame, label: "Current Streak", value: `${currentStreak} days` },
               { icon: GraduationCap, label: "Lesson Plans", value: `${plans.length}` },
             ].map((s) => (
               <div key={s.label} className="flex items-center gap-3 rounded-lg bg-muted/50 p-3">
