@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { CheckCircle2, Circle, Play } from "lucide-react";
 import { Progress } from "@/components/ui/progress";
+import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 import {
   getJourneyProgress,
