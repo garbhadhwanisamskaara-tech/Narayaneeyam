@@ -97,10 +97,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   const signOut = async () => {
-    logEvent("user_logout");
-    setIsAdmin(false);
-    setIsFounder(false);
-    await supabase.auth.signOut();
+    return trackSpan("auth.signOut", "auth", async () => {
+      logEvent("user_logout");
+      setIsAdmin(false);
+      setIsFounder(false);
+      await supabase.auth.signOut();
+    });
   };
 
   return (
