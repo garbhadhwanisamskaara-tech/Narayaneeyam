@@ -74,16 +74,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const displayName = user?.user_metadata?.display_name || user?.email?.split("@")[0] || "";
 
   const signUp = async (email: string, password: string, name: string) => {
-    const { error } = await supabase.auth.signUp({
-      email,
-      password,
-      options: {
-        data: { display_name: name },
-        emailRedirectTo: window.location.origin,
-      },
+    return trackSpan("auth.signUp", "auth", async () => {
+      const { error } = await supabase.auth.signUp({
+        email,
+        password,
+        options: {
+          data: { display_name: name },
+          emailRedirectTo: window.location.origin,
+        },
+      });
+      if (!error) logEvent("user_signup");
+      return { error: error as Error | null };
     });
-    if (!error) logEvent("user_signup");
-    return { error: error as Error | null };
   };
 
   const signIn = async (email: string, password: string) => {
