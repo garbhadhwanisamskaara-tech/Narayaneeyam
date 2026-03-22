@@ -1,5 +1,6 @@
 import { useEffect, useState, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { captureAppError } from "@/monitoring/sentry";
 import { useAuth } from "@/contexts/AuthContext";
 import { getProgress, saveProgress } from "@/lib/progress";
 
