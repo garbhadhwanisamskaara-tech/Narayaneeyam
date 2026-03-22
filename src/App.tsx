@@ -70,6 +70,7 @@ const App = () => (
       </BrowserRouter>
     </TooltipProvider>
   </QueryClientProvider>
+  </SentryErrorBoundary>
 );
 
 export default App;
