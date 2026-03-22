@@ -114,7 +114,9 @@ export function useDashakam(
             .eq("dashakam_no", selectedDashakam)
             .eq("language_code", selectedLanguage)
             .order("verse_no"),
-        ]);
+          ]),
+          { dashakam_no: selectedDashakam }
+        );
 
         if (cancelled) return;
 
