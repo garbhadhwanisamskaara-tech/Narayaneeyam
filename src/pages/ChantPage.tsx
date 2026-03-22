@@ -461,6 +461,7 @@ export default function ChantPage() {
               {isPlaying ? <Pause className="h-6 w-6" /> : <Play className="h-6 w-6 ml-0.5" />}
             </button>
             <button onClick={() => { if (audioRef.current) { audioRef.current.pause(); audioRef.current = null; } pausedRef.current = false; setVerseProgress(0); setHighlightedVerse(Math.min(displayVerses.length - 1, highlightedVerse + 1)); }} className="text-primary-foreground/70 hover:text-primary-foreground p-2"><SkipForward className="h-5 w-5" /></button>
+            <button onClick={handleEndSession} className="text-primary-foreground/70 hover:text-primary-foreground p-2" title="End Session"><Square className="h-5 w-5" /></button>
           </div>
           <div className="text-center text-xs text-primary-foreground/60 mt-2 font-sans">
             Verse {highlightedVerse + 1} of {displayVerses.length}
@@ -474,6 +475,46 @@ export default function ChantPage() {
             <p className="text-center text-xs text-primary-foreground/60 mt-1 font-sans">Audio playback is simulated — Admin: upload audio files to enable real playback</p>
           )}
         </div>
+
+        {/* Ritual Chant Overlays */}
+        <AnimatePresence>
+          {ritualPhase === "opening" && openingChants.length > 0 && (
+            <RitualChantOverlay
+              chants={openingChants}
+              title="Opening Prayers"
+              speed={speed}
+              onComplete={() => {
+                setRitualPhase("idle");
+                setHasPlayedOpening(true);
+                logEvent("chant_started", { dashakam: selectedDashakam });
+                setIsPlaying(true);
+              }}
+            />
+          )}
+          {ritualPhase === "dashakam_end" && dashakamClosingChant && (
+            <RitualChantOverlay
+              chants={[dashakamClosingChant]}
+              title="Dashakam Closing"
+              speed={speed}
+              onComplete={() => {
+                setRitualPhase("idle");
+                setHighlightedVerse(0);
+              }}
+            />
+          )}
+          {ritualPhase === "session_end" && sessionClosingChant && (
+            <RitualChantOverlay
+              chants={[sessionClosingChant]}
+              title="Session Closing"
+              speed={speed}
+              onComplete={() => {
+                setRitualPhase("idle");
+                setHighlightedVerse(0);
+                setVerseProgress(0);
+              }}
+            />
+          )}
+        </AnimatePresence>
       </motion.div>
 
       <RemoveBottomSheet
