@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { useSearchParams } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
-import { Play, Pause, SkipBack, SkipForward, RotateCcw, ChevronDown, ChevronUp, Volume2 } from "lucide-react";
+import { Play, Pause, SkipBack, SkipForward, RotateCcw, ChevronDown, ChevronUp, Volume2, Square } from "lucide-react";
 import { logEvent, logAudioEvent } from "@/services/eventLogger";
 import { captureAudioError } from "@/monitoring/sentry";
 import { useBookmarks } from "@/hooks/useBookmarks";
@@ -13,17 +13,19 @@ import {
   sampleDashakams,
   TRANSLITERATION_LANGUAGES,
   TRANSLATION_LANGUAGES,
-  verseShouldShowBell,
-  getVersePrasadam,
   type TransliterationLanguage,
   type TranslationLanguage,
 } from "@/data/narayaneeyam";
 import { useDashakam } from "@/hooks/useDashakam";
+import { useRitualChants } from "@/hooks/useRitualChants";
+import RitualChantOverlay from "@/components/RitualChantOverlay";
 import { getProgress, saveProgress } from "@/lib/progress";
 import { updateStreakSupabase, markVerseCompleted } from "@/lib/supabaseProgress";
 import { getActiveVerseAtTime, getTimestamps } from "@/lib/audioTimestamps";
 import VerseIcons from "@/components/VerseIcons";
 import { Slider } from "@/components/ui/slider";
+
+type RitualPhase = "idle" | "opening" | "dashakam_end" | "session_end";
 
 export default function ChantPage() {
   const [searchParams] = useSearchParams();
