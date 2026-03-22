@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { useSearchParams } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
-import { Play, Pause, SkipBack, SkipForward, RotateCcw, ChevronDown, ChevronUp, Volume2 } from "lucide-react";
+import { Play, Pause, SkipBack, SkipForward, RotateCcw, ChevronDown, ChevronUp, Volume2, Square } from "lucide-react";
 import { logEvent, logAudioEvent } from "@/services/eventLogger";
 import { captureAudioError } from "@/monitoring/sentry";
 import { useBookmarks } from "@/hooks/useBookmarks";
@@ -13,17 +13,19 @@ import {
   sampleDashakams,
   TRANSLITERATION_LANGUAGES,
   TRANSLATION_LANGUAGES,
-  verseShouldShowBell,
-  getVersePrasadam,
   type TransliterationLanguage,
   type TranslationLanguage,
 } from "@/data/narayaneeyam";
 import { useDashakam } from "@/hooks/useDashakam";
+import { useRitualChants } from "@/hooks/useRitualChants";
+import RitualChantOverlay from "@/components/RitualChantOverlay";
 import { getProgress, saveProgress } from "@/lib/progress";
 import { updateStreakSupabase, markVerseCompleted } from "@/lib/supabaseProgress";
 import { getActiveVerseAtTime, getTimestamps } from "@/lib/audioTimestamps";
 import VerseIcons from "@/components/VerseIcons";
 import { Slider } from "@/components/ui/slider";
+
+type RitualPhase = "idle" | "opening" | "dashakam_end" | "session_end";
 
 export default function ChantPage() {
   const [searchParams] = useSearchParams();
@@ -46,6 +48,7 @@ export default function ChantPage() {
   const gapTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const { isBookmarked, addBookmark, removeBookmark, undoRemoveBookmark } = useBookmarks();
   const { isFavourited, addFavourite, removeFavourite, undoRemoveFavourite } = useFavourites();
+  const [ritualPhase, setRitualPhase] = useState<RitualPhase>("idle");
 
   // Map translitLang/translationLang to a language_code for the hook
   const langCodeMap: Record<string, string> = {
@@ -56,6 +59,7 @@ export default function ChantPage() {
 
   // Live data from Supabase with static fallback
   const { dashakamList, verses: dbVerses, loading: dbLoading, staticDashakam } = useDashakam(selectedDashakam, selectedLanguage);
+  const { openingChants, dashakamClosingChant, sessionClosingChant } = useRitualChants(selectedLanguage);
 
   // Build the dashakam dropdown list — prefer DB list, fallback to static
   const dropdownList = dashakamList.length > 0
@@ -124,11 +128,14 @@ export default function ChantPage() {
         setHighlightedVerse(0);
         setVerseProgress(0);
       } else {
+        // Dashakam complete — show closing chant if available
         setIsPlaying(false);
         updateStreakSupabase();
-        setHighlightedVerse(0);
         setVerseProgress(0);
         setCurrentLoopIteration(0);
+        if (dashakamClosingChant) {
+          setRitualPhase("dashakam_end");
+        }
       }
     } else {
       setVerseProgress(0);
@@ -136,7 +143,7 @@ export default function ChantPage() {
         setHighlightedVerse((prev) => prev + 1);
       }, 1500);
     }
-  }, [highlightedVerse, displayVerses.length, loopCount, currentLoopIteration]);
+  }, [highlightedVerse, displayVerses.length, loopCount, currentLoopIteration, dashakamClosingChant]);
 
   // Real audio playback
   useEffect(() => {
@@ -215,6 +222,8 @@ export default function ChantPage() {
     return () => { if (gapTimerRef.current) clearTimeout(gapTimerRef.current); };
   }, []);
 
+  const [hasPlayedOpening, setHasPlayedOpening] = useState(false);
+
   const handlePlayPause = () => {
     if (isPlaying) {
       if (audioRef.current) {
@@ -224,8 +233,25 @@ export default function ChantPage() {
       logAudioEvent("audio_pause", selectedDashakam, displayVerses[highlightedVerse]?.paragraph || 0, "");
       setIsPlaying(false);
     } else {
+      // Show opening chants on first play of the session
+      if (!hasPlayedOpening && openingChants.length > 0) {
+        setRitualPhase("opening");
+        return;
+      }
       logEvent("chant_started", { dashakam: selectedDashakam });
       setIsPlaying(true);
+    }
+  };
+
+  const handleEndSession = () => {
+    if (audioRef.current) { audioRef.current.pause(); audioRef.current = null; }
+    pausedRef.current = false;
+    setIsPlaying(false);
+    if (sessionClosingChant) {
+      setRitualPhase("session_end");
+    } else {
+      setHighlightedVerse(0);
+      setVerseProgress(0);
     }
   };
 
@@ -435,6 +461,7 @@ export default function ChantPage() {
               {isPlaying ? <Pause className="h-6 w-6" /> : <Play className="h-6 w-6 ml-0.5" />}
             </button>
             <button onClick={() => { if (audioRef.current) { audioRef.current.pause(); audioRef.current = null; } pausedRef.current = false; setVerseProgress(0); setHighlightedVerse(Math.min(displayVerses.length - 1, highlightedVerse + 1)); }} className="text-primary-foreground/70 hover:text-primary-foreground p-2"><SkipForward className="h-5 w-5" /></button>
+            <button onClick={handleEndSession} className="text-primary-foreground/70 hover:text-primary-foreground p-2" title="End Session"><Square className="h-5 w-5" /></button>
           </div>
           <div className="text-center text-xs text-primary-foreground/60 mt-2 font-sans">
             Verse {highlightedVerse + 1} of {displayVerses.length}
@@ -448,6 +475,46 @@ export default function ChantPage() {
             <p className="text-center text-xs text-primary-foreground/60 mt-1 font-sans">Audio playback is simulated — Admin: upload audio files to enable real playback</p>
           )}
         </div>
+
+        {/* Ritual Chant Overlays */}
+        <AnimatePresence>
+          {ritualPhase === "opening" && openingChants.length > 0 && (
+            <RitualChantOverlay
+              chants={openingChants}
+              title="Opening Prayers"
+              speed={speed}
+              onComplete={() => {
+                setRitualPhase("idle");
+                setHasPlayedOpening(true);
+                logEvent("chant_started", { dashakam: selectedDashakam });
+                setIsPlaying(true);
+              }}
+            />
+          )}
+          {ritualPhase === "dashakam_end" && dashakamClosingChant && (
+            <RitualChantOverlay
+              chants={[dashakamClosingChant]}
+              title="Dashakam Closing"
+              speed={speed}
+              onComplete={() => {
+                setRitualPhase("idle");
+                setHighlightedVerse(0);
+              }}
+            />
+          )}
+          {ritualPhase === "session_end" && sessionClosingChant && (
+            <RitualChantOverlay
+              chants={[sessionClosingChant]}
+              title="Session Closing"
+              speed={speed}
+              onComplete={() => {
+                setRitualPhase("idle");
+                setHighlightedVerse(0);
+                setVerseProgress(0);
+              }}
+            />
+          )}
+        </AnimatePresence>
       </motion.div>
 
       <RemoveBottomSheet

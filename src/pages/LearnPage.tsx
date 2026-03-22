@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Play, Pause, RotateCcw, ChevronRight, ChevronDown, ChevronUp, Loader2, BookOpen } from "lucide-react";
+import { Play, Pause, RotateCcw, ChevronRight, ChevronDown, ChevronUp, Loader2, BookOpen, Square } from "lucide-react";
 import {
   sampleDashakams,
   TRANSLITERATION_LANGUAGES,
@@ -19,6 +19,10 @@ import {
 } from "@/lib/audioTimestamps";
 import { Link } from "react-router-dom";
 import VerseIcons from "@/components/VerseIcons";
+import { useRitualChants } from "@/hooks/useRitualChants";
+import RitualChantOverlay from "@/components/RitualChantOverlay";
+
+type RitualPhase = "idle" | "opening" | "dashakam_end" | "session_end";
 
 // ─── Language option type ────────────────────────────────────────────────────
 interface LanguageOption {
@@ -133,6 +137,8 @@ export default function LearnPage() {
   const [repeatCount, setRepeatCount] = useState(DEFAULT_REPEAT_COUNT);
   const [speed, setSpeed] = useState(1);
   const [languages, setLanguages] = useState<LanguageOption[]>([]);
+  const [ritualPhase, setRitualPhase] = useState<RitualPhase>("idle");
+  const [hasPlayedOpening, setHasPlayedOpening] = useState(false);
 
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const gapTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -150,6 +156,7 @@ export default function LearnPage() {
 
   // Use the shared hook for live data
   const { dashakamList, verses, loading, error, staticDashakam } = useDashakam(selectedDashakam, selectedLanguage);
+  const { openingChants, dashakamClosingChant, sessionClosingChant } = useRitualChants(selectedLanguage);
 
   // Fetch active languages from Supabase
   useEffect(() => {
@@ -231,9 +238,12 @@ export default function LearnPage() {
       } else {
         stopPlayback();
         updateStreak();
+        if (dashakamClosingChant) {
+          setRitualPhase("dashakam_end");
+        }
       }
     }
-  }, [highlightIdx, highlightPhrase, lessonVerses, selectedDashakam, repeatCount, stopPlayback]);
+  }, [highlightIdx, highlightPhrase, lessonVerses, selectedDashakam, repeatCount, stopPlayback, dashakamClosingChant]);
 
   // Audio playback effect: play current verse audio, use timeupdate for phrase highlighting
   useEffect(() => {
@@ -288,8 +298,20 @@ export default function LearnPage() {
     if (isPlaying) {
       stopPlayback();
     } else {
+      if (!hasPlayedOpening && openingChants.length > 0) {
+        setRitualPhase("opening");
+        return;
+      }
       setHighlightPhrase(0);
       setIsPlaying(true);
+    }
+  };
+
+  const handleEndSession = () => {
+    stopPlayback();
+    setHighlightIdx(0);
+    if (sessionClosingChant) {
+      setRitualPhase("session_end");
     }
   };
 
@@ -441,6 +463,7 @@ export default function LearnPage() {
                   <button onClick={handlePlayPause} className="flex h-12 w-12 items-center justify-center rounded-full bg-gradient-gold text-primary shadow-gold transition-transform hover:scale-110">
                     {isPlaying ? <Pause className="h-6 w-6" /> : <Play className="h-6 w-6 ml-0.5" />}
                   </button>
+                  <button onClick={handleEndSession} className="text-primary-foreground/70 hover:text-primary-foreground p-2" title="End Session"><Square className="h-5 w-5" /></button>
                 </div>
                 <p className="text-center text-xs text-primary-foreground/60 mt-2 font-sans">
                   Verse {highlightIdx + 1}/{lessonVerses.length}
@@ -448,6 +471,48 @@ export default function LearnPage() {
                   {` · ${repeatCount}× repeats`}
                 </p>
               </div>
+
+              {/* Ritual Chant Overlays */}
+              <AnimatePresence>
+                {ritualPhase === "opening" && openingChants.length > 0 && (
+                  <RitualChantOverlay
+                    chants={openingChants}
+                    useLearnAudio
+                    title="Opening Prayers"
+                    speed={speed}
+                    onComplete={() => {
+                      setRitualPhase("idle");
+                      setHasPlayedOpening(true);
+                      setHighlightPhrase(0);
+                      setIsPlaying(true);
+                    }}
+                  />
+                )}
+                {ritualPhase === "dashakam_end" && dashakamClosingChant && (
+                  <RitualChantOverlay
+                    chants={[dashakamClosingChant]}
+                    useLearnAudio
+                    title="Dashakam Closing"
+                    speed={speed}
+                    onComplete={() => {
+                      setRitualPhase("idle");
+                      setHighlightIdx(0);
+                    }}
+                  />
+                )}
+                {ritualPhase === "session_end" && sessionClosingChant && (
+                  <RitualChantOverlay
+                    chants={[sessionClosingChant]}
+                    useLearnAudio
+                    title="Session Closing"
+                    speed={speed}
+                    onComplete={() => {
+                      setRitualPhase("idle");
+                      setHighlightIdx(0);
+                    }}
+                  />
+                )}
+              </AnimatePresence>
             </>
           )
         ) : !loading && !currentLesson ? (
