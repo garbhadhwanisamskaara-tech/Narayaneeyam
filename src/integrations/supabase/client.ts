@@ -3,7 +3,6 @@ import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
 const SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY;
 
-// Gracefully handle missing env vars — create a dummy client that won't crash the app
 let supabase: SupabaseClient;
 
 if (SUPABASE_URL && SUPABASE_ANON_KEY) {
@@ -11,10 +10,40 @@ if (SUPABASE_URL && SUPABASE_ANON_KEY) {
 } else {
   console.warn(
     "Missing Supabase env vars (VITE_SUPABASE_URL / VITE_SUPABASE_ANON_KEY). " +
-    "Database features will be unavailable."
+      "Database features will be unavailable."
   );
-  // Create a client with placeholder values — queries will fail gracefully
-  supabase = createClient("https://placeholder.supabase.co", "placeholder-key");
+
+  const emptyResult = { data: null, error: null, count: null, status: 200, statusText: "OK" };
+  const chainable: any = new Proxy(
+    {},
+    {
+      get(_target, _prop) {
+        return (..._args: any[]) => chainable;
+      },
+    }
+  );
+  chainable.then = (resolve: any) => resolve(emptyResult);
+
+  const handler: ProxyHandler<any> = {
+    get(_target, prop) {
+      if (prop === "auth") {
+        return {
+          getSession: () => Promise.resolve({ data: { session: null }, error: null }),
+          getUser: () => Promise.resolve({ data: { user: null }, error: null }),
+          onAuthStateChange: (_cb: any) => ({ data: { subscription: { unsubscribe: () => {} } } }),
+          signUp: () => Promise.resolve({ data: null, error: { message: "Supabase not configured" } }),
+          signInWithPassword: () => Promise.resolve({ data: null, error: { message: "Supabase not configured" } }),
+          signOut: () => Promise.resolve({ error: null }),
+        };
+      }
+      if (prop === "from" || prop === "rpc") {
+        return (..._args: any[]) => chainable;
+      }
+      return () => chainable;
+    },
+  };
+
+  supabase = new Proxy({} as SupabaseClient, handler);
 }
 
 export { supabase };
