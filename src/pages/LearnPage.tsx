@@ -238,9 +238,12 @@ export default function LearnPage() {
       } else {
         stopPlayback();
         updateStreak();
+        if (dashakamClosingChant) {
+          setRitualPhase("dashakam_end");
+        }
       }
     }
-  }, [highlightIdx, highlightPhrase, lessonVerses, selectedDashakam, repeatCount, stopPlayback]);
+  }, [highlightIdx, highlightPhrase, lessonVerses, selectedDashakam, repeatCount, stopPlayback, dashakamClosingChant]);
 
   // Audio playback effect: play current verse audio, use timeupdate for phrase highlighting
   useEffect(() => {
