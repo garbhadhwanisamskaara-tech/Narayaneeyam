@@ -1,15 +1,7 @@
 /**
  * B2 Audio URL helper
- *
- * Fetches authorized download URLs for private B2 audio files
- * via the b2-audio Edge Function.
- *
- * Audio Naming Convention (as per spec):
- *   Chant/Podcast: SL{DDD}-{VV}.m4a        e.g. SL001-01.m4a
- *   Learn:         SL{DDD}-{VV}_Learn.m4a   e.g. SL001-01_Learn.m4a
- *   Sloka:         SL{DDD}-{VV}_Sloka{NN}_{VV}.m4a
- *   Sloka Learn:   SL{DDD}-{VV}_Sloka{NN}_{VV}_Learn.m4a
  */
+import { captureAudioError, trackSpan } from "@/monitoring/sentry";
 
 /** Cache authorized URLs (valid ~1 hour, we cache for 50 min) */
 const urlCache = new Map<string, { url: string; expiresAt: number }>();
