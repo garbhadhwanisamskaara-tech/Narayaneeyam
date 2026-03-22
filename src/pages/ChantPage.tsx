@@ -128,11 +128,14 @@ export default function ChantPage() {
         setHighlightedVerse(0);
         setVerseProgress(0);
       } else {
+        // Dashakam complete — show closing chant if available
         setIsPlaying(false);
         updateStreakSupabase();
-        setHighlightedVerse(0);
         setVerseProgress(0);
         setCurrentLoopIteration(0);
+        if (dashakamClosingChant) {
+          setRitualPhase("dashakam_end");
+        }
       }
     } else {
       setVerseProgress(0);
@@ -140,7 +143,7 @@ export default function ChantPage() {
         setHighlightedVerse((prev) => prev + 1);
       }, 1500);
     }
-  }, [highlightedVerse, displayVerses.length, loopCount, currentLoopIteration]);
+  }, [highlightedVerse, displayVerses.length, loopCount, currentLoopIteration, dashakamClosingChant]);
 
   // Real audio playback
   useEffect(() => {
