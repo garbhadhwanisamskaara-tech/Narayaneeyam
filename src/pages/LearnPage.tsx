@@ -156,6 +156,7 @@ export default function LearnPage() {
 
   // Use the shared hook for live data
   const { dashakamList, verses, loading, error, staticDashakam } = useDashakam(selectedDashakam, selectedLanguage);
+  const { openingChants, dashakamClosingChant, sessionClosingChant } = useRitualChants(selectedLanguage);
 
   // Fetch active languages from Supabase
   useEffect(() => {
