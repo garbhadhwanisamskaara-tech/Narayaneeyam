@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Play, Pause, RotateCcw, ChevronRight, ChevronDown, ChevronUp, Loader2, BookOpen } from "lucide-react";
+import { Play, Pause, RotateCcw, ChevronRight, ChevronDown, ChevronUp, Loader2, BookOpen, Square } from "lucide-react";
 import {
   sampleDashakams,
   TRANSLITERATION_LANGUAGES,
