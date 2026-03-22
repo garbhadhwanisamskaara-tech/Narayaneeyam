@@ -1,15 +1,7 @@
 /**
  * B2 Audio URL helper
- *
- * Fetches authorized download URLs for private B2 audio files
- * via the b2-audio Edge Function.
- *
- * Audio Naming Convention (as per spec):
- *   Chant/Podcast: SL{DDD}-{VV}.m4a        e.g. SL001-01.m4a
- *   Learn:         SL{DDD}-{VV}_Learn.m4a   e.g. SL001-01_Learn.m4a
- *   Sloka:         SL{DDD}-{VV}_Sloka{NN}_{VV}.m4a
- *   Sloka Learn:   SL{DDD}-{VV}_Sloka{NN}_{VV}_Learn.m4a
  */
+import { captureAudioError, trackSpan } from "@/monitoring/sentry";
 
 /** Cache authorized URLs (valid ~1 hour, we cache for 50 min) */
 const urlCache = new Map<string, { url: string; expiresAt: number }>();
@@ -25,7 +17,6 @@ function pad(n: number, width: number): string {
  * @param fileName e.g. "SL001-01.m4a" or "audio/SL001-01.m4a"
  */
 export async function getAudioUrl(fileName: string): Promise<string> {
-  // Normalize: strip leading slash or "audio/" prefix if present
   const cleanName = fileName.replace(/^\/?(audio\/)?/, "");
 
   const cached = urlCache.get(cleanName);
@@ -37,30 +28,32 @@ export async function getAudioUrl(fileName: string): Promise<string> {
   const anonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
 
   if (!supabaseUrl || !anonKey) {
-    // Fallback to local files when Supabase isn't configured
     return `/audio/${cleanName}`;
   }
 
-  const fnUrl = `${supabaseUrl}/functions/v1/b2-audio?file=${encodeURIComponent(cleanName)}`;
+  return trackSpan("getAudioUrl", "audio.load", async () => {
+    const fnUrl = `${supabaseUrl}/functions/v1/b2-audio?file=${encodeURIComponent(cleanName)}`;
 
-  const res = await fetch(fnUrl, {
-    headers: {
-      Authorization: `Bearer ${anonKey}`,
-      apikey: anonKey,
-    },
-  });
+    const res = await fetch(fnUrl, {
+      headers: {
+        Authorization: `Bearer ${anonKey}`,
+        apikey: anonKey,
+      },
+    });
 
-  if (!res.ok) {
-    const errText = await res.text();
-    console.error("Failed to get B2 audio URL:", errText);
-    return `/audio/${cleanName}`;
-  }
+    if (!res.ok) {
+      const errText = await res.text();
+      const err = new Error(`B2 audio fetch failed: ${errText}`);
+      captureAudioError(err, { audio_file: cleanName });
+      return `/audio/${cleanName}`;
+    }
 
-  const result = await res.json();
-  const url = result.url;
+    const result = await res.json();
+    const url = result.url;
 
-  urlCache.set(cleanName, { url, expiresAt: Date.now() + CACHE_TTL_MS });
-  return url;
+    urlCache.set(cleanName, { url, expiresAt: Date.now() + CACHE_TTL_MS });
+    return url;
+  }, { file: cleanName });
 }
 
 /**

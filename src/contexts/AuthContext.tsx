@@ -1,7 +1,7 @@
 import { createContext, useContext, useEffect, useState, type ReactNode } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { logEvent } from "@/services/eventLogger";
-import { setSentryUser } from "@/monitoring/sentry";
+import { setSentryUser, trackSpan } from "@/monitoring/sentry";
 import type { User, Session } from "@supabase/supabase-js";
 
 interface AuthContextType {
@@ -74,29 +74,35 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const displayName = user?.user_metadata?.display_name || user?.email?.split("@")[0] || "";
 
   const signUp = async (email: string, password: string, name: string) => {
-    const { error } = await supabase.auth.signUp({
-      email,
-      password,
-      options: {
-        data: { display_name: name },
-        emailRedirectTo: window.location.origin,
-      },
+    return trackSpan("auth.signUp", "auth", async () => {
+      const { error } = await supabase.auth.signUp({
+        email,
+        password,
+        options: {
+          data: { display_name: name },
+          emailRedirectTo: window.location.origin,
+        },
+      });
+      if (!error) logEvent("user_signup");
+      return { error: error as Error | null };
     });
-    if (!error) logEvent("user_signup");
-    return { error: error as Error | null };
   };
 
   const signIn = async (email: string, password: string) => {
-    const { error } = await supabase.auth.signInWithPassword({ email, password });
-    if (!error) logEvent("user_login");
-    return { error: error as Error | null };
+    return trackSpan("auth.signIn", "auth", async () => {
+      const { error } = await supabase.auth.signInWithPassword({ email, password });
+      if (!error) logEvent("user_login");
+      return { error: error as Error | null };
+    });
   };
 
   const signOut = async () => {
-    logEvent("user_logout");
-    setIsAdmin(false);
-    setIsFounder(false);
-    await supabase.auth.signOut();
+    return trackSpan("auth.signOut", "auth", async () => {
+      logEvent("user_logout");
+      setIsAdmin(false);
+      setIsFounder(false);
+      await supabase.auth.signOut();
+    });
   };
 
   return (

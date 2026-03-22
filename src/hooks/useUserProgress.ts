@@ -1,5 +1,6 @@
 import { useEffect, useState, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { captureAppError } from "@/monitoring/sentry";
 import { useAuth } from "@/contexts/AuthContext";
 import { getProgress, saveProgress } from "@/lib/progress";
 
@@ -82,7 +83,8 @@ export function useUserProgress(): UserProgressData {
             pathway_id: r.pathway_id || "100-day-journey",
           }))
         );
-      } catch {
+      } catch (err) {
+        captureAppError(err, { component: "progress", action: "fetch" });
         // Fall back to localStorage on error
         const local = getProgress();
         const localCompleted: CompletedDashakam[] = (local.completedDashakams || []).map((d) => ({
@@ -138,7 +140,8 @@ export function useUserProgress(): UserProgressData {
           { dashakam_no: dashakamNo, completed_date: today, pathway_id: pathwayId },
           ...prev.filter((c) => !(c.dashakam_no === dashakamNo && c.pathway_id === pathwayId)),
         ]);
-      } catch {
+      } catch (err) {
+        captureAppError(err, { component: "progress", action: "markComplete", dashakam_no: dashakamNo });
         // Silent fail — localStorage fallback
         const local = getProgress();
         const completed = local.completedDashakams || [];

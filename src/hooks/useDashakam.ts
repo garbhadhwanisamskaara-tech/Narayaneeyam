@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { captureAppError, trackSpan } from "@/monitoring/sentry";
 import { sampleDashakams, type Dashakam, type Verse } from "@/data/narayaneeyam";
 
 export interface DashakamListItem {
@@ -87,7 +88,10 @@ export function useDashakam(
 
     (async () => {
       try {
-        const [audioRes, scriptRes, langRes, prasRes] = await Promise.all([
+        const [audioRes, scriptRes, langRes, prasRes] = await trackSpan(
+          "loadDashakam",
+          "db.query",
+          () => Promise.all([
           supabase
             .from("verses_audio")
             .select("verse_no, chant_audio_file, learn_audio_file, sloka_id")
@@ -110,7 +114,9 @@ export function useDashakam(
             .eq("dashakam_no", selectedDashakam)
             .eq("language_code", selectedLanguage)
             .order("verse_no"),
-        ]);
+          ]),
+          { dashakam_no: selectedDashakam }
+        );
 
         if (cancelled) return;
 
@@ -183,6 +189,7 @@ export function useDashakam(
 
         setVerses(merged);
       } catch (err: any) {
+        captureAppError(err, { component: "dashakam", dashakam_no: selectedDashakam });
         if (!cancelled) {
           setError(err.message ?? "Failed to load dashakam data");
           // On error, fall back to static
