@@ -19,6 +19,10 @@ import {
 } from "@/lib/audioTimestamps";
 import { Link } from "react-router-dom";
 import VerseIcons from "@/components/VerseIcons";
+import { useRitualChants } from "@/hooks/useRitualChants";
+import RitualChantOverlay from "@/components/RitualChantOverlay";
+
+type RitualPhase = "idle" | "opening" | "dashakam_end" | "session_end";
 
 // ─── Language option type ────────────────────────────────────────────────────
 interface LanguageOption {
