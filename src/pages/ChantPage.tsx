@@ -59,6 +59,7 @@ export default function ChantPage() {
 
   // Live data from Supabase with static fallback
   const { dashakamList, verses: dbVerses, loading: dbLoading, staticDashakam } = useDashakam(selectedDashakam, selectedLanguage);
+  const { openingChants, dashakamClosingChant, sessionClosingChant } = useRitualChants(selectedLanguage);
 
   // Build the dashakam dropdown list — prefer DB list, fallback to static
   const dropdownList = dashakamList.length > 0
