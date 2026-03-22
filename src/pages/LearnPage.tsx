@@ -298,8 +298,20 @@ export default function LearnPage() {
     if (isPlaying) {
       stopPlayback();
     } else {
+      if (!hasPlayedOpening && openingChants.length > 0) {
+        setRitualPhase("opening");
+        return;
+      }
       setHighlightPhrase(0);
       setIsPlaying(true);
+    }
+  };
+
+  const handleEndSession = () => {
+    stopPlayback();
+    setHighlightIdx(0);
+    if (sessionClosingChant) {
+      setRitualPhase("session_end");
     }
   };
 
