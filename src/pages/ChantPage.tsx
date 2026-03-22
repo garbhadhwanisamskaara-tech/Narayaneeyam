@@ -222,6 +222,8 @@ export default function ChantPage() {
     return () => { if (gapTimerRef.current) clearTimeout(gapTimerRef.current); };
   }, []);
 
+  const [hasPlayedOpening, setHasPlayedOpening] = useState(false);
+
   const handlePlayPause = () => {
     if (isPlaying) {
       if (audioRef.current) {
@@ -231,8 +233,25 @@ export default function ChantPage() {
       logAudioEvent("audio_pause", selectedDashakam, displayVerses[highlightedVerse]?.paragraph || 0, "");
       setIsPlaying(false);
     } else {
+      // Show opening chants on first play of the session
+      if (!hasPlayedOpening && openingChants.length > 0) {
+        setRitualPhase("opening");
+        return;
+      }
       logEvent("chant_started", { dashakam: selectedDashakam });
       setIsPlaying(true);
+    }
+  };
+
+  const handleEndSession = () => {
+    if (audioRef.current) { audioRef.current.pause(); audioRef.current = null; }
+    pausedRef.current = false;
+    setIsPlaying(false);
+    if (sessionClosingChant) {
+      setRitualPhase("session_end");
+    } else {
+      setHighlightedVerse(0);
+      setVerseProgress(0);
     }
   };
 
