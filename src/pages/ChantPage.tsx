@@ -48,6 +48,7 @@ export default function ChantPage() {
   const gapTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const { isBookmarked, addBookmark, removeBookmark, undoRemoveBookmark } = useBookmarks();
   const { isFavourited, addFavourite, removeFavourite, undoRemoveFavourite } = useFavourites();
+  const [ritualPhase, setRitualPhase] = useState<RitualPhase>("idle");
 
   // Map translitLang/translationLang to a language_code for the hook
   const langCodeMap: Record<string, string> = {
