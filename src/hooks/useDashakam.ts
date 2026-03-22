@@ -88,7 +88,10 @@ export function useDashakam(
 
     (async () => {
       try {
-        const [audioRes, scriptRes, langRes, prasRes] = await Promise.all([
+        const [audioRes, scriptRes, langRes, prasRes] = await trackSpan(
+          "loadDashakam",
+          "db.query",
+          () => Promise.all([
           supabase
             .from("verses_audio")
             .select("verse_no, chant_audio_file, learn_audio_file, sloka_id")
