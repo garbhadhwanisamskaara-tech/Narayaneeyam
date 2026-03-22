@@ -463,6 +463,7 @@ export default function LearnPage() {
                   <button onClick={handlePlayPause} className="flex h-12 w-12 items-center justify-center rounded-full bg-gradient-gold text-primary shadow-gold transition-transform hover:scale-110">
                     {isPlaying ? <Pause className="h-6 w-6" /> : <Play className="h-6 w-6 ml-0.5" />}
                   </button>
+                  <button onClick={handleEndSession} className="text-primary-foreground/70 hover:text-primary-foreground p-2" title="End Session"><Square className="h-5 w-5" /></button>
                 </div>
                 <p className="text-center text-xs text-primary-foreground/60 mt-2 font-sans">
                   Verse {highlightIdx + 1}/{lessonVerses.length}
@@ -470,6 +471,48 @@ export default function LearnPage() {
                   {` · ${repeatCount}× repeats`}
                 </p>
               </div>
+
+              {/* Ritual Chant Overlays */}
+              <AnimatePresence>
+                {ritualPhase === "opening" && openingChants.length > 0 && (
+                  <RitualChantOverlay
+                    chants={openingChants}
+                    useLearnAudio
+                    title="Opening Prayers"
+                    speed={speed}
+                    onComplete={() => {
+                      setRitualPhase("idle");
+                      setHasPlayedOpening(true);
+                      setHighlightPhrase(0);
+                      setIsPlaying(true);
+                    }}
+                  />
+                )}
+                {ritualPhase === "dashakam_end" && dashakamClosingChant && (
+                  <RitualChantOverlay
+                    chants={[dashakamClosingChant]}
+                    useLearnAudio
+                    title="Dashakam Closing"
+                    speed={speed}
+                    onComplete={() => {
+                      setRitualPhase("idle");
+                      setHighlightIdx(0);
+                    }}
+                  />
+                )}
+                {ritualPhase === "session_end" && sessionClosingChant && (
+                  <RitualChantOverlay
+                    chants={[sessionClosingChant]}
+                    useLearnAudio
+                    title="Session Closing"
+                    speed={speed}
+                    onComplete={() => {
+                      setRitualPhase("idle");
+                      setHighlightIdx(0);
+                    }}
+                  />
+                )}
+              </AnimatePresence>
             </>
           )
         ) : !loading && !currentLesson ? (
