@@ -19,5 +19,5 @@ function ErrorFallback({ error, resetError }: { error: Error; resetError: () => 
 
 export const SentryErrorBoundary = Sentry.withErrorBoundary(
   ({ children }: { children: React.ReactNode }) => <>{children}</>,
-  { fallback: (props) => <ErrorFallback error={props.error} resetError={props.resetError} /> }
+  { fallback: (props) => <ErrorFallback error={props.error instanceof Error ? props.error : new Error(String(props.error))} resetError={props.resetError} /> }
 );
