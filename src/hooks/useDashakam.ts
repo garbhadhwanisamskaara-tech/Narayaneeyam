@@ -191,6 +191,7 @@ export function useDashakam(
       } catch (err: any) {
         captureAppError(err, { component: "dashakam", dashakam_no: selectedDashakam });
         if (!cancelled) {
+          setError(err.message ?? "Failed to load dashakam data");
           // On error, fall back to static
           if (staticDashakam) {
             setVerses(
