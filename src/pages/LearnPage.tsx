@@ -137,6 +137,8 @@ export default function LearnPage() {
   const [repeatCount, setRepeatCount] = useState(DEFAULT_REPEAT_COUNT);
   const [speed, setSpeed] = useState(1);
   const [languages, setLanguages] = useState<LanguageOption[]>([]);
+  const [ritualPhase, setRitualPhase] = useState<RitualPhase>("idle");
+  const [hasPlayedOpening, setHasPlayedOpening] = useState(false);
 
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const gapTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
