@@ -140,7 +140,8 @@ export function useUserProgress(): UserProgressData {
           { dashakam_no: dashakamNo, completed_date: today, pathway_id: pathwayId },
           ...prev.filter((c) => !(c.dashakam_no === dashakamNo && c.pathway_id === pathwayId)),
         ]);
-      } catch {
+      } catch (err) {
+        captureAppError(err, { component: "progress", action: "markComplete", dashakam_no: dashakamNo });
         // Silent fail — localStorage fallback
         const local = getProgress();
         const completed = local.completedDashakams || [];
