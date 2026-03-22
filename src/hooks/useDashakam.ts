@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { captureAppError, trackSpan } from "@/monitoring/sentry";
 import { sampleDashakams, type Dashakam, type Verse } from "@/data/narayaneeyam";
 
 export interface DashakamListItem {
