@@ -83,7 +83,8 @@ export function useUserProgress(): UserProgressData {
             pathway_id: r.pathway_id || "100-day-journey",
           }))
         );
-      } catch {
+      } catch (err) {
+        captureAppError(err, { component: "progress", action: "fetch" });
         // Fall back to localStorage on error
         const local = getProgress();
         const localCompleted: CompletedDashakam[] = (local.completedDashakams || []).map((d) => ({
