@@ -334,6 +334,7 @@ export default function FounderDashboard() {
           </div>
 
         </motion.div>
+        )}
       </div>
     </div>
   );
