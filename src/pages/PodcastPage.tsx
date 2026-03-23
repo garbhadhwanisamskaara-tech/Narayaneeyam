@@ -28,6 +28,37 @@ export default function PodcastPage() {
   const pausedRef = useRef(false);
   const gapTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
+  // ── Playlist state ──
+  const [playlistBuilderOpen, setPlaylistBuilderOpen] = useState(false);
+  const [playlistItems, setPlaylistItems] = useState<PlaylistItem[] | null>(null);
+  const [playlistIndex, setPlaylistIndex] = useState(0);
+  const [playlistLoop, setPlaylistLoop] = useState(0);
+  const [playlistId, setPlaylistId] = useState<string | undefined>();
+  const { saveProgress: savePlaylistProg } = usePlaylist("podcast");
+
+  const inPlaylistMode = playlistItems !== null && playlistItems.length > 0;
+
+  const handleStartPlaylist = (items: PlaylistItem[], plId?: string, resumeIdx?: number, resumeVerse?: number, resumeLoop?: number) => {
+    setPlaylistItems(items);
+    setPlaylistId(plId);
+    const idx = resumeIdx ?? 0;
+    setPlaylistIndex(idx);
+    setPlaylistLoop(resumeLoop ?? 0);
+    setCurrentDashakam(items[idx].dashakam_no);
+    setCurrentVerseIdx(resumeVerse ?? 0);
+    setCurrentLoop(0);
+    setProgress(0);
+    if (audioRef.current) { audioRef.current.pause(); audioRef.current = null; }
+    pausedRef.current = false;
+  };
+
+  const exitPlaylist = () => {
+    setPlaylistItems(null);
+    setPlaylistIndex(0);
+    setPlaylistLoop(0);
+    setPlaylistId(undefined);
+  };
+
   // Restore last position
   useEffect(() => {
     const saved = getProgress();
