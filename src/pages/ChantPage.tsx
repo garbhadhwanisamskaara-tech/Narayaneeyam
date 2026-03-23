@@ -53,6 +53,37 @@ export default function ChantPage() {
   const { isFavourited, addFavourite, removeFavourite, undoRemoveFavourite } = useFavourites();
   const [ritualPhase, setRitualPhase] = useState<RitualPhase>("idle");
 
+  // ── Playlist state ──
+  const [playlistOpen, setPlaylistOpen] = useState(false);
+  const [playlistItems, setPlaylistItems] = useState<PlaylistItem[] | null>(null);
+  const [playlistIndex, setPlaylistIndex] = useState(0);
+  const [playlistLoop, setPlaylistLoop] = useState(0);
+  const [playlistId, setPlaylistId] = useState<string | undefined>();
+  const { saveProgress: savePlaylistProgress } = usePlaylist("chant");
+
+  const inPlaylistMode = playlistItems !== null && playlistItems.length > 0;
+
+  const handleStartPlaylist = (items: PlaylistItem[], plId?: string, resumeIdx?: number, resumeVerse?: number, resumeLoop?: number) => {
+    setPlaylistItems(items);
+    setPlaylistId(plId);
+    const idx = resumeIdx ?? 0;
+    setPlaylistIndex(idx);
+    setPlaylistLoop(resumeLoop ?? 0);
+    setSelectedDashakam(items[idx].dashakam_no);
+    setHighlightedVerse(resumeVerse ? resumeVerse - 1 : 0);
+    setSelectedPara(null);
+    setVerseProgress(0);
+    if (audioRef.current) { audioRef.current.pause(); audioRef.current = null; }
+    pausedRef.current = false;
+  };
+
+  const exitPlaylist = () => {
+    setPlaylistItems(null);
+    setPlaylistIndex(0);
+    setPlaylistLoop(0);
+    setPlaylistId(undefined);
+  };
+
   // Map translitLang/translationLang to a language_code for the hook
   const langCodeMap: Record<string, string> = {
     sanskrit: "sa", english: "en", tamil: "ta", malayalam: "ml",
