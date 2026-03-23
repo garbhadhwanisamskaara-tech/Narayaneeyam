@@ -145,6 +145,11 @@ export default function Layout({ children }: { children: React.ReactNode }) {
           {/* Mobile: user icon + hamburger */}
           <div className="lg:hidden flex items-center gap-2">
             {!loading && user && (
+              <Link to="/support" className="text-primary-foreground/70 hover:text-primary-foreground p-2 transition-colors" title="Support">
+                <LifeBuoy className="h-5 w-5" />
+              </Link>
+            )}
+            {!loading && user && (
               <button
                 onClick={() => signOut()}
                 className="text-primary-foreground/70 hover:text-primary-foreground p-2 transition-colors"
