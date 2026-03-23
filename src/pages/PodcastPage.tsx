@@ -5,6 +5,9 @@ import { sampleDashakams, verseShouldShowBell } from "@/data/narayaneeyam";
 import { getProgress, saveProgress } from "@/lib/progress";
 import { playBellAudio, stopBellAudio } from "@/lib/bellAudio";
 import { Slider } from "@/components/ui/slider";
+import PlaylistBuilder from "@/components/PlaylistBuilder";
+import PlaylistBar from "@/components/PlaylistBar";
+import { usePlaylist, type PlaylistItem } from "@/hooks/usePlaylist";
 
 type PlayMode = "single" | "loop" | "all" | "continue";
 
@@ -24,6 +27,37 @@ export default function PodcastPage() {
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const pausedRef = useRef(false);
   const gapTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // ── Playlist state ──
+  const [playlistBuilderOpen, setPlaylistBuilderOpen] = useState(false);
+  const [playlistItems, setPlaylistItems] = useState<PlaylistItem[] | null>(null);
+  const [playlistIndex, setPlaylistIndex] = useState(0);
+  const [playlistLoop, setPlaylistLoop] = useState(0);
+  const [playlistId, setPlaylistId] = useState<string | undefined>();
+  const { saveProgress: savePlaylistProg } = usePlaylist("podcast");
+
+  const inPlaylistMode = playlistItems !== null && playlistItems.length > 0;
+
+  const handleStartPlaylist = (items: PlaylistItem[], plId?: string, resumeIdx?: number, resumeVerse?: number, resumeLoop?: number) => {
+    setPlaylistItems(items);
+    setPlaylistId(plId);
+    const idx = resumeIdx ?? 0;
+    setPlaylistIndex(idx);
+    setPlaylistLoop(resumeLoop ?? 0);
+    setCurrentDashakam(items[idx].dashakam_no);
+    setCurrentVerseIdx(resumeVerse ?? 0);
+    setCurrentLoop(0);
+    setProgress(0);
+    if (audioRef.current) { audioRef.current.pause(); audioRef.current = null; }
+    pausedRef.current = false;
+  };
+
+  const exitPlaylist = () => {
+    setPlaylistItems(null);
+    setPlaylistIndex(0);
+    setPlaylistLoop(0);
+    setPlaylistId(undefined);
+  };
 
   // Restore last position
   useEffect(() => {
@@ -246,12 +280,70 @@ export default function PodcastPage() {
   return (
     <div className="container mx-auto px-4 py-8 select-none" onContextMenu={(e) => e.preventDefault()}>
       <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
-        <div className="mb-8">
-          <h1 className="font-display text-3xl font-bold text-foreground mb-2">Podcast</h1>
-          <p className="text-muted-foreground font-sans">
-            Listen to Dashakams — plays in background even when app is minimized
-          </p>
+        <div className="mb-8 flex items-center justify-between flex-wrap gap-2">
+          <div>
+            <h1 className="font-display text-3xl font-bold text-foreground mb-2">Podcast</h1>
+            <p className="text-muted-foreground font-sans">
+              Listen to Dashakams — plays in background even when app is minimized
+            </p>
+          </div>
+          <button
+            onClick={() => setPlaylistBuilderOpen(true)}
+            className="flex items-center gap-2 rounded-lg border border-secondary/30 bg-secondary/10 px-4 py-2 text-sm font-sans text-foreground hover:bg-secondary/20 transition-colors"
+          >
+            <ListMusic className="h-4 w-4 text-secondary" /> Custom Playlist
+          </button>
         </div>
+
+        {/* Playlist Bar */}
+        {inPlaylistMode && (
+          <PlaylistBar
+            items={playlistItems!}
+            currentIndex={playlistIndex}
+            currentLoop={playlistLoop}
+            totalCompleted={playlistIndex}
+            onPrevDashakam={() => {
+              if (playlistIndex > 0) {
+                const newIdx = playlistIndex - 1;
+                setPlaylistIndex(newIdx);
+                setPlaylistLoop(0);
+                setCurrentDashakam(playlistItems![newIdx].dashakam_no);
+                setCurrentVerseIdx(0);
+                setCurrentLoop(0);
+                setProgress(0);
+                if (audioRef.current) { audioRef.current.pause(); audioRef.current = null; }
+                pausedRef.current = false;
+              }
+            }}
+            onNextDashakam={() => {
+              if (playlistIndex < playlistItems!.length - 1) {
+                const newIdx = playlistIndex + 1;
+                setPlaylistIndex(newIdx);
+                setPlaylistLoop(0);
+                setCurrentDashakam(playlistItems![newIdx].dashakam_no);
+                setCurrentVerseIdx(0);
+                setCurrentLoop(0);
+                setProgress(0);
+                if (audioRef.current) { audioRef.current.pause(); audioRef.current = null; }
+                pausedRef.current = false;
+              }
+            }}
+            onSkipLoop={() => {
+              setPlaylistLoop(0);
+              const nextIdx = playlistIndex + 1;
+              if (nextIdx < playlistItems!.length) {
+                setPlaylistIndex(nextIdx);
+                setCurrentDashakam(playlistItems![nextIdx].dashakam_no);
+                setCurrentVerseIdx(0);
+                setCurrentLoop(0);
+                setProgress(0);
+                if (audioRef.current) { audioRef.current.pause(); audioRef.current = null; }
+                pausedRef.current = false;
+              }
+            }}
+            onExit={exitPlaylist}
+          />
+        )}
 
         {/* Now Playing */}
         <div className="rounded-xl bg-gradient-peacock p-6 mb-6">
@@ -407,6 +499,13 @@ export default function PodcastPage() {
           </div>
         )}
       </motion.div>
+
+      <PlaylistBuilder
+        mode="podcast"
+        open={playlistBuilderOpen}
+        onClose={() => setPlaylistBuilderOpen(false)}
+        onStartPlaylist={handleStartPlaylist}
+      />
     </div>
   );
 }

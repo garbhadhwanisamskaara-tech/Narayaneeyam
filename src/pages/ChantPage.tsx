@@ -1,7 +1,10 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { useSearchParams } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
-import { Play, Pause, SkipBack, SkipForward, RotateCcw, ChevronDown, ChevronUp, Volume2, Square } from "lucide-react";
+import { Play, Pause, SkipBack, SkipForward, RotateCcw, ChevronDown, ChevronUp, Volume2, Square, ListMusic } from "lucide-react";
+import PlaylistBuilder from "@/components/PlaylistBuilder";
+import PlaylistBar from "@/components/PlaylistBar";
+import { usePlaylist, type PlaylistItem } from "@/hooks/usePlaylist";
 import { logEvent, logAudioEvent } from "@/services/eventLogger";
 import { captureAudioError } from "@/monitoring/sentry";
 import { useBookmarks } from "@/hooks/useBookmarks";
@@ -49,6 +52,37 @@ export default function ChantPage() {
   const { isBookmarked, addBookmark, removeBookmark, undoRemoveBookmark } = useBookmarks();
   const { isFavourited, addFavourite, removeFavourite, undoRemoveFavourite } = useFavourites();
   const [ritualPhase, setRitualPhase] = useState<RitualPhase>("idle");
+
+  // ── Playlist state ──
+  const [playlistOpen, setPlaylistOpen] = useState(false);
+  const [playlistItems, setPlaylistItems] = useState<PlaylistItem[] | null>(null);
+  const [playlistIndex, setPlaylistIndex] = useState(0);
+  const [playlistLoop, setPlaylistLoop] = useState(0);
+  const [playlistId, setPlaylistId] = useState<string | undefined>();
+  const { saveProgress: savePlaylistProgress } = usePlaylist("chant");
+
+  const inPlaylistMode = playlistItems !== null && playlistItems.length > 0;
+
+  const handleStartPlaylist = (items: PlaylistItem[], plId?: string, resumeIdx?: number, resumeVerse?: number, resumeLoop?: number) => {
+    setPlaylistItems(items);
+    setPlaylistId(plId);
+    const idx = resumeIdx ?? 0;
+    setPlaylistIndex(idx);
+    setPlaylistLoop(resumeLoop ?? 0);
+    setSelectedDashakam(items[idx].dashakam_no);
+    setHighlightedVerse(resumeVerse ? resumeVerse - 1 : 0);
+    setSelectedPara(null);
+    setVerseProgress(0);
+    if (audioRef.current) { audioRef.current.pause(); audioRef.current = null; }
+    pausedRef.current = false;
+  };
+
+  const exitPlaylist = () => {
+    setPlaylistItems(null);
+    setPlaylistIndex(0);
+    setPlaylistLoop(0);
+    setPlaylistId(undefined);
+  };
 
   // Map translitLang/translationLang to a language_code for the hook
   const langCodeMap: Record<string, string> = {
@@ -122,28 +156,61 @@ export default function ChantPage() {
 
   const advanceToNextVerse = useCallback(() => {
     if (highlightedVerse >= displayVerses.length - 1) {
-      const nextLoop = currentLoopIteration + 1;
-      if (nextLoop < loopCount) {
-        setCurrentLoopIteration(nextLoop);
+      // Check playlist loop count first
+      const effectiveLoopCount = inPlaylistMode ? (playlistItems![playlistIndex]?.loops ?? 1) : loopCount;
+      const effectiveLoop = inPlaylistMode ? playlistLoop : currentLoopIteration;
+
+      const nextLoop = effectiveLoop + 1;
+      if (nextLoop < effectiveLoopCount) {
+        if (inPlaylistMode) setPlaylistLoop(nextLoop);
+        else setCurrentLoopIteration(nextLoop);
         setHighlightedVerse(0);
         setVerseProgress(0);
       } else {
-        // Dashakam complete — show closing chant if available
+        // Dashakam complete
         setIsPlaying(false);
         updateStreakSupabase();
         setVerseProgress(0);
-        setCurrentLoopIteration(0);
-        if (dashakamClosingChant) {
-          setRitualPhase("dashakam_end");
+        if (inPlaylistMode) {
+          setPlaylistLoop(0);
+          // Save playlist progress
+          if (playlistId) savePlaylistProgress(playlistId, playlistIndex, highlightedVerse + 1, 0);
+          // Move to next dashakam in playlist
+          const nextIdx = playlistIndex + 1;
+          if (nextIdx < playlistItems!.length) {
+            if (dashakamClosingChant) {
+              setRitualPhase("dashakam_end");
+              // After closing chant, we'll advance — store pending next
+              setTimeout(() => {
+                setPlaylistIndex(nextIdx);
+                setSelectedDashakam(playlistItems![nextIdx].dashakam_no);
+                setHighlightedVerse(0);
+                setSelectedPara(null);
+              }, 100);
+            } else {
+              setPlaylistIndex(nextIdx);
+              setSelectedDashakam(playlistItems![nextIdx].dashakam_no);
+              setHighlightedVerse(0);
+              setSelectedPara(null);
+            }
+          } else {
+            // Playlist complete
+            if (dashakamClosingChant) setRitualPhase("dashakam_end");
+          }
+        } else {
+          setCurrentLoopIteration(0);
+          if (dashakamClosingChant) setRitualPhase("dashakam_end");
         }
       }
     } else {
       setVerseProgress(0);
       gapTimerRef.current = setTimeout(() => {
         setHighlightedVerse((prev) => prev + 1);
+        // Save playlist progress
+        if (inPlaylistMode && playlistId) savePlaylistProgress(playlistId, playlistIndex, highlightedVerse + 2, playlistLoop);
       }, 1500);
     }
-  }, [highlightedVerse, displayVerses.length, loopCount, currentLoopIteration, dashakamClosingChant]);
+  }, [highlightedVerse, displayVerses.length, loopCount, currentLoopIteration, dashakamClosingChant, inPlaylistMode, playlistItems, playlistIndex, playlistLoop, playlistId, savePlaylistProgress]);
 
   // Real audio playback
   useEffect(() => {
@@ -275,10 +342,68 @@ export default function ChantPage() {
   return (
     <div className="container mx-auto px-4 py-8 select-none" onContextMenu={(e) => e.preventDefault()}>
       <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
-        <div className="mb-8">
-          <h1 className="font-display text-3xl font-bold text-foreground mb-2">Chant with Me</h1>
-          <p className="text-muted-foreground font-sans">Follow along with synchronized text highlighting</p>
+        <div className="mb-8 flex items-center justify-between flex-wrap gap-2">
+          <div>
+            <h1 className="font-display text-3xl font-bold text-foreground mb-2">Chant with Me</h1>
+            <p className="text-muted-foreground font-sans">Follow along with synchronized text highlighting</p>
+          </div>
+          <button
+            onClick={() => setPlaylistOpen(true)}
+            className="flex items-center gap-2 rounded-lg border border-secondary/30 bg-secondary/10 px-4 py-2 text-sm font-sans text-foreground hover:bg-secondary/20 transition-colors"
+          >
+            <ListMusic className="h-4 w-4 text-secondary" /> Custom Playlist
+          </button>
         </div>
+
+        {/* Playlist Bar */}
+        {inPlaylistMode && (
+          <PlaylistBar
+            items={playlistItems!}
+            currentIndex={playlistIndex}
+            currentLoop={playlistLoop}
+            totalCompleted={playlistIndex}
+            onPrevDashakam={() => {
+              if (playlistIndex > 0) {
+                const newIdx = playlistIndex - 1;
+                setPlaylistIndex(newIdx);
+                setPlaylistLoop(0);
+                setSelectedDashakam(playlistItems![newIdx].dashakam_no);
+                setHighlightedVerse(0);
+                setSelectedPara(null);
+                setVerseProgress(0);
+                if (audioRef.current) { audioRef.current.pause(); audioRef.current = null; }
+                pausedRef.current = false;
+              }
+            }}
+            onNextDashakam={() => {
+              if (playlistIndex < playlistItems!.length - 1) {
+                const newIdx = playlistIndex + 1;
+                setPlaylistIndex(newIdx);
+                setPlaylistLoop(0);
+                setSelectedDashakam(playlistItems![newIdx].dashakam_no);
+                setHighlightedVerse(0);
+                setSelectedPara(null);
+                setVerseProgress(0);
+                if (audioRef.current) { audioRef.current.pause(); audioRef.current = null; }
+                pausedRef.current = false;
+              }
+            }}
+            onSkipLoop={() => {
+              setPlaylistLoop(0);
+              const nextIdx = playlistIndex + 1;
+              if (nextIdx < playlistItems!.length) {
+                setPlaylistIndex(nextIdx);
+                setSelectedDashakam(playlistItems![nextIdx].dashakam_no);
+                setHighlightedVerse(0);
+                setSelectedPara(null);
+                setVerseProgress(0);
+                if (audioRef.current) { audioRef.current.pause(); audioRef.current = null; }
+                pausedRef.current = false;
+              }
+            }}
+            onExit={exitPlaylist}
+          />
+        )}
 
         {/* Controls */}
         <div className="flex flex-wrap gap-3 mb-6 rounded-xl bg-card border border-border p-4">
@@ -532,6 +657,13 @@ export default function ChantPage() {
         type={removeTarget?.type || "bookmark"}
         dashakam={removeTarget?.dashakam || 0}
         verse={removeTarget?.verse || 0}
+      />
+
+      <PlaylistBuilder
+        mode="chant"
+        open={playlistOpen}
+        onClose={() => setPlaylistOpen(false)}
+        onStartPlaylist={handleStartPlaylist}
       />
     </div>
   );
