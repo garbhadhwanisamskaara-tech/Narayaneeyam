@@ -13,12 +13,6 @@ import { useChantAnalytics } from "@/hooks/useChantAnalytics";
 import { useAIInsights } from "@/hooks/useAIInsights";
 import { useUserIssues } from "@/hooks/useUserIssues";
 import AdminTicketsPanel from "@/components/AdminTicketsPanel";
-import { useAuth } from "@/contexts/AuthContext";
-import { useUsageMetrics } from "@/hooks/useUsageMetrics";
-import { useAudioHealth } from "@/hooks/useAudioHealth";
-import { useChantAnalytics } from "@/hooks/useChantAnalytics";
-import { useAIInsights } from "@/hooks/useAIInsights";
-import { useUserIssues } from "@/hooks/useUserIssues";
 
 function KpiCard({ icon: Icon, label, value, compare, color = "text-foreground" }: {
   icon: any; label: string; value: string | number; compare?: string; color?: string;
