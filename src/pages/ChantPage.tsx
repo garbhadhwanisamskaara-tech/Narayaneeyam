@@ -658,6 +658,13 @@ export default function ChantPage() {
         dashakam={removeTarget?.dashakam || 0}
         verse={removeTarget?.verse || 0}
       />
+
+      <PlaylistBuilder
+        mode="chant"
+        open={playlistOpen}
+        onClose={() => setPlaylistOpen(false)}
+        onStartPlaylist={handleStartPlaylist}
+      />
     </div>
   );
 }
