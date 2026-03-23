@@ -1,6 +1,9 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Play, Pause, RotateCcw, ChevronRight, ChevronDown, ChevronUp, Loader2, BookOpen, Square } from "lucide-react";
+import { Play, Pause, RotateCcw, ChevronRight, ChevronDown, ChevronUp, Loader2, BookOpen, Square, ListMusic } from "lucide-react";
+import PlaylistBuilder from "@/components/PlaylistBuilder";
+import PlaylistBar from "@/components/PlaylistBar";
+import { usePlaylist, type PlaylistItem } from "@/hooks/usePlaylist";
 import {
   sampleDashakams,
   TRANSLITERATION_LANGUAGES,
