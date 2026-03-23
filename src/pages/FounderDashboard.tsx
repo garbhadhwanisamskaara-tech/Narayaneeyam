@@ -4,8 +4,15 @@ import { motion } from "framer-motion";
 import {
   Users, UserCheck, Mic, Play, Clock, CheckCircle, RefreshCw,
   AlertTriangle, Bell, Shield, Activity, Server, Database, Cloud,
-  Upload, Plus, MessageSquare, Stethoscope,
+  Upload, Plus, MessageSquare, Stethoscope, Ticket,
 } from "lucide-react";
+import { useAuth } from "@/contexts/AuthContext";
+import { useUsageMetrics } from "@/hooks/useUsageMetrics";
+import { useAudioHealth } from "@/hooks/useAudioHealth";
+import { useChantAnalytics } from "@/hooks/useChantAnalytics";
+import { useAIInsights } from "@/hooks/useAIInsights";
+import { useUserIssues } from "@/hooks/useUserIssues";
+import AdminTicketsPanel from "@/components/AdminTicketsPanel";
 import { useAuth } from "@/contexts/AuthContext";
 import { useUsageMetrics } from "@/hooks/useUsageMetrics";
 import { useAudioHealth } from "@/hooks/useAudioHealth";
