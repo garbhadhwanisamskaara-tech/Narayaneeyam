@@ -149,6 +149,8 @@ export default function FounderDashboard() {
       <div className="container mx-auto px-4 py-6">
         {activeTab === "tickets" ? (
           <AdminTicketsPanel />
+        ) : activeTab === "subscriptions" ? (
+          <AdminSubscriptionsPanel />
         ) : (
         <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
 
