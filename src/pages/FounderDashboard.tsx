@@ -83,7 +83,7 @@ export default function FounderDashboard() {
   const { isFounder, loading: authLoading } = useAuth();
   const [refreshKey, setRefreshKey] = useState(0);
   const [chartDays, setChartDays] = useState(7);
-  const [activeTab, setActiveTab] = useState<"overview" | "tickets">("overview");
+  const [activeTab, setActiveTab] = useState<"overview" | "tickets" | "subscriptions">("overview");
 
   const { metrics, loading: metricsLoading } = useUsageMetrics(refreshKey);
   const { data: audioHealth } = useAudioHealth(refreshKey);
