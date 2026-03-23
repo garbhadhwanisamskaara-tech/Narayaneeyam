@@ -561,6 +561,13 @@ export default function LearnPage() {
           </div>
         ) : null}
       </motion.div>
+
+      <PlaylistBuilder
+        mode="learn"
+        open={playlistOpen}
+        onClose={() => setPlaylistOpen(false)}
+        onStartPlaylist={handleStartPlaylist}
+      />
     </div>
   );
 }
