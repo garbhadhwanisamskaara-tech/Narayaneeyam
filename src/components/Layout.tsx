@@ -5,6 +5,7 @@ import { useState, useEffect } from "react";
 import logoImg from "@/assets/logo.png";
 import { useAuth } from "@/contexts/AuthContext";
 import BottomNav from "@/components/BottomNav";
+import SubscriptionBanner from "@/components/SubscriptionBanner";
 
 const navItems = [
   { path: "/", label: "Home", icon: LayoutDashboard },

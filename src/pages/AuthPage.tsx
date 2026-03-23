@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
-import { Mail, Lock, User, LogIn, UserPlus, KeyRound } from "lucide-react";
+import { Mail, Lock, User, LogIn, UserPlus, KeyRound, RefreshCw } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -17,13 +17,31 @@ export default function AuthPage() {
   const [password, setPassword] = useState("");
   const [name, setName] = useState("");
   const [loading, setLoading] = useState(false);
+  const [showResend, setShowResend] = useState(false);
   const { signIn, signUp } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
 
+  const handleResendConfirmation = async () => {
+    if (!email) return;
+    setLoading(true);
+    const { error } = await supabase.auth.resend({
+      type: "signup",
+      email,
+      options: { emailRedirectTo: window.location.origin },
+    });
+    if (error) {
+      toast({ title: "Error", description: error.message, variant: "destructive" });
+    } else {
+      toast({ title: "Email sent", description: "Please check your inbox for the confirmation link." });
+    }
+    setLoading(false);
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
+    setShowResend(false);
 
     if (mode === "forgot") {
       if (!supabase) { setLoading(false); return; }
@@ -41,13 +59,25 @@ export default function AuthPage() {
       if (error) {
         toast({ title: "Sign up failed", description: error.message, variant: "destructive" });
       } else {
-        toast({ title: "Account created!", description: "Please check your email to confirm your account, or sign in if email confirmation is disabled." });
+        toast({
+          title: "Account created!",
+          description: "Please check your email and click the confirmation link to activate your account.",
+        });
         setMode("signin");
       }
     } else {
       const { error } = await signIn(email, password);
       if (error) {
-        toast({ title: "Sign in failed", description: error.message, variant: "destructive" });
+        if (error.message?.toLowerCase().includes("email not confirmed")) {
+          setShowResend(true);
+          toast({
+            title: "Email not confirmed",
+            description: "Please confirm your email first. Check your inbox for the confirmation link.",
+            variant: "destructive",
+          });
+        } else {
+          toast({ title: "Sign in failed", description: error.message, variant: "destructive" });
+        }
       } else {
         navigate("/");
       }
@@ -106,6 +136,21 @@ export default function AuthPage() {
             </Button>
           </form>
 
+          {showResend && mode === "signin" && (
+            <div className="mt-4 rounded-lg bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 p-3 text-center">
+              <p className="text-xs text-foreground font-sans mb-2">
+                Please confirm your email first. Check your inbox for the confirmation link.
+              </p>
+              <button
+                onClick={handleResendConfirmation}
+                disabled={loading}
+                className="inline-flex items-center gap-1 rounded-md bg-primary px-3 py-1.5 text-xs font-sans font-semibold text-primary-foreground hover:opacity-90"
+              >
+                <RefreshCw className="h-3 w-3" /> Resend Confirmation Email
+              </button>
+            </div>
+          )}
+
           <div className="mt-6 text-center space-y-2">
             {mode === "signin" && (
               <button onClick={() => setMode("forgot")} className="block w-full text-sm text-muted-foreground hover:text-primary hover:underline font-sans">
@@ -113,7 +158,7 @@ export default function AuthPage() {
               </button>
             )}
             <button
-              onClick={() => setMode(mode === "signup" ? "signin" : mode === "signin" ? "signup" : "signin")}
+              onClick={() => { setMode(mode === "signup" ? "signin" : mode === "signin" ? "signup" : "signin"); setShowResend(false); }}
               className="text-sm text-primary hover:underline font-sans"
             >
               {mode === "signup" ? "Already have an account? Sign In" : mode === "signin" ? "Don't have an account? Sign Up" : "Back to Sign In"}
