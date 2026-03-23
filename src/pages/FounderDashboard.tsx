@@ -131,6 +131,23 @@ export default function FounderDashboard() {
             <Bell className="h-4 w-4 text-muted-foreground" />
           </div>
         </div>
+        {/* Tabs */}
+        <div className="container mx-auto px-4 flex gap-1 border-b border-border">
+          {(["overview", "tickets"] as const).map(tab => (
+            <button
+              key={tab}
+              onClick={() => setActiveTab(tab)}
+              className={`px-4 py-2 text-sm font-sans capitalize transition-colors border-b-2 ${
+                activeTab === tab
+                  ? "border-primary text-primary font-semibold"
+                  : "border-transparent text-muted-foreground hover:text-foreground"
+              }`}
+            >
+              {tab === "tickets" && <Ticket className="h-3.5 w-3.5 inline mr-1" />}
+              {tab}
+            </button>
+          ))}
+        </div>
       </div>
 
       <div className="container mx-auto px-4 py-6">
