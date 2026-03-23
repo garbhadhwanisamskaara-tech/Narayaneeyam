@@ -4,7 +4,7 @@ import { motion } from "framer-motion";
 import {
   Users, UserCheck, Mic, Play, Clock, CheckCircle, RefreshCw,
   AlertTriangle, Bell, Shield, Activity, Server, Database, Cloud,
-  Upload, Plus, MessageSquare, Stethoscope, Ticket,
+  Upload, Plus, MessageSquare, Stethoscope, Ticket, CreditCard,
 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useUsageMetrics } from "@/hooks/useUsageMetrics";
@@ -13,6 +13,7 @@ import { useChantAnalytics } from "@/hooks/useChantAnalytics";
 import { useAIInsights } from "@/hooks/useAIInsights";
 import { useUserIssues } from "@/hooks/useUserIssues";
 import AdminTicketsPanel from "@/components/AdminTicketsPanel";
+import AdminSubscriptionsPanel from "@/components/AdminSubscriptionsPanel";
 
 function KpiCard({ icon: Icon, label, value, compare, color = "text-foreground" }: {
   icon: any; label: string; value: string | number; compare?: string; color?: string;
@@ -82,7 +83,7 @@ export default function FounderDashboard() {
   const { isFounder, loading: authLoading } = useAuth();
   const [refreshKey, setRefreshKey] = useState(0);
   const [chartDays, setChartDays] = useState(7);
-  const [activeTab, setActiveTab] = useState<"overview" | "tickets">("overview");
+  const [activeTab, setActiveTab] = useState<"overview" | "tickets" | "subscriptions">("overview");
 
   const { metrics, loading: metricsLoading } = useUsageMetrics(refreshKey);
   const { data: audioHealth } = useAudioHealth(refreshKey);
@@ -126,8 +127,8 @@ export default function FounderDashboard() {
           </div>
         </div>
         {/* Tabs */}
-        <div className="container mx-auto px-4 flex gap-1 border-b border-border">
-          {(["overview", "tickets"] as const).map(tab => (
+         <div className="container mx-auto px-4 flex gap-1 border-b border-border">
+          {(["overview", "tickets", "subscriptions"] as const).map(tab => (
             <button
               key={tab}
               onClick={() => setActiveTab(tab)}
@@ -138,6 +139,7 @@ export default function FounderDashboard() {
               }`}
             >
               {tab === "tickets" && <Ticket className="h-3.5 w-3.5 inline mr-1" />}
+              {tab === "subscriptions" && <CreditCard className="h-3.5 w-3.5 inline mr-1" />}
               {tab}
             </button>
           ))}
@@ -147,6 +149,8 @@ export default function FounderDashboard() {
       <div className="container mx-auto px-4 py-6">
         {activeTab === "tickets" ? (
           <AdminTicketsPanel />
+        ) : activeTab === "subscriptions" ? (
+          <AdminSubscriptionsPanel />
         ) : (
         <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
 
