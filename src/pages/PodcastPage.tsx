@@ -499,6 +499,13 @@ export default function PodcastPage() {
           </div>
         )}
       </motion.div>
+
+      <PlaylistBuilder
+        mode="podcast"
+        open={playlistBuilderOpen}
+        onClose={() => setPlaylistBuilderOpen(false)}
+        onStartPlaylist={handleStartPlaylist}
+      />
     </div>
   );
 }
