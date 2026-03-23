@@ -1,7 +1,10 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { useSearchParams } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
-import { Play, Pause, SkipBack, SkipForward, RotateCcw, ChevronDown, ChevronUp, Volume2, Square } from "lucide-react";
+import { Play, Pause, SkipBack, SkipForward, RotateCcw, ChevronDown, ChevronUp, Volume2, Square, ListMusic } from "lucide-react";
+import PlaylistBuilder from "@/components/PlaylistBuilder";
+import PlaylistBar from "@/components/PlaylistBar";
+import { usePlaylist, type PlaylistItem } from "@/hooks/usePlaylist";
 import { logEvent, logAudioEvent } from "@/services/eventLogger";
 import { captureAudioError } from "@/monitoring/sentry";
 import { useBookmarks } from "@/hooks/useBookmarks";
