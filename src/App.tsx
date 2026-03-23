@@ -58,6 +58,7 @@ const App = () => (
                   <Route path="/user-manual" element={<UserManualPage />} />
                   <Route path="/heart-shelf" element={<HeartShelfPage />} />
                   <Route path="/saved-places" element={<SavedPlacesPage />} />
+                  <Route path="/support" element={<SupportPage />} />
                   <Route path="/admin/festivals" element={<AdminRoute><AdminFestivalsPage /></AdminRoute>} />
                   <Route path="/admin/content" element={<AdminRoute><AdminContentPage /></AdminRoute>} />
                   <Route path="/admin/dashboard" element={<AdminRoute><FounderDashboard /></AdminRoute>} />

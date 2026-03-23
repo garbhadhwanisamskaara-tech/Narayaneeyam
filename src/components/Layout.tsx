@@ -101,6 +101,11 @@ export default function Layout({ children }: { children: React.ReactNode }) {
 
           {/* Theme Toggle + User Profile / Auth */}
           <div className="hidden lg:flex items-center gap-3">
+            {user && (
+              <Link to="/support" className="flex items-center justify-center rounded-lg p-2 text-primary-foreground/70 hover:text-primary-foreground transition-colors" title="Support">
+                <LifeBuoy className="h-4 w-4" />
+              </Link>
+            )}
             <button
               onClick={toggleTheme}
               className="flex items-center justify-center rounded-lg p-2 text-primary-foreground/70 hover:text-primary-foreground transition-colors"
