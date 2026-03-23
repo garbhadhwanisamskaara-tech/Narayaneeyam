@@ -127,8 +127,8 @@ export default function FounderDashboard() {
           </div>
         </div>
         {/* Tabs */}
-        <div className="container mx-auto px-4 flex gap-1 border-b border-border">
-          {(["overview", "tickets"] as const).map(tab => (
+         <div className="container mx-auto px-4 flex gap-1 border-b border-border">
+          {(["overview", "tickets", "subscriptions"] as const).map(tab => (
             <button
               key={tab}
               onClick={() => setActiveTab(tab)}
@@ -139,6 +139,7 @@ export default function FounderDashboard() {
               }`}
             >
               {tab === "tickets" && <Ticket className="h-3.5 w-3.5 inline mr-1" />}
+              {tab === "subscriptions" && <CreditCard className="h-3.5 w-3.5 inline mr-1" />}
               {tab}
             </button>
           ))}
