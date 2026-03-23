@@ -26,6 +26,7 @@ import FounderDashboard from "./pages/FounderDashboard";
 import HeartShelfPage from "./pages/HeartShelfPage";
 import SavedPlacesPage from "./pages/SavedPlacesPage";
 import AdminUploadPage from "./pages/AdminUploadPage";
+import SupportPage from "./pages/SupportPage";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
