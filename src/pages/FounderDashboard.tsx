@@ -4,7 +4,7 @@ import { motion } from "framer-motion";
 import {
   Users, UserCheck, Mic, Play, Clock, CheckCircle, RefreshCw,
   AlertTriangle, Bell, Shield, Activity, Server, Database, Cloud,
-  Upload, Plus, MessageSquare, Stethoscope, Ticket,
+  Upload, Plus, MessageSquare, Stethoscope, Ticket, CreditCard,
 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useUsageMetrics } from "@/hooks/useUsageMetrics";
