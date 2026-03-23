@@ -342,10 +342,68 @@ export default function ChantPage() {
   return (
     <div className="container mx-auto px-4 py-8 select-none" onContextMenu={(e) => e.preventDefault()}>
       <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
-        <div className="mb-8">
-          <h1 className="font-display text-3xl font-bold text-foreground mb-2">Chant with Me</h1>
-          <p className="text-muted-foreground font-sans">Follow along with synchronized text highlighting</p>
+        <div className="mb-8 flex items-center justify-between flex-wrap gap-2">
+          <div>
+            <h1 className="font-display text-3xl font-bold text-foreground mb-2">Chant with Me</h1>
+            <p className="text-muted-foreground font-sans">Follow along with synchronized text highlighting</p>
+          </div>
+          <button
+            onClick={() => setPlaylistOpen(true)}
+            className="flex items-center gap-2 rounded-lg border border-secondary/30 bg-secondary/10 px-4 py-2 text-sm font-sans text-foreground hover:bg-secondary/20 transition-colors"
+          >
+            <ListMusic className="h-4 w-4 text-secondary" /> Custom Playlist
+          </button>
         </div>
+
+        {/* Playlist Bar */}
+        {inPlaylistMode && (
+          <PlaylistBar
+            items={playlistItems!}
+            currentIndex={playlistIndex}
+            currentLoop={playlistLoop}
+            totalCompleted={playlistIndex}
+            onPrevDashakam={() => {
+              if (playlistIndex > 0) {
+                const newIdx = playlistIndex - 1;
+                setPlaylistIndex(newIdx);
+                setPlaylistLoop(0);
+                setSelectedDashakam(playlistItems![newIdx].dashakam_no);
+                setHighlightedVerse(0);
+                setSelectedPara(null);
+                setVerseProgress(0);
+                if (audioRef.current) { audioRef.current.pause(); audioRef.current = null; }
+                pausedRef.current = false;
+              }
+            }}
+            onNextDashakam={() => {
+              if (playlistIndex < playlistItems!.length - 1) {
+                const newIdx = playlistIndex + 1;
+                setPlaylistIndex(newIdx);
+                setPlaylistLoop(0);
+                setSelectedDashakam(playlistItems![newIdx].dashakam_no);
+                setHighlightedVerse(0);
+                setSelectedPara(null);
+                setVerseProgress(0);
+                if (audioRef.current) { audioRef.current.pause(); audioRef.current = null; }
+                pausedRef.current = false;
+              }
+            }}
+            onSkipLoop={() => {
+              setPlaylistLoop(0);
+              const nextIdx = playlistIndex + 1;
+              if (nextIdx < playlistItems!.length) {
+                setPlaylistIndex(nextIdx);
+                setSelectedDashakam(playlistItems![nextIdx].dashakam_no);
+                setHighlightedVerse(0);
+                setSelectedPara(null);
+                setVerseProgress(0);
+                if (audioRef.current) { audioRef.current.pause(); audioRef.current = null; }
+                pausedRef.current = false;
+              }
+            }}
+            onExit={exitPlaylist}
+          />
+        )}
 
         {/* Controls */}
         <div className="flex flex-wrap gap-3 mb-6 rounded-xl bg-card border border-border p-4">
