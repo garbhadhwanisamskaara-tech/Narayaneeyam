@@ -280,12 +280,70 @@ export default function PodcastPage() {
   return (
     <div className="container mx-auto px-4 py-8 select-none" onContextMenu={(e) => e.preventDefault()}>
       <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
-        <div className="mb-8">
-          <h1 className="font-display text-3xl font-bold text-foreground mb-2">Podcast</h1>
-          <p className="text-muted-foreground font-sans">
-            Listen to Dashakams — plays in background even when app is minimized
-          </p>
+        <div className="mb-8 flex items-center justify-between flex-wrap gap-2">
+          <div>
+            <h1 className="font-display text-3xl font-bold text-foreground mb-2">Podcast</h1>
+            <p className="text-muted-foreground font-sans">
+              Listen to Dashakams — plays in background even when app is minimized
+            </p>
+          </div>
+          <button
+            onClick={() => setPlaylistBuilderOpen(true)}
+            className="flex items-center gap-2 rounded-lg border border-secondary/30 bg-secondary/10 px-4 py-2 text-sm font-sans text-foreground hover:bg-secondary/20 transition-colors"
+          >
+            <ListMusic className="h-4 w-4 text-secondary" /> Custom Playlist
+          </button>
         </div>
+
+        {/* Playlist Bar */}
+        {inPlaylistMode && (
+          <PlaylistBar
+            items={playlistItems!}
+            currentIndex={playlistIndex}
+            currentLoop={playlistLoop}
+            totalCompleted={playlistIndex}
+            onPrevDashakam={() => {
+              if (playlistIndex > 0) {
+                const newIdx = playlistIndex - 1;
+                setPlaylistIndex(newIdx);
+                setPlaylistLoop(0);
+                setCurrentDashakam(playlistItems![newIdx].dashakam_no);
+                setCurrentVerseIdx(0);
+                setCurrentLoop(0);
+                setProgress(0);
+                if (audioRef.current) { audioRef.current.pause(); audioRef.current = null; }
+                pausedRef.current = false;
+              }
+            }}
+            onNextDashakam={() => {
+              if (playlistIndex < playlistItems!.length - 1) {
+                const newIdx = playlistIndex + 1;
+                setPlaylistIndex(newIdx);
+                setPlaylistLoop(0);
+                setCurrentDashakam(playlistItems![newIdx].dashakam_no);
+                setCurrentVerseIdx(0);
+                setCurrentLoop(0);
+                setProgress(0);
+                if (audioRef.current) { audioRef.current.pause(); audioRef.current = null; }
+                pausedRef.current = false;
+              }
+            }}
+            onSkipLoop={() => {
+              setPlaylistLoop(0);
+              const nextIdx = playlistIndex + 1;
+              if (nextIdx < playlistItems!.length) {
+                setPlaylistIndex(nextIdx);
+                setCurrentDashakam(playlistItems![nextIdx].dashakam_no);
+                setCurrentVerseIdx(0);
+                setCurrentLoop(0);
+                setProgress(0);
+                if (audioRef.current) { audioRef.current.pause(); audioRef.current = null; }
+                pausedRef.current = false;
+              }
+            }}
+            onExit={exitPlaylist}
+          />
+        )}
 
         {/* Now Playing */}
         <div className="rounded-xl bg-gradient-peacock p-6 mb-6">
