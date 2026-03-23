@@ -147,6 +147,35 @@ export default function LearnPage() {
   const gapTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const inGapRef = useRef(false);
 
+  // ── Playlist state ──
+  const [playlistOpen, setPlaylistOpen] = useState(false);
+  const [playlistItems, setPlaylistItems] = useState<PlaylistItem[] | null>(null);
+  const [playlistIndex, setPlaylistIndex] = useState(0);
+  const [playlistLoop, setPlaylistLoop] = useState(0);
+  const [playlistId, setPlaylistId] = useState<string | undefined>();
+  const { saveProgress: savePlaylistProgress } = usePlaylist("learn");
+
+  const inPlaylistMode = playlistItems !== null && playlistItems.length > 0;
+
+  const handleStartPlaylist = (items: PlaylistItem[], plId?: string, resumeIdx?: number) => {
+    setPlaylistItems(items);
+    setPlaylistId(plId);
+    const idx = resumeIdx ?? 0;
+    setPlaylistIndex(idx);
+    setPlaylistLoop(0);
+    // For learn, we set the dashakam from the playlist item
+    // The lesson plan concept doesn't apply in playlist mode
+    stopPlayback();
+    setHighlightIdx(0);
+  };
+
+  const exitPlaylist = () => {
+    setPlaylistItems(null);
+    setPlaylistIndex(0);
+    setPlaylistLoop(0);
+    setPlaylistId(undefined);
+  };
+
   const currentLesson = activePlan?.lessons[currentLessonIdx];
   const selectedDashakam = currentLesson?.dashakam ?? 1;
 
