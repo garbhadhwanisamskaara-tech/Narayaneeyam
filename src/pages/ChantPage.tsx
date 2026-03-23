@@ -156,28 +156,61 @@ export default function ChantPage() {
 
   const advanceToNextVerse = useCallback(() => {
     if (highlightedVerse >= displayVerses.length - 1) {
-      const nextLoop = currentLoopIteration + 1;
-      if (nextLoop < loopCount) {
-        setCurrentLoopIteration(nextLoop);
+      // Check playlist loop count first
+      const effectiveLoopCount = inPlaylistMode ? (playlistItems![playlistIndex]?.loops ?? 1) : loopCount;
+      const effectiveLoop = inPlaylistMode ? playlistLoop : currentLoopIteration;
+
+      const nextLoop = effectiveLoop + 1;
+      if (nextLoop < effectiveLoopCount) {
+        if (inPlaylistMode) setPlaylistLoop(nextLoop);
+        else setCurrentLoopIteration(nextLoop);
         setHighlightedVerse(0);
         setVerseProgress(0);
       } else {
-        // Dashakam complete — show closing chant if available
+        // Dashakam complete
         setIsPlaying(false);
         updateStreakSupabase();
         setVerseProgress(0);
-        setCurrentLoopIteration(0);
-        if (dashakamClosingChant) {
-          setRitualPhase("dashakam_end");
+        if (inPlaylistMode) {
+          setPlaylistLoop(0);
+          // Save playlist progress
+          if (playlistId) savePlaylistProgress(playlistId, playlistIndex, highlightedVerse + 1, 0);
+          // Move to next dashakam in playlist
+          const nextIdx = playlistIndex + 1;
+          if (nextIdx < playlistItems!.length) {
+            if (dashakamClosingChant) {
+              setRitualPhase("dashakam_end");
+              // After closing chant, we'll advance — store pending next
+              setTimeout(() => {
+                setPlaylistIndex(nextIdx);
+                setSelectedDashakam(playlistItems![nextIdx].dashakam_no);
+                setHighlightedVerse(0);
+                setSelectedPara(null);
+              }, 100);
+            } else {
+              setPlaylistIndex(nextIdx);
+              setSelectedDashakam(playlistItems![nextIdx].dashakam_no);
+              setHighlightedVerse(0);
+              setSelectedPara(null);
+            }
+          } else {
+            // Playlist complete
+            if (dashakamClosingChant) setRitualPhase("dashakam_end");
+          }
+        } else {
+          setCurrentLoopIteration(0);
+          if (dashakamClosingChant) setRitualPhase("dashakam_end");
         }
       }
     } else {
       setVerseProgress(0);
       gapTimerRef.current = setTimeout(() => {
         setHighlightedVerse((prev) => prev + 1);
+        // Save playlist progress
+        if (inPlaylistMode && playlistId) savePlaylistProgress(playlistId, playlistIndex, highlightedVerse + 2, playlistLoop);
       }, 1500);
     }
-  }, [highlightedVerse, displayVerses.length, loopCount, currentLoopIteration, dashakamClosingChant]);
+  }, [highlightedVerse, displayVerses.length, loopCount, currentLoopIteration, dashakamClosingChant, inPlaylistMode, playlistItems, playlistIndex, playlistLoop, playlistId, savePlaylistProgress]);
 
   // Real audio playback
   useEffect(() => {
