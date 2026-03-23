@@ -1,6 +1,6 @@
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
-import { BookOpen, Mic, FileText, GraduationCap, LayoutDashboard, Menu, X, CalendarPlus, Headphones, LogIn, LogOut, User, Sun, Moon } from "lucide-react";
+import { BookOpen, Mic, FileText, GraduationCap, LayoutDashboard, Menu, X, CalendarPlus, Headphones, LogIn, LogOut, User, Sun, Moon, LifeBuoy } from "lucide-react";
 import { useState, useEffect } from "react";
 import logoImg from "@/assets/logo.png";
 import { useAuth } from "@/contexts/AuthContext";
@@ -101,6 +101,11 @@ export default function Layout({ children }: { children: React.ReactNode }) {
 
           {/* Theme Toggle + User Profile / Auth */}
           <div className="hidden lg:flex items-center gap-3">
+            {user && (
+              <Link to="/support" className="flex items-center justify-center rounded-lg p-2 text-primary-foreground/70 hover:text-primary-foreground transition-colors" title="Support">
+                <LifeBuoy className="h-4 w-4" />
+              </Link>
+            )}
             <button
               onClick={toggleTheme}
               className="flex items-center justify-center rounded-lg p-2 text-primary-foreground/70 hover:text-primary-foreground transition-colors"
@@ -139,6 +144,11 @@ export default function Layout({ children }: { children: React.ReactNode }) {
 
           {/* Mobile: user icon + hamburger */}
           <div className="lg:hidden flex items-center gap-2">
+            {!loading && user && (
+              <Link to="/support" className="text-primary-foreground/70 hover:text-primary-foreground p-2 transition-colors" title="Support">
+                <LifeBuoy className="h-5 w-5" />
+              </Link>
+            )}
             {!loading && user && (
               <button
                 onClick={() => signOut()}

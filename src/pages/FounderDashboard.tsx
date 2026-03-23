@@ -4,7 +4,7 @@ import { motion } from "framer-motion";
 import {
   Users, UserCheck, Mic, Play, Clock, CheckCircle, RefreshCw,
   AlertTriangle, Bell, Shield, Activity, Server, Database, Cloud,
-  Upload, Plus, MessageSquare, Stethoscope,
+  Upload, Plus, MessageSquare, Stethoscope, Ticket,
 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useUsageMetrics } from "@/hooks/useUsageMetrics";
@@ -12,6 +12,7 @@ import { useAudioHealth } from "@/hooks/useAudioHealth";
 import { useChantAnalytics } from "@/hooks/useChantAnalytics";
 import { useAIInsights } from "@/hooks/useAIInsights";
 import { useUserIssues } from "@/hooks/useUserIssues";
+import AdminTicketsPanel from "@/components/AdminTicketsPanel";
 
 function KpiCard({ icon: Icon, label, value, compare, color = "text-foreground" }: {
   icon: any; label: string; value: string | number; compare?: string; color?: string;
@@ -81,6 +82,7 @@ export default function FounderDashboard() {
   const { isFounder, loading: authLoading } = useAuth();
   const [refreshKey, setRefreshKey] = useState(0);
   const [chartDays, setChartDays] = useState(7);
+  const [activeTab, setActiveTab] = useState<"overview" | "tickets">("overview");
 
   const { metrics, loading: metricsLoading } = useUsageMetrics(refreshKey);
   const { data: audioHealth } = useAudioHealth(refreshKey);
@@ -123,9 +125,29 @@ export default function FounderDashboard() {
             <Bell className="h-4 w-4 text-muted-foreground" />
           </div>
         </div>
+        {/* Tabs */}
+        <div className="container mx-auto px-4 flex gap-1 border-b border-border">
+          {(["overview", "tickets"] as const).map(tab => (
+            <button
+              key={tab}
+              onClick={() => setActiveTab(tab)}
+              className={`px-4 py-2 text-sm font-sans capitalize transition-colors border-b-2 ${
+                activeTab === tab
+                  ? "border-primary text-primary font-semibold"
+                  : "border-transparent text-muted-foreground hover:text-foreground"
+              }`}
+            >
+              {tab === "tickets" && <Ticket className="h-3.5 w-3.5 inline mr-1" />}
+              {tab}
+            </button>
+          ))}
+        </div>
       </div>
 
       <div className="container mx-auto px-4 py-6">
+        {activeTab === "tickets" ? (
+          <AdminTicketsPanel />
+        ) : (
         <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
 
           {/* KPI Row 1 */}
@@ -306,6 +328,7 @@ export default function FounderDashboard() {
           </div>
 
         </motion.div>
+        )}
       </div>
     </div>
   );
