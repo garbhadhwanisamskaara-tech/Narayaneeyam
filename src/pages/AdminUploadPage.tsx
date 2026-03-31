@@ -54,7 +54,7 @@ interface VerseRow {
   has_bell: boolean;
   has_sloka: boolean;
   dirty: boolean;
-  sanskrit_script: string;
+  sanskrit_text: string;
   meter: string;
   scriptDirty: boolean;
   langContent: Record<LangCode, LangContent>;
