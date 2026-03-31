@@ -332,9 +332,9 @@ export default function AdminUploadPage() {
   const saveScript = async (row: VerseRow) => {
     setSavingScript(row.verse_no);
     try {
-      const { error } = await supabase.from("sanskrit_script").upsert({ dashakam_no: row.dashakam_no, verse_no: row.verse_no, sanskrit_script: row.sanskrit_script, meter: row.meter, has_bell: row.has_bell }, { onConflict: "dashakam_no,verse_no" });
+      const { error } = await supabase.from("language_script").upsert({ dashakam_no: row.dashakam_no, verse_no: row.verse_no, language_code: "sa", transliteration_text: row.sanskrit_text, translation_text: "" }, { onConflict: "dashakam_no,verse_no,language_code" });
       if (error) throw error;
-      const scriptsDone = verses.filter((v) => (v.verse_no === row.verse_no ? row.sanskrit_script : v.sanskrit_script)).length;
+      const scriptsDone = verses.filter((v) => (v.verse_no === row.verse_no ? row.sanskrit_text : v.sanskrit_text)).length;
       await supabase.from("upload_progress").upsert({ dashakam_no: row.dashakam_no, scripts_complete: scriptsDone }, { onConflict: "dashakam_no" });
       setVerses((prev) => prev.map((v) => (v.verse_no === row.verse_no ? { ...v, scriptDirty: false } : v)));
       await loadProgress();
