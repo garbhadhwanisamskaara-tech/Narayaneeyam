@@ -319,8 +319,6 @@ export default function AdminUploadPage() {
     try {
       const { error: audioErr } = await supabase.from("verses_audio").upsert({ dashakam_no: row.dashakam_no, verse_no: row.verse_no, chant_audio_file: row.chant_audio_file, learn_audio_file: row.learn_audio_file }, { onConflict: "dashakam_no,verse_no" });
       if (audioErr) throw audioErr;
-      const { error: scriptErr } = await supabase.from("sanskrit_script").upsert({ dashakam_no: row.dashakam_no, verse_no: row.verse_no, has_bell: row.has_bell }, { onConflict: "dashakam_no,verse_no" });
-      if (scriptErr) throw scriptErr;
       const chantCount = verses.filter((v) => (v.verse_no === row.verse_no ? row.chant_audio_file : v.chant_audio_file)).length;
       const learnCount = verses.filter((v) => (v.verse_no === row.verse_no ? row.learn_audio_file : v.learn_audio_file)).length;
       const dk = localDashakams.find((d) => d.id === row.dashakam_no); const total = dk?.num_verses ?? 10;
