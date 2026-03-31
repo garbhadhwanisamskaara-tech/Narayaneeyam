@@ -473,8 +473,8 @@ export default function AdminUploadPage() {
     const lc = slokaEdit.langContent[lang];
     try {
       const { error } = await supabase.from("sloka_scripts").upsert({
-        sloka_id: slokaEdit.id, language_code: lang, transliteration_text: lc.transliteration_text, translation_text: lc.translation_text,
-      }, { onConflict: "sloka_id,language_code" });
+        sloka_audio_id: slokaEdit.id, language_code: lang, transliteration_text: lc.transliteration_text, translation_text: lc.translation_text,
+      }, { onConflict: "sloka_audio_id,language_code" });
       if (error) throw error;
       setSlokaEdit((f) => {
         if (!f) return f;
