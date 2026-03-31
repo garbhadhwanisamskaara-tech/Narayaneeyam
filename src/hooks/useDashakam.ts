@@ -176,12 +176,12 @@ export function useDashakam(
 
           merged.push({
             verse_no: v,
-            sanskrit_script: s?.sanskrit_script ?? staticVerse?.sanskrit ?? "",
-            meter: s?.meter ?? staticVerse?.meter ?? "",
-            has_bell: s?.has_bell ?? staticVerse?.bell ?? false,
+            sanskrit_text: s?.transliteration_text ?? staticVerse?.sanskrit ?? "",
+            meter: "",
+            has_bell: false,
             chant_audio_file: a?.chant_audio_file ?? staticVerse?.audio ?? "",
             learn_audio_file: a?.learn_audio_file ?? "",
-            sloka_id: a?.sloka_id ?? null,
+            sloka_audio_id: a?.sloka_audio_id ?? null,
             transliteration_text: l?.transliteration_text ?? staticVerse?.english ?? "",
             translation_text: l?.translation_text ?? staticVerse?.meaning_english ?? "",
             prasadam_text: p?.prasadam_text ?? staticVerse?.prasadam ?? "",
