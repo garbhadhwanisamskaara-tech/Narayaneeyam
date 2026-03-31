@@ -47,8 +47,8 @@ export default function ScriptPage() {
     ?? `Dashakam ${selectedDashakam}`;
 
   const getVerseText = (verse: MergedVerse) => {
-    if (selectedLangCode === "sa") return verse.sanskrit_script;
-    return verse.transliteration_text || verse.sanskrit_script;
+    if (selectedLangCode === "sa") return verse.sanskrit_text;
+    return verse.transliteration_text || verse.sanskrit_text;
   };
 
   const getMeaning = (verse: MergedVerse) => verse.translation_text || "";
@@ -246,7 +246,7 @@ export default function ScriptPage() {
 
                   {/* Sanskrit script — always shown */}
                   <p className="font-body text-lg leading-relaxed whitespace-pre-line text-foreground mb-3">
-                    {verse.sanskrit_script}
+                    {verse.sanskrit_text}
                   </p>
 
                   {/* Transliteration — shown if language is not Sanskrit and text exists */}

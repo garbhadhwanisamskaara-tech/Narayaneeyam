@@ -54,14 +54,14 @@ interface VerseRow {
   has_bell: boolean;
   has_sloka: boolean;
   dirty: boolean;
-  sanskrit_script: string;
+  sanskrit_text: string;
   meter: string;
   scriptDirty: boolean;
   langContent: Record<LangCode, LangContent>;
   langLoaded: Set<LangCode>;
   activeLang: LangCode;
   sloka: SlokaData;
-  sloka_id: string | null;
+  sloka_audio_id: string | null;
 }
 
 interface DashakamDetails {
@@ -217,7 +217,7 @@ export default function AdminUploadPage() {
     const numVerses = dk?.num_verses ?? 10;
     const [{ data: audioRows }, { data: scriptRows }] = await Promise.all([
       supabase.from("verses_audio").select("*").eq("dashakam_no", dNo).order("verse_no"),
-      supabase.from("sanskrit_script").select("*").eq("dashakam_no", dNo).order("verse_no"),
+      supabase.from("language_script").select("verse_no, transliteration_text, translation_text").eq("dashakam_no", dNo).eq("language_code", "sa").order("verse_no"),
     ]);
     const audioMap: Record<number, any> = {};
     audioRows?.forEach((r: any) => { audioMap[r.verse_no] = r; });
@@ -229,10 +229,10 @@ export default function AdminUploadPage() {
       rows.push({
         dashakam_no: dNo, verse_no: v,
         chant_audio_file: a?.chant_audio_file ?? "", learn_audio_file: a?.learn_audio_file ?? "",
-        has_bell: s?.has_bell ?? (dk?.bell_verses?.includes(v) ?? false), has_sloka: !!a?.sloka_id, dirty: false,
-        sanskrit_script: s?.sanskrit_script ?? "", meter: s?.meter ?? "", scriptDirty: false,
+        has_bell: dk?.bell_verses?.includes(v) ?? false, has_sloka: !!a?.sloka_audio_id, dirty: false,
+        sanskrit_text: s?.transliteration_text ?? "", meter: "", scriptDirty: false,
         langContent: emptyLangContent(), langLoaded: new Set(), activeLang: "en",
-        sloka: { ...emptySloka }, sloka_id: a?.sloka_id ?? null,
+        sloka: { ...emptySloka }, sloka_audio_id: a?.sloka_audio_id ?? null,
       });
     }
     setVerses(rows); setExpandedVerse(null);
@@ -274,14 +274,14 @@ export default function AdminUploadPage() {
     if (expandedVerse && selectedDashakam) {
       const row = verses.find((v) => v.verse_no === expandedVerse);
       if (row && !row.langLoaded.has(row.activeLang)) loadLangContent(selectedDashakam, expandedVerse, row.activeLang);
-      if (row && row.sloka_id && !row.sloka.id) loadSlokaDataForVerse(row.sloka_id, expandedVerse);
+      if (row && row.sloka_audio_id && !row.sloka.id) loadSlokaDataForVerse(row.sloka_audio_id, expandedVerse);
     }
   }, [expandedVerse, selectedDashakam, verses, loadLangContent, loadSlokaDataForVerse]);
 
   const updateField = (verseNo: number, field: keyof VerseRow, value: any) => {
     setVerses((prev) => prev.map((v) => {
       if (v.verse_no !== verseNo) return v;
-      const isScript = field === "sanskrit_script" || field === "meter";
+      const isScript = field === "sanskrit_text" || field === "meter";
       return { ...v, [field]: value, dirty: isScript ? v.dirty : true, scriptDirty: isScript ? true : v.scriptDirty, ...(field === "has_bell" ? { dirty: true, scriptDirty: true } : {}) };
     }));
   };
@@ -319,8 +319,6 @@ export default function AdminUploadPage() {
     try {
       const { error: audioErr } = await supabase.from("verses_audio").upsert({ dashakam_no: row.dashakam_no, verse_no: row.verse_no, chant_audio_file: row.chant_audio_file, learn_audio_file: row.learn_audio_file }, { onConflict: "dashakam_no,verse_no" });
       if (audioErr) throw audioErr;
-      const { error: scriptErr } = await supabase.from("sanskrit_script").upsert({ dashakam_no: row.dashakam_no, verse_no: row.verse_no, has_bell: row.has_bell }, { onConflict: "dashakam_no,verse_no" });
-      if (scriptErr) throw scriptErr;
       const chantCount = verses.filter((v) => (v.verse_no === row.verse_no ? row.chant_audio_file : v.chant_audio_file)).length;
       const learnCount = verses.filter((v) => (v.verse_no === row.verse_no ? row.learn_audio_file : v.learn_audio_file)).length;
       const dk = localDashakams.find((d) => d.id === row.dashakam_no); const total = dk?.num_verses ?? 10;
@@ -334,9 +332,9 @@ export default function AdminUploadPage() {
   const saveScript = async (row: VerseRow) => {
     setSavingScript(row.verse_no);
     try {
-      const { error } = await supabase.from("sanskrit_script").upsert({ dashakam_no: row.dashakam_no, verse_no: row.verse_no, sanskrit_script: row.sanskrit_script, meter: row.meter, has_bell: row.has_bell }, { onConflict: "dashakam_no,verse_no" });
+      const { error } = await supabase.from("language_script").upsert({ dashakam_no: row.dashakam_no, verse_no: row.verse_no, language_code: "sa", transliteration_text: row.sanskrit_text, translation_text: "" }, { onConflict: "dashakam_no,verse_no,language_code" });
       if (error) throw error;
-      const scriptsDone = verses.filter((v) => (v.verse_no === row.verse_no ? row.sanskrit_script : v.sanskrit_script)).length;
+      const scriptsDone = verses.filter((v) => (v.verse_no === row.verse_no ? row.sanskrit_text : v.sanskrit_text)).length;
       await supabase.from("upload_progress").upsert({ dashakam_no: row.dashakam_no, scripts_complete: scriptsDone }, { onConflict: "dashakam_no" });
       setVerses((prev) => prev.map((v) => (v.verse_no === row.verse_no ? { ...v, scriptDirty: false } : v)));
       await loadProgress();
@@ -374,9 +372,9 @@ export default function AdminUploadPage() {
       const { data, error } = await supabase.from("slokas").upsert(payload, { onConflict: "id" }).select("id").single();
       if (error) throw error;
       const slokaId = data.id;
-      const { error: linkErr } = await supabase.from("verses_audio").upsert({ dashakam_no: row.dashakam_no, verse_no: row.verse_no, sloka_id: slokaId }, { onConflict: "dashakam_no,verse_no" });
+      const { error: linkErr } = await supabase.from("verses_audio").upsert({ dashakam_no: row.dashakam_no, verse_no: row.verse_no, sloka_audio_id: slokaId }, { onConflict: "dashakam_no,verse_no" });
       if (linkErr) throw linkErr;
-      setVerses((prev) => prev.map((v) => v.verse_no !== row.verse_no ? v : { ...v, has_sloka: true, sloka_id: slokaId, sloka: { ...v.sloka, id: slokaId, dirty: false } }));
+      setVerses((prev) => prev.map((v) => v.verse_no !== row.verse_no ? v : { ...v, has_sloka: true, sloka_audio_id: slokaId, sloka: { ...v.sloka, id: slokaId, dirty: false } }));
       toast({ title: "Saved", description: `Sloka for verse ${row.verse_no} saved.` });
     } catch (err: any) { toast({ title: "Error", description: err.message, variant: "destructive" }); } finally { setSavingSloka(null); }
   };
@@ -390,16 +388,16 @@ export default function AdminUploadPage() {
 
     const ids = slokas.map((s: any) => s.id);
     const [{ data: scriptRows }, { data: audioRows }] = await Promise.all([
-      ids.length ? supabase.from("sloka_scripts").select("sloka_id, language_code").in("sloka_id", ids) : Promise.resolve({ data: [] }),
-      ids.length ? supabase.from("sloka_audio").select("sloka_id").in("sloka_id", ids) : Promise.resolve({ data: [] }),
+      ids.length ? supabase.from("sloka_scripts").select("sloka_audio_id, language_code").in("sloka_audio_id", ids) : Promise.resolve({ data: [] }),
+      ids.length ? supabase.from("sloka_audio").select("sloka_audio_id").in("sloka_audio_id", ids) : Promise.resolve({ data: [] }),
     ]);
 
     const langCountMap: Record<string, Set<string>> = {};
     (scriptRows ?? []).forEach((r: any) => {
-      if (!langCountMap[r.sloka_id]) langCountMap[r.sloka_id] = new Set();
-      langCountMap[r.sloka_id].add(r.language_code);
+      if (!langCountMap[r.sloka_audio_id]) langCountMap[r.sloka_audio_id] = new Set();
+      langCountMap[r.sloka_audio_id].add(r.language_code);
     });
-    const audioSet = new Set((audioRows ?? []).map((r: any) => r.sloka_id));
+    const audioSet = new Set((audioRows ?? []).map((r: any) => r.sloka_audio_id));
 
     setSlokaList(slokas.map((s: any) => ({
       id: s.id, sloka_num: s.sloka_num ?? 0, sloka_verse: s.sloka_verse ?? 0,
@@ -427,8 +425,8 @@ export default function AdminUploadPage() {
 
     if (sloka?.id) {
       const [{ data: audio }, { data: scripts }] = await Promise.all([
-        supabase.from("sloka_audio").select("*").eq("sloka_id", sloka.id).maybeSingle(),
-        supabase.from("sloka_scripts").select("language_code, transliteration_text, translation_text").eq("sloka_id", sloka.id),
+        supabase.from("sloka_audio").select("*").eq("sloka_audio_id", sloka.id).maybeSingle(),
+        supabase.from("sloka_scripts").select("language_code, transliteration_text, translation_text").eq("sloka_audio_id", sloka.id),
       ]);
       if (audio) {
         form.chant_audio_file = audio.chant_audio_file ?? "";
@@ -459,9 +457,9 @@ export default function AdminUploadPage() {
         if (error) throw error;
       }
       const { error: audioErr } = await supabase.from("sloka_audio").upsert({
-        sloka_id: slokaId, chant_audio_file: slokaEdit.chant_audio_file, learn_audio_file: slokaEdit.learn_audio_file,
+        sloka_audio_id: slokaId, chant_audio_file: slokaEdit.chant_audio_file, learn_audio_file: slokaEdit.learn_audio_file,
         after_dashakam_no: slokaEdit.after_dashakam_no, after_verse_no: slokaEdit.after_verse_no,
-      }, { onConflict: "sloka_id" });
+      }, { onConflict: "sloka_audio_id" });
       if (audioErr) throw audioErr;
       setSlokaEdit((f) => f ? { ...f, audioDirty: false } : f);
       await loadSlokaList();
@@ -475,8 +473,8 @@ export default function AdminUploadPage() {
     const lc = slokaEdit.langContent[lang];
     try {
       const { error } = await supabase.from("sloka_scripts").upsert({
-        sloka_id: slokaEdit.id, language_code: lang, transliteration_text: lc.transliteration_text, translation_text: lc.translation_text,
-      }, { onConflict: "sloka_id,language_code" });
+        sloka_audio_id: slokaEdit.id, language_code: lang, transliteration_text: lc.transliteration_text, translation_text: lc.translation_text,
+      }, { onConflict: "sloka_audio_id,language_code" });
       if (error) throw error;
       setSlokaEdit((f) => {
         if (!f) return f;
@@ -739,7 +737,7 @@ export default function AdminUploadPage() {
                                 <div className="flex flex-col gap-3 md:flex-row md:items-end">
                                   <div className="flex-1">
                                     <label className="block text-xs font-medium text-muted-foreground mb-1">Sanskrit Script</label>
-                                    <textarea value={row.sanskrit_script} onChange={(e) => updateField(row.verse_no, "sanskrit_script", e.target.value)} rows={3}
+                                    <textarea value={row.sanskrit_text} onChange={(e) => updateField(row.verse_no, "sanskrit_text", e.target.value)} rows={3}
                                       className="w-full rounded border border-input bg-background px-2 py-1 text-xs font-serif focus:ring-1 focus:ring-ring resize-y" placeholder="Enter Sanskrit verse text…" />
                                   </div>
                                   <div className="w-full md:w-40">

@@ -230,7 +230,7 @@ export default function LearnPage() {
     ? verses.filter((v) => currentLesson.paragraphs.includes(v.verse_no))
     : [];
 
-  const getVerseText = (verse: MergedVerse) => verse.transliteration_text || verse.sanskrit_script;
+  const getVerseText = (verse: MergedVerse) => verse.transliteration_text || verse.sanskrit_text;
   const getMeaning = (verse: MergedVerse) => verse.translation_text || "";
 
   // Split verse text into lines/phrases for line-level highlighting

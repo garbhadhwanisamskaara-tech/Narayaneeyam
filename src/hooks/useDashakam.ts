@@ -12,12 +12,12 @@ export interface DashakamListItem {
 
 export interface MergedVerse {
   verse_no: number;
-  sanskrit_script: string;
+  sanskrit_text: string;
   meter: string;
   has_bell: boolean;
   chant_audio_file: string;
   learn_audio_file: string;
-  sloka_id: string | null;
+  sloka_audio_id: string | null;
   transliteration_text: string;
   translation_text: string;
   prasadam_text: string;
@@ -94,13 +94,14 @@ export function useDashakam(
           () => Promise.all([
           supabase
             .from("verses_audio")
-            .select("verse_no, chant_audio_file, learn_audio_file, sloka_id")
+            .select("verse_no, chant_audio_file, learn_audio_file, sloka_audio_id")
             .eq("dashakam_no", selectedDashakam)
             .order("verse_no"),
           supabase
-            .from("sanskrit_script")
-            .select("verse_no, sanskrit_script, meter, has_bell")
+            .from("language_script")
+            .select("verse_no, transliteration_text, translation_text")
             .eq("dashakam_no", selectedDashakam)
+            .eq("language_code", "sa")
             .order("verse_no"),
           supabase
             .from("language_script")
@@ -129,12 +130,12 @@ export function useDashakam(
           // Fall back to static data — convert to MergedVerse shape
           const staticVerses: MergedVerse[] = staticDashakam.verses.map((v) => ({
             verse_no: v.paragraph,
-            sanskrit_script: v.sanskrit,
+            sanskrit_text: v.sanskrit,
             meter: v.meter,
             has_bell: v.bell ?? false,
             chant_audio_file: v.audio ?? "",
             learn_audio_file: "",
-            sloka_id: null,
+            sloka_audio_id: null,
             transliteration_text: v.english,
             translation_text: v.meaning_english,
             prasadam_text: v.prasadam ?? "",
@@ -175,12 +176,12 @@ export function useDashakam(
 
           merged.push({
             verse_no: v,
-            sanskrit_script: s?.sanskrit_script ?? staticVerse?.sanskrit ?? "",
-            meter: s?.meter ?? staticVerse?.meter ?? "",
-            has_bell: s?.has_bell ?? staticVerse?.bell ?? false,
+            sanskrit_text: s?.transliteration_text ?? staticVerse?.sanskrit ?? "",
+            meter: "",
+            has_bell: false,
             chant_audio_file: a?.chant_audio_file ?? staticVerse?.audio ?? "",
             learn_audio_file: a?.learn_audio_file ?? "",
-            sloka_id: a?.sloka_id ?? null,
+            sloka_audio_id: a?.sloka_audio_id ?? null,
             transliteration_text: l?.transliteration_text ?? staticVerse?.english ?? "",
             translation_text: l?.translation_text ?? staticVerse?.meaning_english ?? "",
             prasadam_text: p?.prasadam_text ?? staticVerse?.prasadam ?? "",
@@ -197,12 +198,12 @@ export function useDashakam(
             setVerses(
               staticDashakam.verses.map((v) => ({
                 verse_no: v.paragraph,
-                sanskrit_script: v.sanskrit,
+                sanskrit_text: v.sanskrit,
                 meter: v.meter,
                 has_bell: v.bell ?? false,
                 chant_audio_file: v.audio ?? "",
                 learn_audio_file: "",
-                sloka_id: null,
+                sloka_audio_id: null,
                 transliteration_text: v.english,
                 translation_text: v.meaning_english,
                 prasadam_text: v.prasadam ?? "",
