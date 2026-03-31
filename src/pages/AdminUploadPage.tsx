@@ -425,8 +425,8 @@ export default function AdminUploadPage() {
 
     if (sloka?.id) {
       const [{ data: audio }, { data: scripts }] = await Promise.all([
-        supabase.from("sloka_audio").select("*").eq("sloka_id", sloka.id).maybeSingle(),
-        supabase.from("sloka_scripts").select("language_code, transliteration_text, translation_text").eq("sloka_id", sloka.id),
+        supabase.from("sloka_audio").select("*").eq("sloka_audio_id", sloka.id).maybeSingle(),
+        supabase.from("sloka_scripts").select("language_code, transliteration_text, translation_text").eq("sloka_audio_id", sloka.id),
       ]);
       if (audio) {
         form.chant_audio_file = audio.chant_audio_file ?? "";
