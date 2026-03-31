@@ -229,10 +229,10 @@ export default function AdminUploadPage() {
       rows.push({
         dashakam_no: dNo, verse_no: v,
         chant_audio_file: a?.chant_audio_file ?? "", learn_audio_file: a?.learn_audio_file ?? "",
-        has_bell: s?.has_bell ?? (dk?.bell_verses?.includes(v) ?? false), has_sloka: !!a?.sloka_id, dirty: false,
-        sanskrit_script: s?.sanskrit_script ?? "", meter: s?.meter ?? "", scriptDirty: false,
+        has_bell: dk?.bell_verses?.includes(v) ?? false, has_sloka: !!a?.sloka_audio_id, dirty: false,
+        sanskrit_text: s?.transliteration_text ?? "", meter: "", scriptDirty: false,
         langContent: emptyLangContent(), langLoaded: new Set(), activeLang: "en",
-        sloka: { ...emptySloka }, sloka_id: a?.sloka_id ?? null,
+        sloka: { ...emptySloka }, sloka_audio_id: a?.sloka_audio_id ?? null,
       });
     }
     setVerses(rows); setExpandedVerse(null);
