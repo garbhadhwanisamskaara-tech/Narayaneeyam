@@ -274,7 +274,7 @@ export default function AdminUploadPage() {
     if (expandedVerse && selectedDashakam) {
       const row = verses.find((v) => v.verse_no === expandedVerse);
       if (row && !row.langLoaded.has(row.activeLang)) loadLangContent(selectedDashakam, expandedVerse, row.activeLang);
-      if (row && row.sloka_id && !row.sloka.id) loadSlokaDataForVerse(row.sloka_id, expandedVerse);
+      if (row && row.sloka_audio_id && !row.sloka.id) loadSlokaDataForVerse(row.sloka_audio_id, expandedVerse);
     }
   }, [expandedVerse, selectedDashakam, verses, loadLangContent, loadSlokaDataForVerse]);
 
