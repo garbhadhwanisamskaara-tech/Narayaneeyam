@@ -47,8 +47,8 @@ export default function ScriptPage() {
     ?? `Dashakam ${selectedDashakam}`;
 
   const getVerseText = (verse: MergedVerse) => {
-    if (selectedLangCode === "sa") return verse.sanskrit_script;
-    return verse.transliteration_text || verse.sanskrit_script;
+    if (selectedLangCode === "sa") return verse.sanskrit_text;
+    return verse.transliteration_text || verse.sanskrit_text;
   };
 
   const getMeaning = (verse: MergedVerse) => verse.translation_text || "";
