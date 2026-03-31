@@ -737,7 +737,7 @@ export default function AdminUploadPage() {
                                 <div className="flex flex-col gap-3 md:flex-row md:items-end">
                                   <div className="flex-1">
                                     <label className="block text-xs font-medium text-muted-foreground mb-1">Sanskrit Script</label>
-                                    <textarea value={row.sanskrit_script} onChange={(e) => updateField(row.verse_no, "sanskrit_script", e.target.value)} rows={3}
+                                    <textarea value={row.sanskrit_text} onChange={(e) => updateField(row.verse_no, "sanskrit_text", e.target.value)} rows={3}
                                       className="w-full rounded border border-input bg-background px-2 py-1 text-xs font-serif focus:ring-1 focus:ring-ring resize-y" placeholder="Enter Sanskrit verse text…" />
                                   </div>
                                   <div className="w-full md:w-40">
