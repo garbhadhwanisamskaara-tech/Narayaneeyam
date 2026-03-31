@@ -281,7 +281,7 @@ export default function AdminUploadPage() {
   const updateField = (verseNo: number, field: keyof VerseRow, value: any) => {
     setVerses((prev) => prev.map((v) => {
       if (v.verse_no !== verseNo) return v;
-      const isScript = field === "sanskrit_script" || field === "meter";
+      const isScript = field === "sanskrit_text" || field === "meter";
       return { ...v, [field]: value, dirty: isScript ? v.dirty : true, scriptDirty: isScript ? true : v.scriptDirty, ...(field === "has_bell" ? { dirty: true, scriptDirty: true } : {}) };
     }));
   };
