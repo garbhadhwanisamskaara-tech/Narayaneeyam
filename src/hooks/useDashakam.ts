@@ -12,7 +12,7 @@ export interface DashakamListItem {
 
 export interface MergedVerse {
   verse_no: number;
-  sanskrit_script: string;
+  sanskrit_text: string;
   meter: string;
   has_bell: boolean;
   chant_audio_file: string;
