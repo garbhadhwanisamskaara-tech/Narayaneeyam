@@ -388,16 +388,16 @@ export default function AdminUploadPage() {
 
     const ids = slokas.map((s: any) => s.id);
     const [{ data: scriptRows }, { data: audioRows }] = await Promise.all([
-      ids.length ? supabase.from("sloka_scripts").select("sloka_id, language_code").in("sloka_id", ids) : Promise.resolve({ data: [] }),
-      ids.length ? supabase.from("sloka_audio").select("sloka_id").in("sloka_id", ids) : Promise.resolve({ data: [] }),
+      ids.length ? supabase.from("sloka_scripts").select("sloka_audio_id, language_code").in("sloka_audio_id", ids) : Promise.resolve({ data: [] }),
+      ids.length ? supabase.from("sloka_audio").select("sloka_audio_id").in("sloka_audio_id", ids) : Promise.resolve({ data: [] }),
     ]);
 
     const langCountMap: Record<string, Set<string>> = {};
     (scriptRows ?? []).forEach((r: any) => {
-      if (!langCountMap[r.sloka_id]) langCountMap[r.sloka_id] = new Set();
-      langCountMap[r.sloka_id].add(r.language_code);
+      if (!langCountMap[r.sloka_audio_id]) langCountMap[r.sloka_audio_id] = new Set();
+      langCountMap[r.sloka_audio_id].add(r.language_code);
     });
-    const audioSet = new Set((audioRows ?? []).map((r: any) => r.sloka_id));
+    const audioSet = new Set((audioRows ?? []).map((r: any) => r.sloka_audio_id));
 
     setSlokaList(slokas.map((s: any) => ({
       id: s.id, sloka_num: s.sloka_num ?? 0, sloka_verse: s.sloka_verse ?? 0,
