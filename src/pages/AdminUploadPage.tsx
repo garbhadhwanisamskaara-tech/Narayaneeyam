@@ -457,9 +457,9 @@ export default function AdminUploadPage() {
         if (error) throw error;
       }
       const { error: audioErr } = await supabase.from("sloka_audio").upsert({
-        sloka_id: slokaId, chant_audio_file: slokaEdit.chant_audio_file, learn_audio_file: slokaEdit.learn_audio_file,
+        sloka_audio_id: slokaId, chant_audio_file: slokaEdit.chant_audio_file, learn_audio_file: slokaEdit.learn_audio_file,
         after_dashakam_no: slokaEdit.after_dashakam_no, after_verse_no: slokaEdit.after_verse_no,
-      }, { onConflict: "sloka_id" });
+      }, { onConflict: "sloka_audio_id" });
       if (audioErr) throw audioErr;
       setSlokaEdit((f) => f ? { ...f, audioDirty: false } : f);
       await loadSlokaList();
