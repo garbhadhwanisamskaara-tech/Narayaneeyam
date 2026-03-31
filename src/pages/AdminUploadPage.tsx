@@ -217,7 +217,7 @@ export default function AdminUploadPage() {
     const numVerses = dk?.num_verses ?? 10;
     const [{ data: audioRows }, { data: scriptRows }] = await Promise.all([
       supabase.from("verses_audio").select("*").eq("dashakam_no", dNo).order("verse_no"),
-      supabase.from("sanskrit_script").select("*").eq("dashakam_no", dNo).order("verse_no"),
+      supabase.from("language_script").select("verse_no, transliteration_text, translation_text").eq("dashakam_no", dNo).eq("language_code", "sa").order("verse_no"),
     ]);
     const audioMap: Record<number, any> = {};
     audioRows?.forEach((r: any) => { audioMap[r.verse_no] = r; });
