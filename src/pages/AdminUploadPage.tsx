@@ -372,9 +372,9 @@ export default function AdminUploadPage() {
       const { data, error } = await supabase.from("slokas").upsert(payload, { onConflict: "id" }).select("id").single();
       if (error) throw error;
       const slokaId = data.id;
-      const { error: linkErr } = await supabase.from("verses_audio").upsert({ dashakam_no: row.dashakam_no, verse_no: row.verse_no, sloka_id: slokaId }, { onConflict: "dashakam_no,verse_no" });
+      const { error: linkErr } = await supabase.from("verses_audio").upsert({ dashakam_no: row.dashakam_no, verse_no: row.verse_no, sloka_audio_id: slokaId }, { onConflict: "dashakam_no,verse_no" });
       if (linkErr) throw linkErr;
-      setVerses((prev) => prev.map((v) => v.verse_no !== row.verse_no ? v : { ...v, has_sloka: true, sloka_id: slokaId, sloka: { ...v.sloka, id: slokaId, dirty: false } }));
+      setVerses((prev) => prev.map((v) => v.verse_no !== row.verse_no ? v : { ...v, has_sloka: true, sloka_audio_id: slokaId, sloka: { ...v.sloka, id: slokaId, dirty: false } }));
       toast({ title: "Saved", description: `Sloka for verse ${row.verse_no} saved.` });
     } catch (err: any) { toast({ title: "Error", description: err.message, variant: "destructive" }); } finally { setSavingSloka(null); }
   };
