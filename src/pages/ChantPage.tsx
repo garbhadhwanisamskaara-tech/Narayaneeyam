@@ -108,7 +108,7 @@ export default function ChantPage() {
     id: `${selectedDashakam}-${mv.verse_no}`,
     dashakam: selectedDashakam,
     paragraph: mv.verse_no,
-    sanskrit: mv.sanskrit_script,
+    sanskrit: mv.sanskrit_text,
     english: mv.transliteration_text,
     meaning_english: mv.translation_text,
     meter: mv.meter,

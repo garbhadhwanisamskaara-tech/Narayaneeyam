@@ -246,7 +246,7 @@ export default function ScriptPage() {
 
                   {/* Sanskrit script — always shown */}
                   <p className="font-body text-lg leading-relaxed whitespace-pre-line text-foreground mb-3">
-                    {verse.sanskrit_script}
+                    {verse.sanskrit_text}
                   </p>
 
                   {/* Transliteration — shown if language is not Sanskrit and text exists */}
