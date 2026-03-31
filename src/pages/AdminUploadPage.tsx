@@ -61,7 +61,7 @@ interface VerseRow {
   langLoaded: Set<LangCode>;
   activeLang: LangCode;
   sloka: SlokaData;
-  sloka_id: string | null;
+  sloka_audio_id: string | null;
 }
 
 interface DashakamDetails {
