@@ -94,13 +94,14 @@ export function useDashakam(
           () => Promise.all([
           supabase
             .from("verses_audio")
-            .select("verse_no, chant_audio_file, learn_audio_file, sloka_id")
+            .select("verse_no, chant_audio_file, learn_audio_file, sloka_audio_id")
             .eq("dashakam_no", selectedDashakam)
             .order("verse_no"),
           supabase
-            .from("sanskrit_script")
-            .select("verse_no, sanskrit_script, meter, has_bell")
+            .from("language_script")
+            .select("verse_no, transliteration_text, translation_text")
             .eq("dashakam_no", selectedDashakam)
+            .eq("language_code", "sa")
             .order("verse_no"),
           supabase
             .from("language_script")
