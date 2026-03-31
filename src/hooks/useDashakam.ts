@@ -130,12 +130,12 @@ export function useDashakam(
           // Fall back to static data — convert to MergedVerse shape
           const staticVerses: MergedVerse[] = staticDashakam.verses.map((v) => ({
             verse_no: v.paragraph,
-            sanskrit_script: v.sanskrit,
+            sanskrit_text: v.sanskrit,
             meter: v.meter,
             has_bell: v.bell ?? false,
             chant_audio_file: v.audio ?? "",
             learn_audio_file: "",
-            sloka_id: null,
+            sloka_audio_id: null,
             transliteration_text: v.english,
             translation_text: v.meaning_english,
             prasadam_text: v.prasadam ?? "",
