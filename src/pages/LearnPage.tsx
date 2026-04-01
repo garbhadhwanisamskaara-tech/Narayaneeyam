@@ -12,6 +12,7 @@ import {
   type TranslationLanguage,
 } from "@/data/narayaneeyam";
 import { useDashakam, type MergedVerse } from "@/hooks/useDashakam";
+import { useSlokaPlayback } from "@/hooks/useSlokaPlayback";
 import { supabase } from "@/integrations/supabase/client";
 import { getLessonPlans, type LessonPlan } from "@/lib/lessonPlan";
 import { getProgress, saveProgress, updateStreak } from "@/lib/progress";
@@ -27,17 +28,13 @@ import RitualChantOverlay from "@/components/RitualChantOverlay";
 
 type RitualPhase = "idle" | "opening" | "dashakam_end" | "session_end";
 
-// ─── Language option type ────────────────────────────────────────────────────
-interface LanguageOption {
-  code: string;
-  name: string;
-}
+interface LanguageOption { code: string; name: string; }
 
 // ─── Sub-components ──────────────────────────────────────────────────────────
 
 function LearnControls({
   plans, activePlan, currentLessonIdx, translitLang, translationLang,
-  showMeaning, repeatCount, speed,
+  showMeaning, repeatCount, speed, languages,
   onPlanChange, onLessonChange, onTranslitChange, onTranslationChange,
   onToggleMeaning, onRepeatChange, onSpeedChange,
 }: {
@@ -49,6 +46,7 @@ function LearnControls({
   showMeaning: boolean;
   repeatCount: number;
   speed: number;
+  languages: LanguageOption[];
   onPlanChange: (id: string) => void;
   onLessonChange: (idx: number) => void;
   onTranslitChange: (v: TransliterationLanguage) => void;
@@ -90,7 +88,10 @@ function LearnControls({
         <label className="text-xs text-muted-foreground font-sans">Translation</label>
         <select value={translationLang} onChange={(e) => onTranslationChange(e.target.value as TranslationLanguage)}
           className="rounded-lg border border-border bg-background px-3 py-2 text-sm font-sans text-foreground">
-          {TRANSLATION_LANGUAGES.map((l) => (<option key={l.value} value={l.value}>{l.label}</option>))}
+          {languages.length > 0
+            ? languages.map((l) => (<option key={l.code} value={l.code === "en" ? "english" : l.code === "ta" ? "tamil" : l.code === "ml" ? "malayalam" : l.code === "te" ? "telugu" : l.code === "kn" ? "kannada" : l.code === "hi" ? "hindi" : l.code === "mr" ? "marathi" : l.code}>{l.name}</option>))
+            : TRANSLATION_LANGUAGES.map((l) => (<option key={l.value} value={l.value}>{l.label}</option>))
+          }
         </select>
       </div>
 
@@ -133,10 +134,9 @@ export default function LearnPage() {
   const [showGist, setShowGist] = useState(false);
   const [showBenefit, setShowBenefit] = useState(false);
 
-  // Audio / playback state
   const [isPlaying, setIsPlaying] = useState(false);
   const [highlightIdx, setHighlightIdx] = useState(0);
-  const [highlightPhrase, setHighlightPhrase] = useState(-1); // -1 = whole verse
+  const [highlightPhrase, setHighlightPhrase] = useState(-1);
   const [repeatCount, setRepeatCount] = useState(DEFAULT_REPEAT_COUNT);
   const [speed, setSpeed] = useState(1);
   const [languages, setLanguages] = useState<LanguageOption[]>([]);
@@ -146,6 +146,9 @@ export default function LearnPage() {
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const gapTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const inGapRef = useRef(false);
+
+  // Sloka playback
+  const { activeSlokaScript, activeSlokaTranslation, isSlokaPlaying, handlePostVerse, stopSloka } = useSlokaPlayback();
 
   // ── Playlist state ──
   const [playlistOpen, setPlaylistOpen] = useState(false);
@@ -163,8 +166,6 @@ export default function LearnPage() {
     const idx = resumeIdx ?? 0;
     setPlaylistIndex(idx);
     setPlaylistLoop(0);
-    // For learn, we set the dashakam from the playlist item
-    // The lesson plan concept doesn't apply in playlist mode
     stopPlayback();
     setHighlightIdx(0);
   };
@@ -179,18 +180,16 @@ export default function LearnPage() {
   const currentLesson = activePlan?.lessons[currentLessonIdx];
   const selectedDashakam = currentLesson?.dashakam ?? 1;
 
-  // Map UI language to DB language_code
   const langCodeMap: Record<string, string> = {
     english: "en", tamil: "ta", malayalam: "ml", telugu: "te",
     hindi: "hi", marathi: "mr", kannada: "kn", sanskrit: "en",
   };
   const selectedLanguage = langCodeMap[translationLang] || "en";
 
-  // Use the shared hook for live data
   const { dashakamList, verses, loading, error, staticDashakam } = useDashakam(selectedDashakam, selectedLanguage);
   const { openingChants, dashakamClosingChant, sessionClosingChant } = useRitualChants(selectedLanguage);
 
-  // Fetch active languages from Supabase
+  // Fetch active languages
   useEffect(() => {
     (async () => {
       const { data } = await supabase
@@ -198,34 +197,33 @@ export default function LearnPage() {
         .select("code, name")
         .eq("is_active", true)
         .order("name");
-      if (data && data.length > 0) {
-        setLanguages(data as LanguageOption[]);
-      }
+      if (data && data.length > 0) setLanguages(data as LanguageOption[]);
     })();
   }, []);
 
+  // Persist language preference
+  useEffect(() => {
+    const saved = localStorage.getItem("narayaneeyam_lang");
+    if (saved) setTranslationLang(saved as TranslationLanguage);
+  }, []);
+  useEffect(() => {
+    localStorage.setItem("narayaneeyam_lang", translationLang);
+  }, [translationLang]);
+
   useEffect(() => { setPlans(getLessonPlans()); }, []);
 
-  // Restore last learn position
   useEffect(() => {
     const saved = getProgress();
     if (saved.learnState && plans.length > 0) {
       const plan = plans.find((p) => p.id === saved.learnState!.planId);
-      if (plan) {
-        setActivePlan(plan);
-        setCurrentLessonIdx(saved.learnState!.lessonIdx);
-      }
+      if (plan) { setActivePlan(plan); setCurrentLessonIdx(saved.learnState!.lessonIdx); }
     }
   }, [plans]);
 
-  // Save learn position on changes
   useEffect(() => {
-    if (activePlan) {
-      saveProgress({ learnState: { planId: activePlan.id, lessonIdx: currentLessonIdx } });
-    }
+    if (activePlan) saveProgress({ learnState: { planId: activePlan.id, lessonIdx: currentLessonIdx } });
   }, [activePlan, currentLessonIdx]);
 
-  // Filter verses for this lesson's paragraphs
   const lessonVerses = currentLesson
     ? verses.filter((v) => currentLesson.paragraphs.includes(v.verse_no))
     : [];
@@ -233,7 +231,6 @@ export default function LearnPage() {
   const getVerseText = (verse: MergedVerse) => verse.transliteration_text || verse.sanskrit_text;
   const getMeaning = (verse: MergedVerse) => verse.translation_text || "";
 
-  // Split verse text into lines/phrases for line-level highlighting
   const getVerseLines = (verse: MergedVerse) => {
     const text = getVerseText(verse);
     return text.split("\n").filter(Boolean);
@@ -244,15 +241,14 @@ export default function LearnPage() {
     inGapRef.current = false;
   }, []);
 
-  // Stop everything
   const stopPlayback = useCallback(() => {
     if (audioRef.current) { audioRef.current.pause(); audioRef.current = null; }
     clearGapTimer();
+    stopSloka();
     setIsPlaying(false);
     setHighlightPhrase(-1);
-  }, [clearGapTimer]);
+  }, [clearGapTimer, stopSloka]);
 
-  // Advance: after a phrase/line finishes → insert silence gap → next phrase or next verse
   const advancePhrase = useCallback(() => {
     const verse = lessonVerses[highlightIdx];
     if (!verse) return;
@@ -264,27 +260,44 @@ export default function LearnPage() {
     if (nextPhrase < phraseCount) {
       setHighlightPhrase(nextPhrase);
     } else {
-      if (highlightIdx < lessonVerses.length - 1) {
-        setHighlightIdx((prev) => prev + 1);
-        setHighlightPhrase(0);
+      // Verse finished — check for sloka before advancing
+      if (verse.sloka_audio_id) {
+        handlePostVerse(
+          verse.sloka_audio_id,
+          selectedLanguage,
+          "learn",
+          speed,
+          () => {
+            if (highlightIdx < lessonVerses.length - 1) {
+              setHighlightIdx((prev) => prev + 1);
+              setHighlightPhrase(0);
+            } else {
+              stopPlayback();
+              updateStreak();
+              if (dashakamClosingChant) setRitualPhase("dashakam_end");
+            }
+          }
+        );
       } else {
-        stopPlayback();
-        updateStreak();
-        if (dashakamClosingChant) {
-          setRitualPhase("dashakam_end");
+        if (highlightIdx < lessonVerses.length - 1) {
+          setHighlightIdx((prev) => prev + 1);
+          setHighlightPhrase(0);
+        } else {
+          stopPlayback();
+          updateStreak();
+          if (dashakamClosingChant) setRitualPhase("dashakam_end");
         }
       }
     }
-  }, [highlightIdx, highlightPhrase, lessonVerses, selectedDashakam, repeatCount, stopPlayback, dashakamClosingChant]);
+  }, [highlightIdx, highlightPhrase, lessonVerses, selectedDashakam, selectedLanguage, speed, stopPlayback, dashakamClosingChant, handlePostVerse]);
 
-  // Audio playback effect: play current verse audio, use timeupdate for phrase highlighting
+  // Audio playback effect
   useEffect(() => {
-    if (!isPlaying || lessonVerses.length === 0 || inGapRef.current) return;
+    if (!isPlaying || lessonVerses.length === 0 || inGapRef.current || isSlokaPlaying) return;
 
     const verse = lessonVerses[highlightIdx];
     if (!verse) return;
 
-    // Use learn_audio_file for Learn page
     const audioFile = verse.learn_audio_file;
 
     if (audioFile) {
@@ -310,30 +323,23 @@ export default function LearnPage() {
         audio.onended = null;
       };
     } else {
-      // Fallback: simulate 4s per phrase, then advance
       const lines = getVerseLines(verse);
       const phraseCount = lines.length || 1;
       if (highlightPhrase < 0) setHighlightPhrase(0);
 
-      const timer = setTimeout(() => {
-        advancePhrase();
-      }, 4000);
+      const timer = setTimeout(() => { advancePhrase(); }, 4000);
       return () => clearTimeout(timer);
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isPlaying, highlightIdx, highlightPhrase, lessonVerses.length]);
+  }, [isPlaying, highlightIdx, highlightPhrase, lessonVerses.length, isSlokaPlaying]);
 
-  // Cleanup
   useEffect(() => { return () => { stopPlayback(); }; }, [stopPlayback]);
 
   const handlePlayPause = () => {
     if (isPlaying) {
       stopPlayback();
     } else {
-      if (!hasPlayedOpening && openingChants.length > 0) {
-        setRitualPhase("opening");
-        return;
-      }
+      if (!hasPlayedOpening && openingChants.length > 0) { setRitualPhase("opening"); return; }
       setHighlightPhrase(0);
       setIsPlaying(true);
     }
@@ -342,12 +348,8 @@ export default function LearnPage() {
   const handleEndSession = () => {
     stopPlayback();
     setHighlightIdx(0);
-    if (sessionClosingChant) {
-      setRitualPhase("session_end");
-    }
+    if (sessionClosingChant) setRitualPhase("session_end");
   };
-
-  // ─── Empty state ─────────────────────────────────────────────────────────────
 
   if (plans.length === 0) {
     return (
@@ -363,12 +365,9 @@ export default function LearnPage() {
     );
   }
 
-  // Dashakam title from dashakamList or static fallback
   const dashakamTitle = dashakamList.find((d) => d.dashakam_no === selectedDashakam)?.dashakam_name
     || staticDashakam?.title_english
     || `Dashakam ${selectedDashakam}`;
-
-  // ─── Main render ─────────────────────────────────────────────────────────────
 
   return (
     <div className="container mx-auto px-4 py-8">
@@ -390,7 +389,7 @@ export default function LearnPage() {
           plans={plans} activePlan={activePlan} currentLessonIdx={currentLessonIdx}
           translitLang={translitLang} translationLang={translationLang}
           showMeaning={showMeaning} repeatCount={repeatCount}
-          speed={speed}
+          speed={speed} languages={languages}
           onPlanChange={(id) => { const plan = plans.find((p) => p.id === id); setActivePlan(plan || null); setCurrentLessonIdx(0); stopPlayback(); setHighlightIdx(0); }}
           onLessonChange={(idx) => { setCurrentLessonIdx(idx); stopPlayback(); setHighlightIdx(0); }}
           onTranslitChange={setTranslitLang} onTranslationChange={setTranslationLang}
@@ -406,6 +405,27 @@ export default function LearnPage() {
             <span className="ml-3 text-muted-foreground font-sans">Loading verses…</span>
           </div>
         )}
+
+        {/* Sloka Overlay */}
+        <AnimatePresence>
+          {activeSlokaScript && (
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -20 }}
+              className="fixed inset-x-4 top-1/4 z-50 mx-auto max-w-lg rounded-2xl border border-secondary/40 bg-card/95 backdrop-blur-md p-6 shadow-gold"
+            >
+              <p className="text-xs text-muted-foreground font-sans uppercase tracking-wide mb-2">📿 Sloka</p>
+              <p className="font-body text-lg leading-relaxed text-foreground whitespace-pre-line mb-3">{activeSlokaScript}</p>
+              {activeSlokaTranslation && (
+                <p className="text-sm text-muted-foreground font-sans leading-relaxed border-t border-border pt-2">{activeSlokaTranslation}</p>
+              )}
+              {isSlokaPlaying && (
+                <p className="text-xs text-secondary font-sans mt-2 animate-pulse">♪ Playing sloka audio…</p>
+              )}
+            </motion.div>
+          )}
+        </AnimatePresence>
 
         {/* Learning Content */}
         {!loading && currentLesson ? (
@@ -465,11 +485,13 @@ export default function LearnPage() {
                     <motion.div key={verse.verse_no}
                       className={`rounded-xl border p-5 transition-all duration-500 ${isActiveVerse ? "border-secondary bg-secondary/10 shadow-gold" : "border-border bg-card"}`}>
                       <div className="flex items-center justify-between mb-2">
-                        <span className="text-xs text-muted-foreground font-sans">Verse {verse.verse_no} · {verse.meter}</span>
+                        <span className="text-xs text-muted-foreground font-sans">
+                          Verse {verse.verse_no} · {verse.meter}
+                          {verse.sloka_audio_id && <span className="ml-2 text-secondary">📿</span>}
+                        </span>
                         <VerseIcons bell={verse.has_bell} prasadam={verse.prasadam_text} />
                       </div>
 
-                      {/* Line-by-line rendering with phrase highlighting */}
                       <div className="font-body text-lg leading-relaxed mb-3 space-y-1">
                         {lines.map((line, lineIdx) => (
                           <p key={lineIdx}
@@ -509,6 +531,7 @@ export default function LearnPage() {
                   Verse {highlightIdx + 1}/{lessonVerses.length}
                   {isPlaying && highlightPhrase >= 0 && ` · Line ${highlightPhrase + 1}`}
                   {` · ${repeatCount}× repeats`}
+                  {isSlokaPlaying && " · 📿 Sloka playing"}
                 </p>
               </div>
 
@@ -520,12 +543,7 @@ export default function LearnPage() {
                     useLearnAudio
                     title="Opening Prayers"
                     speed={speed}
-                    onComplete={() => {
-                      setRitualPhase("idle");
-                      setHasPlayedOpening(true);
-                      setHighlightPhrase(0);
-                      setIsPlaying(true);
-                    }}
+                    onComplete={() => { setRitualPhase("idle"); setHasPlayedOpening(true); setHighlightPhrase(0); setIsPlaying(true); }}
                   />
                 )}
                 {ritualPhase === "dashakam_end" && dashakamClosingChant && (
@@ -534,10 +552,7 @@ export default function LearnPage() {
                     useLearnAudio
                     title="Dashakam Closing"
                     speed={speed}
-                    onComplete={() => {
-                      setRitualPhase("idle");
-                      setHighlightIdx(0);
-                    }}
+                    onComplete={() => { setRitualPhase("idle"); setHighlightIdx(0); }}
                   />
                 )}
                 {ritualPhase === "session_end" && sessionClosingChant && (
@@ -546,10 +561,7 @@ export default function LearnPage() {
                     useLearnAudio
                     title="Session Closing"
                     speed={speed}
-                    onComplete={() => {
-                      setRitualPhase("idle");
-                      setHighlightIdx(0);
-                    }}
+                    onComplete={() => { setRitualPhase("idle"); setHighlightIdx(0); }}
                   />
                 )}
               </AnimatePresence>
