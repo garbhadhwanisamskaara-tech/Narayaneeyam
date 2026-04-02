@@ -2,7 +2,7 @@ import { supabase } from "@/integrations/supabase/client";
 
 type EventType =
   | "user_login" | "user_logout" | "user_signup"
-  | "chant_started" | "verse_started" | "verse_completed" | "chant_completed"
+  | "chant_started" | "learn_started" | "verse_started" | "verse_completed" | "chant_completed"
   | "audio_play" | "audio_pause" | "audio_complete" | "audio_error" | "audio_load" | "audio_load_slow"
   | "app_error" | "page_view";
 
