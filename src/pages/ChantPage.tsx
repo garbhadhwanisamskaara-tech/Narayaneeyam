@@ -423,18 +423,6 @@ export default function ChantPage() {
             </select>
           </div>
 
-          <div className="flex flex-col gap-1">
-            <label className="text-xs text-muted-foreground font-sans">Translation</label>
-            <select value={translationLang} onChange={(e) => setTranslationLang(e.target.value as TranslationLanguage)}
-              className="rounded-lg border border-border bg-background px-3 py-2 text-sm font-sans text-foreground">
-              {languages.length > 0
-                ? languages.map((l) => (<option key={l.code} value={l.code === "en" ? "english" : l.code === "ta" ? "tamil" : l.code === "ml" ? "malayalam" : l.code === "te" ? "telugu" : l.code === "kn" ? "kannada" : l.code === "hi" ? "hindi" : l.code === "mr" ? "marathi" : l.code}>{l.name}</option>))
-                : TRANSLATION_LANGUAGES.map((l) => (<option key={l.value} value={l.value}>{l.label}</option>))
-              }
-            </select>
-          </div>
-
-          <div className="flex flex-col gap-1">
             <label className="text-xs text-muted-foreground font-sans">Speed</label>
             <select value={speed} onChange={(e) => { setSpeed(Number(e.target.value)); if (audioRef.current) audioRef.current.playbackRate = Number(e.target.value); }}
               className="rounded-lg border border-border bg-background px-3 py-2 text-sm font-sans text-foreground">
