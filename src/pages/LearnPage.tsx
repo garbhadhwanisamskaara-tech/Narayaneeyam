@@ -97,26 +97,7 @@ export default function LearnPage() {
   const { dashakamList, verses: dbVerses, loading: dbLoading, staticDashakam } = useDashakam(selectedDashakam, selectedLanguage);
   const { openingChants, dashakamClosingChant, sessionClosingChant } = useRitualChants(selectedLanguage);
 
-  // Fetch active languages
-  useEffect(() => {
-    (async () => {
-      const { data } = await supabase
-        .from("languages")
-        .select("code, name")
-        .eq("is_active", true)
-        .order("name");
-      if (data && data.length > 0) setLanguages(data as LanguageOption[]);
-    })();
-  }, []);
-
-  // Persist language preference
-  useEffect(() => {
-    const saved = localStorage.getItem("narayaneeyam_lang");
-    if (saved) setTranslationLang(saved as TranslationLanguage);
-  }, []);
-  useEffect(() => {
-    localStorage.setItem("narayaneeyam_lang", translationLang);
-  }, [translationLang]);
+  // Language fetch removed — default English only
 
   // Build the dashakam dropdown list — prefer DB list, fallback to static
   const dropdownList = dashakamList.length > 0
