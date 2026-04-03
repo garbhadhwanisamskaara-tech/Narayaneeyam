@@ -37,7 +37,6 @@ export default function ChantPage() {
   const [selectedDashakam, setSelectedDashakam] = useState(1);
   const [selectedPara, setSelectedPara] = useState<number | null>(null);
   const [translitLang, setTranslitLang] = useState<TransliterationLanguage>("sanskrit");
-  const [translationLang, setTranslationLang] = useState<TranslationLanguage>("english");
   const [showMeaning, setShowMeaning] = useState(false);
   const [showGist, setShowGist] = useState(false);
   const [showBenefit, setShowBenefit] = useState(false);

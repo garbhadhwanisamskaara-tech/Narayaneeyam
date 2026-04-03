@@ -38,7 +38,6 @@ export default function LearnPage() {
   const [selectedDashakam, setSelectedDashakam] = useState(1);
   const [selectedPara, setSelectedPara] = useState<number | null>(null);
   const [translitLang, setTranslitLang] = useState<TransliterationLanguage>("sanskrit");
-  const [translationLang, setTranslationLang] = useState<TranslationLanguage>("english");
   const [showMeaning, setShowMeaning] = useState(true);
   const [showGist, setShowGist] = useState(false);
   const [showBenefit, setShowBenefit] = useState(false);
