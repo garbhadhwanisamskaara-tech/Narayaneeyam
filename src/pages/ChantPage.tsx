@@ -28,9 +28,6 @@ import VerseIcons from "@/components/VerseIcons";
 import { Slider } from "@/components/ui/slider";
 
 
-type RitualPhase = "idle" | "opening" | "dashakam_end" | "session_end";
-
-interface LanguageOption { code: string; name: string; }
 
 export default function ChantPage() {
   const [searchParams] = useSearchParams();

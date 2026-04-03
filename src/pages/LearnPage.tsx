@@ -31,8 +31,6 @@ import { Slider } from "@/components/ui/slider";
 
 type RitualPhase = "idle" | "opening" | "dashakam_end" | "session_end";
 
-interface LanguageOption { code: string; name: string; }
-
 export default function LearnPage() {
   const [searchParams] = useSearchParams();
   const [selectedDashakam, setSelectedDashakam] = useState(1);
