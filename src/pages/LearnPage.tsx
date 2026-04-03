@@ -91,12 +91,7 @@ export default function LearnPage() {
     setPlaylistId(undefined);
   };
 
-  // Map translitLang/translationLang to a language_code for the hook
-  const langCodeMap: Record<string, string> = {
-    sanskrit: "sa", english: "en", tamil: "ta", malayalam: "ml",
-    telugu: "te", kannada: "kn", hindi: "hi", marathi: "mr",
-  };
-  const selectedLanguage = langCodeMap[translationLang] || "en";
+  const selectedLanguage = "en";
 
   // Live data from Supabase with static fallback
   const { dashakamList, verses: dbVerses, loading: dbLoading, staticDashakam } = useDashakam(selectedDashakam, selectedLanguage);
