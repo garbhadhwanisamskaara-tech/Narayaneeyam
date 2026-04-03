@@ -423,6 +423,7 @@ export default function ChantPage() {
             </select>
           </div>
 
+          <div className="flex flex-col gap-1">
             <label className="text-xs text-muted-foreground font-sans">Speed</label>
             <select value={speed} onChange={(e) => { setSpeed(Number(e.target.value)); if (audioRef.current) audioRef.current.playbackRate = Number(e.target.value); }}
               className="rounded-lg border border-border bg-background px-3 py-2 text-sm font-sans text-foreground">
