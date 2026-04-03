@@ -521,9 +521,10 @@ export default function ChantPage() {
         {/* Verses */}
         {!dbLoading && (
           <div className="space-y-4 mb-8">
-            {displayVerses.length === 0 ? (
+             ) : displayVerses.length === 0 ? (
               <div className="rounded-xl bg-card border border-border p-8 text-center">
-                <p className="text-muted-foreground font-sans">No verses available for this Dashakam yet. Admin needs to upload content.</p>
+                <p className="text-lg text-secondary font-sans">�DivinePeacock</p>
+                <p className="text-muted-foreground font-sans mt-2">Working with divine energy to make this available soon 🙏</p>
               </div>
             ) : (
               displayVerses.map((verse, idx) => (
