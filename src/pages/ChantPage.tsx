@@ -531,10 +531,9 @@ export default function ChantPage() {
                   <div className="flex items-start justify-between mb-3">
                     <span className="text-xs text-muted-foreground font-sans">
                       Verse {verse.paragraph} · {verse.meter}
-                      {verse.sloka_audio_id && <span className="ml-2 text-secondary">📿</span>}
                     </span>
                     <div className="flex items-center gap-1">
-                      <VerseIcons bell={verse.bell} prasadam={verse.prasadam} />
+                      <VerseIcons bell={verse.bell} prasadam={verse.prasadam} slokaAudioId={verse.sloka_audio_id} />
                       <BookmarkButton
                         active={isBookmarked(verse.id)}
                         onClick={() => {
