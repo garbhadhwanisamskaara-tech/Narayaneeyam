@@ -15,9 +15,7 @@ import RemoveBottomSheet from "@/components/RemoveBottomSheet";
 import {
   sampleDashakams,
   TRANSLITERATION_LANGUAGES,
-  TRANSLATION_LANGUAGES,
   type TransliterationLanguage,
-  type TranslationLanguage,
 } from "@/data/narayaneeyam";
 import { useDashakam } from "@/hooks/useDashakam";
 import { useRitualChants } from "@/hooks/useRitualChants";
