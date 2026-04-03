@@ -49,7 +49,7 @@ export default function LearnPage() {
   const [currentRepeat, setCurrentRepeat] = useState(0);
   const [verseProgress, setVerseProgress] = useState(0);
   const [removeTarget, setRemoveTarget] = useState<{ type: "bookmark" | "favourite"; verseId: string; dashakam: number; verse: number } | null>(null);
-  const [languages, setLanguages] = useState<LanguageOption[]>([]);
+  const [languages, _setLanguages] = useState<LanguageOption[]>([]);
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const pausedRef = useRef(false);
   const gapTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
