@@ -570,7 +570,7 @@ export default function ChantPage() {
                   )}
                   {showMeaning && (
                     <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: "auto" }} className="mt-4 border-t border-border pt-3">
-                      <p className="text-xs text-muted-foreground font-sans uppercase tracking-wide mb-1">Translation ({translationLang})</p>
+                      <p className="text-xs text-muted-foreground font-sans uppercase tracking-wide mb-1">Translation (English)</p>
                       <p className="text-sm text-muted-foreground font-sans leading-relaxed">{getMeaning(verse)}</p>
                     </motion.div>
                   )}
