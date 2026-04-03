@@ -15,9 +15,7 @@ import RemoveBottomSheet from "@/components/RemoveBottomSheet";
 import {
   sampleDashakams,
   TRANSLITERATION_LANGUAGES,
-  TRANSLATION_LANGUAGES,
   type TransliterationLanguage,
-  type TranslationLanguage,
 } from "@/data/narayaneeyam";
 import { useDashakam } from "@/hooks/useDashakam";
 import { useRitualChants } from "@/hooks/useRitualChants";
@@ -29,18 +27,15 @@ import { getActiveVerseAtTime, getTimestamps } from "@/lib/audioTimestamps";
 import { getActivePhraseAtTime, getVerseTimestamp } from "@/lib/audioTimestamps";
 import VerseIcons from "@/components/VerseIcons";
 import { Slider } from "@/components/ui/slider";
-import { supabase } from "@/integrations/supabase/client";
+
 
 type RitualPhase = "idle" | "opening" | "dashakam_end" | "session_end";
-
-interface LanguageOption { code: string; name: string; }
 
 export default function LearnPage() {
   const [searchParams] = useSearchParams();
   const [selectedDashakam, setSelectedDashakam] = useState(1);
   const [selectedPara, setSelectedPara] = useState<number | null>(null);
   const [translitLang, setTranslitLang] = useState<TransliterationLanguage>("sanskrit");
-  const [translationLang, setTranslationLang] = useState<TranslationLanguage>("english");
   const [showMeaning, setShowMeaning] = useState(true);
   const [showGist, setShowGist] = useState(false);
   const [showBenefit, setShowBenefit] = useState(false);
@@ -52,7 +47,7 @@ export default function LearnPage() {
   const [currentRepeat, setCurrentRepeat] = useState(0);
   const [verseProgress, setVerseProgress] = useState(0);
   const [removeTarget, setRemoveTarget] = useState<{ type: "bookmark" | "favourite"; verseId: string; dashakam: number; verse: number } | null>(null);
-  const [languages, setLanguages] = useState<LanguageOption[]>([]);
+  
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const pausedRef = useRef(false);
   const gapTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -94,37 +89,13 @@ export default function LearnPage() {
     setPlaylistId(undefined);
   };
 
-  // Map translitLang/translationLang to a language_code for the hook
-  const langCodeMap: Record<string, string> = {
-    sanskrit: "sa", english: "en", tamil: "ta", malayalam: "ml",
-    telugu: "te", kannada: "kn", hindi: "hi", marathi: "mr",
-  };
-  const selectedLanguage = langCodeMap[translationLang] || "en";
+  const selectedLanguage = "en";
 
   // Live data from Supabase with static fallback
   const { dashakamList, verses: dbVerses, loading: dbLoading, staticDashakam } = useDashakam(selectedDashakam, selectedLanguage);
   const { openingChants, dashakamClosingChant, sessionClosingChant } = useRitualChants(selectedLanguage);
 
-  // Fetch active languages
-  useEffect(() => {
-    (async () => {
-      const { data } = await supabase
-        .from("languages")
-        .select("code, name")
-        .eq("is_active", true)
-        .order("name");
-      if (data && data.length > 0) setLanguages(data as LanguageOption[]);
-    })();
-  }, []);
-
-  // Persist language preference
-  useEffect(() => {
-    const saved = localStorage.getItem("narayaneeyam_lang");
-    if (saved) setTranslationLang(saved as TranslationLanguage);
-  }, []);
-  useEffect(() => {
-    localStorage.setItem("narayaneeyam_lang", translationLang);
-  }, [translationLang]);
+  // Language fetch removed — default English only
 
   // Build the dashakam dropdown list — prefer DB list, fallback to static
   const dropdownList = dashakamList.length > 0
@@ -477,16 +448,6 @@ export default function LearnPage() {
             </select>
           </div>
 
-          <div className="flex flex-col gap-1">
-            <label className="text-xs text-muted-foreground font-sans">Translation</label>
-            <select value={translationLang} onChange={(e) => setTranslationLang(e.target.value as TranslationLanguage)}
-              className="rounded-lg border border-border bg-background px-3 py-2 text-sm font-sans text-foreground">
-              {languages.length > 0
-                ? languages.map((l) => (<option key={l.code} value={l.code === "en" ? "english" : l.code === "ta" ? "tamil" : l.code === "ml" ? "malayalam" : l.code === "te" ? "telugu" : l.code === "kn" ? "kannada" : l.code === "hi" ? "hindi" : l.code === "mr" ? "marathi" : l.code}>{l.name}</option>))
-                : TRANSLATION_LANGUAGES.map((l) => (<option key={l.value} value={l.value}>{l.label}</option>))
-              }
-            </select>
-          </div>
 
           <div className="flex flex-col gap-1">
             <label className="text-xs text-muted-foreground font-sans">Speed</label>
@@ -608,7 +569,7 @@ export default function LearnPage() {
           <div className="space-y-4 mb-8">
             {displayVerses.length === 0 ? (
               <div className="rounded-xl bg-card border border-border p-8 text-center">
-                <p className="text-muted-foreground font-sans">No verses available for this Dashakam yet. Admin needs to upload content.</p>
+                <p className="text-muted-foreground font-sans">Working with divine energy to make this available soon 🙏</p>
               </div>
             ) : (
               displayVerses.map((verse, idx) => {
@@ -673,7 +634,7 @@ export default function LearnPage() {
 
                     {showMeaning && (
                       <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: "auto" }} className="mt-4 border-t border-border pt-3">
-                        <p className="text-xs text-muted-foreground font-sans uppercase tracking-wide mb-1">Translation ({translationLang})</p>
+                        <p className="text-xs text-muted-foreground font-sans uppercase tracking-wide mb-1">Translation (English)</p>
                         <p className="text-sm text-muted-foreground font-sans leading-relaxed">{getMeaning(verse)}</p>
                       </motion.div>
                     )}
