@@ -1,6 +1,7 @@
 import { useState, useRef, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { playBellAudio } from "@/lib/bellAudio";
+import { getStorageUrl } from "@/lib/storageUrl";
 
 export interface SlokaData {
   sloka_audio_id: string;
