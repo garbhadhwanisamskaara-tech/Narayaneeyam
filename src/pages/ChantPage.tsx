@@ -223,6 +223,10 @@ export default function ChantPage() {
     }
   }, [highlightedVerse, displayVerses, selectedDashakam, selectedLanguage, speed, handlePostVerse, advanceToNextVerse]);
 
+  // Stable ref so the audio effect doesn't re-run when callbacks change
+  const handleVerseEndedRef = useRef(handleVerseEnded);
+  useEffect(() => { handleVerseEndedRef.current = handleVerseEnded; }, [handleVerseEnded]);
+
   // Real audio playback
   useEffect(() => {
     if (!isPlaying || displayVerses.length === 0 || isSlokaPlaying) return;
@@ -240,7 +244,7 @@ export default function ChantPage() {
         if (audio.duration) setVerseProgress((audio.currentTime / audio.duration) * 100);
       };
       audio.addEventListener("timeupdate", updateProgress);
-      audio.onended = () => handleVerseEnded();
+      audio.onended = () => handleVerseEndedRef.current();
       return () => { audio.removeEventListener("timeupdate", updateProgress); audio.onended = null; };
     }
 
@@ -273,22 +277,25 @@ export default function ChantPage() {
         if (audio.duration) setVerseProgress((audio.currentTime / audio.duration) * 100);
       };
       audio.addEventListener("timeupdate", updateProgress);
-      audio.onended = () => handleVerseEnded();
+      audio.onended = () => handleVerseEndedRef.current();
       return () => { audio.pause(); audio.removeEventListener("timeupdate", updateProgress); audio.onended = null; };
     } else {
       const interval = setInterval(() => {
         setVerseProgress((prev) => {
-          if (prev >= 100) { handleVerseEnded(); return 0; }
+          if (prev >= 100) { handleVerseEndedRef.current(); return 0; }
           return prev + (speed * 2.5);
         });
       }, 100);
       return () => clearInterval(interval);
     }
-  }, [isPlaying, highlightedVerse, displayVerses.length, speed, handleVerseEnded, isSlokaPlaying]);
+  }, [isPlaying, highlightedVerse, displayVerses.length, speed, isSlokaPlaying]);
 
-  // Cleanup
+  // Cleanup on unmount — stop audio when navigating away
   useEffect(() => {
-    return () => { if (gapTimerRef.current) clearTimeout(gapTimerRef.current); };
+    return () => {
+      if (audioRef.current) { audioRef.current.pause(); audioRef.current = null; }
+      if (gapTimerRef.current) clearTimeout(gapTimerRef.current);
+    };
   }, []);
 
   const [hasPlayedOpening, setHasPlayedOpening] = useState(false);
