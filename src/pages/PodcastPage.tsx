@@ -3,6 +3,7 @@ import { motion } from "framer-motion";
 import { Play, Pause, SkipBack, SkipForward, ListMusic, Volume2 } from "lucide-react";
 import { sampleDashakams } from "@/data/narayaneeyam";
 import { supabase } from "@/integrations/supabase/client";
+import { getStorageUrl } from "@/lib/storageUrl";
 import { getProgress, saveProgress } from "@/lib/progress";
 import { Slider } from "@/components/ui/slider";
 import PlaylistBuilder from "@/components/PlaylistBuilder";
