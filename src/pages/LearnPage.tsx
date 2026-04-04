@@ -218,7 +218,7 @@ export default function LearnPage() {
       handlePostVerse(
         currentVerse.sloka_audio_id,
         selectedLanguage,
-        "learn",  // <-- learn mode for sloka
+        "learn",
         speed,
         () => advanceToNextVerse()
       );
@@ -227,8 +227,91 @@ export default function LearnPage() {
     }
   }, [highlightedVerse, displayVerses, selectedDashakam, selectedLanguage, speed, handlePostVerse, advanceToNextVerse]);
 
+  // Stable ref so the audio effect doesn't re-run when callbacks change
+  const handleVerseEndedRef = useRef(handleVerseEnded);
+  useEffect(() => { handleVerseEndedRef.current = handleVerseEnded; }, [handleVerseEnded]);
+
   // Real audio playback — uses learn_audio_file
   useEffect(() => {
+    if (!isPlaying || displayVerses.length === 0 || isSlokaPlaying) return;
+
+    const currentVerse = displayVerses[highlightedVerse];
+
+    if (pausedRef.current && audioRef.current && !audioRef.current.ended) {
+      audioRef.current.playbackRate = speed;
+      audioRef.current.play().catch((err) => console.error("Audio play error:", err));
+      pausedRef.current = false;
+      logAudioEvent("audio_play", selectedDashakam, currentVerse?.paragraph || 0, "resume");
+
+      const audio = audioRef.current;
+      const onTimeUpdate = () => {
+        if (audio.duration) setVerseProgress((audio.currentTime / audio.duration) * 100);
+        const vt = getVerseTimestamp(selectedDashakam, currentVerse?.paragraph || 0);
+        if (vt && vt.phraseEndTimes.length > 0) {
+          const phraseIdx = getActivePhraseAtTime(selectedDashakam, currentVerse?.paragraph || 0, audio.currentTime);
+          setHighlightPhrase(phraseIdx);
+        }
+      };
+      audio.addEventListener("timeupdate", onTimeUpdate);
+      audio.onended = () => handleVerseEndedRef.current();
+      return () => { audio.removeEventListener("timeupdate", onTimeUpdate); audio.onended = null; };
+    }
+
+    if (currentVerse?.audio) {
+      const loadStart = performance.now();
+      const audio = new Audio(currentVerse.audio);
+      audioRef.current = audio;
+      audio.playbackRate = speed;
+      pausedRef.current = false;
+      setHighlightPhrase(0);
+
+      audio.addEventListener("canplaythrough", () => {
+        const loadTime = Math.round(performance.now() - loadStart);
+        const eventType = loadTime > 1500 ? "audio_load_slow" : "audio_load";
+        logAudioEvent(eventType, selectedDashakam, currentVerse.paragraph, currentVerse.audio!, { load_time_ms: loadTime });
+      }, { once: true });
+
+      audio.addEventListener("error", () => {
+        const errMsg = audio.error?.message || "Unknown audio error";
+        logAudioEvent("audio_error", selectedDashakam, currentVerse.paragraph, currentVerse.audio!, { error_message: errMsg });
+        captureAudioError(new Error(errMsg), { dashakam: selectedDashakam, verse: currentVerse.paragraph, audio_file: currentVerse.audio });
+      });
+
+      audio.play().catch((err) => {
+        console.error("Audio play error:", err);
+        logAudioEvent("audio_error", selectedDashakam, currentVerse.paragraph, currentVerse.audio!, { error_message: String(err) });
+      });
+      logAudioEvent("audio_play", selectedDashakam, currentVerse.paragraph, currentVerse.audio!);
+
+      const onTimeUpdate = () => {
+        if (audio.duration) setVerseProgress((audio.currentTime / audio.duration) * 100);
+        const vt = getVerseTimestamp(selectedDashakam, currentVerse.paragraph);
+        if (vt && vt.phraseEndTimes.length > 0) {
+          const phraseIdx = getActivePhraseAtTime(selectedDashakam, currentVerse.paragraph, audio.currentTime);
+          setHighlightPhrase(phraseIdx);
+        }
+      };
+      audio.addEventListener("timeupdate", onTimeUpdate);
+      audio.onended = () => handleVerseEndedRef.current();
+      return () => { audio.pause(); audio.removeEventListener("timeupdate", onTimeUpdate); audio.onended = null; };
+    } else {
+      const interval = setInterval(() => {
+        setVerseProgress((prev) => {
+          if (prev >= 100) { handleVerseEndedRef.current(); return 0; }
+          return prev + (speed * 2.5);
+        });
+      }, 100);
+      return () => clearInterval(interval);
+    }
+  }, [isPlaying, highlightedVerse, displayVerses.length, speed, isSlokaPlaying]);
+
+  // Cleanup on unmount — stop audio when navigating away
+  useEffect(() => {
+    return () => {
+      if (audioRef.current) { audioRef.current.pause(); audioRef.current = null; }
+      if (gapTimerRef.current) clearTimeout(gapTimerRef.current);
+    };
+  }, []);
     if (!isPlaying || displayVerses.length === 0 || isSlokaPlaying) return;
 
     const currentVerse = displayVerses[highlightedVerse];
