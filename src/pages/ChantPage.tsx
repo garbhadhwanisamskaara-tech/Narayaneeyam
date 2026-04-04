@@ -113,7 +113,7 @@ export default function ChantPage() {
     english: mv.transliteration_text,
     meaning_english: mv.translation_text,
     meter: mv.meter,
-    audio: mv.chant_audio_file || undefined,
+    audio: getStorageUrl(mv.chant_audio_file) || undefined,
     bell: mv.has_bell,
     prasadam: mv.prasadam_text || undefined,
     sloka_audio_id: mv.sloka_audio_id,

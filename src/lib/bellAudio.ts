@@ -27,7 +27,9 @@ export function playBellAudio(): Promise<void> {
   return new Promise((resolve) => {
     cleanup();
 
-    const audio = new Audio("/audio/Common/BellFinal.m4A");
+    const { getStorageUrl } = await import("@/lib/storageUrl");
+    const bellUrl = getStorageUrl("Common/BellFinal.m4A");
+    const audio = new Audio(bellUrl);
     bellAudioInstance = audio;
     audio.volume = 1.0;
 

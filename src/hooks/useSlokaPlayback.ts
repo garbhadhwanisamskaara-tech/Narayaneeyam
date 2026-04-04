@@ -101,8 +101,9 @@ export function useSlokaPlayback(): UseSlokaPlaybackReturn {
             ? audioData?.learn_audio_file
             : audioData?.chant_audio_file;
 
-        if (audioFile && !cancelledRef.current) {
-          const audio = new Audio(audioFile);
+        const resolvedAudioFile = getStorageUrl(audioFile);
+        if (resolvedAudioFile && !cancelledRef.current) {
+          const audio = new Audio(resolvedAudioFile);
           audioRef.current = audio;
           audio.playbackRate = speed;
 

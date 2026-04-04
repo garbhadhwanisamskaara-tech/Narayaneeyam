@@ -34,7 +34,8 @@ export default function RitualChantOverlay({ chants, useLearnAudio = false, titl
   useEffect(() => {
     if (!current) { onComplete(); return; }
 
-    const audioFile = useLearnAudio ? current.learn_audio_file : current.chant_audio_file;
+    const rawFile = useLearnAudio ? current.learn_audio_file : current.chant_audio_file;
+    const audioFile = getStorageUrl(rawFile);
     if (audioFile) {
       const audio = new Audio(audioFile);
       audioRef.current = audio;

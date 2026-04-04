@@ -102,7 +102,7 @@ export default function PodcastPage() {
   // Get audio URL for a dashakam — prefer podcast table, fallback to static
   const getAudioUrl = useCallback((dashakamNo: number): string | null => {
     const entry = podcastData.find((p) => p.dashakam === dashakamNo);
-    if (entry?.podcast_audio_file) return entry.podcast_audio_file;
+    if (entry?.podcast_audio_file) return getStorageUrl(entry.podcast_audio_file);
     // Fallback: check static data for individual verse audio (not ideal for podcast)
     return null;
   }, [podcastData]);
