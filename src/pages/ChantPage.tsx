@@ -18,6 +18,7 @@ import {
   type TransliterationLanguage,
 } from "@/data/narayaneeyam";
 import { useDashakam } from "@/hooks/useDashakam";
+import { getStorageUrl } from "@/lib/storageUrl";
 import { useRitualChants } from "@/hooks/useRitualChants";
 import { useSlokaPlayback } from "@/hooks/useSlokaPlayback";
 import RitualChantOverlay from "@/components/RitualChantOverlay";
