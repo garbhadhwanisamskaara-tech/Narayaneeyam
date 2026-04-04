@@ -3,6 +3,7 @@ import { motion } from "framer-motion";
 import { Play, Pause, SkipBack, SkipForward, ListMusic, Volume2 } from "lucide-react";
 import { sampleDashakams } from "@/data/narayaneeyam";
 import { supabase } from "@/integrations/supabase/client";
+import { getStorageUrl } from "@/lib/storageUrl";
 import { getProgress, saveProgress } from "@/lib/progress";
 import { Slider } from "@/components/ui/slider";
 import PlaylistBuilder from "@/components/PlaylistBuilder";
@@ -101,7 +102,7 @@ export default function PodcastPage() {
   // Get audio URL for a dashakam — prefer podcast table, fallback to static
   const getAudioUrl = useCallback((dashakamNo: number): string | null => {
     const entry = podcastData.find((p) => p.dashakam === dashakamNo);
-    if (entry?.podcast_audio_file) return entry.podcast_audio_file;
+    if (entry?.podcast_audio_file) return getStorageUrl(entry.podcast_audio_file);
     // Fallback: check static data for individual verse audio (not ideal for podcast)
     return null;
   }, [podcastData]);

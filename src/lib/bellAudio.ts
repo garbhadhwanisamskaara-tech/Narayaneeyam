@@ -2,6 +2,7 @@
  * Bell audio utility
  * Plays the real bell audio for 3 seconds with a 1-second fade-out (every 10ms).
  */
+import { getStorageUrl } from "@/lib/storageUrl";
 
 let bellAudioInstance: HTMLAudioElement | null = null;
 let fadeInterval: ReturnType<typeof setInterval> | null = null;
@@ -27,7 +28,8 @@ export function playBellAudio(): Promise<void> {
   return new Promise((resolve) => {
     cleanup();
 
-    const audio = new Audio("/audio/Common/BellFinal.m4A");
+    const bellUrl = getStorageUrl("Common/BellFinal.m4A");
+    const audio = new Audio(bellUrl);
     bellAudioInstance = audio;
     audio.volume = 1.0;
 

@@ -2,6 +2,7 @@ import { useEffect, useRef, useState, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { SkipForward, Volume2 } from "lucide-react";
 import type { RitualChant } from "@/hooks/useRitualChants";
+import { getStorageUrl } from "@/lib/storageUrl";
 
 interface Props {
   /** Array of chants to play in sequence */
@@ -33,7 +34,8 @@ export default function RitualChantOverlay({ chants, useLearnAudio = false, titl
   useEffect(() => {
     if (!current) { onComplete(); return; }
 
-    const audioFile = useLearnAudio ? current.learn_audio_file : current.chant_audio_file;
+    const rawFile = useLearnAudio ? current.learn_audio_file : current.chant_audio_file;
+    const audioFile = getStorageUrl(rawFile);
     if (audioFile) {
       const audio = new Audio(audioFile);
       audioRef.current = audio;

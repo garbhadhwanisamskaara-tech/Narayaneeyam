@@ -18,6 +18,7 @@ import {
   type TransliterationLanguage,
 } from "@/data/narayaneeyam";
 import { useDashakam } from "@/hooks/useDashakam";
+import { getStorageUrl } from "@/lib/storageUrl";
 import { useRitualChants } from "@/hooks/useRitualChants";
 import { useSlokaPlayback } from "@/hooks/useSlokaPlayback";
 import RitualChantOverlay from "@/components/RitualChantOverlay";
@@ -114,7 +115,7 @@ export default function LearnPage() {
     english: mv.transliteration_text,
     meaning_english: mv.translation_text,
     meter: mv.meter,
-    audio: mv.learn_audio_file || undefined,  // <-- learn_audio_file instead of chant_audio_file
+    audio: getStorageUrl(mv.learn_audio_file) || undefined,
     bell: mv.has_bell,
     prasadam: mv.prasadam_text || undefined,
     sloka_audio_id: mv.sloka_audio_id,
