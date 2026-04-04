@@ -2,6 +2,7 @@ import { useEffect, useRef, useState, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { SkipForward, Volume2 } from "lucide-react";
 import type { RitualChant } from "@/hooks/useRitualChants";
+import { getStorageUrl } from "@/lib/storageUrl";
 
 interface Props {
   /** Array of chants to play in sequence */
