@@ -218,7 +218,7 @@ export default function LearnPage() {
       handlePostVerse(
         currentVerse.sloka_audio_id,
         selectedLanguage,
-        "learn",  // <-- learn mode for sloka
+        "learn",
         speed,
         () => advanceToNextVerse()
       );
@@ -226,6 +226,10 @@ export default function LearnPage() {
       advanceToNextVerse();
     }
   }, [highlightedVerse, displayVerses, selectedDashakam, selectedLanguage, speed, handlePostVerse, advanceToNextVerse]);
+
+  // Stable ref so the audio effect doesn't re-run when callbacks change
+  const handleVerseEndedRef = useRef(handleVerseEnded);
+  useEffect(() => { handleVerseEndedRef.current = handleVerseEnded; }, [handleVerseEnded]);
 
   // Real audio playback — uses learn_audio_file
   useEffect(() => {
@@ -240,12 +244,8 @@ export default function LearnPage() {
       logAudioEvent("audio_play", selectedDashakam, currentVerse?.paragraph || 0, "resume");
 
       const audio = audioRef.current;
-      const updateProgress = () => {
-        if (audio.duration) setVerseProgress((audio.currentTime / audio.duration) * 100);
-      };
       const onTimeUpdate = () => {
-        updateProgress();
-        // Phrase-level highlighting
+        if (audio.duration) setVerseProgress((audio.currentTime / audio.duration) * 100);
         const vt = getVerseTimestamp(selectedDashakam, currentVerse?.paragraph || 0);
         if (vt && vt.phraseEndTimes.length > 0) {
           const phraseIdx = getActivePhraseAtTime(selectedDashakam, currentVerse?.paragraph || 0, audio.currentTime);
@@ -253,7 +253,7 @@ export default function LearnPage() {
         }
       };
       audio.addEventListener("timeupdate", onTimeUpdate);
-      audio.onended = () => handleVerseEnded();
+      audio.onended = () => handleVerseEndedRef.current();
       return () => { audio.removeEventListener("timeupdate", onTimeUpdate); audio.onended = null; };
     }
 
@@ -285,7 +285,6 @@ export default function LearnPage() {
 
       const onTimeUpdate = () => {
         if (audio.duration) setVerseProgress((audio.currentTime / audio.duration) * 100);
-        // Phrase-level highlighting
         const vt = getVerseTimestamp(selectedDashakam, currentVerse.paragraph);
         if (vt && vt.phraseEndTimes.length > 0) {
           const phraseIdx = getActivePhraseAtTime(selectedDashakam, currentVerse.paragraph, audio.currentTime);
@@ -293,22 +292,25 @@ export default function LearnPage() {
         }
       };
       audio.addEventListener("timeupdate", onTimeUpdate);
-      audio.onended = () => handleVerseEnded();
+      audio.onended = () => handleVerseEndedRef.current();
       return () => { audio.pause(); audio.removeEventListener("timeupdate", onTimeUpdate); audio.onended = null; };
     } else {
       const interval = setInterval(() => {
         setVerseProgress((prev) => {
-          if (prev >= 100) { handleVerseEnded(); return 0; }
+          if (prev >= 100) { handleVerseEndedRef.current(); return 0; }
           return prev + (speed * 2.5);
         });
       }, 100);
       return () => clearInterval(interval);
     }
-  }, [isPlaying, highlightedVerse, displayVerses.length, speed, handleVerseEnded, isSlokaPlaying]);
+  }, [isPlaying, highlightedVerse, displayVerses.length, speed, isSlokaPlaying]);
 
-  // Cleanup
+  // Cleanup on unmount — stop audio when navigating away
   useEffect(() => {
-    return () => { if (gapTimerRef.current) clearTimeout(gapTimerRef.current); };
+    return () => {
+      if (audioRef.current) { audioRef.current.pause(); audioRef.current = null; }
+      if (gapTimerRef.current) clearTimeout(gapTimerRef.current);
+    };
   }, []);
 
   const [hasPlayedOpening, setHasPlayedOpening] = useState(false);
