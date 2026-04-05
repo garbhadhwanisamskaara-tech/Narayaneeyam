@@ -228,6 +228,10 @@ export default function LearnPage() {
     if (!currentVerse) { advanceToNextVerse(); return; }
 
     logAudioEvent("audio_complete", selectedDashakam, currentVerse.paragraph, currentVerse.audio || "");
+    // Mark verse finished in member_progress
+    markVerseFinished(selectedDashakam, currentVerse.paragraph).then(() => {
+      checkDashakamCompletion(selectedDashakam, allVerses.length);
+    });
 
     if (currentVerse.sloka_audio_id) {
       handlePostVerse(
@@ -240,7 +244,7 @@ export default function LearnPage() {
     } else {
       advanceToNextVerse();
     }
-  }, [highlightedVerse, displayVerses, selectedDashakam, selectedLanguage, speed, handlePostVerse, advanceToNextVerse]);
+  }, [highlightedVerse, displayVerses, selectedDashakam, selectedLanguage, speed, handlePostVerse, advanceToNextVerse, markVerseFinished, checkDashakamCompletion, allVerses.length]);
 
   // Stable ref so the audio effect doesn't re-run when callbacks change
   const handleVerseEndedRef = useRef(handleVerseEnded);
