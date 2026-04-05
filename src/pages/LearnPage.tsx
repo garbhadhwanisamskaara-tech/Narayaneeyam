@@ -61,6 +61,9 @@ export default function LearnPage() {
   // Sloka playback
   const { activeSlokaScript, activeSlokaTranslation, isSlokaPlaying, handlePostVerse, stopSloka } = useSlokaPlayback();
 
+  // Member progress tracking
+  const { lastPosition, fetchVerseStatuses, markVerseStarted, markVerseFinished, checkDashakamCompletion, getVerseStatus, dismissBanner, isGuest } = useMemberProgress("learn");
+
   // ── Playlist state ──
   const [playlistOpen, setPlaylistOpen] = useState(false);
   const [playlistItems, setPlaylistItems] = useState<PlaylistItem[] | null>(null);
