@@ -157,6 +157,16 @@ export default function LearnPage() {
     });
   }, [selectedDashakam, selectedPara, highlightedVerse]);
 
+  // Fetch verse statuses when dashakam changes
+  useEffect(() => { fetchVerseStatuses(selectedDashakam); }, [selectedDashakam, fetchVerseStatuses]);
+
+  // Mark verse started when playback begins on a verse
+  useEffect(() => {
+    if (isPlaying && displayVerses[highlightedVerse]) {
+      markVerseStarted(selectedDashakam, displayVerses[highlightedVerse].paragraph);
+    }
+  }, [isPlaying, highlightedVerse, selectedDashakam]);
+
   const advanceToNextVerse = useCallback(() => {
     if (highlightedVerse >= displayVerses.length - 1) {
       const effectiveRepeatCount = inPlaylistMode ? (playlistItems![playlistIndex]?.loops ?? 1) : repeatCount;
