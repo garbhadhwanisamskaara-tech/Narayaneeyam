@@ -399,6 +399,22 @@ export default function LearnPage() {
           </button>
         </div>
 
+        {/* Continue Banner */}
+        <AnimatePresence>
+          {lastPosition && !isGuest && (
+            <ContinueBanner
+              position={lastPosition}
+              onContinue={() => {
+                setSelectedDashakam(lastPosition.dashakam_number);
+                setHighlightedVerse(lastPosition.verse_number - 1);
+                setSelectedPara(null);
+                dismissBanner();
+              }}
+              onDismiss={dismissBanner}
+            />
+          )}
+        </AnimatePresence>
+
         {/* Playlist Bar */}
         {inPlaylistMode && (
           <PlaylistBar
