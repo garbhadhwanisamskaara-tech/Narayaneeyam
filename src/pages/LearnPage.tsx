@@ -28,6 +28,8 @@ import { getActiveVerseAtTime, getTimestamps } from "@/lib/audioTimestamps";
 import { getActivePhraseAtTime, getVerseTimestamp } from "@/lib/audioTimestamps";
 import VerseIcons from "@/components/VerseIcons";
 import { Slider } from "@/components/ui/slider";
+import { useMemberProgress } from "@/hooks/useMemberProgress";
+import ContinueBanner from "@/components/ContinueBanner";
 
 
 type RitualPhase = "idle" | "opening" | "dashakam_end" | "session_end";
@@ -58,6 +60,9 @@ export default function LearnPage() {
 
   // Sloka playback
   const { activeSlokaScript, activeSlokaTranslation, isSlokaPlaying, handlePostVerse, stopSloka } = useSlokaPlayback();
+
+  // Member progress tracking
+  const { lastPosition, fetchVerseStatuses, markVerseStarted, markVerseFinished, checkDashakamCompletion, getVerseStatus, dismissBanner, isGuest } = useMemberProgress("learn");
 
   // ── Playlist state ──
   const [playlistOpen, setPlaylistOpen] = useState(false);
@@ -152,6 +157,16 @@ export default function LearnPage() {
     });
   }, [selectedDashakam, selectedPara, highlightedVerse]);
 
+  // Fetch verse statuses when dashakam changes
+  useEffect(() => { fetchVerseStatuses(selectedDashakam); }, [selectedDashakam, fetchVerseStatuses]);
+
+  // Mark verse started when playback begins on a verse
+  useEffect(() => {
+    if (isPlaying && displayVerses[highlightedVerse]) {
+      markVerseStarted(selectedDashakam, displayVerses[highlightedVerse].paragraph);
+    }
+  }, [isPlaying, highlightedVerse, selectedDashakam]);
+
   const advanceToNextVerse = useCallback(() => {
     if (highlightedVerse >= displayVerses.length - 1) {
       const effectiveRepeatCount = inPlaylistMode ? (playlistItems![playlistIndex]?.loops ?? 1) : repeatCount;
@@ -213,6 +228,10 @@ export default function LearnPage() {
     if (!currentVerse) { advanceToNextVerse(); return; }
 
     logAudioEvent("audio_complete", selectedDashakam, currentVerse.paragraph, currentVerse.audio || "");
+    // Mark verse finished in member_progress
+    markVerseFinished(selectedDashakam, currentVerse.paragraph).then(() => {
+      checkDashakamCompletion(selectedDashakam, allVerses.length);
+    });
 
     if (currentVerse.sloka_audio_id) {
       handlePostVerse(
@@ -225,7 +244,7 @@ export default function LearnPage() {
     } else {
       advanceToNextVerse();
     }
-  }, [highlightedVerse, displayVerses, selectedDashakam, selectedLanguage, speed, handlePostVerse, advanceToNextVerse]);
+  }, [highlightedVerse, displayVerses, selectedDashakam, selectedLanguage, speed, handlePostVerse, advanceToNextVerse, markVerseFinished, checkDashakamCompletion, allVerses.length]);
 
   // Stable ref so the audio effect doesn't re-run when callbacks change
   const handleVerseEndedRef = useRef(handleVerseEnded);
@@ -379,6 +398,22 @@ export default function LearnPage() {
             <ListMusic className="h-4 w-4 text-secondary" /> Custom Playlist
           </button>
         </div>
+
+        {/* Continue Banner */}
+        <AnimatePresence>
+          {lastPosition && !isGuest && (
+            <ContinueBanner
+              position={lastPosition}
+              onContinue={() => {
+                setSelectedDashakam(lastPosition.dashakam_number);
+                setHighlightedVerse(lastPosition.verse_number - 1);
+                setSelectedPara(null);
+                dismissBanner();
+              }}
+              onDismiss={dismissBanner}
+            />
+          )}
+        </AnimatePresence>
 
         {/* Playlist Bar */}
         {inPlaylistMode && (
@@ -583,7 +618,13 @@ export default function LearnPage() {
                   <motion.div key={verse.id} initial={{ opacity: 0, x: -10 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: idx * 0.05 }}
                     className={`rounded-xl border p-5 transition-all duration-500 ${isActiveVerse ? "border-secondary bg-secondary/10 shadow-gold" : "border-border bg-card"}`}>
                     <div className="flex items-start justify-between mb-3">
-                      <span className="text-xs text-muted-foreground font-sans">
+                      <span className="text-xs text-muted-foreground font-sans flex items-center gap-1.5">
+                        {(() => {
+                          const status = getVerseStatus(selectedDashakam, verse.paragraph);
+                          if (status === "completed") return <span className="text-green-500" title="Completed">✓</span>;
+                          if (status === "started") return <span className="text-muted-foreground" title="Started">•</span>;
+                          return null;
+                        })()}
                         Verse {verse.paragraph} · {verse.meter}
                       </span>
                       <div className="flex items-center gap-1">
