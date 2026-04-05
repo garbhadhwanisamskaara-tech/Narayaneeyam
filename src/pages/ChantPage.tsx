@@ -27,6 +27,9 @@ import { updateStreakSupabase, markVerseCompleted } from "@/lib/supabaseProgress
 import { getActiveVerseAtTime, getTimestamps } from "@/lib/audioTimestamps";
 import VerseIcons from "@/components/VerseIcons";
 import { Slider } from "@/components/ui/slider";
+import { useMemberProgress } from "@/hooks/useMemberProgress";
+import ContinueBanner from "@/components/ContinueBanner";
+import { AnimatePresence as AP2 } from "framer-motion";
 
 
 type RitualPhase = "idle" | "opening" | "dashakam_end" | "session_end";
