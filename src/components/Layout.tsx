@@ -9,7 +9,7 @@ import SubscriptionBanner from "@/components/SubscriptionBanner";
 
 const navItems = [
   { path: "/", label: "Home", icon: LayoutDashboard },
-  { path: "/about", label: "FAQ", icon: Info },
+  { path: "/faq", label: "FAQ", icon: Info },
   { path: "/user-manual", label: "Blog", icon: BookOpen },
 ];
 
