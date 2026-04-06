@@ -12,7 +12,7 @@ const menuItems = [
   { path: "/script", label: "Script Library", icon: FileText },
   { path: "/lesson-plan", label: "Lesson Plan", icon: CalendarPlus },
   { path: "/user-manual", label: "Blog", icon: BookOpenCheck },
-  { path: "/about", label: "FAQ", icon: Info },
+  { path: "/faq", label: "FAQ", icon: Info },
   { path: "/support", label: "Raise a Support Ticket", icon: LifeBuoy },
 ];
 

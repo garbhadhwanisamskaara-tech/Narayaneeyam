@@ -21,6 +21,7 @@ import ResetPasswordPage from "./pages/ResetPasswordPage";
 import DevotionPathwaysPage from "./pages/DevotionPathwaysPage";
 import PrasadamListPage from "./pages/PrasadamListPage";
 import AboutPage from "./pages/AboutPage";
+import FaqPage from "./pages/FaqPage";
 import UserManualPage from "./pages/UserManualPage";
 import FounderDashboard from "./pages/FounderDashboard";
 import HeartShelfPage from "./pages/HeartShelfPage";
@@ -56,6 +57,7 @@ const App = () => (
                   <Route path="/devotion-pathways" element={<DevotionPathwaysPage />} />
                   <Route path="/prasadam" element={<PrasadamListPage />} />
                   <Route path="/about" element={<AboutPage />} />
+                  <Route path="/faq" element={<FaqPage />} />
                   <Route path="/user-manual" element={<UserManualPage />} />
                   <Route path="/heart-shelf" element={<HeartShelfPage />} />
                   <Route path="/saved-places" element={<SavedPlacesPage />} />
