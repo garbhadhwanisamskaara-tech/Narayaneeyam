@@ -1,13 +1,13 @@
 import { useState } from "react";
 import { Link, useLocation } from "react-router-dom";
-import { Home, Mic, GraduationCap, Headphones, MoreHorizontal } from "lucide-react";
+import { Mic, GraduationCap, Headphones, BookOpen, MoreHorizontal } from "lucide-react";
 import MoreMenu from "@/components/MoreMenu";
 
 const bottomNavItems = [
-  { path: "/", label: "Home", icon: Home },
   { path: "/chant", label: "Chant", icon: Mic },
   { path: "/learn", label: "Learn", icon: GraduationCap },
   { path: "/podcast", label: "Podcast", icon: Headphones },
+  { path: "/dashboard", label: "Dashboard", icon: BookOpen },
 ];
 
 export default function BottomNav() {
@@ -15,7 +15,7 @@ export default function BottomNav() {
   const [moreOpen, setMoreOpen] = useState(false);
 
   // Check if current route is one of the "More" pages
-  const morePaths = ["/dashboard", "/devotion-pathways", "/prasadam", "/about", "/user-manual"];
+  const morePaths = ["/script", "/lesson-plan", "/user-manual", "/about", "/support"];
   const isMoreActive = morePaths.includes(location.pathname);
 
   return (

@@ -1,6 +1,6 @@
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
-import { BookOpen, Mic, FileText, GraduationCap, LayoutDashboard, Menu, X, CalendarPlus, Headphones, LogIn, LogOut, User, Sun, Moon, LifeBuoy } from "lucide-react";
+import { BookOpen, LayoutDashboard, Menu, X, LogIn, LogOut, User, Sun, Moon, LifeBuoy, Info } from "lucide-react";
 import { useState, useEffect } from "react";
 import logoImg from "@/assets/logo.png";
 import { useAuth } from "@/contexts/AuthContext";
@@ -9,12 +9,8 @@ import SubscriptionBanner from "@/components/SubscriptionBanner";
 
 const navItems = [
   { path: "/", label: "Home", icon: LayoutDashboard },
-  { path: "/chant", label: "Chant with Me", icon: Mic },
-  { path: "/learn", label: "Learn with Me", icon: GraduationCap },
-  { path: "/script", label: "Script Library", icon: FileText },
-  { path: "/lesson-plan", label: "Lesson Plan", icon: CalendarPlus },
-  { path: "/podcast", label: "Podcast", icon: Headphones },
-  { path: "/dashboard", label: "Dashboard", icon: BookOpen },
+  { path: "/about", label: "FAQ", icon: Info },
+  { path: "/user-manual", label: "Blog", icon: BookOpen },
 ];
 
 export default function Layout({ children }: { children: React.ReactNode }) {

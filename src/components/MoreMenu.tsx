@@ -1,8 +1,7 @@
-import { useState } from "react";
+import React from "react";
 import { Link } from "react-router-dom";
-import { User, Route, UtensilsCrossed, Info, BookOpenCheck, X, AlertCircle, BarChart3, Bookmark, Heart } from "lucide-react";
+import { FileText, CalendarPlus, BookOpenCheck, Info, X, LifeBuoy } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
-import ReportIssueDialog from "@/components/ReportIssueDialog";
 
 interface Props {
   open: boolean;
@@ -10,18 +9,14 @@ interface Props {
 }
 
 const menuItems = [
-  { path: "/dashboard", label: "Profile", icon: User },
-  { path: "/saved-places", label: "Where you left off", icon: Bookmark },
-  { path: "/heart-shelf", label: "Slokas close to your heart", icon: Heart },
-  { path: "/devotion-pathways", label: "Devotion Pathways", icon: Route },
-  { path: "/prasadam", label: "Prasadam List", icon: UtensilsCrossed },
-  { path: "/admin/dashboard", label: "Founder Dashboard", icon: BarChart3 },
-  { path: "/about", label: "About", icon: Info },
-  { path: "/user-manual", label: "User Manual", icon: BookOpenCheck },
+  { path: "/script", label: "Script Library", icon: FileText },
+  { path: "/lesson-plan", label: "Lesson Plan", icon: CalendarPlus },
+  { path: "/user-manual", label: "Blog", icon: BookOpenCheck },
+  { path: "/about", label: "FAQ", icon: Info },
+  { path: "/support", label: "Raise a Support Ticket", icon: LifeBuoy },
 ];
 
 export default function MoreMenu({ open, onClose }: Props) {
-  const [showReport, setShowReport] = useState(false);
 
   return (
     <>
@@ -53,18 +48,11 @@ export default function MoreMenu({ open, onClose }: Props) {
                   </Link>
                 ))}
               </nav>
-              <div className="px-3 pb-6">
-                <button onClick={() => { onClose(); setTimeout(() => setShowReport(true), 300); }}
-                  className="flex items-center gap-3 rounded-lg px-4 py-3 text-sm font-sans text-foreground hover:bg-muted/60 transition-colors w-full">
-                  <AlertCircle className="h-5 w-5 text-destructive" />
-                  Report Issue
-                </button>
-              </div>
+              <div className="pb-6" />
             </motion.div>
           </>
         )}
       </AnimatePresence>
-      <ReportIssueDialog open={showReport} onClose={() => setShowReport(false)} />
     </>
   );
 }
