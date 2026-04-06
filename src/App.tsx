@@ -21,6 +21,7 @@ import ResetPasswordPage from "./pages/ResetPasswordPage";
 import DevotionPathwaysPage from "./pages/DevotionPathwaysPage";
 import PrasadamListPage from "./pages/PrasadamListPage";
 import AboutPage from "./pages/AboutPage";
+import FaqPage from "./pages/FaqPage";
 import UserManualPage from "./pages/UserManualPage";
 import FounderDashboard from "./pages/FounderDashboard";
 import HeartShelfPage from "./pages/HeartShelfPage";
