@@ -57,6 +57,7 @@ const App = () => (
                   <Route path="/devotion-pathways" element={<DevotionPathwaysPage />} />
                   <Route path="/prasadam" element={<PrasadamListPage />} />
                   <Route path="/about" element={<AboutPage />} />
+                  <Route path="/faq" element={<FaqPage />} />
                   <Route path="/user-manual" element={<UserManualPage />} />
                   <Route path="/heart-shelf" element={<HeartShelfPage />} />
                   <Route path="/saved-places" element={<SavedPlacesPage />} />
