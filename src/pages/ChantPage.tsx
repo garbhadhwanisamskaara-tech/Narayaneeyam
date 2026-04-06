@@ -163,6 +163,13 @@ export default function ChantPage() {
   // Fetch verse statuses when dashakam changes
   useEffect(() => { fetchVerseStatuses(selectedDashakam); }, [selectedDashakam, fetchVerseStatuses]);
 
+  // Auto-scroll to active verse
+  useEffect(() => {
+    if (isPlaying && activeVerseRef.current) {
+      activeVerseRef.current.scrollIntoView({ behavior: "smooth", block: "center" });
+    }
+  }, [highlightedVerse, isPlaying]);
+
   // Mark verse started when playback begins on a verse
   useEffect(() => {
     if (isPlaying && displayVerses[highlightedVerse]) {

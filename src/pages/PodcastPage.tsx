@@ -401,6 +401,15 @@ export default function PodcastPage() {
         {/* Now Playing */}
         <div className="rounded-xl bg-gradient-peacock p-6 mb-6">
           <div className="text-center mb-6">
+            {isPlaying && (
+              <div className="flex items-center justify-center gap-2 mb-3">
+                <span className="relative flex h-2.5 w-2.5">
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-secondary opacity-75"></span>
+                  <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-secondary"></span>
+                </span>
+                <span className="text-xs font-sans font-semibold text-secondary uppercase tracking-wider">Podcast Module Active</span>
+              </div>
+            )}
             <p className="text-xs text-gold-light font-sans uppercase tracking-wide mb-1">Now Playing</p>
             <h2 className="font-display text-2xl font-semibold text-primary-foreground">
               Dashakam {currentDashakam}
@@ -467,10 +476,12 @@ export default function PodcastPage() {
                 }}
                 className="rounded-lg bg-primary-foreground/10 text-primary-foreground px-2 py-1 text-xs font-sans border-none"
               >
+                <option value={0.5}>0.5×</option>
                 <option value={0.75}>0.75×</option>
                 <option value={1}>1×</option>
                 <option value={1.25}>1.25×</option>
                 <option value={1.5}>1.5×</option>
+                <option value={2}>2×</option>
               </select>
             </div>
             {playMode === "single" && !inPlaylistMode && (
