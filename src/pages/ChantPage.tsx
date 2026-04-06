@@ -53,6 +53,8 @@ export default function ChantPage() {
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const pausedRef = useRef(false);
   const gapTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const activeVerseRef = useRef<HTMLDivElement | null>(null);
+  const versesContainerRef = useRef<HTMLDivElement | null>(null);
   const { isBookmarked, addBookmark, removeBookmark, undoRemoveBookmark } = useBookmarks();
   const { isFavourited, addFavourite, removeFavourite, undoRemoveFavourite } = useFavourites();
   const [ritualPhase, setRitualPhase] = useState<RitualPhase>("idle");
@@ -469,7 +471,7 @@ export default function ChantPage() {
             <label className="text-xs text-muted-foreground font-sans">Speed</label>
             <select value={speed} onChange={(e) => { setSpeed(Number(e.target.value)); if (audioRef.current) audioRef.current.playbackRate = Number(e.target.value); }}
               className="rounded-lg border border-border bg-background px-3 py-2 text-sm font-sans text-foreground">
-              <option value={0.5}>0.5×</option><option value={0.75}>0.75×</option><option value={1}>1×</option><option value={1.25}>1.25×</option><option value={1.5}>1.5×</option>
+              <option value={0.5}>0.5×</option><option value={0.75}>0.75×</option><option value={1}>1×</option><option value={1.25}>1.25×</option><option value={1.5}>1.5×</option><option value={2}>2×</option>
             </select>
           </div>
 
@@ -563,14 +565,14 @@ export default function ChantPage() {
 
         {/* Verses */}
         {!dbLoading && (
-          <div className="space-y-4 mb-8">
+          <div className="space-y-4 mb-8" ref={versesContainerRef}>
             {displayVerses.length === 0 ? (
               <div className="rounded-xl bg-card border border-border p-8 text-center">
                 <p className="text-muted-foreground font-sans mt-2">Working with divine energy to make this available soon 🙏</p>
               </div>
             ) : (
               displayVerses.map((verse, idx) => (
-                <motion.div key={verse.id} initial={{ opacity: 0, x: -10 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: idx * 0.05 }}
+                <motion.div key={verse.id} ref={idx === highlightedVerse ? activeVerseRef : undefined} initial={{ opacity: 0, x: -10 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: idx * 0.05 }}
                   className={`rounded-xl border p-5 transition-all duration-500 ${idx === highlightedVerse && isPlaying ? "border-secondary bg-secondary/10 shadow-gold" : "border-border bg-card"}`}>
                   <div className="flex items-start justify-between mb-3">
                     <span className="text-xs text-muted-foreground font-sans flex items-center gap-1.5">
@@ -629,6 +631,16 @@ export default function ChantPage() {
 
         {/* Audio Player Bar */}
         <div className="sticky bottom-0 bg-gradient-peacock rounded-t-xl p-4 shadow-peacock">
+          {/* Active module indicator */}
+          {isPlaying && (
+            <div className="flex items-center justify-center gap-2 mb-2">
+              <span className="relative flex h-2.5 w-2.5">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-secondary opacity-75"></span>
+                <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-secondary"></span>
+              </span>
+              <span className="text-xs font-sans font-semibold text-secondary uppercase tracking-wider">Chant Module Active</span>
+            </div>
+          )}
           <div className="flex items-center justify-center gap-4">
             <button onClick={() => { if (audioRef.current) { audioRef.current.pause(); audioRef.current = null; } pausedRef.current = false; stopSloka(); setVerseProgress(0); setHighlightedVerse(Math.max(0, highlightedVerse - 1)); }} className="text-primary-foreground/70 hover:text-primary-foreground p-2"><SkipBack className="h-5 w-5" /></button>
             <button onClick={() => { if (audioRef.current) { audioRef.current.pause(); audioRef.current = null; } pausedRef.current = false; stopSloka(); setVerseProgress(0); setHighlightedVerse(0); setCurrentLoopIteration(0); }} className="text-primary-foreground/70 hover:text-primary-foreground p-2" title="Restart"><RotateCcw className="h-5 w-5" /></button>
@@ -638,18 +650,28 @@ export default function ChantPage() {
             <button onClick={() => { if (audioRef.current) { audioRef.current.pause(); audioRef.current = null; } pausedRef.current = false; stopSloka(); setVerseProgress(0); setHighlightedVerse(Math.min(displayVerses.length - 1, highlightedVerse + 1)); }} className="text-primary-foreground/70 hover:text-primary-foreground p-2"><SkipForward className="h-5 w-5" /></button>
             <button onClick={handleEndSession} className="text-primary-foreground/70 hover:text-primary-foreground p-2" title="End Session"><Square className="h-5 w-5" /></button>
           </div>
+          {/* Speed control buttons */}
+          <div className="flex items-center justify-center gap-1.5 mt-3">
+            <span className="text-[10px] text-primary-foreground/50 font-sans mr-1">Speed</span>
+            {[0.5, 0.75, 1, 1.25, 1.5, 2].map((s) => (
+              <button
+                key={s}
+                onClick={() => { setSpeed(s); if (audioRef.current) audioRef.current.playbackRate = s; }}
+                className={`rounded-full px-2 py-0.5 text-[11px] font-sans transition-colors ${
+                  speed === s
+                    ? "bg-secondary text-secondary-foreground font-semibold"
+                    : "bg-primary-foreground/10 text-primary-foreground/70 hover:bg-primary-foreground/20"
+                }`}
+              >
+                {s}×
+              </button>
+            ))}
+          </div>
           <div className="text-center text-xs text-primary-foreground/60 mt-2 font-sans">
             Verse {highlightedVerse + 1} of {displayVerses.length}
             {loopCount > 1 && ` · Loop ${currentLoopIteration + 1}/${loopCount}`}
             {isSlokaPlaying && " · 📿 Sloka playing"}
           </div>
-          {displayVerses.some(v => v.audio) ? (
-            <p className="text-center text-xs text-primary-foreground/60 mt-1 font-sans flex items-center justify-center gap-1">
-              <Volume2 className="h-3 w-3" /> Real audio playback active
-            </p>
-          ) : (
-            <p className="text-center text-xs text-primary-foreground/60 mt-1 font-sans">Audio playback is simulated — Admin: upload audio files to enable real playback</p>
-          )}
         </div>
 
         {/* Ritual Chant Overlays */}
