@@ -166,16 +166,67 @@ export default function ChantPage() {
   // Fetch verse statuses when dashakam changes
   useEffect(() => { fetchVerseStatuses(selectedDashakam); }, [selectedDashakam, fetchVerseStatuses]);
 
-  // Auto-scroll to active verse
+  // Scroll-to-center helper
+  const scrollToVerse = useCallback((idx: number) => {
+    const el = verseRefsMap.current.get(idx);
+    if (!el) return;
+    programmaticScrollRef.current = true;
+    const container = el.closest('.overflow-y-auto') || el.closest('.overflow-auto') || window;
+    const isWindow = container === window;
+    const elTop = isWindow ? el.getBoundingClientRect().top + window.scrollY : (el as HTMLElement).offsetTop;
+    const viewH = isWindow ? window.innerHeight : (container as HTMLElement).clientHeight;
+    (isWindow ? window : container).scrollTo({ top: elTop - viewH / 2 + el.offsetHeight / 2, behavior: 'smooth' });
+    // Release programmatic scroll lock after animation
+    if (scrollTimeoutRef.current) clearTimeout(scrollTimeoutRef.current);
+    scrollTimeoutRef.current = setTimeout(() => { programmaticScrollRef.current = false; }, 600);
+  }, []);
+
+  // Auto-scroll whenever active verse changes
   useEffect(() => {
-    if (activeVerseRef.current) {
-      // Use a short delay to ensure the DOM has updated the ref
-      const timer = setTimeout(() => {
-        activeVerseRef.current?.scrollIntoView({ behavior: "smooth", block: "center" });
-      }, 100);
-      return () => clearTimeout(timer);
-    }
-  }, [highlightedVerse, isPlaying]);
+    const timer = setTimeout(() => scrollToVerse(highlightedVerse), 100);
+    return () => clearTimeout(timer);
+  }, [highlightedVerse, scrollToVerse]);
+
+  // Manual scroll detection — find verse closest to viewport center
+  useEffect(() => {
+    if (!isPlaying) return;
+
+    const handleScroll = () => {
+      if (programmaticScrollRef.current) return;
+      if (manualScrollTimerRef.current) clearTimeout(manualScrollTimerRef.current);
+
+      manualScrollTimerRef.current = setTimeout(() => {
+        const viewCenter = window.innerHeight / 2;
+        let closestIdx = highlightedVerse;
+        let closestDist = Infinity;
+
+        verseRefsMap.current.forEach((el, idx) => {
+          const rect = el.getBoundingClientRect();
+          const elCenter = rect.top + rect.height / 2;
+          const dist = Math.abs(elCenter - viewCenter);
+          if (dist < closestDist) {
+            closestDist = dist;
+            closestIdx = idx;
+          }
+        });
+
+        if (closestIdx !== highlightedVerse) {
+          // Stop current audio, switch to the scroll-detected verse
+          if (audioRef.current) { audioRef.current.pause(); audioRef.current = null; }
+          pausedRef.current = false;
+          stopSloka();
+          setVerseProgress(0);
+          setHighlightedVerse(closestIdx);
+        }
+      }, 150);
+    };
+
+    window.addEventListener("scroll", handleScroll, { passive: true });
+    return () => {
+      window.removeEventListener("scroll", handleScroll);
+      if (manualScrollTimerRef.current) clearTimeout(manualScrollTimerRef.current);
+    };
+  }, [isPlaying, highlightedVerse, stopSloka]);
 
   // Mark verse started when playback begins on a verse
   useEffect(() => {
