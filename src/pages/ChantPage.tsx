@@ -53,8 +53,11 @@ export default function ChantPage() {
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const pausedRef = useRef(false);
   const gapTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const activeVerseRef = useRef<HTMLDivElement | null>(null);
+  const verseRefsMap = useRef<Map<number, HTMLDivElement>>(new Map());
   const versesContainerRef = useRef<HTMLDivElement | null>(null);
+  const programmaticScrollRef = useRef(false);
+  const scrollTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const manualScrollTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const { isBookmarked, addBookmark, removeBookmark, undoRemoveBookmark } = useBookmarks();
   const { isFavourited, addFavourite, removeFavourite, undoRemoveFavourite } = useFavourites();
   const [ritualPhase, setRitualPhase] = useState<RitualPhase>("idle");
@@ -163,16 +166,67 @@ export default function ChantPage() {
   // Fetch verse statuses when dashakam changes
   useEffect(() => { fetchVerseStatuses(selectedDashakam); }, [selectedDashakam, fetchVerseStatuses]);
 
-  // Auto-scroll to active verse
+  // Scroll-to-center helper
+  const scrollToVerse = useCallback((idx: number) => {
+    const el = verseRefsMap.current.get(idx);
+    if (!el) return;
+    programmaticScrollRef.current = true;
+    const container = el.closest('.overflow-y-auto') || el.closest('.overflow-auto') || window;
+    const isWindow = container === window;
+    const elTop = isWindow ? el.getBoundingClientRect().top + window.scrollY : (el as HTMLElement).offsetTop;
+    const viewH = isWindow ? window.innerHeight : (container as HTMLElement).clientHeight;
+    (isWindow ? window : container).scrollTo({ top: elTop - viewH / 2 + el.offsetHeight / 2, behavior: 'smooth' });
+    // Release programmatic scroll lock after animation
+    if (scrollTimeoutRef.current) clearTimeout(scrollTimeoutRef.current);
+    scrollTimeoutRef.current = setTimeout(() => { programmaticScrollRef.current = false; }, 600);
+  }, []);
+
+  // Auto-scroll whenever active verse changes
   useEffect(() => {
-    if (activeVerseRef.current) {
-      // Use a short delay to ensure the DOM has updated the ref
-      const timer = setTimeout(() => {
-        activeVerseRef.current?.scrollIntoView({ behavior: "smooth", block: "center" });
-      }, 100);
-      return () => clearTimeout(timer);
-    }
-  }, [highlightedVerse, isPlaying]);
+    const timer = setTimeout(() => scrollToVerse(highlightedVerse), 100);
+    return () => clearTimeout(timer);
+  }, [highlightedVerse, scrollToVerse]);
+
+  // Manual scroll detection — find verse closest to viewport center
+  useEffect(() => {
+    if (!isPlaying) return;
+
+    const handleScroll = () => {
+      if (programmaticScrollRef.current) return;
+      if (manualScrollTimerRef.current) clearTimeout(manualScrollTimerRef.current);
+
+      manualScrollTimerRef.current = setTimeout(() => {
+        const viewCenter = window.innerHeight / 2;
+        let closestIdx = highlightedVerse;
+        let closestDist = Infinity;
+
+        verseRefsMap.current.forEach((el, idx) => {
+          const rect = el.getBoundingClientRect();
+          const elCenter = rect.top + rect.height / 2;
+          const dist = Math.abs(elCenter - viewCenter);
+          if (dist < closestDist) {
+            closestDist = dist;
+            closestIdx = idx;
+          }
+        });
+
+        if (closestIdx !== highlightedVerse) {
+          // Stop current audio, switch to the scroll-detected verse
+          if (audioRef.current) { audioRef.current.pause(); audioRef.current = null; }
+          pausedRef.current = false;
+          stopSloka();
+          setVerseProgress(0);
+          setHighlightedVerse(closestIdx);
+        }
+      }, 150);
+    };
+
+    window.addEventListener("scroll", handleScroll, { passive: true });
+    return () => {
+      window.removeEventListener("scroll", handleScroll);
+      if (manualScrollTimerRef.current) clearTimeout(manualScrollTimerRef.current);
+    };
+  }, [isPlaying, highlightedVerse, stopSloka]);
 
   // Mark verse started when playback begins on a verse
   useEffect(() => {
@@ -583,7 +637,7 @@ export default function ChantPage() {
               </div>
             ) : (
               displayVerses.map((verse, idx) => (
-                <motion.div key={verse.id} ref={idx === highlightedVerse ? activeVerseRef : undefined} initial={{ opacity: 0, x: -10 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: idx * 0.05 }}
+                <motion.div key={verse.id} ref={(el) => { if (el) verseRefsMap.current.set(idx, el); else verseRefsMap.current.delete(idx); }} initial={{ opacity: 0, x: -10 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: idx * 0.05 }}
                   className={`rounded-xl border p-5 transition-all duration-500 ${idx === highlightedVerse && isPlaying ? "border-secondary bg-secondary/10 shadow-gold" : "border-border bg-card"}`}>
                   <div className="flex items-start justify-between mb-3">
                     <span className="text-xs text-muted-foreground font-sans flex items-center gap-1.5">
