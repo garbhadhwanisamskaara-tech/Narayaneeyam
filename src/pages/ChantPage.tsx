@@ -165,8 +165,12 @@ export default function ChantPage() {
 
   // Auto-scroll to active verse
   useEffect(() => {
-    if (isPlaying && activeVerseRef.current) {
-      activeVerseRef.current.scrollIntoView({ behavior: "smooth", block: "center" });
+    if (activeVerseRef.current) {
+      // Use a short delay to ensure the DOM has updated the ref
+      const timer = setTimeout(() => {
+        activeVerseRef.current?.scrollIntoView({ behavior: "smooth", block: "center" });
+      }, 100);
+      return () => clearTimeout(timer);
     }
   }, [highlightedVerse, isPlaying]);
 
@@ -572,7 +576,7 @@ export default function ChantPage() {
 
         {/* Verses */}
         {!dbLoading && (
-          <div className="space-y-4 mb-8" ref={versesContainerRef}>
+          <div className="space-y-4 pb-48" ref={versesContainerRef}>
             {displayVerses.length === 0 ? (
               <div className="rounded-xl bg-card border border-border p-8 text-center">
                 <p className="text-muted-foreground font-sans mt-2">Working with divine energy to make this available soon 🙏</p>
