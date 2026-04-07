@@ -53,8 +53,11 @@ export default function ChantPage() {
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const pausedRef = useRef(false);
   const gapTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const activeVerseRef = useRef<HTMLDivElement | null>(null);
+  const verseRefsMap = useRef<Map<number, HTMLDivElement>>(new Map());
   const versesContainerRef = useRef<HTMLDivElement | null>(null);
+  const programmaticScrollRef = useRef(false);
+  const scrollTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const manualScrollTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const { isBookmarked, addBookmark, removeBookmark, undoRemoveBookmark } = useBookmarks();
   const { isFavourited, addFavourite, removeFavourite, undoRemoveFavourite } = useFavourites();
   const [ritualPhase, setRitualPhase] = useState<RitualPhase>("idle");
