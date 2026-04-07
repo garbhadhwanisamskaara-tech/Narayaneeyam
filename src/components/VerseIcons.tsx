@@ -45,25 +45,36 @@ export default function VerseIcons({ bell, prasadam, slokaAudioId }: VerseIconsP
       )}
 
       {prasadam && (
-        <div ref={prasadamRef} className="relative">
+        <>
           <button
-            onMouseEnter={() => setShowPrasadam(true)}
-            onMouseLeave={() => setShowPrasadam(false)}
-            onClick={() => setShowPrasadam((prev) => !prev)}
+            onMouseEnter={() => playBellAudio()}
+            onClick={() => playBellAudio()}
             className="flex items-center justify-center text-gold hover:text-gold-light transition-transform hover:scale-110"
-            aria-label="View prasadam"
+            title="Ring bell"
+            aria-label="Ring bell"
           >
-            <Flame className="h-5 w-5" fill="currentColor" strokeWidth={1.5} />
+            <Bell className="h-5 w-5" fill="currentColor" strokeWidth={1.5} />
           </button>
+          <div ref={prasadamRef} className="relative">
+            <button
+              onMouseEnter={() => setShowPrasadam(true)}
+              onMouseLeave={() => setShowPrasadam(false)}
+              onClick={() => setShowPrasadam((prev) => !prev)}
+              className="flex items-center justify-center text-gold hover:text-gold-light transition-transform hover:scale-110"
+              aria-label="View prasadam"
+            >
+              <Flame className="h-5 w-5" fill="currentColor" strokeWidth={1.5} />
+            </button>
 
-          {showPrasadam && (
-            <div className="absolute bottom-full right-0 mb-2 z-50 min-w-[180px] max-w-[260px] rounded-lg bg-gold px-3 py-2 shadow-lg">
-              <p className="text-xs font-semibold text-primary mb-0.5">🪔 Prasadam</p>
-              <p className="text-xs text-primary leading-relaxed">{prasadam}</p>
-              <div className="absolute bottom-0 right-3 translate-y-1/2 rotate-45 h-2 w-2 bg-gold" />
-            </div>
-          )}
-        </div>
+            {showPrasadam && (
+              <div className="absolute bottom-full right-0 mb-2 z-50 min-w-[180px] max-w-[260px] rounded-lg bg-gold px-3 py-2 shadow-lg">
+                <p className="text-xs font-semibold text-primary mb-0.5">🪔 Prasadam</p>
+                <p className="text-xs text-primary leading-relaxed">{prasadam}</p>
+                <div className="absolute bottom-0 right-3 translate-y-1/2 rotate-45 h-2 w-2 bg-gold" />
+              </div>
+            )}
+          </div>
+        </>
       )}
 
       {slokaAudioId && (
