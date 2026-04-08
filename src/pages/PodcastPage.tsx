@@ -32,6 +32,7 @@ export default function PodcastPage() {
   const [completed, setCompleted] = useState(false);
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const pausedRef = useRef(false);
+  const advanceRef = useRef<() => void>(() => {});
 
   // ── Playlist state ──
   const [playlistBuilderOpen, setPlaylistBuilderOpen] = useState(false);
