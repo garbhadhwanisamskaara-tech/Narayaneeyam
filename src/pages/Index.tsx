@@ -1,22 +1,28 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
-import { Mic, GraduationCap, FileText, CalendarPlus, Flame, BookOpen, Headphones, ChevronDown, ChevronUp } from "lucide-react";
+import { Mic, GraduationCap, FileText, CalendarPlus, Flame, BookOpen, Headphones, ChevronDown, ChevronUp, MoreHorizontal, LifeBuoy } from "lucide-react";
 import { getProgress } from "@/lib/progress";
 import heroBg from "@/assets/hero-bg.jpg";
 import FestivalBanner from "@/components/FestivalBanner";
 
-const features = [
+const mainFeatures = [
   { path: "/chant", icon: Mic, title: "Chant with Me", desc: "Chant along with synchronized text highlighting" },
   { path: "/learn", icon: GraduationCap, title: "Learn with Me", desc: "Guided learning with meaning and practice loops" },
-  { path: "/script", icon: FileText, title: "Script Library", desc: "View slokas in multiple scripts with transliteration" },
-  { path: "/lesson-plan", icon: CalendarPlus, title: "Create Lesson Plan", desc: "Build your personal learning schedule" },
   { path: "/podcast", icon: Headphones, title: "Podcast", desc: "Listen to dashakams in the background" },
+];
+
+const moreFeatures = [
+  { path: "/lesson-plan", icon: CalendarPlus, title: "Create Lesson Plan", desc: "Build your personal learning schedule" },
+  { path: "/script", icon: FileText, title: "Script Library", desc: "View slokas in multiple scripts with transliteration" },
+  { path: "/user-manual", icon: BookOpen, title: "User Manual", desc: "Complete guide to using the app" },
+  { path: "/support", icon: LifeBuoy, title: "Raise a Support Ticket", desc: "Get help or report an issue" },
 ];
 
 export default function Index() {
   const progress = getProgress();
   const [showAbout, setShowAbout] = useState(false);
+  const [showMore, setShowMore] = useState(false);
 
   return (
     <div>
@@ -74,8 +80,8 @@ export default function Index() {
 
       {/* Feature Cards */}
       <section className="container mx-auto px-4 -mt-4 relative z-10 pb-8">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
-          {features.map((f, i) => (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+          {mainFeatures.map((f, i) => (
             <motion.div key={f.path} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 + i * 0.1 }}>
               <Link
                 to={f.path}
@@ -91,7 +97,52 @@ export default function Index() {
               </Link>
             </motion.div>
           ))}
+
+          {/* More Card */}
+          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.5 }}>
+            <button
+              onClick={() => setShowMore(!showMore)}
+              className="w-full text-left group block rounded-xl border border-border bg-card p-5 shadow-md transition-all hover:shadow-gold hover:-translate-y-1"
+            >
+              <div className="mb-3 flex h-10 w-10 items-center justify-center rounded-lg bg-gradient-peacock">
+                <MoreHorizontal className="h-5 w-5 text-primary-foreground" />
+              </div>
+              <h3 className="font-display text-base font-semibold text-foreground mb-1 group-hover:text-primary transition-colors">
+                More
+              </h3>
+              <p className="text-xs text-muted-foreground font-sans">Explore more features</p>
+            </button>
+          </motion.div>
         </div>
+
+        {/* More submenu */}
+        <AnimatePresence>
+          {showMore && (
+            <motion.div
+              initial={{ height: 0, opacity: 0 }} animate={{ height: "auto", opacity: 1 }} exit={{ height: 0, opacity: 0 }}
+              className="overflow-hidden mt-4"
+            >
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                {moreFeatures.map((f, i) => (
+                  <motion.div key={f.path} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.05 }}>
+                    <Link
+                      to={f.path}
+                      className="group block rounded-xl border border-border bg-card p-5 shadow-md transition-all hover:shadow-gold hover:-translate-y-1"
+                    >
+                      <div className="mb-3 flex h-10 w-10 items-center justify-center rounded-lg bg-gradient-peacock">
+                        <f.icon className="h-5 w-5 text-primary-foreground" />
+                      </div>
+                      <h3 className="font-display text-base font-semibold text-foreground mb-1 group-hover:text-primary transition-colors">
+                        {f.title}
+                      </h3>
+                      <p className="text-xs text-muted-foreground font-sans">{f.desc}</p>
+                    </Link>
+                  </motion.div>
+                ))}
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
 
         {/* Quick Stats */}
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.7 }} className="mt-8 grid grid-cols-2 md:grid-cols-4 gap-4">
