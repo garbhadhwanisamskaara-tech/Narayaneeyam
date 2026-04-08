@@ -22,6 +22,7 @@ const moreFeatures = [
 export default function Index() {
   const progress = getProgress();
   const [showAbout, setShowAbout] = useState(false);
+  const [showMore, setShowMore] = useState(false);
 
   return (
     <div>
