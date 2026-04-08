@@ -32,6 +32,7 @@ export default function PodcastPage() {
   const [completed, setCompleted] = useState(false);
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const pausedRef = useRef(false);
+  const advanceRef = useRef<() => void>(() => {});
 
   // ── Playlist state ──
   const [playlistBuilderOpen, setPlaylistBuilderOpen] = useState(false);
@@ -159,6 +160,9 @@ export default function PodcastPage() {
     }
   }, [inPlaylistMode, playlistItems, playlistIndex, playlistLoop, playlistId, playMode, currentDashakam, loopCount, currentLoop, savePlaylistProg]);
 
+  // Keep ref in sync
+  useEffect(() => { advanceRef.current = advanceToNext; }, [advanceToNext]);
+
   // Audio playback
   useEffect(() => {
     if (!isPlaying) return;
@@ -176,13 +180,12 @@ export default function PodcastPage() {
         }
       };
       audio.addEventListener("timeupdate", updateProgress);
-      audio.onended = () => advanceToNext();
+      audio.onended = () => advanceRef.current();
       return () => { audio.removeEventListener("timeupdate", updateProgress); audio.onended = null; };
     }
 
     const url = getAudioUrl(currentDashakam);
     if (!url) {
-      // No audio available — simulate or skip
       setIsPlaying(false);
       return;
     }
@@ -201,9 +204,9 @@ export default function PodcastPage() {
       }
     };
     audio.addEventListener("timeupdate", updateProgress);
-    audio.onended = () => advanceToNext();
+    audio.onended = () => advanceRef.current();
     return () => { audio.pause(); audio.removeEventListener("timeupdate", updateProgress); audio.onended = null; };
-  }, [isPlaying, currentDashakam, speed, advanceToNext, currentLoop, playlistLoop, getAudioUrl]);
+  }, [isPlaying, currentDashakam, speed, currentLoop, playlistLoop, getAudioUrl]);
 
   const handlePlayPause = () => {
     if (isPlaying) {
