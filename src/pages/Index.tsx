@@ -1,17 +1,22 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
-import { Mic, GraduationCap, FileText, CalendarPlus, Flame, BookOpen, Headphones, ChevronDown, ChevronUp } from "lucide-react";
+import { Mic, GraduationCap, FileText, CalendarPlus, Flame, BookOpen, Headphones, ChevronDown, ChevronUp, MoreHorizontal, LifeBuoy } from "lucide-react";
 import { getProgress } from "@/lib/progress";
 import heroBg from "@/assets/hero-bg.jpg";
 import FestivalBanner from "@/components/FestivalBanner";
 
-const features = [
+const mainFeatures = [
   { path: "/chant", icon: Mic, title: "Chant with Me", desc: "Chant along with synchronized text highlighting" },
   { path: "/learn", icon: GraduationCap, title: "Learn with Me", desc: "Guided learning with meaning and practice loops" },
-  { path: "/script", icon: FileText, title: "Script Library", desc: "View slokas in multiple scripts with transliteration" },
-  { path: "/lesson-plan", icon: CalendarPlus, title: "Create Lesson Plan", desc: "Build your personal learning schedule" },
   { path: "/podcast", icon: Headphones, title: "Podcast", desc: "Listen to dashakams in the background" },
+];
+
+const moreFeatures = [
+  { path: "/lesson-plan", icon: CalendarPlus, title: "Create Lesson Plan", desc: "Build your personal learning schedule" },
+  { path: "/script", icon: FileText, title: "Script Library", desc: "View slokas in multiple scripts with transliteration" },
+  { path: "/user-manual", icon: BookOpen, title: "User Manual", desc: "Complete guide to using the app" },
+  { path: "/support", icon: LifeBuoy, title: "Raise a Support Ticket", desc: "Get help or report an issue" },
 ];
 
 export default function Index() {
