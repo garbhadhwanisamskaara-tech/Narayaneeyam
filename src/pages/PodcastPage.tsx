@@ -474,7 +474,7 @@ export default function PodcastPage() {
                   setSpeed(s);
                   if (audioRef.current) audioRef.current.playbackRate = s;
                 }}
-                className="rounded-lg bg-primary-foreground/10 text-primary-foreground px-2 py-1 text-xs font-sans border-none"
+                className="rounded-lg bg-primary-foreground/20 text-primary-foreground px-3 py-1.5 text-xs font-sans border border-primary-foreground/20 appearance-none cursor-pointer [&>option]:bg-card [&>option]:text-foreground"
               >
                 <option value={0.5}>0.5×</option>
                 <option value={0.75}>0.75×</option>
@@ -490,7 +490,7 @@ export default function PodcastPage() {
                 <select
                   value={loopCount}
                   onChange={(e) => setLoopCount(Number(e.target.value))}
-                  className="rounded-lg bg-primary-foreground/10 text-primary-foreground px-2 py-1 text-xs font-sans border-none"
+                  className="rounded-lg bg-primary-foreground/20 text-primary-foreground px-3 py-1.5 text-xs font-sans border border-primary-foreground/20 appearance-none cursor-pointer [&>option]:bg-card [&>option]:text-foreground"
                 >
                   {[1, 2, 3, 4, 5].map((n) => (<option key={n} value={n}>{n}×</option>))}
                 </select>
