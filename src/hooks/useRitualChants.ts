@@ -7,6 +7,7 @@ export interface RitualChant {
   display_order: number;
   chant_audio_file: string | null;
   learn_audio_file: string | null;
+  ritual_chant_name: string;
   transliteration_text: string;
   translation_text: string;
 }
@@ -31,24 +32,26 @@ export function useRitualChants(languageCode: string = "en"): UseRitualChantsRet
           .select(`
             chant_key, trigger_point, display_order,
             chant_audio_file, learn_audio_file,
-            ritual_chant_scripts!left (language_code, transliteration_text, translation_text)
+            ritual_chant_scripts!left (language_code, ritual_chant_name, transliteration_text, translation_text)
           `)
           .order("trigger_point")
           .order("display_order");
 
         if (!error && data) {
           const mapped: RitualChant[] = data.map((r: any) => {
-            const script = Array.isArray(r.ritual_chant_scripts)
-              ? r.ritual_chant_scripts.find((s: any) => s.language_code === languageCode)
-              : null;
+            const scripts = Array.isArray(r.ritual_chant_scripts) ? r.ritual_chant_scripts : [];
+            const script = scripts.find((s: any) => s.language_code === languageCode);
+            const fallback = scripts.find((s: any) => s.language_code === "en");
+            const chosen = script || fallback;
             return {
               chant_key: r.chant_key,
               trigger_point: r.trigger_point,
               display_order: r.display_order,
               chant_audio_file: r.chant_audio_file,
               learn_audio_file: r.learn_audio_file,
-              transliteration_text: script?.transliteration_text || "",
-              translation_text: script?.translation_text || "",
+              ritual_chant_name: chosen?.ritual_chant_name || r.chant_key,
+              transliteration_text: chosen?.transliteration_text || "",
+              translation_text: chosen?.translation_text || "",
             };
           });
           setChants(mapped);

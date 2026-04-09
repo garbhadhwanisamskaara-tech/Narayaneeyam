@@ -3,13 +3,14 @@ import { motion, AnimatePresence } from "framer-motion";
 import { SkipForward, Volume2 } from "lucide-react";
 import type { RitualChant } from "@/hooks/useRitualChants";
 import { getStorageUrl } from "@/lib/storageUrl";
+import heroBg from "@/assets/hero-bg.jpg";
 
 interface Props {
   /** Array of chants to play in sequence */
   chants: RitualChant[];
   /** Use learn audio instead of chant audio */
   useLearnAudio?: boolean;
-  /** Title shown at top of overlay */
+  /** Title shown at top of overlay (fallback only) */
   title: string;
   /** Called when all chants finish or user skips */
   onComplete: () => void;
@@ -44,13 +45,15 @@ export default function RitualChantOverlay({ chants, useLearnAudio = false, titl
       audio.onended = () => advance();
       return () => { audio.pause(); audio.onended = null; };
     } else {
-      // No audio — show text for 4s then advance
       const t = setTimeout(advance, 4000);
       return () => clearTimeout(t);
     }
   }, [currentIdx, current, useLearnAudio, speed, advance]);
 
   if (!current) return null;
+
+  const displayName = current.ritual_chant_name || current.chant_key;
+  const hasTransliteration = !!current.transliteration_text;
 
   return (
     <motion.div
@@ -60,19 +63,36 @@ export default function RitualChantOverlay({ chants, useLearnAudio = false, titl
       className="fixed inset-0 z-50 flex items-center justify-center bg-background/95 backdrop-blur-sm p-4"
     >
       <div className="max-w-lg w-full text-center space-y-6">
-        <p className="text-xs uppercase tracking-widest text-muted-foreground font-sans">{title}</p>
+        <p className="text-xs uppercase tracking-widest text-muted-foreground font-sans">{displayName}</p>
         <p className="text-sm text-muted-foreground font-sans">
           {currentIdx + 1} of {chants.length}
         </p>
 
-        <div className="rounded-xl bg-gradient-peacock p-6 shadow-peacock">
-          <p className="font-body text-lg text-primary-foreground leading-relaxed whitespace-pre-line">
-            {current.transliteration_text || current.chant_key}
-          </p>
-          {current.translation_text && (
-            <p className="mt-4 text-sm text-gold-light font-sans leading-relaxed">
-              {current.translation_text}
-            </p>
+        <div className="rounded-xl bg-gradient-peacock p-6 shadow-peacock overflow-hidden relative">
+          {hasTransliteration ? (
+            <>
+              <p className="font-body text-lg text-primary-foreground leading-relaxed whitespace-pre-line">
+                {current.transliteration_text}
+              </p>
+              {current.translation_text && (
+                <p className="mt-4 text-sm text-gold-light font-sans leading-relaxed">
+                  {current.translation_text}
+                </p>
+              )}
+            </>
+          ) : (
+            <div className="flex flex-col items-center gap-4">
+              <img
+                src={heroBg}
+                alt="Guruvayurappan"
+                className="w-40 h-40 object-cover rounded-full border-2 border-gold-light/30"
+              />
+              {current.translation_text && (
+                <p className="text-sm text-gold-light font-sans leading-relaxed">
+                  {current.translation_text}
+                </p>
+              )}
+            </div>
           )}
         </div>
 
