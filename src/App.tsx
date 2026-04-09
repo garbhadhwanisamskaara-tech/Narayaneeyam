@@ -29,6 +29,7 @@ import SavedPlacesPage from "./pages/SavedPlacesPage";
 import AdminUploadPage from "./pages/AdminUploadPage";
 import SupportPage from "./pages/SupportPage";
 import SubscribePage from "./pages/SubscribePage";
+import UserGuidePage from "./pages/UserGuidePage";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -63,6 +64,7 @@ const App = () => (
                   <Route path="/saved-places" element={<SavedPlacesPage />} />
                   <Route path="/support" element={<SupportPage />} />
                   <Route path="/subscribe" element={<SubscribePage />} />
+                  <Route path="/user-guide" element={<UserGuidePage />} />
                   <Route path="/admin/festivals" element={<AdminRoute><AdminFestivalsPage /></AdminRoute>} />
                   <Route path="/admin/content" element={<AdminRoute><AdminContentPage /></AdminRoute>} />
                   <Route path="/admin/dashboard" element={<AdminRoute><FounderDashboard /></AdminRoute>} />
