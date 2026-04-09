@@ -7,6 +7,7 @@ export interface RitualChant {
   display_order: number;
   chant_audio_file: string | null;
   learn_audio_file: string | null;
+  ritual_chant_name: string;
   transliteration_text: string;
   translation_text: string;
 }
