@@ -29,6 +29,7 @@ import SavedPlacesPage from "./pages/SavedPlacesPage";
 import AdminUploadPage from "./pages/AdminUploadPage";
 import SupportPage from "./pages/SupportPage";
 import SubscribePage from "./pages/SubscribePage";
+import UserGuidePage from "./pages/UserGuidePage";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
