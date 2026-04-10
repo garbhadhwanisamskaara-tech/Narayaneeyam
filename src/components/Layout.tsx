@@ -23,7 +23,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
     }
     return false;
   });
-  const { user, displayName, signOut, loading } = useAuth();
+  const { user, displayName, signOut, loading, isEmailVerified, isTrialExpired } = useAuth();
 
   const toggleTheme = () => {
     const next = !isDark;
@@ -32,12 +32,39 @@ export default function Layout({ children }: { children: React.ReactNode }) {
     localStorage.setItem("theme", next ? "dark" : "light");
   };
 
-  // Auth redirect disabled for development
-  // useEffect(() => {
-  //   if (!loading && !user && location.pathname !== "/auth" && location.pathname !== "/reset-password") {
-  //     navigate("/auth", { replace: true });
-  //   }
-  // }, [loading, user, location.pathname, navigate]);
+  // Auth + verification + trial enforcement
+  useEffect(() => {
+    if (loading) return;
+    const path = location.pathname;
+
+    // Allow public routes without auth
+    if (path === "/auth" || path === "/reset-password") return;
+
+    // Redirect unauthenticated users to /auth
+    if (!user) {
+      navigate("/auth", { replace: true });
+      return;
+    }
+
+    // Redirect unverified users to /verify-email
+    if (!isEmailVerified && path !== "/verify-email") {
+      navigate("/verify-email", { replace: true });
+      return;
+    }
+
+    // Redirect expired trial users to /trial-expired
+    if (isEmailVerified && isTrialExpired && path !== "/trial-expired") {
+      navigate("/trial-expired", { replace: true });
+      return;
+    }
+
+    // If verified and trial active, don't stay on verify/expired pages
+    if (isEmailVerified && !isTrialExpired) {
+      if (path === "/verify-email" || path === "/trial-expired") {
+        navigate("/", { replace: true });
+      }
+    }
+  }, [loading, user, isEmailVerified, isTrialExpired, location.pathname, navigate]);
 
   // Apply saved theme on mount
   useEffect(() => {
@@ -49,7 +76,6 @@ export default function Layout({ children }: { children: React.ReactNode }) {
       document.documentElement.classList.remove("dark");
     }
   }, []);
-
 
   return (
     <div className="min-h-screen bg-background">

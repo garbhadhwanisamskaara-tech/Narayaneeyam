@@ -4,6 +4,11 @@ import { logEvent } from "@/services/eventLogger";
 import { setSentryUser, trackSpan } from "@/monitoring/sentry";
 import type { User, Session } from "@supabase/supabase-js";
 
+interface UserProfile {
+  plan: string;
+  trial_expires_at: string | null;
+}
+
 interface AuthContextType {
   user: User | null;
   session: Session | null;
@@ -11,9 +16,15 @@ interface AuthContextType {
   displayName: string;
   isAdmin: boolean;
   isFounder: boolean;
+  isEmailVerified: boolean;
+  isTrialActive: boolean;
+  isTrialExpired: boolean;
+  trialExpiresAt: string | null;
+  profile: UserProfile | null;
   signUp: (email: string, password: string, name: string) => Promise<{ error: Error | null }>;
   signIn: (email: string, password: string) => Promise<{ error: Error | null }>;
   signOut: () => Promise<void>;
+  refreshProfile: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -33,38 +44,63 @@ async function fetchRoles(userId: string): Promise<{ isAdmin: boolean; isFounder
   }
 }
 
+async function fetchProfile(userId: string): Promise<UserProfile | null> {
+  try {
+    const { data } = await supabase
+      .from("profiles")
+      .select("plan, trial_expires_at")
+      .eq("id", userId)
+      .maybeSingle();
+    return data ?? null;
+  } catch {
+    return null;
+  }
+}
+
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
   const [isAdmin, setIsAdmin] = useState(false);
   const [isFounder, setIsFounder] = useState(false);
+  const [profile, setProfile] = useState<UserProfile | null>(null);
+
+  const loadUserData = async (currentUser: User | null) => {
+    if (currentUser) {
+      const [roles, prof] = await Promise.all([
+        fetchRoles(currentUser.id),
+        fetchProfile(currentUser.id),
+      ]);
+      setIsAdmin(roles.isAdmin);
+      setIsFounder(roles.isFounder);
+      setProfile(prof);
+    } else {
+      setIsAdmin(false);
+      setIsFounder(false);
+      setProfile(null);
+    }
+  };
+
+  const refreshProfile = async () => {
+    if (user) {
+      const prof = await fetchProfile(user.id);
+      setProfile(prof);
+    }
+  };
 
   useEffect(() => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
       setSession(session);
       setUser(session?.user ?? null);
       setSentryUser(session?.user?.id ?? null, session?.user?.email ?? undefined);
-
-      if (session?.user) {
-        const roles = await fetchRoles(session.user.id);
-        setIsAdmin(roles.isAdmin);
-        setIsFounder(roles.isFounder);
-      } else {
-        setIsAdmin(false);
-        setIsFounder(false);
-      }
+      await loadUserData(session?.user ?? null);
       setLoading(false);
     });
 
     supabase.auth.getSession().then(async ({ data: { session } }) => {
       setSession(session);
       setUser(session?.user ?? null);
-      if (session?.user) {
-        const roles = await fetchRoles(session.user.id);
-        setIsAdmin(roles.isAdmin);
-        setIsFounder(roles.isFounder);
-      }
+      await loadUserData(session?.user ?? null);
       setLoading(false);
     });
 
@@ -72,6 +108,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const displayName = user?.user_metadata?.display_name || user?.email?.split("@")[0] || "";
+
+  // Email verification uses Supabase's built-in email_confirmed_at
+  const isEmailVerified = !!user?.email_confirmed_at;
+
+  // Trial status from profile
+  const trialExpiresAt = profile?.trial_expires_at ?? null;
+  const isTrialActive = profile?.plan === "trial" && trialExpiresAt
+    ? new Date(trialExpiresAt).getTime() > Date.now()
+    : false;
+  const isTrialExpired = profile?.plan === "trial" && trialExpiresAt
+    ? new Date(trialExpiresAt).getTime() <= Date.now()
+    : false;
 
   const signUp = async (email: string, password: string, name: string) => {
     return trackSpan("auth.signUp", "auth", async () => {
@@ -101,12 +149,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       logEvent("user_logout");
       setIsAdmin(false);
       setIsFounder(false);
+      setProfile(null);
       await supabase.auth.signOut();
     });
   };
 
   return (
-    <AuthContext.Provider value={{ user, session, loading, displayName, isAdmin, isFounder, signUp, signIn, signOut }}>
+    <AuthContext.Provider value={{
+      user, session, loading, displayName, isAdmin, isFounder,
+      isEmailVerified, isTrialActive, isTrialExpired, trialExpiresAt, profile,
+      signUp, signIn, signOut, refreshProfile,
+    }}>
       {children}
     </AuthContext.Provider>
   );
