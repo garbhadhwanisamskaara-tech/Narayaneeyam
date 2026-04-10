@@ -11,7 +11,7 @@ interface Props {
 const menuItems = [
   { path: "/lesson-plan", label: "Create a Lesson Plan", icon: CalendarPlus },
   { path: "/script", label: "Script Library", icon: FileText },
-  { path: "/user-manual", label: "User Manual", icon: BookOpenCheck },
+  { path: "/user-guide", label: "User Guide", icon: BookOpenCheck },
   { path: "/support", label: "Raise a Support Ticket", icon: LifeBuoy },
 ];
 

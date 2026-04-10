@@ -15,7 +15,7 @@ const mainFeatures = [
 const moreFeatures = [
   { path: "/lesson-plan", icon: CalendarPlus, title: "Create Lesson Plan", desc: "Build your personal learning schedule" },
   { path: "/script", icon: FileText, title: "Script Library", desc: "View slokas in multiple scripts with transliteration" },
-  { path: "/user-manual", icon: BookOpen, title: "User Manual", desc: "Complete guide to using the app" },
+  { path: "/user-guide", icon: BookOpen, title: "User Guide", desc: "Simple guide for devotees to use the app" },
   { path: "/support", icon: LifeBuoy, title: "Raise a Support Ticket", desc: "Get help or report an issue" },
 ];
 
