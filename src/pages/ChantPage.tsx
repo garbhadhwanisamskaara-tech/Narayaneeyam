@@ -699,9 +699,40 @@ export default function ChantPage() {
                       />
                     </div>
                   </div>
-                  <p className={`font-body text-lg leading-relaxed whitespace-pre-line transition-colors ${idx === highlightedVerse && isPlaying ? "text-primary font-semibold" : "text-foreground"}`}>
-                    {getVerseText(verse)}
-                  </p>
+                  <div className="font-body text-lg leading-relaxed">
+                    {(() => {
+                      const text = getVerseText(verse);
+                      const lines = text.split("\n").filter(Boolean);
+                      const isActiveVerse = idx === highlightedVerse && isPlaying;
+                      if (lines.length <= 1 || !isActiveVerse) {
+                        return (
+                          <p className={`whitespace-pre-line transition-colors duration-300 ${isActiveVerse ? "text-secondary font-semibold" : "text-foreground"}`}>
+                            {text}
+                          </p>
+                        );
+                      }
+                      return lines.map((line, li) => {
+                        const isActive = li === activeLine;
+                        return (
+                          <span
+                            key={li}
+                            ref={(el) => {
+                              const key = `${idx}-${li}`;
+                              if (el) lineRefsMap.current.set(key, el);
+                              else lineRefsMap.current.delete(key);
+                            }}
+                            className={`block py-0.5 transition-all duration-500 rounded-sm ${
+                              isActive
+                                ? "text-secondary font-semibold karaoke-glow"
+                                : "text-foreground/60"
+                            }`}
+                          >
+                            {line}
+                          </span>
+                        );
+                      });
+                    })()}
+                  </div>
                   {/* Verse seek bar */}
                   {idx === highlightedVerse && verse.audio && (
                     <div className="mt-3">
