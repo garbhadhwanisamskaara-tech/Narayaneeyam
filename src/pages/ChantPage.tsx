@@ -22,6 +22,7 @@ import { getStorageUrl } from "@/lib/storageUrl";
 import { useRitualChants } from "@/hooks/useRitualChants";
 import { useSlokaPlayback } from "@/hooks/useSlokaPlayback";
 import RitualChantOverlay from "@/components/RitualChantOverlay";
+import VerseSkeleton from "@/components/VerseSkeleton";
 import { getProgress, saveProgress } from "@/lib/progress";
 import { updateStreakSupabase, markVerseCompleted } from "@/lib/supabaseProgress";
 import { getActiveVerseAtTime, getTimestamps } from "@/lib/audioTimestamps";
@@ -135,9 +136,14 @@ export default function ChantPage() {
     meaning_kannada: "", meaning_hindi: "", meaning_marathi: "",
   }));
 
+  // Progressive loading: show first 3 verses instantly, rest after paint
+  const [showAll, setShowAll] = useState(false);
+  useEffect(() => { setShowAll(false); const t = setTimeout(() => setShowAll(true), 50); return () => clearTimeout(t); }, [selectedDashakam, selectedPara]);
+
   const displayVerses = selectedPara
     ? allVerses.filter((v) => v.paragraph === selectedPara)
     : allVerses;
+  const visibleVerses = showAll ? displayVerses : displayVerses.slice(0, 3);
 
   // Restore last position or use query param
   useEffect(() => {
@@ -622,10 +628,10 @@ export default function ChantPage() {
           </div>
         )}
 
-        {/* Loading state */}
+        {/* Loading state — skeleton loader */}
         {dbLoading && (
-          <div className="rounded-xl bg-card border border-border p-8 text-center mb-8">
-            <p className="text-muted-foreground font-sans">Loading verses…</p>
+          <div className="mb-8">
+            <VerseSkeleton count={3} />
           </div>
         )}
 
@@ -662,7 +668,7 @@ export default function ChantPage() {
                 <p className="text-muted-foreground font-sans mt-2">Working with divine energy to make this available soon 🙏</p>
               </div>
             ) : (
-              displayVerses.map((verse, idx) => (
+              visibleVerses.map((verse, idx) => (
                 <motion.div key={verse.id} ref={(el) => { if (el) verseRefsMap.current.set(idx, el); else verseRefsMap.current.delete(idx); }} initial={{ opacity: 0, x: -10 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: idx * 0.05 }}
                   className={`rounded-xl border p-5 transition-all duration-500 ${idx === highlightedVerse && isPlaying ? "border-secondary bg-secondary/10 shadow-gold" : "border-border bg-card"}`}>
                   <div className="flex items-start justify-between mb-3">
