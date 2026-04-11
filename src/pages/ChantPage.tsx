@@ -189,6 +189,30 @@ export default function ChantPage() {
     return () => clearTimeout(timer);
   }, [highlightedVerse, scrollToVerse]);
 
+  // Compute active line from verse progress
+  useEffect(() => {
+    if (!isPlaying) { setActiveLine(0); return; }
+    const verse = displayVerses[highlightedVerse];
+    if (!verse) return;
+    const text = getVerseText(verse);
+    const lines = text.split("\n").filter(Boolean);
+    if (lines.length <= 1) { setActiveLine(0); return; }
+    const lineIdx = Math.min(Math.floor((verseProgress / 100) * lines.length), lines.length - 1);
+    setActiveLine(lineIdx);
+  }, [verseProgress, isPlaying, highlightedVerse, displayVerses.length]);
+
+  // Auto-scroll to active line during playback
+  useEffect(() => {
+    if (!isPlaying) return;
+    const key = `${highlightedVerse}-${activeLine}`;
+    const el = lineRefsMap.current.get(key);
+    if (!el) return;
+    programmaticScrollRef.current = true;
+    el.scrollIntoView({ behavior: "smooth", block: "center" });
+    if (scrollTimeoutRef.current) clearTimeout(scrollTimeoutRef.current);
+    scrollTimeoutRef.current = setTimeout(() => { programmaticScrollRef.current = false; }, 600);
+  }, [activeLine, highlightedVerse, isPlaying]);
+
   // Manual scroll detection — find verse closest to viewport center
   useEffect(() => {
     if (!isPlaying) return;
