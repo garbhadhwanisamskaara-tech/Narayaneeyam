@@ -151,4 +151,8 @@
   .border-gold {
     border-color: hsl(42 65% 55% / 0.3);
   }
+
+  .karaoke-glow {
+    text-shadow: 0 0 8px hsl(42 65% 55% / 0.6), 0 0 20px hsl(42 65% 55% / 0.3);
+  }
 }
