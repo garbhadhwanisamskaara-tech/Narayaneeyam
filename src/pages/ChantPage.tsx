@@ -22,6 +22,7 @@ import { getStorageUrl } from "@/lib/storageUrl";
 import { useRitualChants } from "@/hooks/useRitualChants";
 import { useSlokaPlayback } from "@/hooks/useSlokaPlayback";
 import RitualChantOverlay from "@/components/RitualChantOverlay";
+import VerseSkeleton from "@/components/VerseSkeleton";
 import { getProgress, saveProgress } from "@/lib/progress";
 import { updateStreakSupabase, markVerseCompleted } from "@/lib/supabaseProgress";
 import { getActiveVerseAtTime, getTimestamps } from "@/lib/audioTimestamps";
