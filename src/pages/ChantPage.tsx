@@ -48,12 +48,14 @@ export default function ChantPage() {
   const [loopCount, setLoopCount] = useState(1);
   const [currentLoopIteration, setCurrentLoopIteration] = useState(0);
   const [verseProgress, setVerseProgress] = useState(0);
+  const [activeLine, setActiveLine] = useState(0);
   const [removeTarget, setRemoveTarget] = useState<{ type: "bookmark" | "favourite"; verseId: string; dashakam: number; verse: number } | null>(null);
   
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const pausedRef = useRef(false);
   const gapTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const verseRefsMap = useRef<Map<number, HTMLDivElement>>(new Map());
+  const lineRefsMap = useRef<Map<string, HTMLSpanElement>>(new Map());
   const versesContainerRef = useRef<HTMLDivElement | null>(null);
   const programmaticScrollRef = useRef(false);
   const scrollTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
