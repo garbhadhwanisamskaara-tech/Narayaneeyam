@@ -623,10 +623,10 @@ export default function ChantPage() {
           </div>
         )}
 
-        {/* Loading state */}
+        {/* Loading state — skeleton loader */}
         {dbLoading && (
-          <div className="rounded-xl bg-card border border-border p-8 text-center mb-8">
-            <p className="text-muted-foreground font-sans">Loading verses…</p>
+          <div className="mb-8">
+            <VerseSkeleton count={3} />
           </div>
         )}
 
