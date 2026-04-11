@@ -48,12 +48,14 @@ export default function ChantPage() {
   const [loopCount, setLoopCount] = useState(1);
   const [currentLoopIteration, setCurrentLoopIteration] = useState(0);
   const [verseProgress, setVerseProgress] = useState(0);
+  const [activeLine, setActiveLine] = useState(0);
   const [removeTarget, setRemoveTarget] = useState<{ type: "bookmark" | "favourite"; verseId: string; dashakam: number; verse: number } | null>(null);
   
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const pausedRef = useRef(false);
   const gapTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const verseRefsMap = useRef<Map<number, HTMLDivElement>>(new Map());
+  const lineRefsMap = useRef<Map<string, HTMLSpanElement>>(new Map());
   const versesContainerRef = useRef<HTMLDivElement | null>(null);
   const programmaticScrollRef = useRef(false);
   const scrollTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -186,6 +188,30 @@ export default function ChantPage() {
     const timer = setTimeout(() => scrollToVerse(highlightedVerse), 100);
     return () => clearTimeout(timer);
   }, [highlightedVerse, scrollToVerse]);
+
+  // Compute active line from verse progress
+  useEffect(() => {
+    if (!isPlaying) { setActiveLine(0); return; }
+    const verse = displayVerses[highlightedVerse];
+    if (!verse) return;
+    const text = getVerseText(verse);
+    const lines = text.split("\n").filter(Boolean);
+    if (lines.length <= 1) { setActiveLine(0); return; }
+    const lineIdx = Math.min(Math.floor((verseProgress / 100) * lines.length), lines.length - 1);
+    setActiveLine(lineIdx);
+  }, [verseProgress, isPlaying, highlightedVerse, displayVerses.length]);
+
+  // Auto-scroll to active line during playback
+  useEffect(() => {
+    if (!isPlaying) return;
+    const key = `${highlightedVerse}-${activeLine}`;
+    const el = lineRefsMap.current.get(key);
+    if (!el) return;
+    programmaticScrollRef.current = true;
+    el.scrollIntoView({ behavior: "smooth", block: "center" });
+    if (scrollTimeoutRef.current) clearTimeout(scrollTimeoutRef.current);
+    scrollTimeoutRef.current = setTimeout(() => { programmaticScrollRef.current = false; }, 600);
+  }, [activeLine, highlightedVerse, isPlaying]);
 
   // Manual scroll detection — find verse closest to viewport center
   useEffect(() => {
@@ -673,9 +699,40 @@ export default function ChantPage() {
                       />
                     </div>
                   </div>
-                  <p className={`font-body text-lg leading-relaxed whitespace-pre-line transition-colors ${idx === highlightedVerse && isPlaying ? "text-primary font-semibold" : "text-foreground"}`}>
-                    {getVerseText(verse)}
-                  </p>
+                  <div className="font-body text-lg leading-relaxed">
+                    {(() => {
+                      const text = getVerseText(verse);
+                      const lines = text.split("\n").filter(Boolean);
+                      const isActiveVerse = idx === highlightedVerse && isPlaying;
+                      if (lines.length <= 1 || !isActiveVerse) {
+                        return (
+                          <p className={`whitespace-pre-line transition-colors duration-300 ${isActiveVerse ? "text-secondary font-semibold" : "text-foreground"}`}>
+                            {text}
+                          </p>
+                        );
+                      }
+                      return lines.map((line, li) => {
+                        const isActive = li === activeLine;
+                        return (
+                          <span
+                            key={li}
+                            ref={(el) => {
+                              const key = `${idx}-${li}`;
+                              if (el) lineRefsMap.current.set(key, el);
+                              else lineRefsMap.current.delete(key);
+                            }}
+                            className={`block py-0.5 transition-all duration-500 rounded-sm ${
+                              isActive
+                                ? "text-secondary font-semibold karaoke-glow"
+                                : "text-foreground/60"
+                            }`}
+                          >
+                            {line}
+                          </span>
+                        );
+                      });
+                    })()}
+                  </div>
                   {/* Verse seek bar */}
                   {idx === highlightedVerse && verse.audio && (
                     <div className="mt-3">
