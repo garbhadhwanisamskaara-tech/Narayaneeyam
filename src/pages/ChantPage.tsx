@@ -136,9 +136,14 @@ export default function ChantPage() {
     meaning_kannada: "", meaning_hindi: "", meaning_marathi: "",
   }));
 
+  // Progressive loading: show first 3 verses instantly, rest after paint
+  const [showAll, setShowAll] = useState(false);
+  useEffect(() => { setShowAll(false); const t = setTimeout(() => setShowAll(true), 50); return () => clearTimeout(t); }, [selectedDashakam, selectedPara]);
+
   const displayVerses = selectedPara
     ? allVerses.filter((v) => v.paragraph === selectedPara)
     : allVerses;
+  const visibleVerses = showAll ? displayVerses : displayVerses.slice(0, 3);
 
   // Restore last position or use query param
   useEffect(() => {
