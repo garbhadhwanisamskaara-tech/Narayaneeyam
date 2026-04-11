@@ -668,7 +668,7 @@ export default function ChantPage() {
                 <p className="text-muted-foreground font-sans mt-2">Working with divine energy to make this available soon 🙏</p>
               </div>
             ) : (
-              displayVerses.map((verse, idx) => (
+              visibleVerses.map((verse, idx) => (
                 <motion.div key={verse.id} ref={(el) => { if (el) verseRefsMap.current.set(idx, el); else verseRefsMap.current.delete(idx); }} initial={{ opacity: 0, x: -10 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: idx * 0.05 }}
                   className={`rounded-xl border p-5 transition-all duration-500 ${idx === highlightedVerse && isPlaying ? "border-secondary bg-secondary/10 shadow-gold" : "border-border bg-card"}`}>
                   <div className="flex items-start justify-between mb-3">
