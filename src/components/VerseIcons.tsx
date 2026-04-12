@@ -32,7 +32,7 @@ export default function VerseIcons({ bell, prasadam, slokaAudioId }: VerseIconsP
 
   return (
     <div className="flex items-center gap-2">
-      {bell && (
+      {(bell || prasadam) && (
         <button
           onMouseEnter={() => playBellAudio()}
           onClick={() => playBellAudio()}
@@ -46,15 +46,6 @@ export default function VerseIcons({ bell, prasadam, slokaAudioId }: VerseIconsP
 
       {prasadam && (
         <>
-          <button
-            onMouseEnter={() => playBellAudio()}
-            onClick={() => playBellAudio()}
-            className="flex items-center justify-center text-gold hover:text-gold-light transition-transform hover:scale-110"
-            title="Ring bell"
-            aria-label="Ring bell"
-          >
-            <Bell className="h-5 w-5" fill="currentColor" strokeWidth={1.5} />
-          </button>
           <div ref={prasadamRef} className="relative">
             <button
               onMouseEnter={() => setShowPrasadam(true)}

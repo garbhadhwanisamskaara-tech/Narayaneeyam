@@ -68,11 +68,14 @@ function withTimeout<T>(promise: Promise<T>, ms: number): Promise<T> {
 async function fetchVerses(
   selectedDashakam: number,
   selectedLanguage: string,
-  staticDashakam: Dashakam | undefined
+  staticDashakam: Dashakam | undefined,
+  skipCache = false
 ): Promise<MergedVerse[]> {
   const cacheKey = getCacheKey(selectedDashakam, selectedLanguage);
-  const cached = verseCache.get(cacheKey);
-  if (cached) return cached;
+  if (!skipCache) {
+    const cached = verseCache.get(cacheKey);
+    if (cached) return cached;
+  }
 
   // If we have static data, use it as immediate fallback while trying DB
   try {
@@ -174,7 +177,7 @@ if (d1Static) {
   const staticVerses = buildStaticVerses(d1Static);
   verseCache.set(getCacheKey(1, "en"), staticVerses);
   // Then try to upgrade with DB data in background
-  fetchVerses(1, "en", d1Static).catch(() => {});
+  fetchVerses(1, "en", d1Static, true).catch(() => {});
 }
 
 export function useDashakam(
@@ -242,7 +245,14 @@ export function useDashakam(
       setVerses(cached);
       setLoading(false);
       setError(null);
-      return;
+      // If cached data has no real audio (static fallback), try DB upgrade in background
+      const hasRealAudio = cached.some(v => v.chant_audio_file && !v.chant_audio_file.startsWith("/audio/"));
+      if (!hasRealAudio) {
+        fetchVerses(selectedDashakam, selectedLanguage, staticDashakam, true)
+          .then((result) => { if (!cancelled) setVerses(result); })
+          .catch(() => {});
+      }
+      return () => { cancelled = true; };
     }
 
     setLoading(true);
@@ -266,6 +276,8 @@ export function useDashakam(
         if (!cancelled) setLoading(false);
       }
     })();
+
+    return () => { cancelled = true; };
 
     return () => { cancelled = true; };
   }, [selectedDashakam, selectedLanguage]);
