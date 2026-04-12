@@ -203,7 +203,8 @@ export function useDashakam(
             .select("dashakam_no, dashakam_name, num_verses, remarks")
             .eq("language_code", "en")
             .eq("is_published", true)
-            .order("dashakam_no"),
+            .order("dashakam_no")
+            .then((res) => res),
           5000
         );
 
