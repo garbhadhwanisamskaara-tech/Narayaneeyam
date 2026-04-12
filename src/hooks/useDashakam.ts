@@ -198,13 +198,14 @@ export function useDashakam(
     (async () => {
       try {
         const { data, error: err } = await withTimeout(
-          supabase
-            .from("dashakams")
-            .select("dashakam_no, dashakam_name, num_verses, remarks")
-            .eq("language_code", "en")
-            .eq("is_published", true)
-            .order("dashakam_no")
-            .then((res) => res),
+          Promise.resolve(
+            supabase
+              .from("dashakams")
+              .select("dashakam_no, dashakam_name, num_verses, remarks")
+              .eq("language_code", "en")
+              .eq("is_published", true)
+              .order("dashakam_no")
+          ),
           5000
         );
 
