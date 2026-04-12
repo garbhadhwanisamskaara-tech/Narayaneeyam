@@ -245,7 +245,14 @@ export function useDashakam(
       setVerses(cached);
       setLoading(false);
       setError(null);
-      return;
+      // If cached data has no real audio (static fallback), try DB upgrade in background
+      const hasRealAudio = cached.some(v => v.chant_audio_file && !v.chant_audio_file.startsWith("/audio/"));
+      if (!hasRealAudio) {
+        fetchVerses(selectedDashakam, selectedLanguage, staticDashakam, true)
+          .then((result) => { if (!cancelled) setVerses(result); })
+          .catch(() => {});
+      }
+      return () => { cancelled = true; };
     }
 
     setLoading(true);
@@ -269,6 +276,8 @@ export function useDashakam(
         if (!cancelled) setLoading(false);
       }
     })();
+
+    return () => { cancelled = true; };
 
     return () => { cancelled = true; };
   }, [selectedDashakam, selectedLanguage]);
