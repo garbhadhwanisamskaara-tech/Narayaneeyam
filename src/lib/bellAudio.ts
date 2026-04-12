@@ -33,8 +33,8 @@ export function playBellAudio(): Promise<void> {
     bellAudioInstance = audio;
     audio.volume = 1.0;
 
-    audio.play().catch((err) => {
-      console.error("Bell audio play error:", err);
+    audio.play().catch(() => {
+      // Silently handle play interruptions
       resolve();
     });
 
