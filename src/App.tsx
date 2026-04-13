@@ -10,7 +10,7 @@ import Index from "./pages/Index";
 import ChantPage from "./pages/ChantPage";
 import LearnPage from "./pages/LearnPage";
 import ScriptPage from "./pages/ScriptPage";
-import LessonPlanPage from "./pages/LessonPlanPage";
+// LessonPlanPage removed from navigation
 import DashboardPage from "./pages/DashboardPage";
 import PodcastPage from "./pages/PodcastPage";
 import AuthPage from "./pages/AuthPage";
@@ -52,9 +52,9 @@ const App = () => (
                 <Routes>
                   <Route path="/" element={<Index />} />
                   <Route path="/chant" element={<ChantPage />} />
-                  <Route path="/learn" element={<LearnPage />} />
+                  <Route path="/learn" element={<ChantPage />} />
                   <Route path="/script" element={<ScriptPage />} />
-                  <Route path="/lesson-plan" element={<LessonPlanPage />} />
+                  <Route path="/progress" element={<DashboardPage />} />
                   <Route path="/dashboard" element={<DashboardPage />} />
                   <Route path="/podcast" element={<PodcastPage />} />
                   <Route path="/devotion-pathways" element={<DevotionPathwaysPage />} />

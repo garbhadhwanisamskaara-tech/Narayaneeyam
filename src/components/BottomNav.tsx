@@ -1,19 +1,20 @@
 import { useState } from "react";
 import { Link, useLocation } from "react-router-dom";
-import { Mic, GraduationCap, Headphones, MoreHorizontal } from "lucide-react";
+import { Home, Mic, Headphones, BarChart3, MoreHorizontal } from "lucide-react";
 import MoreMenu from "@/components/MoreMenu";
 
 const bottomNavItems = [
+  { path: "/", label: "Home", icon: Home },
   { path: "/chant", label: "Chant", icon: Mic },
-  { path: "/learn", label: "Learn", icon: GraduationCap },
   { path: "/podcast", label: "Podcast", icon: Headphones },
+  { path: "/progress", label: "Progress", icon: BarChart3 },
 ];
 
 export default function BottomNav() {
   const location = useLocation();
   const [moreOpen, setMoreOpen] = useState(false);
 
-  const morePaths = ["/script", "/lesson-plan", "/user-manual", "/support"];
+  const morePaths = ["/script", "/heart-shelf", "/saved-places", "/support"];
   const isMoreActive = morePaths.includes(location.pathname);
 
   return (
