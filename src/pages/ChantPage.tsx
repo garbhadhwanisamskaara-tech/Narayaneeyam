@@ -121,7 +121,7 @@ export default function ChantPage() {
   // Use static dashakam for gist/benefits/title (always available)
   const dashakam = staticDashakam;
 
-  // Convert dbVerses to display format
+  // Convert dbVerses to display format — use learn_audio_file in learn mode
   const allVerses = dbVerses.map((mv) => ({
     id: `${selectedDashakam}-${mv.verse_no}`,
     dashakam: selectedDashakam,
@@ -130,7 +130,7 @@ export default function ChantPage() {
     english: mv.transliteration_text,
     meaning_english: mv.translation_text,
     meter: mv.meter,
-    audio: getStorageUrl(mv.chant_audio_file) || undefined,
+    audio: getStorageUrl(chantMode === "learn" ? mv.learn_audio_file : mv.chant_audio_file) || undefined,
     bell: mv.has_bell,
     prasadam: mv.prasadam_text || undefined,
     sloka_audio_id: mv.sloka_audio_id,
@@ -469,15 +469,38 @@ export default function ChantPage() {
       <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
         <div className="mb-8 flex items-center justify-between flex-wrap gap-2">
           <div>
-            <h1 className="font-display text-3xl font-bold text-foreground mb-2">Chant with Me</h1>
-            <p className="text-muted-foreground font-sans">Follow along with synchronized text highlighting</p>
+            <h1 className="font-display text-3xl font-bold text-foreground mb-2">
+              {chantMode === "chant" ? "Chant with Me" : "Learn with Me"}
+            </h1>
+            <p className="text-muted-foreground font-sans">
+              {chantMode === "chant"
+                ? "Follow along with synchronized text highlighting"
+                : "Listen and repeat during the pause — learn at your own pace"}
+            </p>
           </div>
-          <button
-            onClick={() => setPlaylistOpen(true)}
-            className="flex items-center gap-2 rounded-lg border border-secondary/30 bg-secondary/10 px-4 py-2 text-sm font-sans text-foreground hover:bg-secondary/20 transition-colors"
-          >
-            <ListMusic className="h-4 w-4 text-secondary" /> Custom Playlist
-          </button>
+          <div className="flex items-center gap-2">
+            {/* Mode Toggle */}
+            <div className="flex rounded-lg border border-border bg-background overflow-hidden">
+              <button
+                onClick={() => { setChantMode("chant"); if (audioRef.current) { audioRef.current.pause(); audioRef.current = null; } pausedRef.current = false; stopSloka(); setIsPlaying(false); setVerseProgress(0); }}
+                className={`px-3 py-2 text-sm font-sans transition-colors ${chantMode === "chant" ? "bg-primary text-primary-foreground font-semibold" : "text-muted-foreground hover:text-foreground"}`}
+              >
+                Chant Mode
+              </button>
+              <button
+                onClick={() => { setChantMode("learn"); if (audioRef.current) { audioRef.current.pause(); audioRef.current = null; } pausedRef.current = false; stopSloka(); setIsPlaying(false); setVerseProgress(0); }}
+                className={`px-3 py-2 text-sm font-sans transition-colors ${chantMode === "learn" ? "bg-secondary text-secondary-foreground font-semibold" : "text-muted-foreground hover:text-foreground"}`}
+              >
+                Learn Mode
+              </button>
+            </div>
+            <button
+              onClick={() => setPlaylistOpen(true)}
+              className="flex items-center gap-2 rounded-lg border border-secondary/30 bg-secondary/10 px-4 py-2 text-sm font-sans text-foreground hover:bg-secondary/20 transition-colors"
+            >
+              <ListMusic className="h-4 w-4 text-secondary" /> Playlist
+            </button>
+          </div>
         </div>
 
         {/* Continue Banner */}
