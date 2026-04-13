@@ -1,6 +1,6 @@
 import React from "react";
 import { Link } from "react-router-dom";
-import { FileText, CalendarPlus, BookOpenCheck, LifeBuoy, X } from "lucide-react";
+import { FileText, Bookmark, Heart, LifeBuoy, Settings, X } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 
 interface Props {
@@ -9,10 +9,11 @@ interface Props {
 }
 
 const menuItems = [
-  { path: "/lesson-plan", label: "Create a Lesson Plan", icon: CalendarPlus },
   { path: "/script", label: "Script Library", icon: FileText },
-  { path: "/user-guide", label: "User Guide", icon: BookOpenCheck },
-  { path: "/support", label: "Raise a Support Ticket", icon: LifeBuoy },
+  { path: "/saved-places", label: "Bookmarks", icon: Bookmark },
+  { path: "/heart-shelf", label: "Favourites", icon: Heart },
+  { path: "/support", label: "Support", icon: LifeBuoy },
+  { path: "/user-guide", label: "Settings & Guide", icon: Settings },
 ];
 
 export default function MoreMenu({ open, onClose }: Props) {
