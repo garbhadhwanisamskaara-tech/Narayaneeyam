@@ -37,6 +37,9 @@ type RitualPhase = "idle" | "opening" | "dashakam_end" | "session_end";
 
 export default function ChantPage() {
   const [searchParams] = useSearchParams();
+  const [chantMode, setChantMode] = useState<"chant" | "learn">(
+    searchParams.get("mode") === "learn" || window.location.pathname === "/learn" ? "learn" : "chant"
+  );
   const [selectedDashakam, setSelectedDashakam] = useState(1);
   const [selectedPara, setSelectedPara] = useState<number | null>(null);
   const [translitLang, setTranslitLang] = useState<TransliterationLanguage>("sanskrit");
