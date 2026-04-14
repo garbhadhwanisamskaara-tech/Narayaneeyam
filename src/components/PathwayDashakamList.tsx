@@ -1,17 +1,16 @@
 import { ChevronRight } from "lucide-react";
-import type { Dashakam } from "@/data/narayaneeyam";
+import { getDashakamName } from "@/hooks/useDashakam";
 
 interface Props {
   dashakams: number[];
-  allDashakams: Dashakam[];
   onSelect: (dashakamNumber: number) => void;
 }
 
-export default function PathwayDashakamList({ dashakams, allDashakams, onSelect }: Props) {
+export default function PathwayDashakamList({ dashakams, onSelect }: Props) {
   return (
     <div className="space-y-2">
       {dashakams.map((num) => {
-        const d = allDashakams.find((dd) => dd.id === num);
+        const name = getDashakamName(num);
         return (
           <button
             key={num}
@@ -25,11 +24,9 @@ export default function PathwayDashakamList({ dashakams, allDashakams, onSelect 
               <p className="text-sm font-semibold text-foreground font-sans truncate">
                 Dashakam {num}
               </p>
-              {d && (
-                <p className="text-xs text-muted-foreground font-sans truncate">
-                  {d.title_english}
-                </p>
-              )}
+              <p className="text-xs text-muted-foreground font-sans truncate">
+                {name}
+              </p>
             </div>
             <ChevronRight className="h-4 w-4 text-muted-foreground shrink-0" />
           </button>

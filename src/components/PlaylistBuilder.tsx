@@ -14,7 +14,7 @@ import {
   type PlaylistItem,
   type Playlist,
 } from "@/hooks/usePlaylist";
-import { sampleDashakams } from "@/data/narayaneeyam";
+import { getDashakamName } from "@/hooks/useDashakam";
 
 interface PlaylistBuilderProps {
   mode: "chant" | "learn" | "podcast";
@@ -111,10 +111,7 @@ export default function PlaylistBuilder({ mode, open, onClose, onStartPlaylist }
     onClose();
   };
 
-  const getDashakamName = (no: number) => {
-    const d = sampleDashakams.find(d => d.id === no);
-    return d?.title_english || `Dashakam ${no}`;
-  };
+  const getName = (no: number) => getDashakamName(no);
 
   if (!open) return null;
 
