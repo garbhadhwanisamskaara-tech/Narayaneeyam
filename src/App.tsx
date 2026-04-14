@@ -90,6 +90,7 @@ const App = () => {
     </TooltipProvider>
   </QueryClientProvider>
   </SentryErrorBoundary>
-);
+  );
+};
 
 export default App;
