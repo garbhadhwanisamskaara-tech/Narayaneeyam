@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect, useCallback } from "react";
 import { motion } from "framer-motion";
 import { Play, Pause, SkipBack, SkipForward, ListMusic, Volume2 } from "lucide-react";
-import { useDashakam, getDashakamName } from "@/hooks/useDashakam";
+import { useDashakam, getDashakamName, prefetchDashakamList } from "@/hooks/useDashakam";
 import { supabase } from "@/integrations/supabase/client";
 import { getStorageUrl } from "@/lib/storageUrl";
 import { getProgress, saveProgress } from "@/lib/progress";
