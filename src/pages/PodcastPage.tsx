@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect, useCallback } from "react";
 import { motion } from "framer-motion";
 import { Play, Pause, SkipBack, SkipForward, ListMusic, Volume2 } from "lucide-react";
-import { sampleDashakams } from "@/data/narayaneeyam";
+import { useDashakam, getDashakamName } from "@/hooks/useDashakam";
 import { supabase } from "@/integrations/supabase/client";
 import { getStorageUrl } from "@/lib/storageUrl";
 import { getProgress, saveProgress } from "@/lib/progress";
@@ -108,9 +108,9 @@ export default function PodcastPage() {
     return null;
   }, [podcastData]);
 
-  const dashakam = sampleDashakams.find((d) => d.id === currentDashakam);
+  const dashakamName = getDashakamName(currentDashakam);
   const audioUrl = getAudioUrl(currentDashakam);
-  const nextDashakam = sampleDashakams.find((d) => d.id === currentDashakam + 1);
+  const nextDashakamName = getDashakamName(currentDashakam + 1);
 
   // Advance to next dashakam
   const advanceToNext = useCallback(() => {
@@ -277,10 +277,11 @@ export default function PodcastPage() {
     { value: "all", label: "All 100", desc: "Play all sequentially" },
   ];
 
-  // Build dropdown list with podcast availability
-  const dashakamDropdown = sampleDashakams.map((d) => {
-    const hasPodcast = podcastData.some((p) => p.dashakam === d.id);
-    return { id: d.id, title: d.title_english, titleSanskrit: d.title_sanskrit, hasPodcast };
+  // Build dropdown list — use 1-100 range with DB names
+  const dashakamDropdown = Array.from({ length: 100 }, (_, i) => {
+    const no = i + 1;
+    const hasPodcast = podcastData.some((p) => p.dashakam === no);
+    return { id: no, title: getDashakamName(no), titleSanskrit: "", hasPodcast };
   });
 
   return (

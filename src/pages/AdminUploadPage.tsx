@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback, Fragment } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { sampleDashakams as localDashakams } from "@/data/narayaneeyam";
+import { getDashakamName } from "@/hooks/useDashakam";
 import { toast } from "@/hooks/use-toast";
 import {
   Check, AlertTriangle, X, Save, Upload, BookOpen, FileText,
@@ -206,15 +206,15 @@ export default function AdminUploadPage() {
     if (data) {
       setDetails({ dashakam_name: data.dashakam_name ?? "", gist: data.gist ?? "", benefits: data.benefits ?? "", remarks: data.remarks ?? "", image_url: data.image_url ?? "", is_published: !!data.is_published });
     } else {
-      const local = localDashakams.find((d) => d.id === dNo);
-      setDetails({ dashakam_name: local?.title_english ?? "", gist: local?.gist ?? "", benefits: local?.benefits ?? "", remarks: local?.remarks ?? "", image_url: local?.imageUrl ?? "", is_published: false });
+      setDetails({ dashakam_name: "", gist: "", benefits: "", remarks: "", image_url: "", is_published: false });
     }
     setDetailsDirty(false);
   }, []);
 
   const loadVerses = useCallback(async (dNo: number) => {
-    const dk = localDashakams.find((d) => d.id === dNo);
-    const numVerses = dk?.num_verses ?? 10;
+    // Get num_verses from dashakams table
+    const { data: dkData } = await supabase.from("dashakams").select("num_verses").eq("dashakam_no", dNo).eq("language_code", "en").maybeSingle();
+    const numVerses = dkData?.num_verses ?? 10;
     const [{ data: audioRows }, { data: scriptRows }] = await Promise.all([
       supabase.from("verses_audio").select("*").eq("dashakam_no", dNo).order("verse_no"),
       supabase.from("language_script").select("verse_no, transliteration_text, translation_text").eq("dashakam_no", dNo).eq("language_code", "sa").order("verse_no"),
