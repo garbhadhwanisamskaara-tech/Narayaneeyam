@@ -72,7 +72,7 @@ async function fetchDashakamList(): Promise<DashakamListItem[]> {
             .eq("language_code", "en")
             .order("dashakam_no"),
         ),
-        30000,
+        15000,
       );
       console.log(`[useDashakam] dashakams query result: error=${!!error}, rows=${data?.length ?? 0}`);
       if (error) {
@@ -150,7 +150,7 @@ async function fetchVerses(
           .order("verse_no"),
       ),
     ]),
-    30000,
+    15000,
   );
 
   const audioMap: Record<number, any> = {};
