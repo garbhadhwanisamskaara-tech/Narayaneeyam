@@ -44,25 +44,33 @@ async function fetchDashakamList(): Promise<DashakamListItem[]> {
   if (dashakamCache.loading) return dashakamCache.loading;
 
   dashakamCache.loading = (async () => {
-    const { data, error } = await supabase
-      .from("dashakams")
-      .select("dashakam_no, dashakam_name, num_verses, remarks, gist, benefits")
-      .eq("language_code", "en")
-      .order("dashakam_no");
+    try {
+      const { data, error } = await supabase
+        .from("dashakams")
+        .select("dashakam_no, dashakam_name, num_verses, remarks, gist, benefits")
+        .eq("language_code", "en")
+        .order("dashakam_no");
 
-    if (error) throw error;
+      if (error) throw error;
 
-    // dedupe
-    const seen = new Set<number>();
-    const list = (data || []).filter((d) => {
-      if (seen.has(d.dashakam_no)) return false;
-      seen.add(d.dashakam_no);
-      return true;
-    });
+      // dedupe
+      const seen = new Set<number>();
+      const list = (data || []).filter((d) => {
+        if (seen.has(d.dashakam_no)) return false;
+        seen.add(d.dashakam_no);
+        return true;
+      });
 
-    dashakamCache.list = list;
-    dashakamCache.loading = null;
-    return list;
+      dashakamCache.list = list;
+      dashakamCache.loading = null;
+      console.log("[useDashakam] fetched dashakam list:", list.length, "items");
+      return list;
+    } catch (err) {
+      // Reset loading so next call retries instead of returning a rejected promise forever
+      dashakamCache.loading = null;
+      console.error("[useDashakam] fetchDashakamList failed:", err);
+      throw err;
+    }
   })();
 
   return dashakamCache.loading;
