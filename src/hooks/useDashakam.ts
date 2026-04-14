@@ -53,6 +53,10 @@ async function fetchDashakamList(): Promise<DashakamListItem[]> {
   if (dashakamListCache) return dashakamListCache;
   if (dashakamListPromise) return dashakamListPromise;
 
+  dashakamListAttempts++;
+  const attempt = dashakamListAttempts;
+  console.log(`[useDashakam] fetchDashakamList attempt #${attempt}`);
+
   dashakamListPromise = (async () => {
     try {
       const { data, error } = await withTimeout(
@@ -64,7 +68,14 @@ async function fetchDashakamList(): Promise<DashakamListItem[]> {
         ),
         8000,
       );
-      if (error || !data || data.length === 0) {
+      console.log(`[useDashakam] dashakams query result: error=${!!error}, rows=${data?.length ?? 0}`);
+      if (error) {
+        console.error("[useDashakam] dashakams query error:", error.message, error.code);
+        dashakamListPromise = null;
+        return [];
+      }
+      if (!data || data.length === 0) {
+        console.warn("[useDashakam] dashakams returned 0 rows — possible RLS issue");
         dashakamListPromise = null;
         return [];
       }
@@ -77,9 +88,11 @@ async function fetchDashakamList(): Promise<DashakamListItem[]> {
           list.push(row);
         }
       }
+      console.log(`[useDashakam] dashakamList loaded: ${list.length} dashakams`);
       dashakamListCache = list;
       return list;
-    } catch {
+    } catch (err: any) {
+      console.error("[useDashakam] fetchDashakamList exception:", err?.message);
       dashakamListPromise = null;
       return [];
     }
