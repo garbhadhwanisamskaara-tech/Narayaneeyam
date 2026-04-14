@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Download, ChevronDown, ChevronUp, Loader2, BookOpen } from "lucide-react";
-import { sampleDashakams } from "@/data/narayaneeyam";
+import { Loader2, BookOpen } from "lucide-react";
 import { useDashakam, type MergedVerse } from "@/hooks/useDashakam";
 import { supabase } from "@/integrations/supabase/client";
 import VerseIcons from "@/components/VerseIcons";
@@ -25,7 +25,7 @@ export default function ScriptPage() {
   const [showGist, setShowGist] = useState(false);
   const [showBenefit, setShowBenefit] = useState(false);
 
-  const { dashakamList, verses, loading, staticDashakam } = useDashakam(
+  const { dashakamList, verses, loading } = useDashakam(
     selectedDashakam,
     selectedLangCode === "sa" ? "en" : selectedLangCode
   );
@@ -38,12 +38,10 @@ export default function ScriptPage() {
 
   const numVerses =
     dashakamList.find((d) => d.dashakam_no === selectedDashakam)?.num_verses
-    ?? staticDashakam?.num_verses
     ?? 10;
 
   const dashakamTitle =
     dashakamList.find((d) => d.dashakam_no === selectedDashakam)?.dashakam_name
-    ?? staticDashakam?.title_english
     ?? `Dashakam ${selectedDashakam}`;
 
   const getVerseText = (verse: MergedVerse) => {
@@ -66,10 +64,7 @@ export default function ScriptPage() {
     URL.revokeObjectURL(url);
   };
 
-  // Dropdown list: prefer DB, fall back to static
-  const dropdownList = dashakamList.length > 0
-    ? dashakamList
-    : sampleDashakams.map((d) => ({ dashakam_no: d.id, dashakam_name: d.title_english, num_verses: d.num_verses, remarks: d.remarks ?? null }));
+  const dropdownList = dashakamList;
 
   return (
     <div className="container mx-auto px-4 py-8">
