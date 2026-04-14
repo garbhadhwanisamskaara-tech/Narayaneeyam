@@ -38,7 +38,12 @@ import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
 
-const App = () => (
+const App = () => {
+  useEffect(() => {
+    prefetchDashakamList();
+  }, []);
+
+  return (
   <SentryErrorBoundary>
   <QueryClientProvider client={queryClient}>
     <TooltipProvider>
