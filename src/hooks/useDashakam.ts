@@ -29,6 +29,8 @@ interface UseDashakamResult {
   loading: boolean;
   error: string | null;
   staticDashakam: Dashakam | undefined;
+  /** True when verses have real Supabase audio URLs (not static fallbacks) */
+  audioReady: boolean;
 }
 
 // ── In-memory verse cache ──
