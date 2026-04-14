@@ -34,59 +34,46 @@ interface UseDashakamResult {
 // ── In-memory caches ──
 const verseCache = new Map<string, MergedVerse[]>();
 let dashakamListCache: DashakamListItem[] | null = null;
-let dashakamListPromise: Promise<DashakamListItem[]> | null = null;
-let dashakamListAttempts = 0;
 
 function getCacheKey(dashakam: number, lang: string) {
   return `${dashakam}:${lang}`;
 }
 
-async function fetchDashakamList(): Promise<DashakamListItem[]> {
+async function fetchDashakamListDirect(): Promise<DashakamListItem[]> {
   if (dashakamListCache) return dashakamListCache;
-  if (dashakamListPromise) return dashakamListPromise;
 
-  dashakamListAttempts++;
-  const attempt = dashakamListAttempts;
-  console.log(`[useDashakam] fetchDashakamList attempt #${attempt}`);
-
-  dashakamListPromise = (async () => {
-    try {
-      const { data, error } = await supabase
-        .from("dashakams")
-        .select("dashakam_no, dashakam_name, num_verses, remarks, gist, benefits")
-        .eq("language_code", "en")
-        .order("dashakam_no");
-      console.log(`[useDashakam] dashakams query result: error=${!!error}, rows=${data?.length ?? 0}`);
-      if (error) {
-        console.error("[useDashakam] dashakams query error:", error.message, error.code);
-        dashakamListPromise = null;
-        return [];
-      }
-      if (!data || data.length === 0) {
-        console.warn("[useDashakam] dashakams returned 0 rows — possible RLS issue");
-        dashakamListPromise = null;
-        return [];
-      }
-      // Deduplicate: keep only the first (transliterated) row per dashakam_no
-      const seen = new Set<number>();
-      const list: DashakamListItem[] = [];
-      for (const row of data as DashakamListItem[]) {
-        if (!seen.has(row.dashakam_no)) {
-          seen.add(row.dashakam_no);
-          list.push(row);
-        }
-      }
-      console.log(`[useDashakam] dashakamList loaded: ${list.length} dashakams`);
-      dashakamListCache = list;
-      return list;
-    } catch (err: any) {
-      console.error("[useDashakam] fetchDashakamList exception:", err?.message);
-      dashakamListPromise = null;
+  console.log("[useDashakam] fetching dashakam list from DB...");
+  try {
+    const { data, error } = await supabase
+      .from("dashakams")
+      .select("dashakam_no, dashakam_name, num_verses, remarks, gist, benefits")
+      .eq("language_code", "en")
+      .order("dashakam_no");
+    console.log(`[useDashakam] dashakams query: error=${!!error}, rows=${data?.length ?? 0}`);
+    if (error) {
+      console.error("[useDashakam] dashakams query error:", error.message);
       return [];
     }
-  })();
-
-  return dashakamListPromise;
+    if (!data || data.length === 0) {
+      console.warn("[useDashakam] dashakams returned 0 rows — possible RLS issue");
+      return [];
+    }
+    // Deduplicate: keep only the first row per dashakam_no
+    const seen = new Set<number>();
+    const list: DashakamListItem[] = [];
+    for (const row of data as DashakamListItem[]) {
+      if (!seen.has(row.dashakam_no)) {
+        seen.add(row.dashakam_no);
+        list.push(row);
+      }
+    }
+    console.log(`[useDashakam] dashakamList loaded: ${list.length} dashakams`);
+    dashakamListCache = list;
+    return list;
+  } catch (err: any) {
+    console.error("[useDashakam] fetchDashakamList exception:", err?.message);
+    return [];
+  }
 }
 
 async function fetchVerses(
