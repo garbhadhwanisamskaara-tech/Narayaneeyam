@@ -39,8 +39,9 @@ const DASHAKAM_SEED: DashakamListItem[] = Array.from({ length: 100 }, (_, i) => 
 }));
 
 // ---- simple cache ----
-const dashakamCache: { list: DashakamListItem[] | null; loading: Promise<DashakamListItem[]> | null } = {
+const dashakamCache: { list: DashakamListItem[]; fetched: boolean; loading: Promise<DashakamListItem[]> | null } = {
   list: DASHAKAM_SEED,
+  fetched: false,
   loading: null,
 };
 const verseCache = new Map<string, MergedVerse[]>();
@@ -49,7 +50,7 @@ const getKey = (d: number, l: string) => `${d}_${l}`;
 
 /** Fetch dashakam list (shared, deduped) */
 async function fetchDashakamList(): Promise<DashakamListItem[]> {
-  if (dashakamCache.list) return dashakamCache.list;
+  if (dashakamCache.fetched) return dashakamCache.list;
   if (dashakamCache.loading) return dashakamCache.loading;
 
   dashakamCache.loading = (async () => {
