@@ -177,11 +177,7 @@ async function fetchVerses(
   return merged;
 }
 
-// ── Preload Dashakam 1 on module load ──
-fetchDashakamList().then((list) => {
-  const d1 = list.find((d) => d.dashakam_no === 1);
-  if (d1) fetchVerses(1, "en", d1.num_verses).catch(() => {});
-});
+// No module-level preload — wait for auth to be ready
 
 export function useDashakam(selectedDashakam: number, selectedLanguage: string = "en"): UseDashakamResult {
   const [dashakamList, setDashakamList] = useState<DashakamListItem[]>(dashakamListCache ?? []);
@@ -193,11 +189,29 @@ export function useDashakam(selectedDashakam: number, selectedLanguage: string =
   });
   const [error, setError] = useState<string | null>(null);
 
-  // Load dashakam list once
+  // Load dashakam list — retry up to 3 times if empty
   useEffect(() => {
-    fetchDashakamList().then((list) => {
-      setDashakamList(list);
-    });
+    let cancelled = false;
+    let retryTimer: ReturnType<typeof setTimeout> | null = null;
+
+    async function load(retries = 0) {
+      const list = await fetchDashakamList();
+      if (cancelled) return;
+      if (list.length > 0) {
+        setDashakamList(list);
+      } else if (retries < 3) {
+        console.log(`[useDashakam] dashakamList empty, retrying in ${(retries + 1) * 1500}ms...`);
+        retryTimer = setTimeout(() => load(retries + 1), (retries + 1) * 1500);
+      } else {
+        console.error("[useDashakam] dashakamList empty after 3 retries");
+      }
+    }
+
+    load();
+    return () => {
+      cancelled = true;
+      if (retryTimer) clearTimeout(retryTimer);
+    };
   }, []);
 
   // Load verse data
