@@ -144,7 +144,7 @@ async function fetchVerses(
       verse_no: v,
       sanskrit_text: s?.transliteration_text ?? "",
       meter: a?.meter ?? "",
-      has_bell: a?.has_bell ?? false,
+      
       chant_audio_file: a?.chant_audio_file ?? "",
       sloka_audio_id: a?.sloka_audio_id ?? null,
       transliteration_text: l?.transliteration_text ?? "",
