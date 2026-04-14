@@ -62,14 +62,13 @@ async function fetchDashakamList(): Promise<DashakamListItem[]> {
       });
 
       dashakamCache.list = list;
-      dashakamCache.loading = null;
       console.log("[useDashakam] fetched dashakam list:", list.length, "items");
       return list;
     } catch (err) {
-      // Reset loading so next call retries instead of returning a rejected promise forever
-      dashakamCache.loading = null;
       console.error("[useDashakam] fetchDashakamList failed:", err);
       throw err;
+    } finally {
+      dashakamCache.loading = null; // always reset, even on failure
     }
   })();
 
