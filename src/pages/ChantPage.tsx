@@ -32,6 +32,7 @@ import RitualChantOverlay from "@/components/RitualChantOverlay";
 import VerseSkeleton from "@/components/VerseSkeleton";
 import { getProgress, saveProgress } from "@/lib/progress";
 import { updateStreakSupabase, markVerseCompleted } from "@/lib/supabaseProgress";
+import { useAudioEngine } from "@/contexts/AudioContext";
 
 import VerseIcons from "@/components/VerseIcons";
 import { Slider } from "@/components/ui/slider";
@@ -71,7 +72,9 @@ export default function ChantPage() {
     verse: number;
   } | null>(null);
 
-  const audioRef = useRef<HTMLAudioElement | null>(null);
+  // Global audio engine (singleton, survives navigation)
+  const engine = useAudioEngine();
+
   const pausedRef = useRef(false);
   const gapTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const verseRefsMap = useRef<Map<number, HTMLDivElement>>(new Map());
@@ -109,6 +112,12 @@ export default function ChantPage() {
 
   const inPlaylistMode = playlistItems !== null && playlistItems.length > 0;
 
+  // Helper to stop the global audio engine
+  const stopAudio = useCallback(() => {
+    engine.stop();
+    pausedRef.current = false;
+  }, [engine]);
+
   const handleStartPlaylist = (
     items: PlaylistItem[],
     plId?: string,
@@ -125,11 +134,7 @@ export default function ChantPage() {
     setHighlightedVerse(resumeVerse ? resumeVerse - 1 : 0);
     setSelectedPara(null);
     setVerseProgress(0);
-    if (audioRef.current) {
-      audioRef.current.pause();
-      audioRef.current = null;
-    }
-    pausedRef.current = false;
+    stopAudio();
   };
 
   const exitPlaylist = () => {
@@ -168,12 +173,9 @@ export default function ChantPage() {
     setHighlightedVerse(0);
   }, [dashakamList, selectedDashakam]);
 
-  // (removed — learn mode deleted)
-
   // Convert dbVerses to display format
   const allVerses = dbVerses.map((mv) => {
     const rawUrl = getStorageUrl(mv.chant_audio_file);
-    // Accept any valid https URL (getStorageUrl already handles conversion)
     const validAudio = rawUrl && rawUrl.startsWith("https://") ? rawUrl : undefined;
     return {
       id: `${selectedDashakam}-${mv.verse_no}`,
@@ -202,7 +204,7 @@ export default function ChantPage() {
     };
   });
 
-  // Progressive loading: show first 3 verses instantly, rest after paint
+  // Progressive loading
   const [showAll, setShowAll] = useState(false);
   useEffect(() => {
     setShowAll(false);
@@ -258,7 +260,6 @@ export default function ChantPage() {
     const elTop = isWindow ? el.getBoundingClientRect().top + window.scrollY : (el as HTMLElement).offsetTop;
     const viewH = isWindow ? window.innerHeight : (container as HTMLElement).clientHeight;
     (isWindow ? window : container).scrollTo({ top: elTop - viewH / 2 + el.offsetHeight / 2, behavior: "smooth" });
-    // Release programmatic scroll lock after animation
     if (scrollTimeoutRef.current) clearTimeout(scrollTimeoutRef.current);
     scrollTimeoutRef.current = setTimeout(() => {
       programmaticScrollRef.current = false;
@@ -274,12 +275,12 @@ export default function ChantPage() {
   // Clear highlighting when verse changes
   useEffect(() => {
     if (highlightedVerse !== prevHighlightedVerseRef.current) {
-      setActiveLine(null); // clear old verse highlight before starting new one
+      setActiveLine(null);
       prevHighlightedVerseRef.current = highlightedVerse;
     }
   }, [highlightedVerse]);
 
-  // Compute active line from verse progress
+  // Sync verse progress from global engine
   useEffect(() => {
     if (!isPlaying) {
       setActiveLine(null);
@@ -293,12 +294,10 @@ export default function ChantPage() {
       setActiveLine(0);
       return;
     }
-    // When progress >= 100%, keep highlighting on the last line (don't wrap)
     if (verseProgress >= 100) {
       setActiveLine(lines.length - 1);
       return;
     }
-    // Clamp to [0, lines.length - 1], never wrapping back to 0
     const lineIdx = Math.min(Math.floor((verseProgress / 100) * lines.length), lines.length - 1);
     setActiveLine(lineIdx);
   }, [verseProgress, isPlaying, highlightedVerse, displayVerses.length]);
@@ -317,7 +316,7 @@ export default function ChantPage() {
     }, 600);
   }, [activeLine, highlightedVerse, isPlaying]);
 
-  // Manual scroll detection — find verse closest to viewport center
+  // Manual scroll detection
   useEffect(() => {
     if (!isPlaying) return;
 
@@ -341,12 +340,7 @@ export default function ChantPage() {
         });
 
         if (closestIdx !== highlightedVerse) {
-          // Stop current audio, switch to the scroll-detected verse
-          if (audioRef.current) {
-            audioRef.current.pause();
-            audioRef.current = null;
-          }
-          pausedRef.current = false;
+          stopAudio();
           stopSloka();
           setVerseProgress(0);
           setHighlightedVerse(closestIdx);
@@ -359,7 +353,7 @@ export default function ChantPage() {
       window.removeEventListener("scroll", handleScroll);
       if (manualScrollTimerRef.current) clearTimeout(manualScrollTimerRef.current);
     };
-  }, [isPlaying, highlightedVerse, stopSloka]);
+  }, [isPlaying, highlightedVerse, stopSloka, stopAudio]);
 
   // Mark verse started when playback begins on a verse
   useEffect(() => {
@@ -442,7 +436,6 @@ export default function ChantPage() {
     }
 
     logAudioEvent("audio_complete", selectedDashakam, currentVerse.paragraph, currentVerse.audio || "");
-    // Mark verse finished in member_progress
     markVerseFinished(selectedDashakam, currentVerse.paragraph).then(() => {
       checkDashakamCompletion(selectedDashakam, allVerses.length);
     });
@@ -471,53 +464,70 @@ export default function ChantPage() {
     handleVerseEndedRef.current = handleVerseEnded;
   }, [handleVerseEnded]);
 
-  // Real audio playback
+  // Real audio playback via global engine
   useEffect(() => {
     if (!isPlaying || displayVerses.length === 0 || isSlokaPlaying) return;
 
     const currentVerse = displayVerses[highlightedVerse];
 
-    if (pausedRef.current && audioRef.current && !audioRef.current.ended) {
-      audioRef.current.playbackRate = speed;
-      console.log("Resuming audio URL:", audioRef.current.src);
-      audioRef.current.play().catch((err) => console.error("Audio play error:", err));
+    // Resume from pause
+    if (pausedRef.current && engine.state.isPaused) {
+      engine.setSpeed(speed);
+      engine.resume();
       pausedRef.current = false;
       logAudioEvent("audio_play", selectedDashakam, currentVerse?.paragraph || 0, "resume");
 
-      const audio = audioRef.current;
-      const updateProgress = () => {
-        if (audio.duration) setVerseProgress((audio.currentTime / audio.duration) * 100);
-      };
-      audio.addEventListener("timeupdate", updateProgress);
-      audio.onended = () => handleVerseEndedRef.current();
+      // Wire up onEnded and progress sync
+      engine.onEnded.current = () => handleVerseEndedRef.current();
+
+      const progressInterval = setInterval(() => {
+        setVerseProgress(engine.state.progress);
+      }, 100);
+
       return () => {
-        audio.removeEventListener("timeupdate", updateProgress);
-        audio.onended = null;
+        clearInterval(progressInterval);
+        engine.onEnded.current = null;
       };
     }
 
     if (currentVerse?.audio) {
       const loadStart = performance.now();
       console.log("Playing audio URL:", currentVerse.audio);
-      const audio = new Audio(currentVerse.audio);
-      audioRef.current = audio;
-      audio.playbackRate = speed;
+
+      // Set Media Session metadata for lock screen controls
+      const dashakamName = dashakamMeta?.dashakam_name || `Dashakam ${selectedDashakam}`;
+      engine.setMediaMetadata(`${dashakamName} - Verse ${currentVerse.paragraph}`, "Sriman Narayaneeyam");
+
+      engine.setSpeed(speed);
+      engine.play(currentVerse.audio);
       pausedRef.current = false;
 
-      audio.addEventListener(
-        "canplaythrough",
-        () => {
-          const loadTime = Math.round(performance.now() - loadStart);
-          const eventType = loadTime > 1500 ? "audio_load_slow" : "audio_load";
-          logAudioEvent(eventType, selectedDashakam, currentVerse.paragraph, currentVerse.audio!, {
-            load_time_ms: loadTime,
-          });
-        },
-        { once: true },
-      );
+      logAudioEvent("audio_play", selectedDashakam, currentVerse.paragraph, currentVerse.audio!);
 
-      audio.addEventListener("error", () => {
-        const errMsg = audio.error?.message || "Unknown audio error";
+      // Wire up onEnded
+      engine.onEnded.current = () => handleVerseEndedRef.current();
+
+      // Sync progress from engine state
+      const progressInterval = setInterval(() => {
+        const a = engine.audioElement.current;
+        if (a && a.duration) {
+          setVerseProgress((a.currentTime / a.duration) * 100);
+        }
+      }, 100);
+
+      // Log load time
+      const onCanPlay = () => {
+        const loadTime = Math.round(performance.now() - loadStart);
+        const eventType = loadTime > 1500 ? "audio_load_slow" : "audio_load";
+        logAudioEvent(eventType, selectedDashakam, currentVerse.paragraph, currentVerse.audio!, {
+          load_time_ms: loadTime,
+        });
+      };
+      engine.audioElement.current.addEventListener("canplaythrough", onCanPlay, { once: true });
+
+      // Error handling
+      const onError = () => {
+        const errMsg = engine.audioElement.current.error?.message || "Unknown audio error";
         logAudioEvent("audio_error", selectedDashakam, currentVerse.paragraph, currentVerse.audio!, {
           error_message: errMsg,
         });
@@ -526,43 +536,30 @@ export default function ChantPage() {
           verse: currentVerse.paragraph,
           audio_file: currentVerse.audio,
         });
-      });
-
-      audio.play().catch((err) => {
-        console.error("Audio play error:", err);
-        logAudioEvent("audio_error", selectedDashakam, currentVerse.paragraph, currentVerse.audio!, {
-          error_message: String(err),
-        });
-      });
-      logAudioEvent("audio_play", selectedDashakam, currentVerse.paragraph, currentVerse.audio!);
-
-      const updateProgress = () => {
-        if (audio.duration) setVerseProgress((audio.currentTime / audio.duration) * 100);
       };
-      audio.addEventListener("timeupdate", updateProgress);
-      audio.onended = () => handleVerseEndedRef.current();
+      engine.audioElement.current.addEventListener("error", onError, { once: true });
+
       return () => {
-        audio.pause();
-        audio.removeEventListener("timeupdate", updateProgress);
-        audio.onended = null;
+        clearInterval(progressInterval);
+        engine.onEnded.current = null;
+        engine.audioElement.current.removeEventListener("canplaythrough", onCanPlay);
+        engine.audioElement.current.removeEventListener("error", onError);
+        // Do NOT stop audio here — let it persist across navigation
+        // Only pause if we're switching verses within the same page
+        engine.pause();
       };
     } else {
-      // No valid audio URL — skip to next verse after a short delay
       console.warn("No valid audio URL for verse", currentVerse?.paragraph, "— skipping");
       gapTimerRef.current = setTimeout(() => handleVerseEndedRef.current(), 2000);
       return () => {
         if (gapTimerRef.current) clearTimeout(gapTimerRef.current);
       };
     }
-  }, [isPlaying, highlightedVerse, displayVerses.length, speed, isSlokaPlaying]);
+  }, [isPlaying, highlightedVerse, displayVerses.length, speed, isSlokaPlaying, engine]);
 
-  // Cleanup on unmount — stop audio when navigating away
+  // Cleanup gap timers on unmount (but NOT audio — let it persist)
   useEffect(() => {
     return () => {
-      if (audioRef.current) {
-        audioRef.current.pause();
-        audioRef.current = null;
-      }
       if (gapTimerRef.current) clearTimeout(gapTimerRef.current);
     };
   }, []);
@@ -571,10 +568,8 @@ export default function ChantPage() {
 
   const handlePlayPause = () => {
     if (isPlaying) {
-      if (audioRef.current) {
-        audioRef.current.pause();
-        pausedRef.current = true;
-      }
+      engine.pause();
+      pausedRef.current = true;
       stopSloka();
       logAudioEvent("audio_pause", selectedDashakam, displayVerses[highlightedVerse]?.paragraph || 0, "");
       setIsPlaying(false);
@@ -593,11 +588,7 @@ export default function ChantPage() {
   };
 
   const handleEndSession = () => {
-    if (audioRef.current) {
-      audioRef.current.pause();
-      audioRef.current = null;
-    }
-    pausedRef.current = false;
+    stopAudio();
     stopSloka();
     setIsPlaying(false);
     if (sessionClosingChant) {
@@ -611,9 +602,7 @@ export default function ChantPage() {
   const handleSeekVerse = (value: number[]) => {
     const seekTo = value[0];
     setVerseProgress(seekTo);
-    if (audioRef.current && audioRef.current.duration) {
-      audioRef.current.currentTime = (seekTo / 100) * audioRef.current.duration;
-    }
+    engine.seek(seekTo);
   };
 
   const getVerseText = (verse: (typeof allVerses)[0]) => {
@@ -674,11 +663,7 @@ export default function ChantPage() {
                 setHighlightedVerse(0);
                 setSelectedPara(null);
                 setVerseProgress(0);
-                if (audioRef.current) {
-                  audioRef.current.pause();
-                  audioRef.current = null;
-                }
-                pausedRef.current = false;
+                stopAudio();
                 stopSloka();
               }
             }}
@@ -691,11 +676,7 @@ export default function ChantPage() {
                 setHighlightedVerse(0);
                 setSelectedPara(null);
                 setVerseProgress(0);
-                if (audioRef.current) {
-                  audioRef.current.pause();
-                  audioRef.current = null;
-                }
-                pausedRef.current = false;
+                stopAudio();
                 stopSloka();
               }
             }}
@@ -708,11 +689,7 @@ export default function ChantPage() {
                 setHighlightedVerse(0);
                 setSelectedPara(null);
                 setVerseProgress(0);
-                if (audioRef.current) {
-                  audioRef.current.pause();
-                  audioRef.current = null;
-                }
-                pausedRef.current = false;
+                stopAudio();
                 stopSloka();
               }
             }}
@@ -733,11 +710,7 @@ export default function ChantPage() {
                 setHighlightedVerse(0);
                 setShowGist(false);
                 setVerseProgress(0);
-                if (audioRef.current) {
-                  audioRef.current.pause();
-                  audioRef.current = null;
-                }
-                pausedRef.current = false;
+                stopAudio();
                 stopSloka();
               }}
               className="rounded-lg border border-border bg-background px-3 py-2 text-sm font-sans text-foreground"
@@ -790,8 +763,9 @@ export default function ChantPage() {
             <select
               value={speed}
               onChange={(e) => {
-                setSpeed(Number(e.target.value));
-                if (audioRef.current) audioRef.current.playbackRate = Number(e.target.value);
+                const newSpeed = Number(e.target.value);
+                setSpeed(newSpeed);
+                engine.setSpeed(newSpeed);
               }}
               className="rounded-lg border border-border bg-background px-3 py-2 text-sm font-sans text-foreground"
             >
@@ -885,7 +859,7 @@ export default function ChantPage() {
           </div>
         )}
 
-        {/* Loading state — skeleton loader */}
+        {/* Loading state */}
         {dbLoading && (
           <div className="mb-8">
             <VerseSkeleton count={3} />
@@ -916,7 +890,6 @@ export default function ChantPage() {
             </motion.div>
           )}
         </AnimatePresence>
-
 
         {/* Verses */}
         {!dbLoading && (
@@ -1086,11 +1059,7 @@ export default function ChantPage() {
           <div className="flex items-center justify-center gap-4">
             <button
               onClick={() => {
-                if (audioRef.current) {
-                  audioRef.current.pause();
-                  audioRef.current = null;
-                }
-                pausedRef.current = false;
+                stopAudio();
                 stopSloka();
                 setVerseProgress(0);
                 setHighlightedVerse(Math.max(0, highlightedVerse - 1));
@@ -1101,11 +1070,7 @@ export default function ChantPage() {
             </button>
             <button
               onClick={() => {
-                if (audioRef.current) {
-                  audioRef.current.pause();
-                  audioRef.current = null;
-                }
-                pausedRef.current = false;
+                stopAudio();
                 stopSloka();
                 setVerseProgress(0);
                 setHighlightedVerse(0);
@@ -1125,11 +1090,7 @@ export default function ChantPage() {
             </button>
             <button
               onClick={() => {
-                if (audioRef.current) {
-                  audioRef.current.pause();
-                  audioRef.current = null;
-                }
-                pausedRef.current = false;
+                stopAudio();
                 stopSloka();
                 setVerseProgress(0);
                 setHighlightedVerse(Math.min(displayVerses.length - 1, highlightedVerse + 1));
@@ -1154,7 +1115,7 @@ export default function ChantPage() {
                 key={s}
                 onClick={() => {
                   setSpeed(s);
-                  if (audioRef.current) audioRef.current.playbackRate = s;
+                  engine.setSpeed(s);
                 }}
                 className={`rounded-full px-2 py-0.5 text-[11px] font-sans transition-colors ${
                   speed === s
