@@ -151,7 +151,7 @@ async function fetchVerses(
 
 /** Call after auth is ready to prefetch dashakam list */
 export function prefetchDashakamList(): void {
-  fetchDashakamList().catch(() => {});
+  fetchDashakamListDirect().catch(() => {});
 }
 
 export function useDashakam(selectedDashakam: number, selectedLanguage: string = "en"): UseDashakamResult {
@@ -183,7 +183,7 @@ export function useDashakam(selectedDashakam: number, selectedLanguage: string =
   // Load dashakam list
   useEffect(() => {
     let cancelled = false;
-    fetchDashakamList().then((list) => {
+    fetchDashakamListDirect().then((list) => {
       if (!cancelled && list.length > 0) {
         setDashakamList(list);
       }
@@ -209,7 +209,7 @@ export function useDashakam(selectedDashakam: number, selectedLanguage: string =
 
     (async () => {
       try {
-        const list = await fetchDashakamList();
+        const list = await fetchDashakamListDirect();
         const dk = list.find((d) => d.dashakam_no === selectedDashakam);
         const numVerses = dk?.num_verses ?? 10;
 
