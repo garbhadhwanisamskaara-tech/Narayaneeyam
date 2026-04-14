@@ -238,7 +238,7 @@ export default function ScriptPage() {
                 >
                   <div className="flex items-center justify-between mb-3">
                     <span className="text-xs text-muted-foreground font-sans">
-                      Verse {verse.verse_no} · Meter: {verse.meter}
+                      Verse {verse.verse_no}{verse.meter ? ` · Meter ${verse.meter}` : ""}
                     </span>
                     <VerseIcons bell={false} prasadam={verse.prasadam_text} />
                   </div>
