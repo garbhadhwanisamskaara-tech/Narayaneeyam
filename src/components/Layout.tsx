@@ -53,6 +53,20 @@ export default function Layout({ children }: { children: React.ReactNode }) {
     else { document.documentElement.classList.remove("dark"); }
   }, []);
 
+  // Block rendering until auth state is resolved — never flash protected content
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary" />
+      </div>
+    );
+  }
+
+  // If not authenticated, render nothing — the useEffect redirect will kick in
+  if (!user) {
+    return null;
+  }
+
   return (
     <div className="min-h-screen bg-background">
       <header className="sticky top-0 z-50 bg-gradient-peacock shadow-peacock">
