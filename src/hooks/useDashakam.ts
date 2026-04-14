@@ -16,7 +16,6 @@ export interface MergedVerse {
   meter: string;
   has_bell: boolean;
   chant_audio_file: string;
-  learn_audio_file: string;
   sloka_audio_id: string | null;
   transliteration_text: string;
   translation_text: string;
@@ -49,7 +48,6 @@ function buildStaticVerses(staticDashakam: Dashakam): MergedVerse[] {
     meter: v.meter,
     has_bell: v.bell ?? false,
     chant_audio_file: v.audio ?? "",
-    learn_audio_file: "",
     sloka_audio_id: null,
     transliteration_text: v.english,
     translation_text: v.meaning_english,
@@ -83,7 +81,7 @@ async function fetchVerses(
       Promise.all([
         supabase
           .from("verses_audio")
-          .select("verse_no, chant_audio_file, learn_audio_file, sloka_audio_id")
+          .select("verse_no, chant_audio_file, sloka_audio_id")
           .eq("dashakam_no", selectedDashakam)
           .order("verse_no"),
         supabase
@@ -151,7 +149,6 @@ async function fetchVerses(
         meter: sv?.meter ?? "",
         has_bell: false,
         chant_audio_file: a?.chant_audio_file ?? "",
-        learn_audio_file: a?.learn_audio_file ?? "",
         sloka_audio_id: a?.sloka_audio_id ?? null,
         transliteration_text: l?.transliteration_text ?? sv?.english ?? "",
         translation_text: l?.translation_text ?? sv?.meaning_english ?? "",
@@ -293,11 +290,7 @@ export function useDashakam(selectedDashakam: number, selectedLanguage: string =
   const audioReady =
     !loading &&
     verses.length > 0 &&
-    verses.some(
-      (v) =>
-        (v.chant_audio_file && !v.chant_audio_file.startsWith("/Chant/")) ||
-        (v.learn_audio_file && !v.learn_audio_file.startsWith("/audio/")),
-    );
+    verses.some((v) => v.chant_audio_file && !v.chant_audio_file.startsWith("/Chant/"));
 
   return { dashakamList, verses, loading, error, staticDashakam, audioReady };
 }
