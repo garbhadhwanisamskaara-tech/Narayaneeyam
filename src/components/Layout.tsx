@@ -129,12 +129,15 @@ export default function Layout({ children }: { children: React.ReactNode }) {
             ) : null}
           </div>
 
-          <div className="lg:hidden flex items-center gap-2">
+          <div className="lg:hidden flex items-center gap-1">
             {!loading && user && (
-              <Link to="/support" className="text-primary-foreground/70 hover:text-primary-foreground p-2 transition-colors" title="Support"><LifeBuoy className="h-5 w-5" /></Link>
+              <span className="text-xs font-sans text-primary-foreground/80 max-w-[80px] truncate">{displayName}</span>
             )}
             {!loading && user && (
-              <button type="button" onClick={() => signOut()} className="text-primary-foreground/70 hover:text-primary-foreground p-2 transition-colors" title="Sign out"><LogOut className="h-5 w-5" /></button>
+              <Link to="/support" className="text-primary-foreground/70 hover:text-primary-foreground p-1.5 transition-colors" title="Support"><LifeBuoy className="h-4 w-4" /></Link>
+            )}
+            {!loading && user && (
+              <button type="button" onClick={() => signOut()} className="text-primary-foreground/70 hover:text-primary-foreground p-1.5 transition-colors" title="Sign out"><LogOut className="h-4 w-4" /></button>
             )}
             <button type="button" className="text-primary-foreground p-2" onClick={() => setMobileOpen(!mobileOpen)}>
               {mobileOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
