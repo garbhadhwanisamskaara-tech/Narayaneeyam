@@ -9,14 +9,12 @@ export interface DashakamListItem {
   remarks: string | null;
   gist: string | null;
   benefits: string | null;
-  title_sanskrit: string | null;
 }
 
 export interface MergedVerse {
   verse_no: number;
   sanskrit_text: string;
   meter: string;
-  has_bell: boolean;
   chant_audio_file: string;
   sloka_audio_id: string | null;
   transliteration_text: string;
@@ -60,7 +58,7 @@ async function fetchDashakamList(): Promise<DashakamListItem[]> {
         Promise.resolve(
           supabase
             .from("dashakams")
-            .select("dashakam_no, dashakam_name, num_verses, remarks, gist, benefits, title_sanskrit")
+            .select("dashakam_no, dashakam_name, num_verses, remarks, gist, benefits")
             .eq("language_code", "en")
             .eq("is_published", true)
             .order("dashakam_no"),
@@ -96,7 +94,7 @@ async function fetchVerses(
     Promise.all([
       supabase
         .from("verses_audio")
-        .select("verse_no, chant_audio_file, sloka_audio_id, has_bell")
+        .select("verse_no, chant_audio_file, sloka_audio_id")
         .eq("dashakam_no", selectedDashakam)
         .order("verse_no"),
       supabase
