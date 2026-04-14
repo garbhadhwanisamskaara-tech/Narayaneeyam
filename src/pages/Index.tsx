@@ -45,7 +45,7 @@ export default function Index() {
               className="inline-flex items-center gap-4 rounded-xl bg-card/90 backdrop-blur-sm px-6 py-4 shadow-gold">
               <div className="text-left">
                 <p className="text-sm text-muted-foreground font-sans">Continue where you left off</p>
-                <p className="font-display text-foreground font-semibold">Dashakam {progress.lastDashakam}, Para {progress.lastParagraph}</p>
+                <p className="font-display text-foreground font-semibold">Dashakam {progress.lastDashakam}, Verse {progress.lastParagraph}</p>
               </div>
               <div className="flex items-center gap-2 text-secondary">
                 <Flame className="h-5 w-5" />

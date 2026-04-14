@@ -728,7 +728,7 @@ export default function ChantPage() {
           </div>
 
           <div className="flex flex-col gap-1">
-            <label className="text-xs text-muted-foreground font-sans">Paragraph</label>
+            <label className="text-xs text-muted-foreground font-sans">Verse</label>
             <select
               value={selectedPara || "all"}
               onChange={(e) => setSelectedPara(e.target.value === "all" ? null : Number(e.target.value))}
@@ -737,7 +737,7 @@ export default function ChantPage() {
               <option value="all">All</option>
               {Array.from({ length: allVerses.length || 0 }, (_, i) => i + 1).map((n) => (
                 <option key={n} value={n}>
-                  Para {n}
+                  Verse {n}
                 </option>
               ))}
             </select>
@@ -978,7 +978,7 @@ export default function ChantPage() {
                       />
                     </div>
                   </div>
-                  <div className="font-body text-lg leading-relaxed">
+                  <div className="font-body text-base sm:text-lg leading-relaxed break-words overflow-wrap-anywhere">
                     {(() => {
                       const text = getVerseText(verse);
                       const lines = text.split("\n").filter(Boolean);
