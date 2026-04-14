@@ -108,7 +108,7 @@ export default function ChantPage() {
   const selectedLanguage = "en";
 
   // Live data from Supabase with static fallback
-  const { dashakamList, verses: dbVerses, loading: dbLoading, staticDashakam } = useDashakam(selectedDashakam, selectedLanguage);
+  const { dashakamList, verses: dbVerses, loading: dbLoading, staticDashakam, audioReady } = useDashakam(selectedDashakam, selectedLanguage);
   const { openingChants, dashakamClosingChant, sessionClosingChant } = useRitualChants(selectedLanguage);
 
   // Language fetch removed — default English only
