@@ -1,3 +1,4 @@
+import { useEffect } from "react";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -5,6 +6,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { SentryErrorBoundary } from "@/components/SentryErrorBoundary";
 import { AuthProvider } from "@/contexts/AuthContext";
+import { prefetchDashakamList } from "@/hooks/useDashakam";
 import Layout from "./components/Layout";
 import Index from "./pages/Index";
 import ChantPage from "./pages/ChantPage";
@@ -36,7 +38,12 @@ import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
 
-const App = () => (
+const App = () => {
+  useEffect(() => {
+    prefetchDashakamList();
+  }, []);
+
+  return (
   <SentryErrorBoundary>
   <QueryClientProvider client={queryClient}>
     <TooltipProvider>
@@ -83,6 +90,7 @@ const App = () => (
     </TooltipProvider>
   </QueryClientProvider>
   </SentryErrorBoundary>
-);
+  );
+};
 
 export default App;
