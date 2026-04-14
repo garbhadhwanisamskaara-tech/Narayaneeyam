@@ -437,6 +437,10 @@ export default function ChantPage() {
       logAudioEvent("audio_pause", selectedDashakam, displayVerses[highlightedVerse]?.paragraph || 0, "");
       setIsPlaying(false);
     } else {
+      if (!audioReady) {
+        console.warn("Audio not ready — waiting for Supabase data");
+        return;
+      }
       if (!hasPlayedOpening && openingChants.length > 0) { setRitualPhase("opening"); return; }
       logEvent("chant_started", { dashakam: selectedDashakam });
       setIsPlaying(true);
