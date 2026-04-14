@@ -52,7 +52,7 @@ export default function ChantPage() {
   const [searchParams] = useSearchParams();
   const [selectedDashakam, setSelectedDashakam] = useState(DEFAULT_DASHAKAM);
   const [selectedPara, setSelectedPara] = useState<number | null>(null);
-  const [translitLang, setTranslitLang] = useState<TransliterationLanguage>("sanskrit");
+  const [translitLang, setTranslitLang] = useState<TransliterationLanguage>("english");
   const [showMeaning, setShowMeaning] = useState(false);
   const [showGist, setShowGist] = useState(false);
   const [showBenefit, setShowBenefit] = useState(false);
