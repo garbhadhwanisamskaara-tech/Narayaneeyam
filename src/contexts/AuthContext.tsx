@@ -146,14 +146,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   const signOut = async () => {
-    return trackSpan("auth.signOut", "auth", async () => {
+    try {
       logEvent("user_logout");
       setIsAdmin(false);
       setIsFounder(false);
       setProfile(null);
       await supabase.auth.signOut();
+    } catch (e) {
+      console.error("Sign-out error:", e);
+    } finally {
       window.location.href = "/auth";
-    });
+    }
   };
 
   return (
