@@ -69,6 +69,7 @@ async function fetchDashakamList(): Promise<DashakamListItem[]> {
           supabase
             .from("dashakams")
             .select("dashakam_no, dashakam_name, num_verses, remarks, gist, benefits")
+            .eq("language_code", "en")
             .order("dashakam_no"),
         ),
         30000,
