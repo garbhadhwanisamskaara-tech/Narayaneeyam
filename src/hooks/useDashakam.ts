@@ -35,6 +35,7 @@ interface UseDashakamResult {
 const verseCache = new Map<string, MergedVerse[]>();
 let dashakamListCache: DashakamListItem[] | null = null;
 let dashakamListPromise: Promise<DashakamListItem[]> | null = null;
+let dashakamListAttempts = 0;
 
 function getCacheKey(dashakam: number, lang: string) {
   return `${dashakam}:${lang}`;
