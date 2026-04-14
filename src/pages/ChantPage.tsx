@@ -1,7 +1,18 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { useSearchParams } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
-import { Play, Pause, SkipBack, SkipForward, RotateCcw, ChevronDown, ChevronUp, Volume2, Square, ListMusic } from "lucide-react";
+import {
+  Play,
+  Pause,
+  SkipBack,
+  SkipForward,
+  RotateCcw,
+  ChevronDown,
+  ChevronUp,
+  Volume2,
+  Square,
+  ListMusic,
+} from "lucide-react";
 import PlaylistBuilder from "@/components/PlaylistBuilder";
 import PlaylistBar from "@/components/PlaylistBar";
 import { usePlaylist, type PlaylistItem } from "@/hooks/usePlaylist";
@@ -12,10 +23,7 @@ import { useFavourites } from "@/hooks/useFavourites";
 import BookmarkButton from "@/components/BookmarkButton";
 import FavouriteButton from "@/components/FavouriteButton";
 import RemoveBottomSheet from "@/components/RemoveBottomSheet";
-import {
-  TRANSLITERATION_LANGUAGES,
-  type TransliterationLanguage,
-} from "@/data/narayaneeyam";
+import { TRANSLITERATION_LANGUAGES, type TransliterationLanguage } from "@/data/narayaneeyam";
 import { useDashakam } from "@/hooks/useDashakam";
 import { getStorageUrl } from "@/lib/storageUrl";
 import { useRitualChants } from "@/hooks/useRitualChants";
@@ -30,7 +38,6 @@ import { Slider } from "@/components/ui/slider";
 import { useMemberProgress } from "@/hooks/useMemberProgress";
 import ContinueBanner from "@/components/ContinueBanner";
 import { AnimatePresence as AP2 } from "framer-motion";
-
 
 type RitualPhase = "idle" | "opening" | "dashakam_end" | "session_end";
 
@@ -49,8 +56,13 @@ export default function ChantPage() {
   const [currentLoopIteration, setCurrentLoopIteration] = useState(0);
   const [verseProgress, setVerseProgress] = useState(0);
   const [activeLine, setActiveLine] = useState(0);
-  const [removeTarget, setRemoveTarget] = useState<{ type: "bookmark" | "favourite"; verseId: string; dashakam: number; verse: number } | null>(null);
-  
+  const [removeTarget, setRemoveTarget] = useState<{
+    type: "bookmark" | "favourite";
+    verseId: string;
+    dashakam: number;
+    verse: number;
+  } | null>(null);
+
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const pausedRef = useRef(false);
   const gapTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -68,7 +80,16 @@ export default function ChantPage() {
   const { activeSlokaScript, activeSlokaTranslation, isSlokaPlaying, handlePostVerse, stopSloka } = useSlokaPlayback();
 
   // Member progress tracking
-  const { lastPosition, fetchVerseStatuses, markVerseStarted, markVerseFinished, checkDashakamCompletion, getVerseStatus, dismissBanner, isGuest } = useMemberProgress("chant");
+  const {
+    lastPosition,
+    fetchVerseStatuses,
+    markVerseStarted,
+    markVerseFinished,
+    checkDashakamCompletion,
+    getVerseStatus,
+    dismissBanner,
+    isGuest,
+  } = useMemberProgress("chant");
 
   // ── Playlist state ──
   const [playlistOpen, setPlaylistOpen] = useState(false);
@@ -80,7 +101,13 @@ export default function ChantPage() {
 
   const inPlaylistMode = playlistItems !== null && playlistItems.length > 0;
 
-  const handleStartPlaylist = (items: PlaylistItem[], plId?: string, resumeIdx?: number, resumeVerse?: number, resumeLoop?: number) => {
+  const handleStartPlaylist = (
+    items: PlaylistItem[],
+    plId?: string,
+    resumeIdx?: number,
+    resumeVerse?: number,
+    resumeLoop?: number,
+  ) => {
     setPlaylistItems(items);
     setPlaylistId(plId);
     const idx = resumeIdx ?? 0;
@@ -90,7 +117,10 @@ export default function ChantPage() {
     setHighlightedVerse(resumeVerse ? resumeVerse - 1 : 0);
     setSelectedPara(null);
     setVerseProgress(0);
-    if (audioRef.current) { audioRef.current.pause(); audioRef.current = null; }
+    if (audioRef.current) {
+      audioRef.current.pause();
+      audioRef.current = null;
+    }
     pausedRef.current = false;
   };
 
@@ -104,17 +134,23 @@ export default function ChantPage() {
   const selectedLanguage = "en";
 
   // Live data from Supabase
-  const { dashakamList, verses: dbVerses, loading: dbLoading, audioReady } = useDashakam(selectedDashakam, selectedLanguage);
+  const {
+    dashakamList,
+    verses: dbVerses,
+    loading: dbLoading,
+    audioReady,
+  } = useDashakam(selectedDashakam, selectedLanguage);
   const { openingChants, dashakamClosingChant, sessionClosingChant } = useRitualChants(selectedLanguage);
 
   // Build the dashakam dropdown list from DB
-  const dropdownList = dashakamList.filter((d) => d.dashakam_no <= 10).map((d) => ({ id: d.dashakam_no, title: d.dashakam_name }));
+  const dropdownList = dashakamList
+    .filter((d) => d.dashakam_no <= 10)
+    .map((d) => ({ id: d.dashakam_no, title: d.dashakam_name }));
 
   // Get dashakam metadata from DB list
   const dashakamMeta = dashakamList.find((d) => d.dashakam_no === selectedDashakam);
 
   // (removed — learn mode deleted)
-  
 
   // Convert dbVerses to display format
   const allVerses = dbVerses.map((mv) => {
@@ -133,19 +169,30 @@ export default function ChantPage() {
       bell: false,
       prasadam: mv.prasadam_text || undefined,
       sloka_audio_id: mv.sloka_audio_id,
-      tamil: "", malayalam: "", telugu: "", kannada: "", hindi: "", marathi: "",
-      meaning_tamil: "", meaning_malayalam: "", meaning_telugu: "",
-      meaning_kannada: "", meaning_hindi: "", meaning_marathi: "",
+      tamil: "",
+      malayalam: "",
+      telugu: "",
+      kannada: "",
+      hindi: "",
+      marathi: "",
+      meaning_tamil: "",
+      meaning_malayalam: "",
+      meaning_telugu: "",
+      meaning_kannada: "",
+      meaning_hindi: "",
+      meaning_marathi: "",
     };
   });
 
   // Progressive loading: show first 3 verses instantly, rest after paint
   const [showAll, setShowAll] = useState(false);
-  useEffect(() => { setShowAll(false); const t = setTimeout(() => setShowAll(true), 50); return () => clearTimeout(t); }, [selectedDashakam, selectedPara]);
+  useEffect(() => {
+    setShowAll(false);
+    const t = setTimeout(() => setShowAll(true), 50);
+    return () => clearTimeout(t);
+  }, [selectedDashakam, selectedPara]);
 
-  const displayVerses = selectedPara
-    ? allVerses.filter((v) => v.paragraph === selectedPara)
-    : allVerses;
+  const displayVerses = selectedPara ? allVerses.filter((v) => v.paragraph === selectedPara) : allVerses;
   const hasVerses = displayVerses.length > 0;
   const visibleVerses = showAll ? displayVerses : displayVerses.slice(0, 3);
 
@@ -154,7 +201,10 @@ export default function ChantPage() {
     const qd = searchParams.get("dashakam");
     if (qd) {
       const num = parseInt(qd, 10);
-      if (num >= 1 && num <= 100) { setSelectedDashakam(num); return; }
+      if (num >= 1 && num <= 100) {
+        setSelectedDashakam(num);
+        return;
+      }
     }
     const progress = getProgress();
     if (progress.chantState) {
@@ -176,21 +226,25 @@ export default function ChantPage() {
   }, [selectedDashakam, selectedPara, highlightedVerse]);
 
   // Fetch verse statuses when dashakam changes
-  useEffect(() => { fetchVerseStatuses(selectedDashakam); }, [selectedDashakam, fetchVerseStatuses]);
+  useEffect(() => {
+    fetchVerseStatuses(selectedDashakam);
+  }, [selectedDashakam, fetchVerseStatuses]);
 
   // Scroll-to-center helper
   const scrollToVerse = useCallback((idx: number) => {
     const el = verseRefsMap.current.get(idx);
     if (!el) return;
     programmaticScrollRef.current = true;
-    const container = el.closest('.overflow-y-auto') || el.closest('.overflow-auto') || window;
+    const container = el.closest(".overflow-y-auto") || el.closest(".overflow-auto") || window;
     const isWindow = container === window;
     const elTop = isWindow ? el.getBoundingClientRect().top + window.scrollY : (el as HTMLElement).offsetTop;
     const viewH = isWindow ? window.innerHeight : (container as HTMLElement).clientHeight;
-    (isWindow ? window : container).scrollTo({ top: elTop - viewH / 2 + el.offsetHeight / 2, behavior: 'smooth' });
+    (isWindow ? window : container).scrollTo({ top: elTop - viewH / 2 + el.offsetHeight / 2, behavior: "smooth" });
     // Release programmatic scroll lock after animation
     if (scrollTimeoutRef.current) clearTimeout(scrollTimeoutRef.current);
-    scrollTimeoutRef.current = setTimeout(() => { programmaticScrollRef.current = false; }, 600);
+    scrollTimeoutRef.current = setTimeout(() => {
+      programmaticScrollRef.current = false;
+    }, 600);
   }, []);
 
   // Auto-scroll whenever active verse changes
@@ -201,12 +255,18 @@ export default function ChantPage() {
 
   // Compute active line from verse progress
   useEffect(() => {
-    if (!isPlaying) { setActiveLine(0); return; }
+    if (!isPlaying) {
+      setActiveLine(0);
+      return;
+    }
     const verse = displayVerses[highlightedVerse];
     if (!verse) return;
     const text = getVerseText(verse);
     const lines = text.split("\n").filter(Boolean);
-    if (lines.length <= 1) { setActiveLine(0); return; }
+    if (lines.length <= 1) {
+      setActiveLine(0);
+      return;
+    }
     const lineIdx = Math.min(Math.floor((verseProgress / 100) * lines.length), lines.length - 1);
     setActiveLine(lineIdx);
   }, [verseProgress, isPlaying, highlightedVerse, displayVerses.length]);
@@ -220,7 +280,9 @@ export default function ChantPage() {
     programmaticScrollRef.current = true;
     el.scrollIntoView({ behavior: "smooth", block: "center" });
     if (scrollTimeoutRef.current) clearTimeout(scrollTimeoutRef.current);
-    scrollTimeoutRef.current = setTimeout(() => { programmaticScrollRef.current = false; }, 600);
+    scrollTimeoutRef.current = setTimeout(() => {
+      programmaticScrollRef.current = false;
+    }, 600);
   }, [activeLine, highlightedVerse, isPlaying]);
 
   // Manual scroll detection — find verse closest to viewport center
@@ -248,7 +310,10 @@ export default function ChantPage() {
 
         if (closestIdx !== highlightedVerse) {
           // Stop current audio, switch to the scroll-detected verse
-          if (audioRef.current) { audioRef.current.pause(); audioRef.current = null; }
+          if (audioRef.current) {
+            audioRef.current.pause();
+            audioRef.current = null;
+          }
           pausedRef.current = false;
           stopSloka();
           setVerseProgress(0);
@@ -317,15 +382,33 @@ export default function ChantPage() {
       setVerseProgress(0);
       gapTimerRef.current = setTimeout(() => {
         setHighlightedVerse((prev) => prev + 1);
-        if (inPlaylistMode && playlistId) savePlaylistProgress(playlistId, playlistIndex, highlightedVerse + 2, playlistLoop);
+        if (inPlaylistMode && playlistId)
+          savePlaylistProgress(playlistId, playlistIndex, highlightedVerse + 2, playlistLoop);
       }, 1500);
     }
-  }, [highlightedVerse, displayVerses.length, loopCount, currentLoopIteration, dashakamClosingChant, inPlaylistMode, playlistItems, playlistIndex, playlistLoop, playlistId, savePlaylistProgress]);
+  }, [
+    highlightedVerse,
+    displayVerses.length,
+    loopCount,
+    currentLoopIteration,
+    dashakamClosingChant,
+    inPlaylistMode,
+    playlistItems,
+    playlistIndex,
+    playlistLoop,
+    playlistId,
+    savePlaylistProgress,
+  ]);
 
   // After verse audio ends, check for sloka before advancing
   const handleVerseEnded = useCallback(() => {
     const currentVerse = displayVerses[highlightedVerse];
-    if (!currentVerse) { advanceToNextVerse(); return; }
+    console.log("CURRENT VERSE:", currentVerse);
+    console.log("AUDIO URL:", currentVerse?.audio);
+    if (!currentVerse) {
+      advanceToNextVerse();
+      return;
+    }
 
     logAudioEvent("audio_complete", selectedDashakam, currentVerse.paragraph, currentVerse.audio || "");
     // Mark verse finished in member_progress
@@ -334,21 +417,28 @@ export default function ChantPage() {
     });
 
     if (currentVerse.sloka_audio_id) {
-      handlePostVerse(
-        currentVerse.sloka_audio_id,
-        selectedLanguage,
-        "chant",
-        speed,
-        () => advanceToNextVerse()
-      );
+      handlePostVerse(currentVerse.sloka_audio_id, selectedLanguage, "chant", speed, () => advanceToNextVerse());
     } else {
       advanceToNextVerse();
     }
-  }, [highlightedVerse, displayVerses, selectedDashakam, selectedLanguage, speed, handlePostVerse, advanceToNextVerse, markVerseFinished, checkDashakamCompletion, allVerses.length]);
+  }, [
+    highlightedVerse,
+    displayVerses,
+    selectedDashakam,
+    selectedLanguage,
+    speed,
+    handlePostVerse,
+    advanceToNextVerse,
+    markVerseFinished,
+    checkDashakamCompletion,
+    allVerses.length,
+  ]);
 
   // Stable ref so the audio effect doesn't re-run when callbacks change
   const handleVerseEndedRef = useRef(handleVerseEnded);
-  useEffect(() => { handleVerseEndedRef.current = handleVerseEnded; }, [handleVerseEnded]);
+  useEffect(() => {
+    handleVerseEndedRef.current = handleVerseEnded;
+  }, [handleVerseEnded]);
 
   // Real audio playback
   useEffect(() => {
@@ -358,7 +448,7 @@ export default function ChantPage() {
 
     if (pausedRef.current && audioRef.current && !audioRef.current.ended) {
       audioRef.current.playbackRate = speed;
-      console.log('Resuming audio URL:', audioRef.current.src);
+      console.log("Resuming audio URL:", audioRef.current.src);
       audioRef.current.play().catch((err) => console.error("Audio play error:", err));
       pausedRef.current = false;
       logAudioEvent("audio_play", selectedDashakam, currentVerse?.paragraph || 0, "resume");
@@ -369,32 +459,49 @@ export default function ChantPage() {
       };
       audio.addEventListener("timeupdate", updateProgress);
       audio.onended = () => handleVerseEndedRef.current();
-      return () => { audio.removeEventListener("timeupdate", updateProgress); audio.onended = null; };
+      return () => {
+        audio.removeEventListener("timeupdate", updateProgress);
+        audio.onended = null;
+      };
     }
 
     if (currentVerse?.audio) {
       const loadStart = performance.now();
-      console.log('Playing audio URL:', currentVerse.audio);
+      console.log("Playing audio URL:", currentVerse.audio);
       const audio = new Audio(currentVerse.audio);
       audioRef.current = audio;
       audio.playbackRate = speed;
       pausedRef.current = false;
 
-      audio.addEventListener("canplaythrough", () => {
-        const loadTime = Math.round(performance.now() - loadStart);
-        const eventType = loadTime > 1500 ? "audio_load_slow" : "audio_load";
-        logAudioEvent(eventType, selectedDashakam, currentVerse.paragraph, currentVerse.audio!, { load_time_ms: loadTime });
-      }, { once: true });
+      audio.addEventListener(
+        "canplaythrough",
+        () => {
+          const loadTime = Math.round(performance.now() - loadStart);
+          const eventType = loadTime > 1500 ? "audio_load_slow" : "audio_load";
+          logAudioEvent(eventType, selectedDashakam, currentVerse.paragraph, currentVerse.audio!, {
+            load_time_ms: loadTime,
+          });
+        },
+        { once: true },
+      );
 
       audio.addEventListener("error", () => {
         const errMsg = audio.error?.message || "Unknown audio error";
-        logAudioEvent("audio_error", selectedDashakam, currentVerse.paragraph, currentVerse.audio!, { error_message: errMsg });
-        captureAudioError(new Error(errMsg), { dashakam: selectedDashakam, verse: currentVerse.paragraph, audio_file: currentVerse.audio });
+        logAudioEvent("audio_error", selectedDashakam, currentVerse.paragraph, currentVerse.audio!, {
+          error_message: errMsg,
+        });
+        captureAudioError(new Error(errMsg), {
+          dashakam: selectedDashakam,
+          verse: currentVerse.paragraph,
+          audio_file: currentVerse.audio,
+        });
       });
 
       audio.play().catch((err) => {
         console.error("Audio play error:", err);
-        logAudioEvent("audio_error", selectedDashakam, currentVerse.paragraph, currentVerse.audio!, { error_message: String(err) });
+        logAudioEvent("audio_error", selectedDashakam, currentVerse.paragraph, currentVerse.audio!, {
+          error_message: String(err),
+        });
       });
       logAudioEvent("audio_play", selectedDashakam, currentVerse.paragraph, currentVerse.audio!);
 
@@ -403,19 +510,28 @@ export default function ChantPage() {
       };
       audio.addEventListener("timeupdate", updateProgress);
       audio.onended = () => handleVerseEndedRef.current();
-      return () => { audio.pause(); audio.removeEventListener("timeupdate", updateProgress); audio.onended = null; };
+      return () => {
+        audio.pause();
+        audio.removeEventListener("timeupdate", updateProgress);
+        audio.onended = null;
+      };
     } else {
       // No valid audio URL — skip to next verse after a short delay
-      console.warn('No valid audio URL for verse', currentVerse?.paragraph, '— skipping');
+      console.warn("No valid audio URL for verse", currentVerse?.paragraph, "— skipping");
       gapTimerRef.current = setTimeout(() => handleVerseEndedRef.current(), 2000);
-      return () => { if (gapTimerRef.current) clearTimeout(gapTimerRef.current); };
+      return () => {
+        if (gapTimerRef.current) clearTimeout(gapTimerRef.current);
+      };
     }
   }, [isPlaying, highlightedVerse, displayVerses.length, speed, isSlokaPlaying]);
 
   // Cleanup on unmount — stop audio when navigating away
   useEffect(() => {
     return () => {
-      if (audioRef.current) { audioRef.current.pause(); audioRef.current = null; }
+      if (audioRef.current) {
+        audioRef.current.pause();
+        audioRef.current = null;
+      }
       if (gapTimerRef.current) clearTimeout(gapTimerRef.current);
     };
   }, []);
@@ -424,7 +540,10 @@ export default function ChantPage() {
 
   const handlePlayPause = () => {
     if (isPlaying) {
-      if (audioRef.current) { audioRef.current.pause(); pausedRef.current = true; }
+      if (audioRef.current) {
+        audioRef.current.pause();
+        pausedRef.current = true;
+      }
       stopSloka();
       logAudioEvent("audio_pause", selectedDashakam, displayVerses[highlightedVerse]?.paragraph || 0, "");
       setIsPlaying(false);
@@ -433,14 +552,20 @@ export default function ChantPage() {
         console.warn("Audio not ready — waiting for Supabase data");
         return;
       }
-      if (!hasPlayedOpening && openingChants.length > 0) { setRitualPhase("opening"); return; }
+      if (!hasPlayedOpening && openingChants.length > 0) {
+        setRitualPhase("opening");
+        return;
+      }
       logEvent("chant_started", { dashakam: selectedDashakam });
       setIsPlaying(true);
     }
   };
 
   const handleEndSession = () => {
-    if (audioRef.current) { audioRef.current.pause(); audioRef.current = null; }
+    if (audioRef.current) {
+      audioRef.current.pause();
+      audioRef.current = null;
+    }
     pausedRef.current = false;
     stopSloka();
     setIsPlaying(false);
@@ -460,25 +585,21 @@ export default function ChantPage() {
     }
   };
 
-  const getVerseText = (verse: typeof allVerses[0]) => {
+  const getVerseText = (verse: (typeof allVerses)[0]) => {
     if (translitLang === "sanskrit") return verse.sanskrit;
     if (translitLang === "english") return verse.english;
     return verse.english || verse.sanskrit;
   };
 
-  const getMeaning = (verse: typeof allVerses[0]) => verse.meaning_english;
+  const getMeaning = (verse: (typeof allVerses)[0]) => verse.meaning_english;
 
   return (
     <div className="container mx-auto px-4 py-8 select-none" onContextMenu={(e) => e.preventDefault()}>
       <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
         <div className="mb-8 flex items-center justify-between flex-wrap gap-2">
           <div>
-            <h1 className="font-display text-3xl font-bold text-foreground mb-2">
-              Chant with Me
-            </h1>
-            <p className="text-muted-foreground font-sans">
-              Follow along with synchronized text highlighting
-            </p>
+            <h1 className="font-display text-3xl font-bold text-foreground mb-2">Chant with Me</h1>
+            <p className="text-muted-foreground font-sans">Follow along with synchronized text highlighting</p>
           </div>
           <div className="flex items-center gap-2">
             <button
@@ -516,21 +637,35 @@ export default function ChantPage() {
             onPrevDashakam={() => {
               if (playlistIndex > 0) {
                 const newIdx = playlistIndex - 1;
-                setPlaylistIndex(newIdx); setPlaylistLoop(0);
+                setPlaylistIndex(newIdx);
+                setPlaylistLoop(0);
                 setSelectedDashakam(playlistItems![newIdx].dashakam_no);
-                setHighlightedVerse(0); setSelectedPara(null); setVerseProgress(0);
-                if (audioRef.current) { audioRef.current.pause(); audioRef.current = null; }
-                pausedRef.current = false; stopSloka();
+                setHighlightedVerse(0);
+                setSelectedPara(null);
+                setVerseProgress(0);
+                if (audioRef.current) {
+                  audioRef.current.pause();
+                  audioRef.current = null;
+                }
+                pausedRef.current = false;
+                stopSloka();
               }
             }}
             onNextDashakam={() => {
               if (playlistIndex < playlistItems!.length - 1) {
                 const newIdx = playlistIndex + 1;
-                setPlaylistIndex(newIdx); setPlaylistLoop(0);
+                setPlaylistIndex(newIdx);
+                setPlaylistLoop(0);
                 setSelectedDashakam(playlistItems![newIdx].dashakam_no);
-                setHighlightedVerse(0); setSelectedPara(null); setVerseProgress(0);
-                if (audioRef.current) { audioRef.current.pause(); audioRef.current = null; }
-                pausedRef.current = false; stopSloka();
+                setHighlightedVerse(0);
+                setSelectedPara(null);
+                setVerseProgress(0);
+                if (audioRef.current) {
+                  audioRef.current.pause();
+                  audioRef.current = null;
+                }
+                pausedRef.current = false;
+                stopSloka();
               }
             }}
             onSkipLoop={() => {
@@ -539,9 +674,15 @@ export default function ChantPage() {
               if (nextIdx < playlistItems!.length) {
                 setPlaylistIndex(nextIdx);
                 setSelectedDashakam(playlistItems![nextIdx].dashakam_no);
-                setHighlightedVerse(0); setSelectedPara(null); setVerseProgress(0);
-                if (audioRef.current) { audioRef.current.pause(); audioRef.current = null; }
-                pausedRef.current = false; stopSloka();
+                setHighlightedVerse(0);
+                setSelectedPara(null);
+                setVerseProgress(0);
+                if (audioRef.current) {
+                  audioRef.current.pause();
+                  audioRef.current = null;
+                }
+                pausedRef.current = false;
+                stopSloka();
               }
             }}
             onExit={exitPlaylist}
@@ -552,50 +693,101 @@ export default function ChantPage() {
         <div className="flex flex-wrap gap-3 mb-6 rounded-xl bg-card border border-border p-4">
           <div className="flex flex-col gap-1">
             <label className="text-xs text-muted-foreground font-sans">Dashakam</label>
-            <select value={selectedDashakam} onChange={(e) => { setSelectedDashakam(Number(e.target.value)); setSelectedPara(null); setHighlightedVerse(0); setShowGist(false); setVerseProgress(0); if (audioRef.current) { audioRef.current.pause(); audioRef.current = null; } pausedRef.current = false; stopSloka(); }}
-              className="rounded-lg border border-border bg-background px-3 py-2 text-sm font-sans text-foreground">
-              {dropdownList.map((d) => (<option key={d.id} value={d.id}>{d.id}. {d.title}</option>))}
+            <select
+              value={selectedDashakam}
+              onChange={(e) => {
+                setSelectedDashakam(Number(e.target.value));
+                setSelectedPara(null);
+                setHighlightedVerse(0);
+                setShowGist(false);
+                setVerseProgress(0);
+                if (audioRef.current) {
+                  audioRef.current.pause();
+                  audioRef.current = null;
+                }
+                pausedRef.current = false;
+                stopSloka();
+              }}
+              className="rounded-lg border border-border bg-background px-3 py-2 text-sm font-sans text-foreground"
+            >
+              {dropdownList.map((d) => (
+                <option key={d.id} value={d.id}>
+                  {d.id}. {d.title}
+                </option>
+              ))}
             </select>
           </div>
 
           <div className="flex flex-col gap-1">
             <label className="text-xs text-muted-foreground font-sans">Paragraph</label>
-            <select value={selectedPara || "all"} onChange={(e) => setSelectedPara(e.target.value === "all" ? null : Number(e.target.value))}
-              className="rounded-lg border border-border bg-background px-3 py-2 text-sm font-sans text-foreground">
+            <select
+              value={selectedPara || "all"}
+              onChange={(e) => setSelectedPara(e.target.value === "all" ? null : Number(e.target.value))}
+              className="rounded-lg border border-border bg-background px-3 py-2 text-sm font-sans text-foreground"
+            >
               <option value="all">All</option>
               {Array.from({ length: allVerses.length || 0 }, (_, i) => i + 1).map((n) => (
-                <option key={n} value={n}>Para {n}</option>
+                <option key={n} value={n}>
+                  Para {n}
+                </option>
               ))}
             </select>
           </div>
 
           <div className="flex flex-col gap-1">
             <label className="text-xs text-muted-foreground font-sans">Transliteration</label>
-            <select value={translitLang} onChange={(e) => setTranslitLang(e.target.value as TransliterationLanguage)}
-              className="rounded-lg border border-border bg-background px-3 py-2 text-sm font-sans text-foreground">
-              {TRANSLITERATION_LANGUAGES.map((l) => (<option key={l.value} value={l.value}>{l.label}</option>))}
+            <select
+              value={translitLang}
+              onChange={(e) => setTranslitLang(e.target.value as TransliterationLanguage)}
+              className="rounded-lg border border-border bg-background px-3 py-2 text-sm font-sans text-foreground"
+            >
+              {TRANSLITERATION_LANGUAGES.map((l) => (
+                <option key={l.value} value={l.value}>
+                  {l.label}
+                </option>
+              ))}
             </select>
           </div>
 
           <div className="flex flex-col gap-1">
             <label className="text-xs text-muted-foreground font-sans">Speed</label>
-            <select value={speed} onChange={(e) => { setSpeed(Number(e.target.value)); if (audioRef.current) audioRef.current.playbackRate = Number(e.target.value); }}
-              className="rounded-lg border border-border bg-background px-3 py-2 text-sm font-sans text-foreground">
-              <option value={0.5}>0.5×</option><option value={0.75}>0.75×</option><option value={1}>1×</option><option value={1.25}>1.25×</option><option value={1.5}>1.5×</option><option value={2}>2×</option>
+            <select
+              value={speed}
+              onChange={(e) => {
+                setSpeed(Number(e.target.value));
+                if (audioRef.current) audioRef.current.playbackRate = Number(e.target.value);
+              }}
+              className="rounded-lg border border-border bg-background px-3 py-2 text-sm font-sans text-foreground"
+            >
+              <option value={0.5}>0.5×</option>
+              <option value={0.75}>0.75×</option>
+              <option value={1}>1×</option>
+              <option value={1.25}>1.25×</option>
+              <option value={1.5}>1.5×</option>
+              <option value={2}>2×</option>
             </select>
           </div>
 
           <div className="flex flex-col gap-1">
             <label className="text-xs text-muted-foreground font-sans">Loop</label>
-            <select value={loopCount} onChange={(e) => setLoopCount(Number(e.target.value))}
-              className="rounded-lg border border-border bg-background px-3 py-2 text-sm font-sans text-foreground">
-              {[1, 2, 3, 5, 10].map((n) => (<option key={n} value={n}>{n}×</option>))}
+            <select
+              value={loopCount}
+              onChange={(e) => setLoopCount(Number(e.target.value))}
+              className="rounded-lg border border-border bg-background px-3 py-2 text-sm font-sans text-foreground"
+            >
+              {[1, 2, 3, 5, 10].map((n) => (
+                <option key={n} value={n}>
+                  {n}×
+                </option>
+              ))}
             </select>
           </div>
 
           <div className="flex flex-col gap-1 justify-end">
-            <button onClick={() => setShowMeaning(!showMeaning)}
-              className={`rounded-lg px-3 py-2 text-sm font-sans transition-colors ${showMeaning ? "bg-primary text-primary-foreground" : "border border-border bg-background text-foreground hover:bg-muted"}`}>
+            <button
+              onClick={() => setShowMeaning(!showMeaning)}
+              className={`rounded-lg px-3 py-2 text-sm font-sans transition-colors ${showMeaning ? "bg-primary text-primary-foreground" : "border border-border bg-background text-foreground hover:bg-muted"}`}
+            >
               {showMeaning ? "Hide Meaning" : "Show Meaning"}
             </button>
           </div>
@@ -605,17 +797,23 @@ export default function ChantPage() {
         {dashakamMeta && (
           <div className="mb-6">
             <div className="rounded-xl bg-gradient-peacock p-5">
-              <h2 className="font-display text-xl font-semibold text-primary-foreground mb-1">{dashakamMeta.dashakam_name}</h2>
+              <h2 className="font-display text-xl font-semibold text-primary-foreground mb-1">
+                {dashakamMeta.dashakam_name}
+              </h2>
               <p className="text-gold-light font-sans text-sm mb-1">{dashakamMeta.dashakam_name}</p>
               <div className="mt-3 flex items-center gap-2">
-                <button onClick={() => setShowGist(!showGist)}
-                  className="inline-flex items-center gap-1 rounded-lg bg-primary-foreground/10 px-3 py-1.5 text-xs text-gold-light font-sans hover:bg-primary-foreground/20 transition-colors">
+                <button
+                  onClick={() => setShowGist(!showGist)}
+                  className="inline-flex items-center gap-1 rounded-lg bg-primary-foreground/10 px-3 py-1.5 text-xs text-gold-light font-sans hover:bg-primary-foreground/20 transition-colors"
+                >
                   {showGist ? <ChevronUp className="h-3 w-3" /> : <ChevronDown className="h-3 w-3" />}
                   {showGist ? "Hide Gist" : "View Gist"}
                 </button>
                 {dashakamMeta.benefits && (
-                  <button onClick={() => setShowBenefit(!showBenefit)}
-                    className="inline-flex items-center gap-1 rounded-lg bg-primary-foreground/10 px-3 py-1.5 text-xs text-gold-light font-sans hover:bg-primary-foreground/20 transition-colors">
+                  <button
+                    onClick={() => setShowBenefit(!showBenefit)}
+                    className="inline-flex items-center gap-1 rounded-lg bg-primary-foreground/10 px-3 py-1.5 text-xs text-gold-light font-sans hover:bg-primary-foreground/20 transition-colors"
+                  >
                     {showBenefit ? <ChevronUp className="h-3 w-3" /> : <ChevronDown className="h-3 w-3" />}
                     {showBenefit ? "Hide Benefit" : "View Benefit"}
                   </button>
@@ -624,14 +822,24 @@ export default function ChantPage() {
             </div>
             <AnimatePresence>
               {showGist && dashakamMeta.gist && (
-                <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: "auto", opacity: 1 }} exit={{ height: 0, opacity: 0 }} className="overflow-hidden">
+                <motion.div
+                  initial={{ height: 0, opacity: 0 }}
+                  animate={{ height: "auto", opacity: 1 }}
+                  exit={{ height: 0, opacity: 0 }}
+                  className="overflow-hidden"
+                >
                   <div className="rounded-b-xl border border-t-0 border-border bg-card p-4">
                     <p className="text-sm text-foreground font-sans leading-relaxed">{dashakamMeta.gist}</p>
                   </div>
                 </motion.div>
               )}
               {showBenefit && dashakamMeta.benefits && (
-                <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: "auto", opacity: 1 }} exit={{ height: 0, opacity: 0 }} className="overflow-hidden">
+                <motion.div
+                  initial={{ height: 0, opacity: 0 }}
+                  animate={{ height: "auto", opacity: 1 }}
+                  exit={{ height: 0, opacity: 0 }}
+                  className="overflow-hidden"
+                >
                   <div className="rounded-b-xl border border-t-0 border-border bg-card p-4">
                     <p className="text-sm text-foreground font-sans leading-relaxed">✨ {dashakamMeta.benefits}</p>
                   </div>
@@ -676,34 +884,57 @@ export default function ChantPage() {
         {/* DEBUG: Raw DB data for verse 1 */}
         {!dbLoading && selectedDashakam === 1 && (
           <div className="mb-4 rounded-xl border-2 border-dashed border-yellow-500 bg-yellow-50 dark:bg-yellow-900/20 p-4 text-xs font-mono overflow-auto max-h-64">
-            <p className="font-bold text-yellow-700 dark:text-yellow-300 mb-2">🔍 DEBUG: Dashakam 1, Verse 1 raw data</p>
-            <p><strong>dbVerses count:</strong> {dbVerses.length}</p>
-            {dbVerses.length > 0 && (() => {
-              const v1 = dbVerses[0];
-              const audioUrl = getStorageUrl(v1.chant_audio_file);
-              return (
-                <div className="mt-2 space-y-1">
-                  <p><strong>verse_no:</strong> {v1.verse_no}</p>
-                  <p><strong>sanskrit_text:</strong> {v1.sanskrit_text?.slice(0, 120) || '(empty)'}</p>
-                  <p><strong>transliteration_text:</strong> {v1.transliteration_text?.slice(0, 120) || '(empty)'}</p>
-                  <p><strong>translation_text:</strong> {v1.translation_text?.slice(0, 120) || '(empty)'}</p>
-                  <p><strong>chant_audio_file (raw):</strong> {v1.chant_audio_file || '(empty)'}</p>
-                  <p><strong>resolved audio URL:</strong> {audioUrl || '(empty)'}</p>
-                  <p><strong>sloka_audio_id:</strong> {v1.sloka_audio_id || '(none)'}</p>
-                  <p><strong>meter:</strong> {v1.meter || '(empty)'}</p>
-                  <p><strong>prasadam_text:</strong> {v1.prasadam_text?.slice(0, 80) || '(empty)'}</p>
-                  <button
-                    onClick={() => {
-                      const a = new Audio(audioUrl);
-                      a.play().catch(e => console.error("DEBUG audio play error:", e));
-                    }}
-                    className="mt-2 px-3 py-1 rounded bg-yellow-600 text-white text-xs hover:bg-yellow-700"
-                  >
-                    ▶ Test Play SN001-01 audio
-                  </button>
-                </div>
-              );
-            })()}
+            <p className="font-bold text-yellow-700 dark:text-yellow-300 mb-2">
+              🔍 DEBUG: Dashakam 1, Verse 1 raw data
+            </p>
+            <p>
+              <strong>dbVerses count:</strong> {dbVerses.length}
+            </p>
+            {dbVerses.length > 0 &&
+              (() => {
+                const v1 = dbVerses[0];
+                const audioUrl = getStorageUrl(v1.chant_audio_file);
+                return (
+                  <div className="mt-2 space-y-1">
+                    <p>
+                      <strong>verse_no:</strong> {v1.verse_no}
+                    </p>
+                    <p>
+                      <strong>sanskrit_text:</strong> {v1.sanskrit_text?.slice(0, 120) || "(empty)"}
+                    </p>
+                    <p>
+                      <strong>transliteration_text:</strong> {v1.transliteration_text?.slice(0, 120) || "(empty)"}
+                    </p>
+                    <p>
+                      <strong>translation_text:</strong> {v1.translation_text?.slice(0, 120) || "(empty)"}
+                    </p>
+                    <p>
+                      <strong>chant_audio_file (raw):</strong> {v1.chant_audio_file || "(empty)"}
+                    </p>
+                    <p>
+                      <strong>resolved audio URL:</strong> {audioUrl || "(empty)"}
+                    </p>
+                    <p>
+                      <strong>sloka_audio_id:</strong> {v1.sloka_audio_id || "(none)"}
+                    </p>
+                    <p>
+                      <strong>meter:</strong> {v1.meter || "(empty)"}
+                    </p>
+                    <p>
+                      <strong>prasadam_text:</strong> {v1.prasadam_text?.slice(0, 80) || "(empty)"}
+                    </p>
+                    <button
+                      onClick={() => {
+                        const a = new Audio(audioUrl);
+                        a.play().catch((e) => console.error("DEBUG audio play error:", e));
+                      }}
+                      className="mt-2 px-3 py-1 rounded bg-yellow-600 text-white text-xs hover:bg-yellow-700"
+                    >
+                      ▶ Test Play SN001-01 audio
+                    </button>
+                  </div>
+                );
+              })()}
             {dbVerses.length === 0 && <p className="text-red-600 mt-1">No verses returned from DB!</p>}
           </div>
         )}
@@ -713,21 +944,43 @@ export default function ChantPage() {
           <div className="space-y-4 pb-48" ref={versesContainerRef}>
             {!hasVerses ? (
               <div className="rounded-xl bg-card border border-border p-8 text-center">
-                <p className="text-muted-foreground font-sans mt-2">Working with divine energy to make this available soon 🙏</p>
+                <p className="text-muted-foreground font-sans mt-2">
+                  Working with divine energy to make this available soon 🙏
+                </p>
               </div>
             ) : (
               visibleVerses.map((verse, idx) => (
-                <motion.div key={verse.id} ref={(el) => { if (el) verseRefsMap.current.set(idx, el); else verseRefsMap.current.delete(idx); }} initial={{ opacity: 0, x: -10 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: idx * 0.05 }}
-                  className={`rounded-xl border p-5 transition-all duration-500 ${idx === highlightedVerse && isPlaying ? "border-secondary bg-secondary/10 shadow-gold" : "border-border bg-card"}`}>
+                <motion.div
+                  key={verse.id}
+                  ref={(el) => {
+                    if (el) verseRefsMap.current.set(idx, el);
+                    else verseRefsMap.current.delete(idx);
+                  }}
+                  initial={{ opacity: 0, x: -10 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ delay: idx * 0.05 }}
+                  className={`rounded-xl border p-5 transition-all duration-500 ${idx === highlightedVerse && isPlaying ? "border-secondary bg-secondary/10 shadow-gold" : "border-border bg-card"}`}
+                >
                   <div className="flex items-start justify-between mb-3">
                     <span className="text-xs text-muted-foreground font-sans flex items-center gap-1.5">
                       {(() => {
                         const status = getVerseStatus(selectedDashakam, verse.paragraph);
-                        if (status === "completed") return <span className="text-green-500" title="Completed">✓</span>;
-                        if (status === "started") return <span className="text-muted-foreground" title="Started">•</span>;
+                        if (status === "completed")
+                          return (
+                            <span className="text-green-500" title="Completed">
+                              ✓
+                            </span>
+                          );
+                        if (status === "started")
+                          return (
+                            <span className="text-muted-foreground" title="Started">
+                              •
+                            </span>
+                          );
                         return null;
                       })()}
-                      Verse {verse.paragraph}{verse.meter ? ` · ${verse.meter}` : ''}
+                      Verse {verse.paragraph}
+                      {verse.meter ? ` · ${verse.meter}` : ""}
                     </span>
                     <div className="flex items-center gap-1">
                       <VerseIcons bell={verse.bell} prasadam={verse.prasadam} slokaAudioId={verse.sloka_audio_id} />
@@ -735,9 +988,19 @@ export default function ChantPage() {
                         active={isBookmarked(verse.id)}
                         onClick={() => {
                           if (isBookmarked(verse.id)) {
-                            setRemoveTarget({ type: "bookmark", verseId: verse.id, dashakam: verse.dashakam, verse: verse.paragraph });
+                            setRemoveTarget({
+                              type: "bookmark",
+                              verseId: verse.id,
+                              dashakam: verse.dashakam,
+                              verse: verse.paragraph,
+                            });
                           } else {
-                            addBookmark({ verseId: verse.id, dashakam: verse.dashakam, verse: verse.paragraph, mode: "chant" });
+                            addBookmark({
+                              verseId: verse.id,
+                              dashakam: verse.dashakam,
+                              verse: verse.paragraph,
+                              mode: "chant",
+                            });
                           }
                         }}
                       />
@@ -745,9 +1008,19 @@ export default function ChantPage() {
                         active={isFavourited(verse.id)}
                         onClick={() => {
                           if (isFavourited(verse.id)) {
-                            setRemoveTarget({ type: "favourite", verseId: verse.id, dashakam: verse.dashakam, verse: verse.paragraph });
+                            setRemoveTarget({
+                              type: "favourite",
+                              verseId: verse.id,
+                              dashakam: verse.dashakam,
+                              verse: verse.paragraph,
+                            });
                           } else {
-                            addFavourite({ verseId: verse.id, dashakam: verse.dashakam, verse: verse.paragraph, sanskrit: verse.sanskrit || verse.english });
+                            addFavourite({
+                              verseId: verse.id,
+                              dashakam: verse.dashakam,
+                              verse: verse.paragraph,
+                              sanskrit: verse.sanskrit || verse.english,
+                            });
                           }
                         }}
                       />
@@ -760,7 +1033,9 @@ export default function ChantPage() {
                       const isActiveVerse = idx === highlightedVerse && isPlaying;
                       if (lines.length <= 1 || !isActiveVerse) {
                         return (
-                          <p className={`whitespace-pre-line transition-colors duration-300 ${isActiveVerse ? "text-secondary font-semibold" : "text-foreground"}`}>
+                          <p
+                            className={`whitespace-pre-line transition-colors duration-300 ${isActiveVerse ? "text-secondary font-semibold" : "text-foreground"}`}
+                          >
                             {text}
                           </p>
                         );
@@ -776,9 +1051,7 @@ export default function ChantPage() {
                               else lineRefsMap.current.delete(key);
                             }}
                             className={`block py-0.5 transition-all duration-500 rounded-sm ${
-                              isActive
-                                ? "text-secondary font-semibold karaoke-glow"
-                                : "text-foreground/60"
+                              isActive ? "text-secondary font-semibold karaoke-glow" : "text-foreground/60"
                             }`}
                           >
                             {line}
@@ -790,12 +1063,24 @@ export default function ChantPage() {
                   {/* Verse seek bar */}
                   {idx === highlightedVerse && verse.audio && (
                     <div className="mt-3">
-                      <Slider value={[verseProgress]} onValueChange={handleSeekVerse} max={100} step={0.5} className="w-full" />
+                      <Slider
+                        value={[verseProgress]}
+                        onValueChange={handleSeekVerse}
+                        max={100}
+                        step={0.5}
+                        className="w-full"
+                      />
                     </div>
                   )}
                   {showMeaning && (
-                    <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: "auto" }} className="mt-4 border-t border-border pt-3">
-                      <p className="text-xs text-muted-foreground font-sans uppercase tracking-wide mb-1">Translation (English)</p>
+                    <motion.div
+                      initial={{ opacity: 0, height: 0 }}
+                      animate={{ opacity: 1, height: "auto" }}
+                      className="mt-4 border-t border-border pt-3"
+                    >
+                      <p className="text-xs text-muted-foreground font-sans uppercase tracking-wide mb-1">
+                        Translation (English)
+                      </p>
                       <p className="text-sm text-muted-foreground font-sans leading-relaxed">{getMeaning(verse)}</p>
                     </motion.div>
                   )}
@@ -820,17 +1105,67 @@ export default function ChantPage() {
             </div>
           )}
           <div className="flex items-center justify-center gap-4">
-            <button onClick={() => { if (audioRef.current) { audioRef.current.pause(); audioRef.current = null; } pausedRef.current = false; stopSloka(); setVerseProgress(0); setHighlightedVerse(Math.max(0, highlightedVerse - 1)); }} className="text-primary-foreground/70 hover:text-primary-foreground p-2"><SkipBack className="h-5 w-5" /></button>
-            <button onClick={() => { if (audioRef.current) { audioRef.current.pause(); audioRef.current = null; } pausedRef.current = false; stopSloka(); setVerseProgress(0); setHighlightedVerse(0); setCurrentLoopIteration(0); }} className="text-primary-foreground/70 hover:text-primary-foreground p-2" title="Restart"><RotateCcw className="h-5 w-5" /></button>
+            <button
+              onClick={() => {
+                if (audioRef.current) {
+                  audioRef.current.pause();
+                  audioRef.current = null;
+                }
+                pausedRef.current = false;
+                stopSloka();
+                setVerseProgress(0);
+                setHighlightedVerse(Math.max(0, highlightedVerse - 1));
+              }}
+              className="text-primary-foreground/70 hover:text-primary-foreground p-2"
+            >
+              <SkipBack className="h-5 w-5" />
+            </button>
+            <button
+              onClick={() => {
+                if (audioRef.current) {
+                  audioRef.current.pause();
+                  audioRef.current = null;
+                }
+                pausedRef.current = false;
+                stopSloka();
+                setVerseProgress(0);
+                setHighlightedVerse(0);
+                setCurrentLoopIteration(0);
+              }}
+              className="text-primary-foreground/70 hover:text-primary-foreground p-2"
+              title="Restart"
+            >
+              <RotateCcw className="h-5 w-5" />
+            </button>
             <button
               onClick={handlePlayPause}
               disabled={!isPlaying && !audioReady}
-              className={`flex h-12 w-12 items-center justify-center rounded-full bg-gradient-gold text-primary shadow-gold transition-transform hover:scale-110 ${!isPlaying && !audioReady ? 'opacity-50 cursor-not-allowed' : ''}`}
+              className={`flex h-12 w-12 items-center justify-center rounded-full bg-gradient-gold text-primary shadow-gold transition-transform hover:scale-110 ${!isPlaying && !audioReady ? "opacity-50 cursor-not-allowed" : ""}`}
             >
               {isPlaying ? <Pause className="h-6 w-6" /> : <Play className="h-6 w-6 ml-0.5" />}
             </button>
-            <button onClick={() => { if (audioRef.current) { audioRef.current.pause(); audioRef.current = null; } pausedRef.current = false; stopSloka(); setVerseProgress(0); setHighlightedVerse(Math.min(displayVerses.length - 1, highlightedVerse + 1)); }} className="text-primary-foreground/70 hover:text-primary-foreground p-2"><SkipForward className="h-5 w-5" /></button>
-            <button onClick={handleEndSession} className="text-primary-foreground/70 hover:text-primary-foreground p-2" title="End Session"><Square className="h-5 w-5" /></button>
+            <button
+              onClick={() => {
+                if (audioRef.current) {
+                  audioRef.current.pause();
+                  audioRef.current = null;
+                }
+                pausedRef.current = false;
+                stopSloka();
+                setVerseProgress(0);
+                setHighlightedVerse(Math.min(displayVerses.length - 1, highlightedVerse + 1));
+              }}
+              className="text-primary-foreground/70 hover:text-primary-foreground p-2"
+            >
+              <SkipForward className="h-5 w-5" />
+            </button>
+            <button
+              onClick={handleEndSession}
+              className="text-primary-foreground/70 hover:text-primary-foreground p-2"
+              title="End Session"
+            >
+              <Square className="h-5 w-5" />
+            </button>
           </div>
           {/* Speed control buttons */}
           <div className="flex items-center justify-center gap-1.5 mt-3">
@@ -838,7 +1173,10 @@ export default function ChantPage() {
             {[0.5, 0.75, 1, 1.25, 1.5, 2].map((s) => (
               <button
                 key={s}
-                onClick={() => { setSpeed(s); if (audioRef.current) audioRef.current.playbackRate = s; }}
+                onClick={() => {
+                  setSpeed(s);
+                  if (audioRef.current) audioRef.current.playbackRate = s;
+                }}
                 className={`rounded-full px-2 py-0.5 text-[11px] font-sans transition-colors ${
                   speed === s
                     ? "bg-secondary text-secondary-foreground font-semibold"
@@ -876,7 +1214,10 @@ export default function ChantPage() {
               chants={[dashakamClosingChant]}
               title="Dashakam Closing"
               speed={speed}
-              onComplete={() => { setRitualPhase("idle"); setHighlightedVerse(0); }}
+              onComplete={() => {
+                setRitualPhase("idle");
+                setHighlightedVerse(0);
+              }}
             />
           )}
           {ritualPhase === "session_end" && sessionClosingChant && (
@@ -884,7 +1225,11 @@ export default function ChantPage() {
               chants={[sessionClosingChant]}
               title="Session Closing"
               speed={speed}
-              onComplete={() => { setRitualPhase("idle"); setHighlightedVerse(0); setVerseProgress(0); }}
+              onComplete={() => {
+                setRitualPhase("idle");
+                setHighlightedVerse(0);
+                setVerseProgress(0);
+              }}
             />
           )}
         </AnimatePresence>
