@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect, useCallback } from "react";
 import { motion } from "framer-motion";
 import { Play, Pause, SkipBack, SkipForward, ListMusic, Volume2 } from "lucide-react";
-import { useDashakam, getDashakamName } from "@/hooks/useDashakam";
+import { useDashakam, getDashakamName, prefetchDashakamList } from "@/hooks/useDashakam";
 import { supabase } from "@/integrations/supabase/client";
 import { getStorageUrl } from "@/lib/storageUrl";
 import { getProgress, saveProgress } from "@/lib/progress";
@@ -43,6 +43,12 @@ export default function PodcastPage() {
   const { saveProgress: savePlaylistProg } = usePlaylist("podcast");
 
   const inPlaylistMode = playlistItems !== null && playlistItems.length > 0;
+
+  // Prefetch dashakam names so dropdown shows real names
+  const [namesReady, setNamesReady] = useState(false);
+  useEffect(() => {
+    prefetchDashakamList().then(() => setNamesReady(true)).catch(() => {});
+  }, []);
 
   // Fetch podcast data from Supabase
   useEffect(() => {

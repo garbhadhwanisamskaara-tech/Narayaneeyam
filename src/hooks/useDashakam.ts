@@ -30,21 +30,54 @@ interface UseDashakamResult {
 }
 
 // ---- simple cache ----
-const dashakamCache: { list: DashakamListItem[] | null } = { list: null };
+const dashakamCache: { list: DashakamListItem[] | null; loading: Promise<DashakamListItem[]> | null } = {
+  list: null,
+  loading: null,
+};
 const verseCache = new Map<string, MergedVerse[]>();
 
 const getKey = (d: number, l: string) => `${d}_${l}`;
+
+/** Fetch dashakam list (shared, deduped) */
+async function fetchDashakamList(): Promise<DashakamListItem[]> {
+  if (dashakamCache.list) return dashakamCache.list;
+  if (dashakamCache.loading) return dashakamCache.loading;
+
+  dashakamCache.loading = (async () => {
+    const { data, error } = await supabase
+      .from("dashakams")
+      .select("dashakam_no, dashakam_name, num_verses, remarks, gist, benefits")
+      .eq("language_code", "en")
+      .order("dashakam_no");
+
+    if (error) throw error;
+
+    // dedupe
+    const seen = new Set<number>();
+    const list = (data || []).filter((d) => {
+      if (seen.has(d.dashakam_no)) return false;
+      seen.add(d.dashakam_no);
+      return true;
+    });
+
+    dashakamCache.list = list;
+    dashakamCache.loading = null;
+    return list;
+  })();
+
+  return dashakamCache.loading;
+}
 
 export function useDashakam(
   selectedDashakam: number,
   selectedLanguage: string = "en"
 ): UseDashakamResult {
-  const [dashakamList, setDashakamList] = useState<DashakamListItem[]>([]);
+  const [dashakamList, setDashakamList] = useState<DashakamListItem[]>(dashakamCache.list || []);
   const [verses, setVerses] = useState<MergedVerse[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  const requestRef = useRef(0); // prevents race condition
+  const requestRef = useRef(0);
 
   useEffect(() => {
     let isMounted = true;
@@ -56,77 +89,67 @@ export function useDashakam(
 
       try {
         // 1. DASHAKAM LIST
-        let list = dashakamCache.list;
-
-        if (!list) {
-          const { data, error } = await supabase
-            .from("dashakams")
-            .select("dashakam_no, dashakam_name, num_verses, remarks, gist, benefits")
-            .in("language_code", ["en", "sa"])
-            .order("dashakam_no");
-
-          if (error) throw error;
-
-          // dedupe
-          const seen = new Set<number>();
-          list = (data || []).filter((d) => {
-            if (seen.has(d.dashakam_no)) return false;
-            seen.add(d.dashakam_no);
-            return true;
-          });
-
-          dashakamCache.list = list;
-        }
+        const list = await fetchDashakamList();
 
         if (!isMounted || requestId !== requestRef.current) return;
-        setDashakamList(list || []);
+        setDashakamList(list);
 
         // 2. VERSES (with cache)
         const key = getKey(selectedDashakam, selectedLanguage);
         let merged = verseCache.get(key);
 
         if (!merged) {
-          const [audio, script, lang, pras] = await Promise.all([
+          // Fetch audio, Sanskrit script, target language, and prasadam in parallel
+          // IMPORTANT: fetch Sanskrit and target language SEPARATELY to avoid map overwrite
+          const [audio, scriptSa, langTarget, prasTarget] = await Promise.all([
             supabase
               .from("verses_audio")
               .select("verse_no, chant_audio_file, sloka_audio_id")
-              .eq("dashakam_no", selectedDashakam),
+              .eq("dashakam_no", selectedDashakam)
+              .order("verse_no"),
 
+            // Sanskrit script (Devanagari text)
             supabase
               .from("language_script")
               .select("verse_no, transliteration_text")
               .eq("dashakam_no", selectedDashakam)
-              .eq("language_code", "sa"),
+              .eq("language_code", "sa")
+              .order("verse_no"),
 
+            // Target language transliteration + translation (e.g. "en")
             supabase
               .from("language_script")
               .select("verse_no, transliteration_text, translation_text")
               .eq("dashakam_no", selectedDashakam)
-              .in("language_code", [selectedLanguage, "sa"]),
+              .eq("language_code", selectedLanguage)
+              .order("verse_no"),
 
+            // Prasadam in target language
             supabase
               .from("prasadam")
               .select("verse_no, prasadam_text")
               .eq("dashakam_no", selectedDashakam)
-              .in("language_code", [selectedLanguage, "sa"]),
+              .eq("language_code", selectedLanguage)
+              .order("verse_no"),
           ]);
 
-          const map = (arr: any[]) =>
+          const toMap = (arr: any[] | null) =>
             Object.fromEntries((arr || []).map((r) => [r.verse_no, r]));
 
-          const a = map(audio.data);
-          const s = map(script.data);
-          const l = map(lang.data);
-          const p = map(pras.data);
+          const a = toMap(audio.data);
+          const s = toMap(scriptSa.data);   // Sanskrit
+          const l = toMap(langTarget.data);  // Target language (en/ta/etc)
+          const p = toMap(prasTarget.data);
 
-          const max = Math.max(
+          // Determine verse count from dashakam metadata or data
+          const dk = list.find((d) => d.dashakam_no === selectedDashakam);
+          const max = dk?.num_verses || Math.max(
             ...Object.keys(a).map(Number),
             ...Object.keys(s).map(Number),
             0
           );
 
           merged = [];
-
           for (let i = 1; i <= max; i++) {
             merged.push({
               verse_no: i,
@@ -147,6 +170,7 @@ export function useDashakam(
         setVerses(merged);
       } catch (err: any) {
         if (!isMounted) return;
+        console.error("[useDashakam] error:", err.message);
         setError(err.message || "Failed to load data");
       } finally {
         if (!isMounted || requestId !== requestRef.current) return;
@@ -169,13 +193,19 @@ export function useDashakam(
   return { dashakamList, verses, loading, error, audioReady };
 }
 
-/** Get dashakam name from cached list */
+/** Get dashakam name from cached list — also triggers fetch if cache empty */
 export function getDashakamName(dashakamNo: number): string {
-  const item = dashakamCache.list?.find((d) => d.dashakam_no === dashakamNo);
-  return item?.dashakam_name || `Dashakam ${dashakamNo}`;
+  // If cache exists, return from it
+  if (dashakamCache.list) {
+    const item = dashakamCache.list.find((d) => d.dashakam_no === dashakamNo);
+    return item?.dashakam_name || `Dashakam ${dashakamNo}`;
+  }
+  // Trigger background fetch so names are available next render
+  fetchDashakamList().catch(() => {});
+  return `Dashakam ${dashakamNo}`;
 }
 
-/** Prefetch dashakam list (no-op kept for backward compat) */
-export function prefetchDashakamList(): void {
-  // no longer used — data loads on ChantPage mount
+/** Prefetch dashakam list — can be called from any page */
+export function prefetchDashakamList(): Promise<DashakamListItem[]> {
+  return fetchDashakamList();
 }
