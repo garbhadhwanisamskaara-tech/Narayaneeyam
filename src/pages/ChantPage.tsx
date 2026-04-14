@@ -130,7 +130,7 @@ export default function ChantPage() {
       meaning_english: mv.translation_text,
       meter: mv.meter,
       audio: validAudio,
-      bell: mv.has_bell,
+      bell: false,
       prasadam: mv.prasadam_text || undefined,
       sloka_audio_id: mv.sloka_audio_id,
       tamil: "", malayalam: "", telugu: "", kannada: "", hindi: "", marathi: "",
@@ -604,7 +604,7 @@ export default function ChantPage() {
         {dashakamMeta && (
           <div className="mb-6">
             <div className="rounded-xl bg-gradient-peacock p-5">
-              <h2 className="font-display text-xl font-semibold text-primary-foreground mb-1">{dashakamMeta.title_sanskrit || dashakamMeta.dashakam_name}</h2>
+              <h2 className="font-display text-xl font-semibold text-primary-foreground mb-1">{dashakamMeta.dashakam_name}</h2>
               <p className="text-gold-light font-sans text-sm mb-1">{dashakamMeta.dashakam_name}</p>
               <div className="mt-3 flex items-center gap-2">
                 <button onClick={() => setShowGist(!showGist)}

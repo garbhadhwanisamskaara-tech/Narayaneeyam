@@ -165,7 +165,7 @@ export default function ScriptPage() {
             <div className="mb-6">
               <div className="rounded-xl bg-gradient-peacock p-5">
                 <h2 className="font-display text-xl font-semibold text-primary-foreground">
-                  {dk?.title_sanskrit || dashakamTitle}
+                  {dashakamTitle}
                 </h2>
                 <p className="text-gold-light font-sans text-sm">{dashakamTitle}</p>
                 {dk?.remarks && (
@@ -240,7 +240,7 @@ export default function ScriptPage() {
                     <span className="text-xs text-muted-foreground font-sans">
                       Verse {verse.verse_no} · Meter: {verse.meter}
                     </span>
-                    <VerseIcons bell={verse.has_bell} prasadam={verse.prasadam_text} />
+                    <VerseIcons bell={false} prasadam={verse.prasadam_text} />
                   </div>
 
                   {/* Sanskrit script — always shown */}
