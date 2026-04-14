@@ -40,16 +40,8 @@ export function useAudioEngine(): AudioEngine {
 
 export function AudioProvider({ children }: { children: ReactNode }) {
   // Singleton audio element — never recreated
-  const audioRef = useRef<HTMLAudioElement>(() => {
-    const a = new Audio();
-    a.preload = "auto";
-    a.setAttribute("playsinline", "true");
-    a.setAttribute("webkit-playsinline", "true");
-    return a;
-  });
-
-  // Lazily initialise once
-  if (!(audioRef.current instanceof HTMLAudioElement)) {
+  const audioRef = useRef<HTMLAudioElement>(null!);
+  if (!audioRef.current) {
     const a = new Audio();
     a.preload = "auto";
     a.setAttribute("playsinline", "true");
