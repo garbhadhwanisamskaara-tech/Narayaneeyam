@@ -206,6 +206,6 @@ export function getDashakamName(dashakamNo: number): string {
 }
 
 /** Prefetch dashakam list — can be called from any page */
-export function prefetchDashakamList(): void {
-  fetchDashakamList().catch(() => {});
+export function prefetchDashakamList(): Promise<DashakamListItem[]> {
+  return fetchDashakamList();
 }
