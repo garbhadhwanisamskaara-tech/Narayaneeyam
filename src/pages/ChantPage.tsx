@@ -271,10 +271,18 @@ export default function ChantPage() {
     return () => clearTimeout(timer);
   }, [highlightedVerse, scrollToVerse]);
 
+  // Clear highlighting when verse changes
+  useEffect(() => {
+    if (highlightedVerse !== prevHighlightedVerseRef.current) {
+      setActiveLine(null); // clear old verse highlight before starting new one
+      prevHighlightedVerseRef.current = highlightedVerse;
+    }
+  }, [highlightedVerse]);
+
   // Compute active line from verse progress
   useEffect(() => {
     if (!isPlaying) {
-      setActiveLine(0);
+      setActiveLine(null);
       return;
     }
     const verse = displayVerses[highlightedVerse];
@@ -285,6 +293,12 @@ export default function ChantPage() {
       setActiveLine(0);
       return;
     }
+    // When progress >= 100%, keep highlighting on the last line (don't wrap)
+    if (verseProgress >= 100) {
+      setActiveLine(lines.length - 1);
+      return;
+    }
+    // Clamp to [0, lines.length - 1], never wrapping back to 0
     const lineIdx = Math.min(Math.floor((verseProgress / 100) * lines.length), lines.length - 1);
     setActiveLine(lineIdx);
   }, [verseProgress, isPlaying, highlightedVerse, displayVerses.length]);
