@@ -24,7 +24,7 @@ import RitualChantOverlay from "@/components/RitualChantOverlay";
 import VerseSkeleton from "@/components/VerseSkeleton";
 import { getProgress, saveProgress } from "@/lib/progress";
 import { updateStreakSupabase, markVerseCompleted } from "@/lib/supabaseProgress";
-import { getActiveVerseAtTime, getTimestamps } from "@/lib/audioTimestamps";
+
 import VerseIcons from "@/components/VerseIcons";
 import { Slider } from "@/components/ui/slider";
 import { useMemberProgress } from "@/hooks/useMemberProgress";
