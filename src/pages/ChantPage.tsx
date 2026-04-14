@@ -410,13 +410,10 @@ export default function ChantPage() {
       audio.onended = () => handleVerseEndedRef.current();
       return () => { audio.pause(); audio.removeEventListener("timeupdate", updateProgress); audio.onended = null; };
     } else {
-      const interval = setInterval(() => {
-        setVerseProgress((prev) => {
-          if (prev >= 100) { handleVerseEndedRef.current(); return 0; }
-          return prev + (speed * 2.5);
-        });
-      }, 100);
-      return () => clearInterval(interval);
+      // No valid audio URL — skip to next verse after a short delay
+      console.warn('No valid audio URL for verse', currentVerse?.paragraph, '— skipping');
+      gapTimerRef.current = setTimeout(() => handleVerseEndedRef.current(), 2000);
+      return () => { if (gapTimerRef.current) clearTimeout(gapTimerRef.current); };
     }
   }, [isPlaying, highlightedVerse, displayVerses.length, speed, isSlokaPlaying]);
 
