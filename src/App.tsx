@@ -8,7 +8,7 @@ import { AuthProvider } from "@/contexts/AuthContext";
 import Layout from "./components/Layout";
 import Index from "./pages/Index";
 import ChantPage from "./pages/ChantPage";
-import LearnPage from "./pages/LearnPage";
+
 import ScriptPage from "./pages/ScriptPage";
 // LessonPlanPage removed from navigation
 import DashboardPage from "./pages/DashboardPage";
