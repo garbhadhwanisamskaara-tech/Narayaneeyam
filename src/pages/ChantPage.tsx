@@ -41,9 +41,16 @@ import { AnimatePresence as AP2 } from "framer-motion";
 
 type RitualPhase = "idle" | "opening" | "dashakam_end" | "session_end";
 
+const DEFAULT_DASHAKAM = 1;
+
+function normalizeDashakam(value: unknown, fallback = DEFAULT_DASHAKAM) {
+  const parsed = typeof value === "number" ? value : Number(value);
+  return Number.isInteger(parsed) && parsed >= 1 && parsed <= 100 ? parsed : fallback;
+}
+
 export default function ChantPage() {
   const [searchParams] = useSearchParams();
-  const [selectedDashakam, setSelectedDashakam] = useState(1);
+  const [selectedDashakam, setSelectedDashakam] = useState(DEFAULT_DASHAKAM);
   const [selectedPara, setSelectedPara] = useState<number | null>(null);
   const [translitLang, setTranslitLang] = useState<TransliterationLanguage>("sanskrit");
   const [showMeaning, setShowMeaning] = useState(false);
@@ -149,6 +156,17 @@ export default function ChantPage() {
   // Get dashakam metadata from DB list
   const dashakamMeta = dashakamList.find((d) => d.dashakam_no === selectedDashakam);
 
+  useEffect(() => {
+    if (!dashakamList.length) return;
+
+    const hasSelectedDashakam = dashakamList.some((d) => d.dashakam_no === selectedDashakam);
+    if (hasSelectedDashakam) return;
+
+    setSelectedDashakam(dashakamList[0].dashakam_no);
+    setSelectedPara(null);
+    setHighlightedVerse(0);
+  }, [dashakamList, selectedDashakam]);
+
   // (removed — learn mode deleted)
 
   // Convert dbVerses to display format
@@ -199,7 +217,7 @@ export default function ChantPage() {
   useEffect(() => {
     const qd = searchParams.get("dashakam");
     if (qd) {
-      const num = parseInt(qd, 10);
+      const num = normalizeDashakam(parseInt(qd, 10));
       if (num >= 1 && num <= 100) {
         setSelectedDashakam(num);
         return;
@@ -207,11 +225,11 @@ export default function ChantPage() {
     }
     const progress = getProgress();
     if (progress.chantState) {
-      setSelectedDashakam(progress.chantState.dashakam);
+      setSelectedDashakam(normalizeDashakam(progress.chantState.dashakam));
       setSelectedPara(progress.chantState.para);
-      setHighlightedVerse(progress.chantState.verse);
+      setHighlightedVerse(Math.max(0, Number(progress.chantState.verse) || 0));
     } else {
-      setSelectedDashakam(progress.lastDashakam || 1);
+      setSelectedDashakam(normalizeDashakam(progress.lastDashakam));
     }
   }, []);
 
