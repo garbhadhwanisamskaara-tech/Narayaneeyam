@@ -13,7 +13,6 @@ import BookmarkButton from "@/components/BookmarkButton";
 import FavouriteButton from "@/components/FavouriteButton";
 import RemoveBottomSheet from "@/components/RemoveBottomSheet";
 import {
-  sampleDashakams,
   TRANSLITERATION_LANGUAGES,
   type TransliterationLanguage,
 } from "@/data/narayaneeyam";
@@ -37,9 +36,6 @@ type RitualPhase = "idle" | "opening" | "dashakam_end" | "session_end";
 
 export default function ChantPage() {
   const [searchParams] = useSearchParams();
-  const [chantMode, setChantMode] = useState<"chant" | "learn">(
-    searchParams.get("mode") === "learn" || window.location.pathname === "/learn" ? "learn" : "chant"
-  );
   const [selectedDashakam, setSelectedDashakam] = useState(1);
   const [selectedPara, setSelectedPara] = useState<number | null>(null);
   const [translitLang, setTranslitLang] = useState<TransliterationLanguage>("sanskrit");
@@ -107,19 +103,18 @@ export default function ChantPage() {
 
   const selectedLanguage = "en";
 
-  // Live data from Supabase with static fallback
-  const { dashakamList, verses: dbVerses, loading: dbLoading, staticDashakam, audioReady } = useDashakam(selectedDashakam, selectedLanguage);
+  // Live data from Supabase
+  const { dashakamList, verses: dbVerses, loading: dbLoading, audioReady } = useDashakam(selectedDashakam, selectedLanguage);
   const { openingChants, dashakamClosingChant, sessionClosingChant } = useRitualChants(selectedLanguage);
 
-  // Language fetch removed — default English only
+  // Build the dashakam dropdown list from DB
+  const dropdownList = dashakamList.map((d) => ({ id: d.dashakam_no, title: d.dashakam_name }));
 
-  // Build the dashakam dropdown list — prefer DB list, fallback to static
-  const dropdownList = dashakamList.length > 0
-    ? dashakamList.map((d) => ({ id: d.dashakam_no, title: d.dashakam_name }))
-    : sampleDashakams.map((d) => ({ id: d.id, title: d.title_english }));
+  // Get dashakam metadata from DB list
+  const dashakamMeta = dashakamList.find((d) => d.dashakam_no === selectedDashakam);
 
-  // Use static dashakam for gist/benefits/title (always available)
-  const dashakam = staticDashakam;
+  // (removed — learn mode deleted)
+  
 
   // Convert dbVerses to display format — use learn_audio_file in learn mode
   // getStorageUrl converts relative paths to full Supabase Storage URLs
