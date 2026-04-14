@@ -15,6 +15,7 @@ export interface MergedVerse {
   chant_audio_file: string;
   sloka_audio_id: string | null;
   sanskrit_text: string;
+  meter: string;
   transliteration_text: string;
   translation_text: string;
   prasadam_text: string;
