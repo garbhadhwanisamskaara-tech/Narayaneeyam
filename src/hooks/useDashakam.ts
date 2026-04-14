@@ -49,6 +49,11 @@ function withTimeout<T>(promise: Promise<T>, ms: number): Promise<T> {
   ]);
 }
 
+/** Await a Supabase query builder properly */
+async function executeQuery<T>(queryBuilder: PromiseLike<T>): Promise<T> {
+  return await queryBuilder;
+}
+
 async function fetchDashakamList(): Promise<DashakamListItem[]> {
   if (dashakamListCache) return dashakamListCache;
   if (dashakamListPromise) return dashakamListPromise;
@@ -60,13 +65,13 @@ async function fetchDashakamList(): Promise<DashakamListItem[]> {
   dashakamListPromise = (async () => {
     try {
       const { data, error } = await withTimeout(
-        Promise.resolve(
+        executeQuery(
           supabase
             .from("dashakams")
             .select("dashakam_no, dashakam_name, num_verses, remarks, gist, benefits")
             .order("dashakam_no"),
         ),
-        8000,
+        30000,
       );
       console.log(`[useDashakam] dashakams query result: error=${!!error}, rows=${data?.length ?? 0}`);
       if (error) {
@@ -112,31 +117,39 @@ async function fetchVerses(
 
   const [audioRes, scriptRes, langRes, prasRes] = await withTimeout(
     Promise.all([
-      supabase
-        .from("verses_audio")
-        .select("verse_no, chant_audio_file, sloka_audio_id")
-        .eq("dashakam_no", selectedDashakam)
-        .order("verse_no"),
-      supabase
-        .from("language_script")
-        .select("verse_no, transliteration_text, translation_text")
-        .eq("dashakam_no", selectedDashakam)
-        .eq("language_code", "sa")
-        .order("verse_no"),
-      supabase
-        .from("language_script")
-        .select("verse_no, transliteration_text, translation_text")
-        .eq("dashakam_no", selectedDashakam)
-        .eq("language_code", selectedLanguage)
-        .order("verse_no"),
-      supabase
-        .from("prasadam")
-        .select("verse_no, prasadam_text")
-        .eq("dashakam_no", selectedDashakam)
-        .eq("language_code", selectedLanguage)
-        .order("verse_no"),
+      executeQuery(
+        supabase
+          .from("verses_audio")
+          .select("verse_no, chant_audio_file, sloka_audio_id")
+          .eq("dashakam_no", selectedDashakam)
+          .order("verse_no"),
+      ),
+      executeQuery(
+        supabase
+          .from("language_script")
+          .select("verse_no, transliteration_text, translation_text")
+          .eq("dashakam_no", selectedDashakam)
+          .eq("language_code", "sa")
+          .order("verse_no"),
+      ),
+      executeQuery(
+        supabase
+          .from("language_script")
+          .select("verse_no, transliteration_text, translation_text")
+          .eq("dashakam_no", selectedDashakam)
+          .eq("language_code", selectedLanguage)
+          .order("verse_no"),
+      ),
+      executeQuery(
+        supabase
+          .from("prasadam")
+          .select("verse_no, prasadam_text")
+          .eq("dashakam_no", selectedDashakam)
+          .eq("language_code", selectedLanguage)
+          .order("verse_no"),
+      ),
     ]),
-    8000,
+    30000,
   );
 
   const audioMap: Record<number, any> = {};
