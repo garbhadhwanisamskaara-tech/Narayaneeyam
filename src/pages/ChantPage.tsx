@@ -62,7 +62,8 @@ export default function ChantPage() {
   const [loopCount, setLoopCount] = useState(1);
   const [currentLoopIteration, setCurrentLoopIteration] = useState(0);
   const [verseProgress, setVerseProgress] = useState(0);
-  const [activeLine, setActiveLine] = useState(0);
+  const [activeLine, setActiveLine] = useState<number | null>(null);
+  const prevHighlightedVerseRef = useRef(highlightedVerse);
   const [removeTarget, setRemoveTarget] = useState<{
     type: "bookmark" | "favourite";
     verseId: string;
