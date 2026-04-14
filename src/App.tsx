@@ -6,6 +6,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { SentryErrorBoundary } from "@/components/SentryErrorBoundary";
 import { AuthProvider } from "@/contexts/AuthContext";
+import { AudioProvider } from "@/contexts/AudioContext";
 import { prefetchDashakamList } from "@/hooks/useDashakam";
 import Layout from "./components/Layout";
 import Index from "./pages/Index";
