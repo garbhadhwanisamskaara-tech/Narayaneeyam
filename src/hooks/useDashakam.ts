@@ -35,6 +35,7 @@ interface UseDashakamResult {
 const verseCache = new Map<string, MergedVerse[]>();
 let dashakamListCache: DashakamListItem[] | null = null;
 let dashakamListPromise: Promise<DashakamListItem[]> | null = null;
+let dashakamListAttempts = 0;
 
 function getCacheKey(dashakam: number, lang: string) {
   return `${dashakam}:${lang}`;
@@ -52,6 +53,10 @@ async function fetchDashakamList(): Promise<DashakamListItem[]> {
   if (dashakamListCache) return dashakamListCache;
   if (dashakamListPromise) return dashakamListPromise;
 
+  dashakamListAttempts++;
+  const attempt = dashakamListAttempts;
+  console.log(`[useDashakam] fetchDashakamList attempt #${attempt}`);
+
   dashakamListPromise = (async () => {
     try {
       const { data, error } = await withTimeout(
@@ -63,7 +68,14 @@ async function fetchDashakamList(): Promise<DashakamListItem[]> {
         ),
         8000,
       );
-      if (error || !data || data.length === 0) {
+      console.log(`[useDashakam] dashakams query result: error=${!!error}, rows=${data?.length ?? 0}`);
+      if (error) {
+        console.error("[useDashakam] dashakams query error:", error.message, error.code);
+        dashakamListPromise = null;
+        return [];
+      }
+      if (!data || data.length === 0) {
+        console.warn("[useDashakam] dashakams returned 0 rows — possible RLS issue");
         dashakamListPromise = null;
         return [];
       }
@@ -76,9 +88,11 @@ async function fetchDashakamList(): Promise<DashakamListItem[]> {
           list.push(row);
         }
       }
+      console.log(`[useDashakam] dashakamList loaded: ${list.length} dashakams`);
       dashakamListCache = list;
       return list;
-    } catch {
+    } catch (err: any) {
+      console.error("[useDashakam] fetchDashakamList exception:", err?.message);
       dashakamListPromise = null;
       return [];
     }
@@ -163,11 +177,7 @@ async function fetchVerses(
   return merged;
 }
 
-// ── Preload Dashakam 1 on module load ──
-fetchDashakamList().then((list) => {
-  const d1 = list.find((d) => d.dashakam_no === 1);
-  if (d1) fetchVerses(1, "en", d1.num_verses).catch(() => {});
-});
+// No module-level preload — wait for auth to be ready
 
 export function useDashakam(selectedDashakam: number, selectedLanguage: string = "en"): UseDashakamResult {
   const [dashakamList, setDashakamList] = useState<DashakamListItem[]>(dashakamListCache ?? []);
@@ -179,11 +189,29 @@ export function useDashakam(selectedDashakam: number, selectedLanguage: string =
   });
   const [error, setError] = useState<string | null>(null);
 
-  // Load dashakam list once
+  // Load dashakam list — retry up to 3 times if empty
   useEffect(() => {
-    fetchDashakamList().then((list) => {
-      setDashakamList(list);
-    });
+    let cancelled = false;
+    let retryTimer: ReturnType<typeof setTimeout> | null = null;
+
+    async function load(retries = 0) {
+      const list = await fetchDashakamList();
+      if (cancelled) return;
+      if (list.length > 0) {
+        setDashakamList(list);
+      } else if (retries < 3) {
+        console.log(`[useDashakam] dashakamList empty, retrying in ${(retries + 1) * 1500}ms...`);
+        retryTimer = setTimeout(() => load(retries + 1), (retries + 1) * 1500);
+      } else {
+        console.error("[useDashakam] dashakamList empty after 3 retries");
+      }
+    }
+
+    load();
+    return () => {
+      cancelled = true;
+      if (retryTimer) clearTimeout(retryTimer);
+    };
   }, []);
 
   // Load verse data
