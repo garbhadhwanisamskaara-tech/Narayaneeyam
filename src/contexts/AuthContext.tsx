@@ -2,7 +2,7 @@ import { createContext, useContext, useEffect, useState, type ReactNode } from "
 import { supabase } from "@/integrations/supabase/client";
 import { logEvent } from "@/services/eventLogger";
 import { setSentryUser, trackSpan } from "@/monitoring/sentry";
-import { prefetchDashakamList } from "@/hooks/useDashakam";
+
 import type { User, Session } from "@supabase/supabase-js";
 
 interface UserProfile {
@@ -68,8 +68,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const loadUserData = async (currentUser: User | null) => {
     if (currentUser) {
-      // Prefetch dashakam list as soon as user is authenticated
-      prefetchDashakamList();
       const [roles, prof] = await Promise.all([
         fetchRoles(currentUser.id),
         fetchProfile(currentUser.id),
