@@ -65,13 +65,13 @@ async function fetchDashakamList(): Promise<DashakamListItem[]> {
   dashakamListPromise = (async () => {
     try {
       const { data, error } = await withTimeout(
-        Promise.resolve(
+        executeQuery(
           supabase
             .from("dashakams")
             .select("dashakam_no, dashakam_name, num_verses, remarks, gist, benefits")
             .order("dashakam_no"),
         ),
-        8000,
+        30000,
       );
       console.log(`[useDashakam] dashakams query result: error=${!!error}, rows=${data?.length ?? 0}`);
       if (error) {
