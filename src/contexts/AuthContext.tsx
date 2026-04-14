@@ -2,6 +2,7 @@ import { createContext, useContext, useEffect, useState, type ReactNode } from "
 import { supabase } from "@/integrations/supabase/client";
 import { logEvent } from "@/services/eventLogger";
 import { setSentryUser, trackSpan } from "@/monitoring/sentry";
+import { queryClient } from "@/lib/queryClient";
 
 import type { User, Session } from "@supabase/supabase-js";
 
@@ -58,6 +59,29 @@ async function fetchProfile(userId: string): Promise<UserProfile | null> {
   }
 }
 
+function clearStoredAuthTokens(storage: Storage | undefined) {
+  if (!storage) return;
+
+  const keysToRemove: string[] = [];
+  for (let i = 0; i < storage.length; i += 1) {
+    const key = storage.key(i);
+    if (key?.startsWith("sb-") && key.endsWith("-auth-token")) {
+      keysToRemove.push(key);
+    }
+  }
+
+  keysToRemove.forEach((key) => storage.removeItem(key));
+}
+
+async function clearClientAuthState() {
+  queryClient.clear();
+
+  if (typeof window === "undefined") return;
+
+  clearStoredAuthTokens(window.localStorage);
+  clearStoredAuthTokens(window.sessionStorage);
+}
+
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
@@ -90,30 +114,39 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   useEffect(() => {
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
-      setSession(session);
-      setUser(session?.user ?? null);
-      setSentryUser(session?.user?.id ?? null, session?.user?.email ?? undefined);
-      await loadUserData(session?.user ?? null);
-      setLoading(false);
+    let isActive = true;
+
+    const syncSession = (nextSession: Session | null) => {
+      if (!isActive) return;
+
+      const nextUser = nextSession?.user ?? null;
+      setSession(nextSession);
+      setUser(nextUser);
+      setSentryUser(nextUser?.id ?? null, nextUser?.email ?? undefined);
+
+      void loadUserData(nextUser).finally(() => {
+        if (isActive) setLoading(false);
+      });
+    };
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, nextSession) => {
+      syncSession(nextSession);
     });
 
-    supabase.auth.getSession().then(async ({ data: { session } }) => {
-      setSession(session);
-      setUser(session?.user ?? null);
-      await loadUserData(session?.user ?? null);
-      setLoading(false);
+    void supabase.auth.getSession().then(({ data: { session: nextSession } }) => {
+      syncSession(nextSession);
     });
 
-    return () => subscription.unsubscribe();
+    return () => {
+      isActive = false;
+      subscription.unsubscribe();
+    };
   }, []);
 
   const displayName = user?.user_metadata?.display_name || user?.email?.split("@")[0] || "";
 
-  // Email verification uses Supabase's built-in email_confirmed_at
   const isEmailVerified = !!user?.email_confirmed_at;
 
-  // Trial status from profile
   const trialExpiresAt = profile?.trial_expires_at ?? null;
   const isTrialActive = profile?.plan === "trial" && trialExpiresAt
     ? new Date(trialExpiresAt).getTime() > Date.now()
@@ -148,14 +181,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const signOut = async () => {
     try {
       logEvent("user_logout");
+      setUser(null);
+      setSession(null);
       setIsAdmin(false);
       setIsFounder(false);
       setProfile(null);
-      await supabase.auth.signOut();
+      setLoading(false);
+      setSentryUser(null);
+
+      await supabase.auth.signOut({ scope: "local" });
     } catch (e) {
       console.error("Sign-out error:", e);
     } finally {
-      window.location.href = "/auth";
+      await clearClientAuthState();
+      window.location.replace("/auth");
     }
   };
 
