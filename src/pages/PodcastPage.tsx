@@ -418,12 +418,7 @@ export default function PodcastPage() {
             <h2 className="font-display text-2xl font-semibold text-primary-foreground">
               Dashakam {currentDashakam}
             </h2>
-            {dashakam && (
-              <>
-                <p className="text-gold-light font-sans text-sm mt-1">{dashakam.title_english}</p>
-                <p className="text-primary-foreground/60 font-sans text-xs mt-1">{dashakam.title_sanskrit}</p>
-              </>
-            )}
+            <p className="text-gold-light font-sans text-sm mt-1">{dashakamName}</p>
             {playMode === "all" && (
               <p className="text-gold-light font-sans text-xs mt-2">
                 📻 Playing all 100 dashakams · {currentDashakam}/100
@@ -503,10 +498,10 @@ export default function PodcastPage() {
           </div>
 
           {/* Next dashakam preview */}
-          {nextDashakam && (playMode === "all" || inPlaylistMode) && (
+          {currentDashakam < 100 && (playMode === "all" || inPlaylistMode) && (
             <div className="mt-4 text-center">
               <p className="text-[10px] text-primary-foreground/40 font-sans">
-                Up next: Dashakam {nextDashakam.id} — {nextDashakam.title_english}
+                Up next: Dashakam {currentDashakam + 1} — {nextDashakamName}
               </p>
             </div>
           )}

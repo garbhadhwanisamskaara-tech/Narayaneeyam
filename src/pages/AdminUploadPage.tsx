@@ -229,7 +229,7 @@ export default function AdminUploadPage() {
       rows.push({
         dashakam_no: dNo, verse_no: v,
         chant_audio_file: a?.chant_audio_file ?? "", learn_audio_file: a?.learn_audio_file ?? "",
-        has_bell: dk?.bell_verses?.includes(v) ?? false, has_sloka: !!a?.sloka_audio_id, dirty: false,
+        has_bell: a?.has_bell ?? false, has_sloka: !!a?.sloka_audio_id, dirty: false,
         sanskrit_text: s?.transliteration_text ?? "", meter: "", scriptDirty: false,
         langContent: emptyLangContent(), langLoaded: new Set(), activeLang: "en",
         sloka: { ...emptySloka }, sloka_audio_id: a?.sloka_audio_id ?? null,
@@ -321,7 +321,7 @@ export default function AdminUploadPage() {
       if (audioErr) throw audioErr;
       const chantCount = verses.filter((v) => (v.verse_no === row.verse_no ? row.chant_audio_file : v.chant_audio_file)).length;
       const learnCount = verses.filter((v) => (v.verse_no === row.verse_no ? row.learn_audio_file : v.learn_audio_file)).length;
-      const dk = localDashakams.find((d) => d.id === row.dashakam_no); const total = dk?.num_verses ?? 10;
+      const total = verses.length || 10;
       await supabase.from("upload_progress").upsert({ dashakam_no: row.dashakam_no, chant_uploaded: chantCount, learn_uploaded: learnCount, is_complete: chantCount >= total && learnCount >= total }, { onConflict: "dashakam_no" });
       setVerses((prev) => prev.map((v) => (v.verse_no === row.verse_no ? { ...v, dirty: false } : v)));
       await loadProgress();
@@ -356,7 +356,7 @@ export default function AdminUploadPage() {
       setVerses((prev) => prev.map((v) => { if (v.verse_no !== row.verse_no) return v; const updated = { ...v, langContent: { ...v.langContent } }; updated.langContent[lang] = { ...v.langContent[lang], dirty: false }; return updated; }));
       if (lang === "en") {
         const { data: enRows } = await supabase.from("language_script").select("verse_no").eq("dashakam_no", row.dashakam_no).eq("language_code", "en").not("translation_text", "is", null);
-        const dk = localDashakams.find((d) => d.id === row.dashakam_no); const total = dk?.num_verses ?? 10;
+        const total = verses.length || 10;
         await supabase.from("upload_progress").upsert({ dashakam_no: row.dashakam_no, translations_complete: (enRows?.length ?? 0) >= total }, { onConflict: "dashakam_no" });
         await loadProgress();
       }
@@ -379,7 +379,7 @@ export default function AdminUploadPage() {
     } catch (err: any) { toast({ title: "Error", description: err.message, variant: "destructive" }); } finally { setSavingSloka(null); }
   };
 
-  const selectedDk = localDashakams.find((d) => d.id === selectedDashakam);
+  const selectedDkName = getDashakamName(selectedDashakam ?? 0);
 
   /* ═══════════ SLOKAS TAB LOGIC ═══════════ */
   const loadSlokaList = useCallback(async () => {
@@ -628,7 +628,7 @@ export default function AdminUploadPage() {
             <select value={selectedDashakam ?? ""} onChange={(e) => { const v = Number(e.target.value); if (v) selectDashakam(v); }}
               className="w-full max-w-md rounded-lg border border-input bg-background px-3 py-2 text-sm text-foreground focus:ring-2 focus:ring-ring">
               <option value="">— pick a dashakam —</option>
-              {localDashakams.map((d) => (<option key={d.id} value={d.id}>{d.id}. {d.title_english} ({d.num_verses} verses)</option>))}
+              {Array.from({ length: 100 }, (_, i) => i + 1).map((no) => (<option key={no} value={no}>{no}. {getDashakamName(no)}</option>))}
             </select>
           </section>
 
