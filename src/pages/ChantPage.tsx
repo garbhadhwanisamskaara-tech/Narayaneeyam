@@ -108,7 +108,7 @@ export default function ChantPage() {
   const { openingChants, dashakamClosingChant, sessionClosingChant } = useRitualChants(selectedLanguage);
 
   // Build the dashakam dropdown list from DB
-  const dropdownList = dashakamList.map((d) => ({ id: d.dashakam_no, title: d.dashakam_name }));
+  const dropdownList = dashakamList.filter((d) => d.dashakam_no <= 10).map((d) => ({ id: d.dashakam_no, title: d.dashakam_name }));
 
   // Get dashakam metadata from DB list
   const dashakamMeta = dashakamList.find((d) => d.dashakam_no === selectedDashakam);
