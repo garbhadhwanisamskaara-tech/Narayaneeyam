@@ -174,7 +174,7 @@ export function AudioProvider({ children }: { children: ReactNode }) {
     }
   }, [audio]);
 
-  const engine: AudioEngine = {
+  const engine: AudioEngine = useMemo(() => ({
     state,
     play,
     pause,
@@ -185,7 +185,7 @@ export function AudioProvider({ children }: { children: ReactNode }) {
     setMediaMetadata,
     onEnded: onEndedRef,
     audioElement: audioRef as React.MutableRefObject<HTMLAudioElement>,
-  };
+  }), [state, play, pause, resume, stop, seek, setSpeed, setMediaMetadata]);
 
   return <AudioCtx.Provider value={engine}>{children}</AudioCtx.Provider>;
 }
