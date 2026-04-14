@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect, useCallback } from "react";
 import { motion } from "framer-motion";
 import { Play, Pause, SkipBack, SkipForward, ListMusic, Volume2 } from "lucide-react";
-import { sampleDashakams } from "@/data/narayaneeyam";
+import { useDashakam, getDashakamName } from "@/hooks/useDashakam";
 import { supabase } from "@/integrations/supabase/client";
 import { getStorageUrl } from "@/lib/storageUrl";
 import { getProgress, saveProgress } from "@/lib/progress";
@@ -108,9 +108,9 @@ export default function PodcastPage() {
     return null;
   }, [podcastData]);
 
-  const dashakam = sampleDashakams.find((d) => d.id === currentDashakam);
+  const dashakamName = getDashakamName(currentDashakam);
   const audioUrl = getAudioUrl(currentDashakam);
-  const nextDashakam = sampleDashakams.find((d) => d.id === currentDashakam + 1);
+  const nextDashakamName = getDashakamName(currentDashakam + 1);
 
   // Advance to next dashakam
   const advanceToNext = useCallback(() => {
@@ -277,10 +277,11 @@ export default function PodcastPage() {
     { value: "all", label: "All 100", desc: "Play all sequentially" },
   ];
 
-  // Build dropdown list with podcast availability
-  const dashakamDropdown = sampleDashakams.map((d) => {
-    const hasPodcast = podcastData.some((p) => p.dashakam === d.id);
-    return { id: d.id, title: d.title_english, titleSanskrit: d.title_sanskrit, hasPodcast };
+  // Build dropdown list — use 1-100 range with DB names
+  const dashakamDropdown = Array.from({ length: 100 }, (_, i) => {
+    const no = i + 1;
+    const hasPodcast = podcastData.some((p) => p.dashakam === no);
+    return { id: no, title: getDashakamName(no), titleSanskrit: "", hasPodcast };
   });
 
   return (
@@ -417,12 +418,7 @@ export default function PodcastPage() {
             <h2 className="font-display text-2xl font-semibold text-primary-foreground">
               Dashakam {currentDashakam}
             </h2>
-            {dashakam && (
-              <>
-                <p className="text-gold-light font-sans text-sm mt-1">{dashakam.title_english}</p>
-                <p className="text-primary-foreground/60 font-sans text-xs mt-1">{dashakam.title_sanskrit}</p>
-              </>
-            )}
+            <p className="text-gold-light font-sans text-sm mt-1">{dashakamName}</p>
             {playMode === "all" && (
               <p className="text-gold-light font-sans text-xs mt-2">
                 📻 Playing all 100 dashakams · {currentDashakam}/100
@@ -502,10 +498,10 @@ export default function PodcastPage() {
           </div>
 
           {/* Next dashakam preview */}
-          {nextDashakam && (playMode === "all" || inPlaylistMode) && (
+          {currentDashakam < 100 && (playMode === "all" || inPlaylistMode) && (
             <div className="mt-4 text-center">
               <p className="text-[10px] text-primary-foreground/40 font-sans">
-                Up next: Dashakam {nextDashakam.id} — {nextDashakam.title_english}
+                Up next: Dashakam {currentDashakam + 1} — {nextDashakamName}
               </p>
             </div>
           )}

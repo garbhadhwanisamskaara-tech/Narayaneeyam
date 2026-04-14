@@ -1,13 +1,15 @@
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { captureAppError } from "@/monitoring/sentry";
-import { sampleDashakams, type Dashakam } from "@/data/narayaneeyam";
 
 export interface DashakamListItem {
   dashakam_no: number;
   dashakam_name: string;
   num_verses: number;
   remarks: string | null;
+  gist: string | null;
+  benefits: string | null;
+  title_sanskrit: string | null;
 }
 
 export interface MergedVerse {
@@ -27,32 +29,17 @@ interface UseDashakamResult {
   verses: MergedVerse[];
   loading: boolean;
   error: string | null;
-  staticDashakam: Dashakam | undefined;
-  /** True when verses have real Supabase audio URLs (not static fallbacks) */
+  /** True when verses have real audio file paths */
   audioReady: boolean;
 }
 
-// ── In-memory verse cache ──
+// ── In-memory caches ──
 const verseCache = new Map<string, MergedVerse[]>();
 let dashakamListCache: DashakamListItem[] | null = null;
+let dashakamListPromise: Promise<DashakamListItem[]> | null = null;
 
 function getCacheKey(dashakam: number, lang: string) {
   return `${dashakam}:${lang}`;
-}
-
-/** Build static fallback verses from bundled data */
-function buildStaticVerses(staticDashakam: Dashakam): MergedVerse[] {
-  return staticDashakam.verses.map((v) => ({
-    verse_no: v.paragraph,
-    sanskrit_text: v.sanskrit,
-    meter: v.meter,
-    has_bell: v.bell ?? false,
-    chant_audio_file: v.audio ?? "",
-    sloka_audio_id: null,
-    transliteration_text: v.english,
-    translation_text: v.meaning_english,
-    prasadam_text: v.prasadam ?? "",
-  }));
 }
 
 /** Race a promise against a timeout */
@@ -63,121 +50,120 @@ function withTimeout<T>(promise: Promise<T>, ms: number): Promise<T> {
   ]);
 }
 
+async function fetchDashakamList(): Promise<DashakamListItem[]> {
+  if (dashakamListCache) return dashakamListCache;
+  if (dashakamListPromise) return dashakamListPromise;
+
+  dashakamListPromise = (async () => {
+    try {
+      const { data, error } = await withTimeout(
+        Promise.resolve(
+          supabase
+            .from("dashakams")
+            .select("dashakam_no, dashakam_name, num_verses, remarks, gist, benefits, title_sanskrit")
+            .eq("language_code", "en")
+            .eq("is_published", true)
+            .order("dashakam_no"),
+        ),
+        8000,
+      );
+      if (error || !data || data.length === 0) {
+        dashakamListPromise = null;
+        return [];
+      }
+      const list = data as DashakamListItem[];
+      dashakamListCache = list;
+      return list;
+    } catch {
+      dashakamListPromise = null;
+      return [];
+    }
+  })();
+
+  return dashakamListPromise;
+}
+
 async function fetchVerses(
   selectedDashakam: number,
   selectedLanguage: string,
-  staticDashakam: Dashakam | undefined,
-  skipCache = false,
+  numVerses: number,
 ): Promise<MergedVerse[]> {
   const cacheKey = getCacheKey(selectedDashakam, selectedLanguage);
-  if (!skipCache) {
-    const cached = verseCache.get(cacheKey);
-    if (cached) return cached;
+  const cached = verseCache.get(cacheKey);
+  if (cached) return cached;
+
+  const [audioRes, scriptRes, langRes, prasRes] = await withTimeout(
+    Promise.all([
+      supabase
+        .from("verses_audio")
+        .select("verse_no, chant_audio_file, sloka_audio_id, has_bell")
+        .eq("dashakam_no", selectedDashakam)
+        .order("verse_no"),
+      supabase
+        .from("language_script")
+        .select("verse_no, transliteration_text, translation_text")
+        .eq("dashakam_no", selectedDashakam)
+        .eq("language_code", "sa")
+        .order("verse_no"),
+      supabase
+        .from("language_script")
+        .select("verse_no, transliteration_text, translation_text")
+        .eq("dashakam_no", selectedDashakam)
+        .eq("language_code", selectedLanguage)
+        .order("verse_no"),
+      supabase
+        .from("prasadam")
+        .select("verse_no, prasadam_text")
+        .eq("dashakam_no", selectedDashakam)
+        .eq("language_code", selectedLanguage)
+        .order("verse_no"),
+    ]),
+    8000,
+  );
+
+  const audioMap: Record<number, any> = {};
+  (audioRes.data ?? []).forEach((r: any) => { audioMap[r.verse_no] = r; });
+  const scriptMap: Record<number, any> = {};
+  (scriptRes.data ?? []).forEach((r: any) => { scriptMap[r.verse_no] = r; });
+  const langMap: Record<number, any> = {};
+  (langRes.data ?? []).forEach((r: any) => { langMap[r.verse_no] = r; });
+  const prasMap: Record<number, any> = {};
+  (prasRes.data ?? []).forEach((r: any) => { prasMap[r.verse_no] = r; });
+
+  const count = numVerses || Math.max(
+    ...Object.keys(audioMap).map(Number),
+    ...Object.keys(scriptMap).map(Number),
+    0,
+  );
+
+  const merged: MergedVerse[] = [];
+  for (let v = 1; v <= count; v++) {
+    const a = audioMap[v];
+    const s = scriptMap[v];
+    const l = langMap[v];
+    const p = prasMap[v];
+    merged.push({
+      verse_no: v,
+      sanskrit_text: s?.transliteration_text ?? "",
+      meter: a?.meter ?? "",
+      has_bell: a?.has_bell ?? false,
+      chant_audio_file: a?.chant_audio_file ?? "",
+      sloka_audio_id: a?.sloka_audio_id ?? null,
+      transliteration_text: l?.transliteration_text ?? "",
+      translation_text: l?.translation_text ?? "",
+      prasadam_text: p?.prasadam_text ?? "",
+    });
   }
 
-  // If we have static data, use it as immediate fallback while trying DB
-  try {
-    const [audioRes, scriptRes, langRes, prasRes] = await withTimeout(
-      Promise.all([
-        supabase
-          .from("verses_audio")
-          .select("verse_no, chant_audio_file, sloka_audio_id")
-          .eq("dashakam_no", selectedDashakam)
-          .order("verse_no"),
-        supabase
-          .from("language_script")
-          .select("verse_no, transliteration_text, translation_text")
-          .eq("dashakam_no", selectedDashakam)
-          .eq("language_code", "sa")
-          .order("verse_no"),
-        supabase
-          .from("language_script")
-          .select("verse_no, transliteration_text, translation_text")
-          .eq("dashakam_no", selectedDashakam)
-          .eq("language_code", selectedLanguage)
-          .order("verse_no"),
-        supabase
-          .from("prasadam")
-          .select("verse_no, prasadam_text")
-          .eq("dashakam_no", selectedDashakam)
-          .eq("language_code", selectedLanguage)
-          .order("verse_no"),
-      ]),
-      8000, // 8s timeout
-    );
-
-    const hasDbData = (audioRes.data && audioRes.data.length > 0) || (scriptRes.data && scriptRes.data.length > 0);
-
-    if (!hasDbData && staticDashakam) {
-      const staticVerses = buildStaticVerses(staticDashakam);
-      verseCache.set(cacheKey, staticVerses);
-      return staticVerses;
-    }
-
-    const audioMap: Record<number, any> = {};
-    (audioRes.data ?? []).forEach((r: any) => {
-      audioMap[r.verse_no] = r;
-    });
-    const scriptMap: Record<number, any> = {};
-    (scriptRes.data ?? []).forEach((r: any) => {
-      scriptMap[r.verse_no] = r;
-    });
-    const langMap: Record<number, any> = {};
-    (langRes.data ?? []).forEach((r: any) => {
-      langMap[r.verse_no] = r;
-    });
-    const prasMap: Record<number, any> = {};
-    (prasRes.data ?? []).forEach((r: any) => {
-      prasMap[r.verse_no] = r;
-    });
-
-    const numVerses =
-      staticDashakam?.num_verses ??
-      Math.max(...Object.keys(audioMap).map(Number), ...Object.keys(scriptMap).map(Number), 10);
-
-    const merged: MergedVerse[] = [];
-    for (let v = 1; v <= numVerses; v++) {
-      const a = audioMap[v];
-      const s = scriptMap[v];
-      const l = langMap[v];
-      const p = prasMap[v];
-      const sv = staticDashakam?.verses.find((x) => x.paragraph === v);
-
-      merged.push({
-        verse_no: v,
-        sanskrit_text: s?.transliteration_text ?? sv?.sanskrit ?? "",
-        meter: sv?.meter ?? "",
-        has_bell: false,
-        chant_audio_file: a?.chant_audio_file ?? "",
-        sloka_audio_id: a?.sloka_audio_id ?? null,
-        transliteration_text: l?.transliteration_text ?? sv?.english ?? "",
-        translation_text: l?.translation_text ?? sv?.meaning_english ?? "",
-        prasadam_text: p?.prasadam_text ?? sv?.prasadam ?? "",
-      });
-    }
-
-    verseCache.set(cacheKey, merged);
-    return merged;
-  } catch (err) {
-    // On any failure (timeout, network, etc.), fall back to static data
-    if (staticDashakam) {
-      const staticVerses = buildStaticVerses(staticDashakam);
-      verseCache.set(cacheKey, staticVerses);
-      return staticVerses;
-    }
-    throw err;
-  }
+  verseCache.set(cacheKey, merged);
+  return merged;
 }
 
 // ── Preload Dashakam 1 on module load ──
-const d1Static = sampleDashakams.find((d) => d.id === 1);
-if (d1Static) {
-  // Immediately cache static data so it's available even before DB responds
-  const staticVerses = buildStaticVerses(d1Static);
-  verseCache.set(getCacheKey(1, "en"), staticVerses);
-  // Then try to upgrade with DB data in background
-  fetchVerses(1, "en", d1Static, true).catch(() => {});
-}
+fetchDashakamList().then((list) => {
+  const d1 = list.find((d) => d.dashakam_no === 1);
+  if (d1) fetchVerses(1, "en", d1.num_verses).catch(() => {});
+});
 
 export function useDashakam(selectedDashakam: number, selectedLanguage: string = "en"): UseDashakamResult {
   const [dashakamList, setDashakamList] = useState<DashakamListItem[]>(dashakamListCache ?? []);
@@ -189,49 +175,11 @@ export function useDashakam(selectedDashakam: number, selectedLanguage: string =
   });
   const [error, setError] = useState<string | null>(null);
 
-  const staticDashakam = sampleDashakams.find((d) => d.id === selectedDashakam);
-
   // Load dashakam list once
   useEffect(() => {
-    if (dashakamListCache) {
-      setDashakamList(dashakamListCache);
-      return;
-    }
-    (async () => {
-      try {
-        const { data, error: err } = await withTimeout(
-          Promise.resolve(
-            supabase
-              .from("dashakams")
-              .select("dashakam_no, dashakam_name, num_verses, remarks")
-              .eq("language_code", "en")
-              .eq("is_published", true)
-              .order("dashakam_no"),
-          ),
-          5000,
-        );
-
-        const fallback = sampleDashakams.map((d) => ({
-          dashakam_no: d.id,
-          dashakam_name: d.title_english,
-          num_verses: d.num_verses,
-          remarks: d.remarks ?? null,
-        }));
-
-        const list = err || !data || data.length === 0 ? fallback : (data as DashakamListItem[]);
-        dashakamListCache = list;
-        setDashakamList(list);
-      } catch {
-        const fallback = sampleDashakams.map((d) => ({
-          dashakam_no: d.id,
-          dashakam_name: d.title_english,
-          num_verses: d.num_verses,
-          remarks: d.remarks ?? null,
-        }));
-        dashakamListCache = fallback;
-        setDashakamList(fallback);
-      }
-    })();
+    fetchDashakamList().then((list) => {
+      setDashakamList(list);
+    });
   }, []);
 
   // Load verse data
@@ -244,18 +192,7 @@ export function useDashakam(selectedDashakam: number, selectedLanguage: string =
       setVerses(cached);
       setLoading(false);
       setError(null);
-      // If cached data has no real audio (static fallback), try DB upgrade in background
-      const hasRealAudio = cached.some((v) => v.chant_audio_file && !v.chant_audio_file.startsWith("/Chant/"));
-      if (!hasRealAudio) {
-        fetchVerses(selectedDashakam, selectedLanguage, staticDashakam, true)
-          .then((result) => {
-            if (!cancelled) setVerses(result);
-          })
-          .catch(() => {});
-      }
-      return () => {
-        cancelled = true;
-      };
+      return () => { cancelled = true; };
     }
 
     setLoading(true);
@@ -263,7 +200,12 @@ export function useDashakam(selectedDashakam: number, selectedLanguage: string =
 
     (async () => {
       try {
-        const result = await fetchVerses(selectedDashakam, selectedLanguage, staticDashakam);
+        // Get num_verses from dashakam list
+        const list = await fetchDashakamList();
+        const dk = list.find((d) => d.dashakam_no === selectedDashakam);
+        const numVerses = dk?.num_verses ?? 10;
+
+        const result = await fetchVerses(selectedDashakam, selectedLanguage, numVerses);
         if (!cancelled) {
           setVerses(result);
         }
@@ -271,26 +213,26 @@ export function useDashakam(selectedDashakam: number, selectedLanguage: string =
         captureAppError(err, { component: "dashakam", dashakam_no: selectedDashakam });
         if (!cancelled) {
           setError(err.message ?? "Failed to load dashakam data");
-          if (staticDashakam) {
-            setVerses(buildStaticVerses(staticDashakam));
-          }
         }
       } finally {
         if (!cancelled) setLoading(false);
       }
     })();
 
-    return () => {
-      cancelled = true;
-    };
+    return () => { cancelled = true; };
   }, [selectedDashakam, selectedLanguage]);
 
-  // Audio is ready when we have verses with non-empty, non-static-fallback audio files
-  // DB may store relative paths (e.g. "Chant/SN001/SN001-01.mp3") which getStorageUrl converts to full URLs
+  // Audio is ready when we have verses with non-empty chant_audio_file
   const audioReady =
     !loading &&
     verses.length > 0 &&
-    verses.some((v) => v.chant_audio_file && !v.chant_audio_file.startsWith("/Chant/"));
+    verses.some((v) => v.chant_audio_file && v.chant_audio_file.length > 0);
 
-  return { dashakamList, verses, loading, error, staticDashakam, audioReady };
+  return { dashakamList, verses, loading, error, audioReady };
+}
+
+/** Get dashakam name from cached list */
+export function getDashakamName(dashakamNo: number): string {
+  const item = dashakamListCache?.find((d) => d.dashakam_no === dashakamNo);
+  return item?.dashakam_name || `Dashakam ${dashakamNo}`;
 }

@@ -13,7 +13,6 @@ import BookmarkButton from "@/components/BookmarkButton";
 import FavouriteButton from "@/components/FavouriteButton";
 import RemoveBottomSheet from "@/components/RemoveBottomSheet";
 import {
-  sampleDashakams,
   TRANSLITERATION_LANGUAGES,
   type TransliterationLanguage,
 } from "@/data/narayaneeyam";
@@ -37,9 +36,6 @@ type RitualPhase = "idle" | "opening" | "dashakam_end" | "session_end";
 
 export default function ChantPage() {
   const [searchParams] = useSearchParams();
-  const [chantMode, setChantMode] = useState<"chant" | "learn">(
-    searchParams.get("mode") === "learn" || window.location.pathname === "/learn" ? "learn" : "chant"
-  );
   const [selectedDashakam, setSelectedDashakam] = useState(1);
   const [selectedPara, setSelectedPara] = useState<number | null>(null);
   const [translitLang, setTranslitLang] = useState<TransliterationLanguage>("sanskrit");
@@ -107,24 +103,22 @@ export default function ChantPage() {
 
   const selectedLanguage = "en";
 
-  // Live data from Supabase with static fallback
-  const { dashakamList, verses: dbVerses, loading: dbLoading, staticDashakam, audioReady } = useDashakam(selectedDashakam, selectedLanguage);
+  // Live data from Supabase
+  const { dashakamList, verses: dbVerses, loading: dbLoading, audioReady } = useDashakam(selectedDashakam, selectedLanguage);
   const { openingChants, dashakamClosingChant, sessionClosingChant } = useRitualChants(selectedLanguage);
 
-  // Language fetch removed — default English only
+  // Build the dashakam dropdown list from DB
+  const dropdownList = dashakamList.map((d) => ({ id: d.dashakam_no, title: d.dashakam_name }));
 
-  // Build the dashakam dropdown list — prefer DB list, fallback to static
-  const dropdownList = dashakamList.length > 0
-    ? dashakamList.map((d) => ({ id: d.dashakam_no, title: d.dashakam_name }))
-    : sampleDashakams.map((d) => ({ id: d.id, title: d.title_english }));
+  // Get dashakam metadata from DB list
+  const dashakamMeta = dashakamList.find((d) => d.dashakam_no === selectedDashakam);
 
-  // Use static dashakam for gist/benefits/title (always available)
-  const dashakam = staticDashakam;
+  // (removed — learn mode deleted)
+  
 
-  // Convert dbVerses to display format — use learn_audio_file in learn mode
-  // getStorageUrl converts relative paths to full Supabase Storage URLs
+  // Convert dbVerses to display format
   const allVerses = dbVerses.map((mv) => {
-    const rawUrl = getStorageUrl(chantMode === "learn" ? mv.learn_audio_file : mv.chant_audio_file);
+    const rawUrl = getStorageUrl(mv.chant_audio_file);
     // Accept any valid https URL (getStorageUrl already handles conversion)
     const validAudio = rawUrl && rawUrl.startsWith("https://") ? rawUrl : undefined;
     return {
@@ -479,30 +473,13 @@ export default function ChantPage() {
         <div className="mb-8 flex items-center justify-between flex-wrap gap-2">
           <div>
             <h1 className="font-display text-3xl font-bold text-foreground mb-2">
-              {chantMode === "chant" ? "Chant with Me" : "Learn with Me"}
+              Chant with Me
             </h1>
             <p className="text-muted-foreground font-sans">
-              {chantMode === "chant"
-                ? "Follow along with synchronized text highlighting"
-                : "Listen and repeat during the pause — learn at your own pace"}
+              Follow along with synchronized text highlighting
             </p>
           </div>
           <div className="flex items-center gap-2">
-            {/* Mode Toggle */}
-            <div className="flex rounded-lg border border-border bg-background overflow-hidden">
-              <button
-                onClick={() => { setChantMode("chant"); if (audioRef.current) { audioRef.current.pause(); audioRef.current = null; } pausedRef.current = false; stopSloka(); setIsPlaying(false); setVerseProgress(0); }}
-                className={`px-3 py-2 text-sm font-sans transition-colors ${chantMode === "chant" ? "bg-primary text-primary-foreground font-semibold" : "text-muted-foreground hover:text-foreground"}`}
-              >
-                Chant Mode
-              </button>
-              <button
-                onClick={() => { setChantMode("learn"); if (audioRef.current) { audioRef.current.pause(); audioRef.current = null; } pausedRef.current = false; stopSloka(); setIsPlaying(false); setVerseProgress(0); }}
-                className={`px-3 py-2 text-sm font-sans transition-colors ${chantMode === "learn" ? "bg-secondary text-secondary-foreground font-semibold" : "text-muted-foreground hover:text-foreground"}`}
-              >
-                Learn Mode
-              </button>
-            </div>
             <button
               onClick={() => setPlaylistOpen(true)}
               className="flex items-center gap-2 rounded-lg border border-secondary/30 bg-secondary/10 px-4 py-2 text-sm font-sans text-foreground hover:bg-secondary/20 transition-colors"
@@ -624,18 +601,18 @@ export default function ChantPage() {
         </div>
 
         {/* Dashakam Info + Gist */}
-        {dashakam && (
+        {dashakamMeta && (
           <div className="mb-6">
             <div className="rounded-xl bg-gradient-peacock p-5">
-              <h2 className="font-display text-xl font-semibold text-primary-foreground mb-1">{dashakam.title_sanskrit}</h2>
-              <p className="text-gold-light font-sans text-sm mb-1">{dashakam.title_english}</p>
+              <h2 className="font-display text-xl font-semibold text-primary-foreground mb-1">{dashakamMeta.title_sanskrit || dashakamMeta.dashakam_name}</h2>
+              <p className="text-gold-light font-sans text-sm mb-1">{dashakamMeta.dashakam_name}</p>
               <div className="mt-3 flex items-center gap-2">
                 <button onClick={() => setShowGist(!showGist)}
                   className="inline-flex items-center gap-1 rounded-lg bg-primary-foreground/10 px-3 py-1.5 text-xs text-gold-light font-sans hover:bg-primary-foreground/20 transition-colors">
                   {showGist ? <ChevronUp className="h-3 w-3" /> : <ChevronDown className="h-3 w-3" />}
                   {showGist ? "Hide Gist" : "View Gist"}
                 </button>
-                {dashakam.benefits && (
+                {dashakamMeta.benefits && (
                   <button onClick={() => setShowBenefit(!showBenefit)}
                     className="inline-flex items-center gap-1 rounded-lg bg-primary-foreground/10 px-3 py-1.5 text-xs text-gold-light font-sans hover:bg-primary-foreground/20 transition-colors">
                     {showBenefit ? <ChevronUp className="h-3 w-3" /> : <ChevronDown className="h-3 w-3" />}
@@ -645,17 +622,17 @@ export default function ChantPage() {
               </div>
             </div>
             <AnimatePresence>
-              {showGist && (
+              {showGist && dashakamMeta.gist && (
                 <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: "auto", opacity: 1 }} exit={{ height: 0, opacity: 0 }} className="overflow-hidden">
                   <div className="rounded-b-xl border border-t-0 border-border bg-card p-4">
-                    <p className="text-sm text-foreground font-sans leading-relaxed">{dashakam.gist}</p>
+                    <p className="text-sm text-foreground font-sans leading-relaxed">{dashakamMeta.gist}</p>
                   </div>
                 </motion.div>
               )}
-              {showBenefit && dashakam.benefits && (
+              {showBenefit && dashakamMeta.benefits && (
                 <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: "auto", opacity: 1 }} exit={{ height: 0, opacity: 0 }} className="overflow-hidden">
                   <div className="rounded-b-xl border border-t-0 border-border bg-card p-4">
-                    <p className="text-sm text-foreground font-sans leading-relaxed">✨ {dashakam.benefits}</p>
+                    <p className="text-sm text-foreground font-sans leading-relaxed">✨ {dashakamMeta.benefits}</p>
                   </div>
                 </motion.div>
               )}
@@ -802,7 +779,7 @@ export default function ChantPage() {
                 <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-secondary"></span>
               </span>
               <span className="text-xs font-sans font-semibold text-secondary uppercase tracking-wider">
-                {chantMode === "chant" ? "Chant Module Active" : "Learn Module Active"}
+                Chant Module Active
               </span>
             </div>
           )}

@@ -2,7 +2,7 @@ import { useEffect, useState, useCallback, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "@/hooks/use-toast";
-import { sampleDashakams } from "@/data/narayaneeyam";
+import { getDashakamName } from "@/hooks/useDashakam";
 
 export interface VerseStatus {
   verse_number: number;
@@ -39,11 +39,11 @@ export function useMemberProgress(mode: "chant" | "learn") {
 
         if (data && data.length > 0) {
           const d = data[0];
-          const dashakam = sampleDashakams.find((s) => s.id === d.dashakam_number);
+          const dashakamName = getDashakamName(d.dashakam_number);
           setLastPosition({
             dashakam_number: d.dashakam_number,
             verse_number: d.verse_number,
-            dashakam_name: dashakam?.title_english || `Dashakam ${d.dashakam_number}`,
+            dashakam_name: dashakamName,
           });
         }
       } catch {
@@ -155,8 +155,7 @@ export function useMemberProgress(mode: "chant" | "learn") {
 
       if (completedCount >= totalVerses) {
         completionToastShown.current.add(dashakamNo);
-        const dashakam = sampleDashakams.find((s) => s.id === dashakamNo);
-        const name = dashakam?.title_english || `Dashakam ${dashakamNo}`;
+        const name = getDashakamName(dashakamNo);
 
         toast({
           title: `🙏 Dashakam ${dashakamNo} complete!`,

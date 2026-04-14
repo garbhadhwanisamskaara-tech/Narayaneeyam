@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback, Fragment } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { sampleDashakams as localDashakams } from "@/data/narayaneeyam";
+import { getDashakamName } from "@/hooks/useDashakam";
 import { toast } from "@/hooks/use-toast";
 import {
   Check, AlertTriangle, X, Save, Upload, BookOpen, FileText,
@@ -206,15 +206,15 @@ export default function AdminUploadPage() {
     if (data) {
       setDetails({ dashakam_name: data.dashakam_name ?? "", gist: data.gist ?? "", benefits: data.benefits ?? "", remarks: data.remarks ?? "", image_url: data.image_url ?? "", is_published: !!data.is_published });
     } else {
-      const local = localDashakams.find((d) => d.id === dNo);
-      setDetails({ dashakam_name: local?.title_english ?? "", gist: local?.gist ?? "", benefits: local?.benefits ?? "", remarks: local?.remarks ?? "", image_url: local?.imageUrl ?? "", is_published: false });
+      setDetails({ dashakam_name: "", gist: "", benefits: "", remarks: "", image_url: "", is_published: false });
     }
     setDetailsDirty(false);
   }, []);
 
   const loadVerses = useCallback(async (dNo: number) => {
-    const dk = localDashakams.find((d) => d.id === dNo);
-    const numVerses = dk?.num_verses ?? 10;
+    // Get num_verses from dashakams table
+    const { data: dkData } = await supabase.from("dashakams").select("num_verses").eq("dashakam_no", dNo).eq("language_code", "en").maybeSingle();
+    const numVerses = dkData?.num_verses ?? 10;
     const [{ data: audioRows }, { data: scriptRows }] = await Promise.all([
       supabase.from("verses_audio").select("*").eq("dashakam_no", dNo).order("verse_no"),
       supabase.from("language_script").select("verse_no, transliteration_text, translation_text").eq("dashakam_no", dNo).eq("language_code", "sa").order("verse_no"),
@@ -229,7 +229,7 @@ export default function AdminUploadPage() {
       rows.push({
         dashakam_no: dNo, verse_no: v,
         chant_audio_file: a?.chant_audio_file ?? "", learn_audio_file: a?.learn_audio_file ?? "",
-        has_bell: dk?.bell_verses?.includes(v) ?? false, has_sloka: !!a?.sloka_audio_id, dirty: false,
+        has_bell: a?.has_bell ?? false, has_sloka: !!a?.sloka_audio_id, dirty: false,
         sanskrit_text: s?.transliteration_text ?? "", meter: "", scriptDirty: false,
         langContent: emptyLangContent(), langLoaded: new Set(), activeLang: "en",
         sloka: { ...emptySloka }, sloka_audio_id: a?.sloka_audio_id ?? null,
@@ -321,7 +321,7 @@ export default function AdminUploadPage() {
       if (audioErr) throw audioErr;
       const chantCount = verses.filter((v) => (v.verse_no === row.verse_no ? row.chant_audio_file : v.chant_audio_file)).length;
       const learnCount = verses.filter((v) => (v.verse_no === row.verse_no ? row.learn_audio_file : v.learn_audio_file)).length;
-      const dk = localDashakams.find((d) => d.id === row.dashakam_no); const total = dk?.num_verses ?? 10;
+      const total = verses.length || 10;
       await supabase.from("upload_progress").upsert({ dashakam_no: row.dashakam_no, chant_uploaded: chantCount, learn_uploaded: learnCount, is_complete: chantCount >= total && learnCount >= total }, { onConflict: "dashakam_no" });
       setVerses((prev) => prev.map((v) => (v.verse_no === row.verse_no ? { ...v, dirty: false } : v)));
       await loadProgress();
@@ -356,7 +356,7 @@ export default function AdminUploadPage() {
       setVerses((prev) => prev.map((v) => { if (v.verse_no !== row.verse_no) return v; const updated = { ...v, langContent: { ...v.langContent } }; updated.langContent[lang] = { ...v.langContent[lang], dirty: false }; return updated; }));
       if (lang === "en") {
         const { data: enRows } = await supabase.from("language_script").select("verse_no").eq("dashakam_no", row.dashakam_no).eq("language_code", "en").not("translation_text", "is", null);
-        const dk = localDashakams.find((d) => d.id === row.dashakam_no); const total = dk?.num_verses ?? 10;
+        const total = verses.length || 10;
         await supabase.from("upload_progress").upsert({ dashakam_no: row.dashakam_no, translations_complete: (enRows?.length ?? 0) >= total }, { onConflict: "dashakam_no" });
         await loadProgress();
       }
@@ -379,7 +379,7 @@ export default function AdminUploadPage() {
     } catch (err: any) { toast({ title: "Error", description: err.message, variant: "destructive" }); } finally { setSavingSloka(null); }
   };
 
-  const selectedDk = localDashakams.find((d) => d.id === selectedDashakam);
+  const selectedDkName = getDashakamName(selectedDashakam ?? 0);
 
   /* ═══════════ SLOKAS TAB LOGIC ═══════════ */
   const loadSlokaList = useCallback(async () => {
@@ -628,14 +628,14 @@ export default function AdminUploadPage() {
             <select value={selectedDashakam ?? ""} onChange={(e) => { const v = Number(e.target.value); if (v) selectDashakam(v); }}
               className="w-full max-w-md rounded-lg border border-input bg-background px-3 py-2 text-sm text-foreground focus:ring-2 focus:ring-ring">
               <option value="">— pick a dashakam —</option>
-              {localDashakams.map((d) => (<option key={d.id} value={d.id}>{d.id}. {d.title_english} ({d.num_verses} verses)</option>))}
+              {Array.from({ length: 100 }, (_, i) => i + 1).map((no) => (<option key={no} value={no}>{no}. {getDashakamName(no)}</option>))}
             </select>
           </section>
 
           {/* Dashakam Details Form */}
-          {selectedDashakam && selectedDk && (
+          {selectedDashakam && (
             <section className="mb-8 rounded-xl border border-border bg-card p-6">
-              <h2 className="font-display text-lg font-semibold text-foreground mb-4">Dashakam {selectedDk.id} — Details</h2>
+              <h2 className="font-display text-lg font-semibold text-foreground mb-4">Dashakam {selectedDashakam} — Details</h2>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-xs font-medium text-muted-foreground mb-1">Dashakam Name</label>
@@ -675,11 +675,11 @@ export default function AdminUploadPage() {
           )}
 
           {/* Verse Table */}
-          {selectedDashakam && selectedDk && (
+          {selectedDashakam && (
             <section>
               <h2 className="font-display text-lg font-semibold text-foreground mb-2">Verses — Audio, Script & Content</h2>
               <p className="text-sm text-muted-foreground mb-4">
-                {selectedDk.num_verses} verses · Bell on verse{selectedDk.bell_verses.length > 1 ? "s" : ""} {selectedDk.bell_verses.join(", ")} · Click a verse number to expand.
+                {verses.length} verses
               </p>
               <div className="overflow-x-auto rounded-lg border border-border">
                 <table className="w-full text-sm">
