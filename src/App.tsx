@@ -10,7 +10,7 @@ import Index from "./pages/Index";
 import ChantPage from "./pages/ChantPage";
 
 import ScriptPage from "./pages/ScriptPage";
-// LessonPlanPage removed from navigation
+
 import DashboardPage from "./pages/DashboardPage";
 import PodcastPage from "./pages/PodcastPage";
 import AuthPage from "./pages/AuthPage";
