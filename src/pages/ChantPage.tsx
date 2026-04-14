@@ -406,11 +406,10 @@ export default function ChantPage() {
       }
     } else {
       setVerseProgress(0);
-      gapTimerRef.current = setTimeout(() => {
-        setHighlightedVerse((prev) => prev + 1);
-        if (inPlaylistMode && playlistId)
-          savePlaylistProgress(playlistId, playlistIndex, highlightedVerse + 2, playlistLoop);
-      }, 1500);
+      // Immediately advance to next verse — no silence gap
+      setHighlightedVerse((prev) => prev + 1);
+      if (inPlaylistMode && playlistId)
+        savePlaylistProgress(playlistId, playlistIndex, highlightedVerse + 2, playlistLoop);
     }
   }, [
     highlightedVerse,
