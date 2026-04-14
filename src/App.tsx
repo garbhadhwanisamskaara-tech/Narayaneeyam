@@ -47,6 +47,7 @@ const App = () => {
   return (
   <SentryErrorBoundary>
   <QueryClientProvider client={queryClient}>
+    <AudioProvider>
     <TooltipProvider>
       <Toaster />
       <Sonner />
