@@ -191,7 +191,10 @@ async function fetchVerses(
   return merged;
 }
 
-// No module-level preload — wait for auth to be ready
+/** Call after auth is ready to prefetch dashakam list */
+export function prefetchDashakamList(): void {
+  fetchDashakamList().catch(() => {});
+}
 
 export function useDashakam(selectedDashakam: number, selectedLanguage: string = "en"): UseDashakamResult {
   const [dashakamList, setDashakamList] = useState<DashakamListItem[]>(dashakamListCache ?? []);
