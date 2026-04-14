@@ -108,7 +108,7 @@ export default function ChantPage() {
   const selectedLanguage = "en";
 
   // Live data from Supabase with static fallback
-  const { dashakamList, verses: dbVerses, loading: dbLoading, staticDashakam } = useDashakam(selectedDashakam, selectedLanguage);
+  const { dashakamList, verses: dbVerses, loading: dbLoading, staticDashakam, audioReady } = useDashakam(selectedDashakam, selectedLanguage);
   const { openingChants, dashakamClosingChant, sessionClosingChant } = useRitualChants(selectedLanguage);
 
   // Language fetch removed — default English only
@@ -121,23 +121,30 @@ export default function ChantPage() {
   // Use static dashakam for gist/benefits/title (always available)
   const dashakam = staticDashakam;
 
+  const SUPABASE_URL_PREFIX = "https://znglsaxfyhkuzyrfbuhn.supabase.co";
+
   // Convert dbVerses to display format — use learn_audio_file in learn mode
-  const allVerses = dbVerses.map((mv) => ({
-    id: `${selectedDashakam}-${mv.verse_no}`,
-    dashakam: selectedDashakam,
-    paragraph: mv.verse_no,
-    sanskrit: mv.sanskrit_text,
-    english: mv.transliteration_text,
-    meaning_english: mv.translation_text,
-    meter: mv.meter,
-    audio: getStorageUrl(chantMode === "learn" ? mv.learn_audio_file : mv.chant_audio_file) || undefined,
-    bell: mv.has_bell,
-    prasadam: mv.prasadam_text || undefined,
-    sloka_audio_id: mv.sloka_audio_id,
-    tamil: "", malayalam: "", telugu: "", kannada: "", hindi: "", marathi: "",
-    meaning_tamil: "", meaning_malayalam: "", meaning_telugu: "",
-    meaning_kannada: "", meaning_hindi: "", meaning_marathi: "",
-  }));
+  // Only use audio URLs that are valid Supabase URLs
+  const allVerses = dbVerses.map((mv) => {
+    const rawUrl = getStorageUrl(chantMode === "learn" ? mv.learn_audio_file : mv.chant_audio_file);
+    const validAudio = rawUrl && rawUrl.startsWith(SUPABASE_URL_PREFIX) ? rawUrl : undefined;
+    return {
+      id: `${selectedDashakam}-${mv.verse_no}`,
+      dashakam: selectedDashakam,
+      paragraph: mv.verse_no,
+      sanskrit: mv.sanskrit_text,
+      english: mv.transliteration_text,
+      meaning_english: mv.translation_text,
+      meter: mv.meter,
+      audio: validAudio,
+      bell: mv.has_bell,
+      prasadam: mv.prasadam_text || undefined,
+      sloka_audio_id: mv.sloka_audio_id,
+      tamil: "", malayalam: "", telugu: "", kannada: "", hindi: "", marathi: "",
+      meaning_tamil: "", meaning_malayalam: "", meaning_telugu: "",
+      meaning_kannada: "", meaning_hindi: "", meaning_marathi: "",
+    };
+  });
 
   // Progressive loading: show first 3 verses instantly, rest after paint
   const [showAll, setShowAll] = useState(false);
@@ -357,6 +364,7 @@ export default function ChantPage() {
 
     if (pausedRef.current && audioRef.current && !audioRef.current.ended) {
       audioRef.current.playbackRate = speed;
+      console.log('Resuming audio URL:', audioRef.current.src);
       audioRef.current.play().catch((err) => console.error("Audio play error:", err));
       pausedRef.current = false;
       logAudioEvent("audio_play", selectedDashakam, currentVerse?.paragraph || 0, "resume");
@@ -372,6 +380,7 @@ export default function ChantPage() {
 
     if (currentVerse?.audio) {
       const loadStart = performance.now();
+      console.log('Playing audio URL:', currentVerse.audio);
       const audio = new Audio(currentVerse.audio);
       audioRef.current = audio;
       audio.playbackRate = speed;
@@ -402,13 +411,10 @@ export default function ChantPage() {
       audio.onended = () => handleVerseEndedRef.current();
       return () => { audio.pause(); audio.removeEventListener("timeupdate", updateProgress); audio.onended = null; };
     } else {
-      const interval = setInterval(() => {
-        setVerseProgress((prev) => {
-          if (prev >= 100) { handleVerseEndedRef.current(); return 0; }
-          return prev + (speed * 2.5);
-        });
-      }, 100);
-      return () => clearInterval(interval);
+      // No valid audio URL — skip to next verse after a short delay
+      console.warn('No valid audio URL for verse', currentVerse?.paragraph, '— skipping');
+      gapTimerRef.current = setTimeout(() => handleVerseEndedRef.current(), 2000);
+      return () => { if (gapTimerRef.current) clearTimeout(gapTimerRef.current); };
     }
   }, [isPlaying, highlightedVerse, displayVerses.length, speed, isSlokaPlaying]);
 
@@ -429,6 +435,10 @@ export default function ChantPage() {
       logAudioEvent("audio_pause", selectedDashakam, displayVerses[highlightedVerse]?.paragraph || 0, "");
       setIsPlaying(false);
     } else {
+      if (!audioReady) {
+        console.warn("Audio not ready — waiting for Supabase data");
+        return;
+      }
       if (!hasPlayedOpening && openingChants.length > 0) { setRitualPhase("opening"); return; }
       logEvent("chant_started", { dashakam: selectedDashakam });
       setIsPlaying(true);
@@ -800,8 +810,10 @@ export default function ChantPage() {
           <div className="flex items-center justify-center gap-4">
             <button onClick={() => { if (audioRef.current) { audioRef.current.pause(); audioRef.current = null; } pausedRef.current = false; stopSloka(); setVerseProgress(0); setHighlightedVerse(Math.max(0, highlightedVerse - 1)); }} className="text-primary-foreground/70 hover:text-primary-foreground p-2"><SkipBack className="h-5 w-5" /></button>
             <button onClick={() => { if (audioRef.current) { audioRef.current.pause(); audioRef.current = null; } pausedRef.current = false; stopSloka(); setVerseProgress(0); setHighlightedVerse(0); setCurrentLoopIteration(0); }} className="text-primary-foreground/70 hover:text-primary-foreground p-2" title="Restart"><RotateCcw className="h-5 w-5" /></button>
-            <button onClick={handlePlayPause} className="flex h-12 w-12 items-center justify-center rounded-full bg-gradient-gold text-primary shadow-gold transition-transform hover:scale-110">
-              {isPlaying ? <Pause className="h-6 w-6" /> : <Play className="h-6 w-6 ml-0.5" />}
+            <button onClick={handlePlayPause} disabled={!audioReady && !isPlaying} className={`flex h-12 w-12 items-center justify-center rounded-full bg-gradient-gold text-primary shadow-gold transition-transform hover:scale-110 ${!audioReady && !isPlaying ? 'opacity-50 cursor-not-allowed' : ''}`}>
+              {!audioReady && !isPlaying ? (
+                <div className="h-5 w-5 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+              ) : isPlaying ? <Pause className="h-6 w-6" /> : <Play className="h-6 w-6 ml-0.5" />}
             </button>
             <button onClick={() => { if (audioRef.current) { audioRef.current.pause(); audioRef.current = null; } pausedRef.current = false; stopSloka(); setVerseProgress(0); setHighlightedVerse(Math.min(displayVerses.length - 1, highlightedVerse + 1)); }} className="text-primary-foreground/70 hover:text-primary-foreground p-2"><SkipForward className="h-5 w-5" /></button>
             <button onClick={handleEndSession} className="text-primary-foreground/70 hover:text-primary-foreground p-2" title="End Session"><Square className="h-5 w-5" /></button>

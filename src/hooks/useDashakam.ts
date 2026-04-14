@@ -29,6 +29,8 @@ interface UseDashakamResult {
   loading: boolean;
   error: string | null;
   staticDashakam: Dashakam | undefined;
+  /** True when verses have real Supabase audio URLs (not static fallbacks) */
+  audioReady: boolean;
 }
 
 // ── In-memory verse cache ──
@@ -278,9 +280,13 @@ export function useDashakam(
     })();
 
     return () => { cancelled = true; };
-
-    return () => { cancelled = true; };
   }, [selectedDashakam, selectedLanguage]);
 
-  return { dashakamList, verses, loading, error, staticDashakam };
+  const SUPABASE_PREFIX = "https://znglsaxfyhkuzyrfbuhn.supabase.co";
+  const audioReady = !loading && verses.length > 0 && verses.some(
+    (v) => (v.chant_audio_file && v.chant_audio_file.startsWith(SUPABASE_PREFIX)) ||
+           (v.learn_audio_file && v.learn_audio_file.startsWith(SUPABASE_PREFIX))
+  );
+
+  return { dashakamList, verses, loading, error, staticDashakam, audioReady };
 }
