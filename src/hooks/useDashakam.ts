@@ -41,19 +41,6 @@ function getCacheKey(dashakam: number, lang: string) {
   return `${dashakam}:${lang}`;
 }
 
-/** Race a promise against a timeout */
-function withTimeout<T>(promise: Promise<T>, ms: number): Promise<T> {
-  return Promise.race([
-    promise,
-    new Promise<never>((_, reject) => setTimeout(() => reject(new Error("Query timeout")), ms)),
-  ]);
-}
-
-/** Await a Supabase query builder properly */
-async function executeQuery<T>(queryBuilder: PromiseLike<T>): Promise<T> {
-  return await queryBuilder;
-}
-
 async function fetchDashakamList(): Promise<DashakamListItem[]> {
   if (dashakamListCache) return dashakamListCache;
   if (dashakamListPromise) return dashakamListPromise;
@@ -64,16 +51,11 @@ async function fetchDashakamList(): Promise<DashakamListItem[]> {
 
   dashakamListPromise = (async () => {
     try {
-      const { data, error } = await withTimeout(
-        executeQuery(
-          supabase
-            .from("dashakams")
-            .select("dashakam_no, dashakam_name, num_verses, remarks, gist, benefits")
-            .eq("language_code", "en")
-            .order("dashakam_no"),
-        ),
-        15000,
-      );
+      const { data, error } = await supabase
+        .from("dashakams")
+        .select("dashakam_no, dashakam_name, num_verses, remarks, gist, benefits")
+        .eq("language_code", "en")
+        .order("dashakam_no");
       console.log(`[useDashakam] dashakams query result: error=${!!error}, rows=${data?.length ?? 0}`);
       if (error) {
         console.error("[useDashakam] dashakams query error:", error.message, error.code);
@@ -116,42 +98,31 @@ async function fetchVerses(
   const cached = verseCache.get(cacheKey);
   if (cached) return cached;
 
-  const [audioRes, scriptRes, langRes, prasRes] = await withTimeout(
-    Promise.all([
-      executeQuery(
-        supabase
-          .from("verses_audio")
-          .select("verse_no, chant_audio_file, sloka_audio_id")
-          .eq("dashakam_no", selectedDashakam)
-          .order("verse_no"),
-      ),
-      executeQuery(
-        supabase
-          .from("language_script")
-          .select("verse_no, transliteration_text, translation_text")
-          .eq("dashakam_no", selectedDashakam)
-          .eq("language_code", "sa")
-          .order("verse_no"),
-      ),
-      executeQuery(
-        supabase
-          .from("language_script")
-          .select("verse_no, transliteration_text, translation_text")
-          .eq("dashakam_no", selectedDashakam)
-          .eq("language_code", selectedLanguage)
-          .order("verse_no"),
-      ),
-      executeQuery(
-        supabase
-          .from("prasadam")
-          .select("verse_no, prasadam_text")
-          .eq("dashakam_no", selectedDashakam)
-          .eq("language_code", selectedLanguage)
-          .order("verse_no"),
-      ),
-    ]),
-    15000,
-  );
+  const [audioRes, scriptRes, langRes, prasRes] = await Promise.all([
+    supabase
+      .from("verses_audio")
+      .select("verse_no, chant_audio_file, sloka_audio_id")
+      .eq("dashakam_no", selectedDashakam)
+      .order("verse_no"),
+    supabase
+      .from("language_script")
+      .select("verse_no, transliteration_text, translation_text")
+      .eq("dashakam_no", selectedDashakam)
+      .eq("language_code", "sa")
+      .order("verse_no"),
+    supabase
+      .from("language_script")
+      .select("verse_no, transliteration_text, translation_text")
+      .eq("dashakam_no", selectedDashakam)
+      .eq("language_code", selectedLanguage)
+      .order("verse_no"),
+    supabase
+      .from("prasadam")
+      .select("verse_no, prasadam_text")
+      .eq("dashakam_no", selectedDashakam)
+      .eq("language_code", selectedLanguage)
+      .order("verse_no"),
+  ]);
 
   const audioMap: Record<number, any> = {};
   (audioRes.data ?? []).forEach((r: any) => { audioMap[r.verse_no] = r; });
