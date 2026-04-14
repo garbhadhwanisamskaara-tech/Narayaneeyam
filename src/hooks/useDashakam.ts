@@ -117,31 +117,39 @@ async function fetchVerses(
 
   const [audioRes, scriptRes, langRes, prasRes] = await withTimeout(
     Promise.all([
-      supabase
-        .from("verses_audio")
-        .select("verse_no, chant_audio_file, sloka_audio_id")
-        .eq("dashakam_no", selectedDashakam)
-        .order("verse_no"),
-      supabase
-        .from("language_script")
-        .select("verse_no, transliteration_text, translation_text")
-        .eq("dashakam_no", selectedDashakam)
-        .eq("language_code", "sa")
-        .order("verse_no"),
-      supabase
-        .from("language_script")
-        .select("verse_no, transliteration_text, translation_text")
-        .eq("dashakam_no", selectedDashakam)
-        .eq("language_code", selectedLanguage)
-        .order("verse_no"),
-      supabase
-        .from("prasadam")
-        .select("verse_no, prasadam_text")
-        .eq("dashakam_no", selectedDashakam)
-        .eq("language_code", selectedLanguage)
-        .order("verse_no"),
+      executeQuery(
+        supabase
+          .from("verses_audio")
+          .select("verse_no, chant_audio_file, sloka_audio_id")
+          .eq("dashakam_no", selectedDashakam)
+          .order("verse_no"),
+      ),
+      executeQuery(
+        supabase
+          .from("language_script")
+          .select("verse_no, transliteration_text, translation_text")
+          .eq("dashakam_no", selectedDashakam)
+          .eq("language_code", "sa")
+          .order("verse_no"),
+      ),
+      executeQuery(
+        supabase
+          .from("language_script")
+          .select("verse_no, transliteration_text, translation_text")
+          .eq("dashakam_no", selectedDashakam)
+          .eq("language_code", selectedLanguage)
+          .order("verse_no"),
+      ),
+      executeQuery(
+        supabase
+          .from("prasadam")
+          .select("verse_no, prasadam_text")
+          .eq("dashakam_no", selectedDashakam)
+          .eq("language_code", selectedLanguage)
+          .order("verse_no"),
+      ),
     ]),
-    8000,
+    30000,
   );
 
   const audioMap: Record<number, any> = {};
