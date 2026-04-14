@@ -72,6 +72,7 @@ async function fetchDashakamList(): Promise<DashakamListItem[]> {
       });
 
       dashakamCache.list = list;
+      dashakamCache.fetched = true;
       console.log("[useDashakam] fetched dashakam list:", list.length, "items");
       return list;
     } catch (err) {
