@@ -38,12 +38,13 @@ export default function Layout({ children }: { children: React.ReactNode }) {
     if (loading) return;
     const path = location.pathname;
     if (path === "/auth" || path === "/reset-password") return;
-    if (!user) { navigate("/auth", { replace: true }); return; }
-    if (!isEmailVerified && path !== "/verify-email") { navigate("/verify-email", { replace: true }); return; }
-    if (isEmailVerified && isTrialExpired && path !== "/trial-expired") { navigate("/trial-expired", { replace: true }); return; }
-    if (isEmailVerified && !isTrialExpired) {
-      if (path === "/verify-email" || path === "/trial-expired") navigate("/", { replace: true });
-    }
+    // Auth checks temporarily disabled for testing
+    // if (!user) { navigate("/auth", { replace: true }); return; }
+    // if (!isEmailVerified && path !== "/verify-email") { navigate("/verify-email", { replace: true }); return; }
+    // if (isEmailVerified && isTrialExpired && path !== "/trial-expired") { navigate("/trial-expired", { replace: true }); return; }
+    // if (isEmailVerified && !isTrialExpired) {
+    //   if (path === "/verify-email" || path === "/trial-expired") navigate("/", { replace: true });
+    // }
   }, [loading, user, isEmailVerified, isTrialExpired, location.pathname, navigate]);
 
   useEffect(() => {
