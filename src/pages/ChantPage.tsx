@@ -779,7 +779,7 @@ export default function ChantPage() {
                 <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-secondary"></span>
               </span>
               <span className="text-xs font-sans font-semibold text-secondary uppercase tracking-wider">
-                {chantMode === "chant" ? "Chant Module Active" : "Learn Module Active"}
+                Chant Module Active
               </span>
             </div>
           )}

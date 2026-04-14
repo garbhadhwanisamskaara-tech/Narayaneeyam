@@ -7,7 +7,7 @@ import {
 } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { DEVOTION_PATHWAYS, FESTIVAL_PATHWAYS, type DevotionPathway } from "@/data/devotionPathways";
-import { sampleDashakams } from "@/data/narayaneeyam";
+import { getDashakamName } from "@/hooks/useDashakam";
 import PathwayDashakamList from "@/components/PathwayDashakamList";
 import FestivalPathwaysList from "@/components/FestivalPathwaysList";
 import HundredDayJourney from "@/components/HundredDayJourney";
@@ -197,7 +197,6 @@ export default function DevotionPathwaysPage() {
         </p>
         <PathwayDashakamList
           dashakams={festDashakams}
-          allDashakams={sampleDashakams}
           onSelect={handleDashakamClick}
         />
       </div>
@@ -214,7 +213,7 @@ export default function DevotionPathwaysPage() {
         >
           <ArrowLeft className="h-4 w-4" /> Back to Pathways
         </button>
-        <HundredDayJourney allDashakams={sampleDashakams} onDashakamClick={handleDashakamClick} />
+        <HundredDayJourney onDashakamClick={handleDashakamClick} />
       </div>
     );
   }
@@ -235,7 +234,6 @@ export default function DevotionPathwaysPage() {
         </p>
         <PathwayDashakamList
           dashakams={selectedPathway.dashakams}
-          allDashakams={sampleDashakams}
           onSelect={handleDashakamClick}
         />
       </div>

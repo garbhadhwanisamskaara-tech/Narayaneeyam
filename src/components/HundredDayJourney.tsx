@@ -9,14 +9,13 @@ import {
   markDayComplete,
   type JourneyProgress,
 } from "@/data/devotionPathways";
-import type { Dashakam } from "@/data/narayaneeyam";
+import { getDashakamName } from "@/hooks/useDashakam";
 
 interface Props {
-  allDashakams: Dashakam[];
   onDashakamClick: (dashakamNumber: number) => void;
 }
 
-export default function HundredDayJourney({ allDashakams, onDashakamClick }: Props) {
+export default function HundredDayJourney({ onDashakamClick }: Props) {
   const [progress, setProgress] = useState<JourneyProgress | null>(getJourneyProgress);
   const { user } = useAuth();
 
@@ -29,92 +28,52 @@ export default function HundredDayJourney({ allDashakams, onDashakamClick }: Pro
     setProgress(p);
   };
 
-  const handleComplete = (dashakam: number) => {
-    const p = markDayComplete(dashakam, user?.id);
-    setProgress({ ...p });
+  const handleMarkComplete = (dashakamNo: number) => {
+    const p = markDayComplete(dashakamNo);
+    setProgress(p);
   };
 
-  // Find next uncompleted dashakam
-  const nextDashakam = Array.from({ length: 100 }, (_, i) => i + 1).find(
-    (n) => !completedSet.has(n)
-  );
+  if (!progress) {
+    return (
+      <div className="text-center py-12">
+        <h2 className="font-display text-2xl font-bold text-foreground mb-3">100-Day Journey</h2>
+        <p className="text-sm text-muted-foreground font-sans mb-6 max-w-md mx-auto">
+          Complete all 100 Dashakams at your own pace. Track your progress daily and build a consistent chanting practice.
+        </p>
+        <Button onClick={handleStart} className="bg-primary text-primary-foreground">
+          <Play className="h-4 w-4 mr-2" /> Start Journey
+        </Button>
+      </div>
+    );
+  }
 
   return (
     <div>
-      <h1 className="font-display text-2xl font-bold text-foreground mb-2">
-        100 Day Journey
-      </h1>
-      <p className="text-sm text-muted-foreground mb-4 font-sans">
-        One Dashakam per day · Build a transformative practice
+      <h2 className="font-display text-2xl font-bold text-foreground mb-2">100-Day Journey</h2>
+      <p className="text-sm text-muted-foreground font-sans mb-4">
+        {completedCount} of 100 Dashakams completed
       </p>
+      <Progress value={pct} className="mb-6 h-3" />
 
-      {/* Progress bar */}
-      <div className="mb-6 rounded-xl border border-border bg-card p-4">
-        <div className="flex items-center justify-between mb-2">
-          <span className="text-sm font-semibold text-foreground font-sans">
-            {completedCount} / 100 days completed
-          </span>
-          <span className="text-xs text-muted-foreground font-sans">{pct}%</span>
-        </div>
-        <Progress value={pct} className="h-2" />
-        {!progress && (
-          <Button onClick={handleStart} className="mt-4 w-full" size="sm">
-            <Play className="h-4 w-4 mr-2" /> Start Journey
-          </Button>
-        )}
-        {progress && nextDashakam && (
-          <p className="mt-3 text-xs text-muted-foreground font-sans">
-            Next: Day {nextDashakam} — Dashakam {nextDashakam}
-          </p>
-        )}
-        {completedCount === 100 && (
-          <p className="mt-3 text-sm font-semibold text-primary font-sans">
-            🎉 Journey Complete! Congratulations!
-          </p>
-        )}
-      </div>
-
-      {/* Day list */}
-      <div className="space-y-1.5">
-        {Array.from({ length: 100 }, (_, i) => i + 1).map((day) => {
-          const d = allDashakams.find((dd) => dd.id === day);
-          const done = completedSet.has(day);
+      <div className="grid grid-cols-5 sm:grid-cols-10 gap-2">
+        {Array.from({ length: 100 }, (_, i) => i + 1).map((num) => {
+          const done = completedSet.has(num);
           return (
-            <div
-              key={day}
-              className={`flex items-center gap-3 rounded-lg border px-4 py-2.5 transition-colors ${
+            <button
+              key={num}
+              onClick={() => {
+                if (!done) handleMarkComplete(num);
+                onDashakamClick(num);
+              }}
+              title={getDashakamName(num)}
+              className={`relative aspect-square rounded-lg text-xs font-sans font-semibold flex items-center justify-center transition-all ${
                 done
-                  ? "border-primary/20 bg-primary/5"
-                  : "border-border bg-card hover:bg-muted/50"
+                  ? "bg-primary/20 text-primary border border-primary/30"
+                  : "bg-muted text-muted-foreground border border-border hover:bg-muted/80"
               }`}
             >
-              <button
-                onClick={() => !done && handleComplete(day)}
-                className="shrink-0"
-                title={done ? "Completed" : "Mark complete"}
-                disabled={done}
-              >
-                {done ? (
-                  <CheckCircle2 className="h-5 w-5 text-primary" />
-                ) : (
-                  <Circle className="h-5 w-5 text-muted-foreground hover:text-primary transition-colors" />
-                )}
-              </button>
-              <button
-                onClick={() => onDashakamClick(day)}
-                className="flex-1 text-left min-w-0"
-              >
-                <span className="text-sm font-sans">
-                  <span className="font-semibold text-foreground">Day {day}</span>
-                  <span className="text-muted-foreground"> — Dashakam {day}</span>
-                </span>
-                {d && (
-                  <p className="text-xs text-muted-foreground font-sans truncate">
-                    {d.title_english}
-                  </p>
-                )}
-              </button>
-            </div>
+              {done ? <CheckCircle2 className="h-4 w-4 text-primary" /> : num}
+            </button>
           );
         })}
       </div>
