@@ -880,63 +880,6 @@ export default function ChantPage() {
           )}
         </AnimatePresence>
 
-        {/* DEBUG: Raw DB data for verse 1 */}
-        {!dbLoading && selectedDashakam === 1 && (
-          <div className="mb-4 rounded-xl border-2 border-dashed border-yellow-500 bg-yellow-50 dark:bg-yellow-900/20 p-4 text-xs font-mono overflow-auto max-h-64">
-            <p className="font-bold text-yellow-700 dark:text-yellow-300 mb-2">
-              🔍 DEBUG: Dashakam 1, Verse 1 raw data
-            </p>
-            <p>
-              <strong>dbVerses count:</strong> {dbVerses.length}
-            </p>
-            {dbVerses.length > 0 &&
-              (() => {
-                const v1 = dbVerses[0];
-                const audioUrl = getStorageUrl(v1.chant_audio_file);
-                return (
-                  <div className="mt-2 space-y-1">
-                    <p>
-                      <strong>verse_no:</strong> {v1.verse_no}
-                    </p>
-                    <p>
-                      <strong>sanskrit_text:</strong> {v1.sanskrit_text?.slice(0, 120) || "(empty)"}
-                    </p>
-                    <p>
-                      <strong>transliteration_text:</strong> {v1.transliteration_text?.slice(0, 120) || "(empty)"}
-                    </p>
-                    <p>
-                      <strong>translation_text:</strong> {v1.translation_text?.slice(0, 120) || "(empty)"}
-                    </p>
-                    <p>
-                      <strong>chant_audio_file (raw):</strong> {v1.chant_audio_file || "(empty)"}
-                    </p>
-                    <p>
-                      <strong>resolved audio URL:</strong> {audioUrl || "(empty)"}
-                    </p>
-                    <p>
-                      <strong>sloka_audio_id:</strong> {v1.sloka_audio_id || "(none)"}
-                    </p>
-                    <p>
-                      <strong>meter:</strong> {v1.meter || "(empty)"}
-                    </p>
-                    <p>
-                      <strong>prasadam_text:</strong> {v1.prasadam_text?.slice(0, 80) || "(empty)"}
-                    </p>
-                    <button
-                      onClick={() => {
-                        const a = new Audio(audioUrl);
-                        a.play().catch((e) => console.error("DEBUG audio play error:", e));
-                      }}
-                      className="mt-2 px-3 py-1 rounded bg-yellow-600 text-white text-xs hover:bg-yellow-700"
-                    >
-                      ▶ Test Play SN001-01 audio
-                    </button>
-                  </div>
-                );
-              })()}
-            {dbVerses.length === 0 && <p className="text-red-600 mt-1">No verses returned from DB!</p>}
-          </div>
-        )}
 
         {/* Verses */}
         {!dbLoading && (
