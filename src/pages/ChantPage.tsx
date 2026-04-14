@@ -364,6 +364,7 @@ export default function ChantPage() {
 
     if (pausedRef.current && audioRef.current && !audioRef.current.ended) {
       audioRef.current.playbackRate = speed;
+      console.log('Resuming audio URL:', audioRef.current.src);
       audioRef.current.play().catch((err) => console.error("Audio play error:", err));
       pausedRef.current = false;
       logAudioEvent("audio_play", selectedDashakam, currentVerse?.paragraph || 0, "resume");
