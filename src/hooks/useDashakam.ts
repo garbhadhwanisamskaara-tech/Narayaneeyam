@@ -133,6 +133,7 @@ export function useDashakam(
               chant_audio_file: a[i]?.chant_audio_file ?? "",
               sloka_audio_id: a[i]?.sloka_audio_id ?? null,
               sanskrit_text: s[i]?.transliteration_text ?? "",
+              meter: a[i]?.meter ?? "",
               transliteration_text: l[i]?.transliteration_text ?? "",
               translation_text: l[i]?.translation_text ?? "",
               prasadam_text: p[i]?.prasadam_text ?? "",
