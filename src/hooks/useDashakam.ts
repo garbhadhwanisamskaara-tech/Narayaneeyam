@@ -284,5 +284,11 @@ export function useDashakam(
     return () => { cancelled = true; };
   }, [selectedDashakam, selectedLanguage]);
 
-  return { dashakamList, verses, loading, error, staticDashakam };
+  const SUPABASE_PREFIX = "https://znglsaxfyhkuzyrfbuhn.supabase.co";
+  const audioReady = !loading && verses.length > 0 && verses.some(
+    (v) => (v.chant_audio_file && v.chant_audio_file.startsWith(SUPABASE_PREFIX)) ||
+           (v.learn_audio_file && v.learn_audio_file.startsWith(SUPABASE_PREFIX))
+  );
+
+  return { dashakamList, verses, loading, error, staticDashakam, audioReady };
 }
