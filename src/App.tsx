@@ -2,12 +2,13 @@ import { useEffect } from "react";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { SentryErrorBoundary } from "@/components/SentryErrorBoundary";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { AudioProvider } from "@/contexts/AudioContext";
 import { prefetchDashakamList } from "@/hooks/useDashakam";
+import { queryClient } from "@/lib/queryClient";
 import Layout from "./components/Layout";
 import Index from "./pages/Index";
 import ChantPage from "./pages/ChantPage";
@@ -36,8 +37,6 @@ import UserGuidePage from "./pages/UserGuidePage";
 import VerifyEmailPage from "./pages/VerifyEmailPage";
 import TrialExpiredPage from "./pages/TrialExpiredPage";
 import NotFound from "./pages/NotFound";
-
-const queryClient = new QueryClient();
 
 const App = () => {
   useEffect(() => {
