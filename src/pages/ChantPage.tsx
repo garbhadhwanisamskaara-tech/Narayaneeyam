@@ -714,7 +714,7 @@ export default function ChantPage() {
                         if (status === "started") return <span className="text-muted-foreground" title="Started">•</span>;
                         return null;
                       })()}
-                      Verse {verse.paragraph} · {verse.meter}
+                      Verse {verse.paragraph}{verse.meter ? ` · ${verse.meter}` : ''}
                     </span>
                     <div className="flex items-center gap-1">
                       <VerseIcons bell={verse.bell} prasadam={verse.prasadam} slokaAudioId={verse.sloka_audio_id} />

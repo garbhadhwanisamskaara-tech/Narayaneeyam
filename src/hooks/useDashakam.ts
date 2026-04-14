@@ -148,7 +148,7 @@ async function fetchVerses(
       merged.push({
         verse_no: v,
         sanskrit_text: s?.transliteration_text ?? sv?.sanskrit ?? "",
-        meter: "",
+        meter: sv?.meter ?? "",
         has_bell: false,
         chant_audio_file: a?.chant_audio_file ?? sv?.audio ?? "",
         learn_audio_file: a?.learn_audio_file ?? "",
