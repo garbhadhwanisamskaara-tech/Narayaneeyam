@@ -152,6 +152,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setIsFounder(false);
       setProfile(null);
       await supabase.auth.signOut();
+      window.location.href = "/auth";
     });
   };
 
