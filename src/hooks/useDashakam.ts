@@ -49,6 +49,11 @@ function withTimeout<T>(promise: Promise<T>, ms: number): Promise<T> {
   ]);
 }
 
+/** Await a Supabase query builder properly */
+async function executeQuery<T>(queryBuilder: PromiseLike<T>): Promise<T> {
+  return await queryBuilder;
+}
+
 async function fetchDashakamList(): Promise<DashakamListItem[]> {
   if (dashakamListCache) return dashakamListCache;
   if (dashakamListPromise) return dashakamListPromise;
