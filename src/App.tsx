@@ -10,7 +10,7 @@ import { AudioProvider } from "@/contexts/AudioContext";
 import { prefetchDashakamList } from "@/hooks/useDashakam";
 import { queryClient } from "@/lib/queryClient";
 import Layout from "./components/Layout";
-import Index from "./pages/Index";
+import HomeGate from "./components/HomeGate";
 import ChantPage from "./pages/ChantPage";
 
 import ScriptPage from "./pages/ScriptPage";
@@ -53,12 +53,12 @@ const App = () => {
       <BrowserRouter>
         <AuthProvider>
           <Routes>
+            <Route path="/" element={<HomeGate />} />
             <Route path="/auth" element={<AuthPage />} />
             <Route path="/reset-password" element={<ResetPasswordPage />} />
             <Route path="/*" element={
               <Layout>
                 <Routes>
-                  <Route path="/" element={<Index />} />
                   <Route path="/chant" element={<ChantPage />} />
                   
                   <Route path="/script" element={<ScriptPage />} />
