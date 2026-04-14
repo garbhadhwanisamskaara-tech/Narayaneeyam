@@ -554,7 +554,8 @@ export default function ChantPage() {
         if (gapTimerRef.current) clearTimeout(gapTimerRef.current);
       };
     }
-  }, [isPlaying, highlightedVerse, displayVerses.length, speed, isSlokaPlaying, engine]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isPlaying, highlightedVerse, displayVerses.length, speed, isSlokaPlaying]);
 
   // Cleanup gap timers on unmount (but NOT audio — let it persist)
   useEffect(() => {
