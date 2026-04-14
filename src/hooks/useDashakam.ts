@@ -59,8 +59,6 @@ async function fetchDashakamList(): Promise<DashakamListItem[]> {
           supabase
             .from("dashakams")
             .select("dashakam_no, dashakam_name, num_verses, remarks, gist, benefits")
-            .eq("language_code", "en")
-            .eq("is_published", true)
             .order("dashakam_no"),
         ),
         8000,
@@ -69,7 +67,15 @@ async function fetchDashakamList(): Promise<DashakamListItem[]> {
         dashakamListPromise = null;
         return [];
       }
-      const list = data as DashakamListItem[];
+      // Deduplicate: keep only the first (transliterated) row per dashakam_no
+      const seen = new Set<number>();
+      const list: DashakamListItem[] = [];
+      for (const row of data as DashakamListItem[]) {
+        if (!seen.has(row.dashakam_no)) {
+          seen.add(row.dashakam_no);
+          list.push(row);
+        }
+      }
       dashakamListCache = list;
       return list;
     } catch {
