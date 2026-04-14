@@ -1,7 +1,6 @@
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Download, ChevronDown, ChevronUp, Loader2, BookOpen } from "lucide-react";
-import { Loader2, BookOpen } from "lucide-react";
 import { useDashakam, type MergedVerse } from "@/hooks/useDashakam";
 import { supabase } from "@/integrations/supabase/client";
 import VerseIcons from "@/components/VerseIcons";
@@ -160,51 +159,56 @@ export default function ScriptPage() {
         </div>
 
         {/* Dashakam Title + Gist */}
-        <div className="mb-6">
-          <div className="rounded-xl bg-gradient-peacock p-5">
-            <h2 className="font-display text-xl font-semibold text-primary-foreground">
-              {staticDashakam?.title_sanskrit || dashakamTitle}
-            </h2>
-            <p className="text-gold-light font-sans text-sm">{dashakamTitle}</p>
-            {staticDashakam?.remarks && (
-              <p className="text-gold-light/80 text-xs font-sans mt-1 italic">Note: {staticDashakam.remarks}</p>
-            )}
-            <div className="mt-3 flex items-center gap-2">
-              <button
-                onClick={() => setShowGist(!showGist)}
-                className="inline-flex items-center gap-1 rounded-lg bg-primary-foreground/10 px-3 py-1.5 text-xs text-gold-light font-sans hover:bg-primary-foreground/20 transition-colors"
-              >
-                {showGist ? <ChevronUp className="h-3 w-3" /> : <ChevronDown className="h-3 w-3" />}
-                {showGist ? "Hide Gist" : "View Gist"}
-              </button>
-              {staticDashakam?.benefits && (
-                <button
-                  onClick={() => setShowBenefit(!showBenefit)}
-                  className="inline-flex items-center gap-1 rounded-lg bg-primary-foreground/10 px-3 py-1.5 text-xs text-gold-light font-sans hover:bg-primary-foreground/20 transition-colors"
-                >
-                  {showBenefit ? <ChevronUp className="h-3 w-3" /> : <ChevronDown className="h-3 w-3" />}
-                  {showBenefit ? "Hide Benefit" : "View Benefit"}
-                </button>
-              )}
+        {(() => {
+          const dk = dashakamList.find((d) => d.dashakam_no === selectedDashakam);
+          return (
+            <div className="mb-6">
+              <div className="rounded-xl bg-gradient-peacock p-5">
+                <h2 className="font-display text-xl font-semibold text-primary-foreground">
+                  {dk?.title_sanskrit || dashakamTitle}
+                </h2>
+                <p className="text-gold-light font-sans text-sm">{dashakamTitle}</p>
+                {dk?.remarks && (
+                  <p className="text-gold-light/80 text-xs font-sans mt-1 italic">Note: {dk.remarks}</p>
+                )}
+                <div className="mt-3 flex items-center gap-2">
+                  <button
+                    onClick={() => setShowGist(!showGist)}
+                    className="inline-flex items-center gap-1 rounded-lg bg-primary-foreground/10 px-3 py-1.5 text-xs text-gold-light font-sans hover:bg-primary-foreground/20 transition-colors"
+                  >
+                    {showGist ? <ChevronUp className="h-3 w-3" /> : <ChevronDown className="h-3 w-3" />}
+                    {showGist ? "Hide Gist" : "View Gist"}
+                  </button>
+                  {dk?.benefits && (
+                    <button
+                      onClick={() => setShowBenefit(!showBenefit)}
+                      className="inline-flex items-center gap-1 rounded-lg bg-primary-foreground/10 px-3 py-1.5 text-xs text-gold-light font-sans hover:bg-primary-foreground/20 transition-colors"
+                    >
+                      {showBenefit ? <ChevronUp className="h-3 w-3" /> : <ChevronDown className="h-3 w-3" />}
+                      {showBenefit ? "Hide Benefit" : "View Benefit"}
+                    </button>
+                  )}
+                </div>
+              </div>
+              <AnimatePresence>
+                {showGist && dk?.gist && (
+                  <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: "auto", opacity: 1 }} exit={{ height: 0, opacity: 0 }} className="overflow-hidden">
+                    <div className="rounded-b-xl border border-t-0 border-border bg-card p-4">
+                      <p className="text-sm text-foreground font-sans leading-relaxed">{dk.gist}</p>
+                    </div>
+                  </motion.div>
+                )}
+                {showBenefit && dk?.benefits && (
+                  <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: "auto", opacity: 1 }} exit={{ height: 0, opacity: 0 }} className="overflow-hidden">
+                    <div className="rounded-b-xl border border-t-0 border-border bg-card p-4">
+                      <p className="text-sm text-foreground font-sans leading-relaxed">✨ {dk.benefits}</p>
+                    </div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
             </div>
-          </div>
-          <AnimatePresence>
-            {showGist && staticDashakam?.gist && (
-              <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: "auto", opacity: 1 }} exit={{ height: 0, opacity: 0 }} className="overflow-hidden">
-                <div className="rounded-b-xl border border-t-0 border-border bg-card p-4">
-                  <p className="text-sm text-foreground font-sans leading-relaxed">{staticDashakam.gist}</p>
-                </div>
-              </motion.div>
-            )}
-            {showBenefit && staticDashakam?.benefits && (
-              <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: "auto", opacity: 1 }} exit={{ height: 0, opacity: 0 }} className="overflow-hidden">
-                <div className="rounded-b-xl border border-t-0 border-border bg-card p-4">
-                  <p className="text-sm text-foreground font-sans leading-relaxed">✨ {staticDashakam.benefits}</p>
-                </div>
-              </motion.div>
-            )}
-          </AnimatePresence>
-        </div>
+          );
+        })()}
 
         {/* Loading state */}
         {loading && (
