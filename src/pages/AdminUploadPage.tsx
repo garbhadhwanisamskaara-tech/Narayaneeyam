@@ -633,9 +633,9 @@ export default function AdminUploadPage() {
           </section>
 
           {/* Dashakam Details Form */}
-          {selectedDashakam && selectedDk && (
+          {selectedDashakam && (
             <section className="mb-8 rounded-xl border border-border bg-card p-6">
-              <h2 className="font-display text-lg font-semibold text-foreground mb-4">Dashakam {selectedDk.id} — Details</h2>
+              <h2 className="font-display text-lg font-semibold text-foreground mb-4">Dashakam {selectedDashakam} — Details</h2>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-xs font-medium text-muted-foreground mb-1">Dashakam Name</label>
@@ -675,11 +675,11 @@ export default function AdminUploadPage() {
           )}
 
           {/* Verse Table */}
-          {selectedDashakam && selectedDk && (
+          {selectedDashakam && (
             <section>
               <h2 className="font-display text-lg font-semibold text-foreground mb-2">Verses — Audio, Script & Content</h2>
               <p className="text-sm text-muted-foreground mb-4">
-                {selectedDk.num_verses} verses · Bell on verse{selectedDk.bell_verses.length > 1 ? "s" : ""} {selectedDk.bell_verses.join(", ")} · Click a verse number to expand.
+                {verses.length} verses
               </p>
               <div className="overflow-x-auto rounded-lg border border-border">
                 <table className="w-full text-sm">
