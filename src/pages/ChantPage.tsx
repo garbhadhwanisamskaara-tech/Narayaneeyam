@@ -642,11 +642,11 @@ export default function ChantPage() {
         )}
 
         {/* Loading state — skeleton loader */}
-        {dbLoading ? (
+        {dbLoading && (
           <div className="mb-8">
             <VerseSkeleton count={3} />
           </div>
-        ) : (
+        )}
 
         {/* Sloka Overlay */}
         <AnimatePresence>
@@ -673,6 +673,8 @@ export default function ChantPage() {
           )}
         </AnimatePresence>
 
+        {/* Verses */}
+        {!dbLoading && (
           <div className="space-y-4 pb-48" ref={versesContainerRef}>
             {!hasVerses ? (
               <div className="rounded-xl bg-card border border-border p-8 text-center">
