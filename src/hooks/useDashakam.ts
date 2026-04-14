@@ -41,19 +41,6 @@ function getCacheKey(dashakam: number, lang: string) {
   return `${dashakam}:${lang}`;
 }
 
-/** Race a promise against a timeout */
-function withTimeout<T>(promise: Promise<T>, ms: number): Promise<T> {
-  return Promise.race([
-    promise,
-    new Promise<never>((_, reject) => setTimeout(() => reject(new Error("Query timeout")), ms)),
-  ]);
-}
-
-/** Await a Supabase query builder properly */
-async function executeQuery<T>(queryBuilder: PromiseLike<T>): Promise<T> {
-  return await queryBuilder;
-}
-
 async function fetchDashakamList(): Promise<DashakamListItem[]> {
   if (dashakamListCache) return dashakamListCache;
   if (dashakamListPromise) return dashakamListPromise;
@@ -64,16 +51,11 @@ async function fetchDashakamList(): Promise<DashakamListItem[]> {
 
   dashakamListPromise = (async () => {
     try {
-      const { data, error } = await withTimeout(
-        executeQuery(
-          supabase
-            .from("dashakams")
-            .select("dashakam_no, dashakam_name, num_verses, remarks, gist, benefits")
-            .eq("language_code", "en")
-            .order("dashakam_no"),
-        ),
-        15000,
-      );
+      const { data, error } = await supabase
+        .from("dashakams")
+        .select("dashakam_no, dashakam_name, num_verses, remarks, gist, benefits")
+        .eq("language_code", "en")
+        .order("dashakam_no");
       console.log(`[useDashakam] dashakams query result: error=${!!error}, rows=${data?.length ?? 0}`);
       if (error) {
         console.error("[useDashakam] dashakams query error:", error.message, error.code);
