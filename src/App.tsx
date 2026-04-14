@@ -90,6 +90,7 @@ const App = () => {
         </AuthProvider>
       </BrowserRouter>
     </TooltipProvider>
+    </AudioProvider>
   </QueryClientProvider>
   </SentryErrorBoundary>
   );
