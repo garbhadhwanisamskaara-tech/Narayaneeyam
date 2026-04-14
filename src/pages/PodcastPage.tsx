@@ -44,6 +44,9 @@ export default function PodcastPage() {
 
   const inPlaylistMode = playlistItems !== null && playlistItems.length > 0;
 
+  // Prefetch dashakam names so dropdown shows real names
+  useEffect(() => { prefetchDashakamList(); }, []);
+
   // Fetch podcast data from Supabase
   useEffect(() => {
     (async () => {
