@@ -280,8 +280,6 @@ export function useDashakam(
     })();
 
     return () => { cancelled = true; };
-
-    return () => { cancelled = true; };
   }, [selectedDashakam, selectedLanguage]);
 
   const SUPABASE_PREFIX = "https://znglsaxfyhkuzyrfbuhn.supabase.co";
