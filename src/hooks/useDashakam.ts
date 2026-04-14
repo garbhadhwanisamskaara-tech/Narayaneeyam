@@ -29,9 +29,18 @@ interface UseDashakamResult {
   audioReady: boolean;
 }
 
+const DASHAKAM_SEED: DashakamListItem[] = Array.from({ length: 100 }, (_, i) => ({
+  dashakam_no: i + 1,
+  dashakam_name: `Dashakam ${i + 1}`,
+  num_verses: 10,
+  remarks: null,
+  gist: null,
+  benefits: null,
+}));
+
 // ---- simple cache ----
 const dashakamCache: { list: DashakamListItem[] | null; loading: Promise<DashakamListItem[]> | null } = {
-  list: null,
+  list: DASHAKAM_SEED,
   loading: null,
 };
 const verseCache = new Map<string, MergedVerse[]>();
