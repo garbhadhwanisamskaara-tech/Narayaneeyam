@@ -148,7 +148,7 @@ async function fetchVerses(
       merged.push({
         verse_no: v,
         sanskrit_text: s?.transliteration_text ?? sv?.sanskrit ?? "",
-        meter: "",
+        meter: sv?.meter ?? "",
         has_bell: false,
         chant_audio_file: a?.chant_audio_file ?? sv?.audio ?? "",
         learn_audio_file: a?.learn_audio_file ?? "",
@@ -282,10 +282,11 @@ export function useDashakam(
     return () => { cancelled = true; };
   }, [selectedDashakam, selectedLanguage]);
 
-  const SUPABASE_PREFIX = "https://znglsaxfyhkuzyrfbuhn.supabase.co";
+  // Audio is ready when we have verses with non-empty, non-static-fallback audio files
+  // DB may store relative paths (e.g. "Chant/SN001/SN001-01.mp3") which getStorageUrl converts to full URLs
   const audioReady = !loading && verses.length > 0 && verses.some(
-    (v) => (v.chant_audio_file && v.chant_audio_file.startsWith(SUPABASE_PREFIX)) ||
-           (v.learn_audio_file && v.learn_audio_file.startsWith(SUPABASE_PREFIX))
+    (v) => (v.chant_audio_file && !v.chant_audio_file.startsWith("/audio/")) ||
+           (v.learn_audio_file && !v.learn_audio_file.startsWith("/audio/"))
   );
 
   return { dashakamList, verses, loading, error, staticDashakam, audioReady };

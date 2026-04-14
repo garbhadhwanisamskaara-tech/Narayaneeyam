@@ -23,7 +23,7 @@ const sections = [
       },
       {
         q: "How do I navigate the app?",
-        a: "On mobile, use the bottom menu to quickly access Chant, Learn, Podcast, and More. On desktop, use the top navigation bar. The 'More' menu has additional options like Lesson Plan, Script Library, User Manual, and Support.",
+        a: "On mobile, use the bottom menu to quickly access Home, Chant, Podcast, Progress, and More. On desktop, use the top navigation bar. The 'More' menu has additional options like Script Library, Bookmarks, Favourites, Support, and Settings.",
       },
     ],
   },
@@ -61,23 +61,23 @@ const sections = [
   {
     id: "learn",
     icon: <BookOpen className="h-5 w-5 text-primary" />,
-    title: "Learn with Me",
+    title: "Learn Mode (inside Chant)",
     items: [
       {
-        q: "How is Learn different from Chant?",
-        a: "In Chant mode, you listen to and chant along with the full verse. In Learn mode, each verse is broken into smaller phrases so you can learn step by step, at your own pace.",
+        q: "How do I switch to Learn Mode?",
+        a: "On the Chant page, you'll see a toggle at the top — 'Chant Mode' and 'Learn Mode'. Tap 'Learn Mode' to switch. The same dashakam and verse will be shown, but with learning-specific audio.",
       },
       {
-        q: "How does phrase-by-phrase learning work?",
-        a: "Each shloka is split into short phrases. You hear one phrase at a time, can repeat it, and then move to the next. It's like having a gentle teacher sitting beside you.",
+        q: "How is Learn Mode different from Chant Mode?",
+        a: "In Chant Mode, you listen to and chant along with the full verse. In Learn Mode, each verse is broken into smaller phrases so you can learn step by step, at your own pace.",
       },
       {
-        q: "How do I repeat a phrase?",
-        a: "Tap the Repeat button to hear the same phrase again. You can repeat as many times as you need — there's no rush in devotion.",
+        q: "How do I learn at my own pace?",
+        a: "Use the speed control to slow down to 0.5× or 0.75× for easier learning. You can pause at any time and rewind to listen again. Use the loop feature to repeat a verse as many times as you need — there's no rush in devotion.",
       },
       {
         q: "How do I see the meaning of a shloka?",
-        a: "The meaning (translation) is shown below the Sanskrit text. You can view it in your preferred language if translations are available.",
+        a: "Tap the 'Show Meaning' button on the Chant page. The meaning (translation) will appear below each verse in English.",
       },
     ],
   },
@@ -160,7 +160,7 @@ const sections = [
       },
       {
         q: "📖  Learn first, then Chant",
-        a: "Use Learn mode to understand the phrases, then switch to Chant mode to experience the full flow. This combination deepens both understanding and devotion.",
+        a: "Switch to Learn Mode on the Chant page to understand the phrases at a slower speed, then switch back to Chant Mode to experience the full flow. This combination deepens both understanding and devotion.",
       },
     ],
   },

@@ -1,21 +1,12 @@
 import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
-import { Flame, BookOpen, Clock, Mic, BarChart3, Share2, LogIn, TrendingUp, Play } from "lucide-react";
+import { Flame, BookOpen, Clock, Mic, BarChart3, LogIn, TrendingUp, Play } from "lucide-react";
 import { getProgress } from "@/lib/progress";
 import { TOTAL_VERSES, sampleDashakams } from "@/data/narayaneeyam";
 import { useAuth } from "@/contexts/AuthContext";
 import { useUserProgress } from "@/hooks/useUserProgress";
 import { Progress } from "@/components/ui/progress";
 import ProgressRing from "@/components/ProgressRing";
-
-function getVerseOfTheDay(): { sanskrit: string; meaning: string; dashakam: number; verse: number } {
-  const dayOfYear = Math.floor((Date.now() - new Date(new Date().getFullYear(), 0, 0).getTime()) / 86400000);
-  const allVerses = sampleDashakams.flatMap(d => d.verses.map(v => ({ ...v, dashakamId: d.id })));
-  if (allVerses.length === 0) return { sanskrit: "ॐ नमो भगवते वासुदेवाय", meaning: "Om, I bow to Lord Vasudeva", dashakam: 1, verse: 1 };
-  const idx = dayOfYear % allVerses.length;
-  const v = allVerses[idx];
-  return { sanskrit: v.sanskrit || v.english, meaning: v.meaning_english || "", dashakam: v.dashakamId, verse: v.paragraph };
-}
 
 export default function DashboardPage() {
   const localProgress = getProgress();
@@ -29,7 +20,6 @@ export default function DashboardPage() {
     loading: progressLoading,
     isGuest,
   } = useUserProgress();
-  const verseOfDay = getVerseOfTheDay();
 
   // Current position from local progress
   const currentDashakam = localProgress.chantState?.dashakam || localProgress.lastDashakam || 1;
@@ -42,12 +32,6 @@ export default function DashboardPage() {
   const avgPerDay = daysActive > 0 ? dashakamsCompleted / daysActive : 0;
   const remaining = 100 - dashakamsCompleted;
   const estDays = avgPerDay > 0 ? Math.ceil(remaining / avgPerDay) : null;
-
-  const handleShare = async () => {
-    const text = `Verse of the Day (Dashakam ${verseOfDay.dashakam}, Verse ${verseOfDay.verse}):\n\n${verseOfDay.sanskrit}\n\n${verseOfDay.meaning}`;
-    if (navigator.share) { try { await navigator.share({ text }); } catch {} }
-    else { await navigator.clipboard.writeText(text); }
-  };
 
   const recentCompleted = completedDashakams.slice(0, 5);
 
@@ -225,19 +209,6 @@ export default function DashboardPage() {
           </motion.div>
         )}
 
-        {/* Verse of the Day */}
-        <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.4 }}
-          className="rounded-xl bg-gradient-peacock p-6 mb-8">
-          <div className="flex items-center justify-between mb-3">
-            <p className="text-xs text-gold-light font-sans uppercase tracking-widest">✦ Verse of the Day</p>
-            <button onClick={handleShare} className="text-gold-light/60 hover:text-gold-light transition-colors"><Share2 className="h-4 w-4" /></button>
-          </div>
-          <p className="font-body text-base text-primary-foreground leading-relaxed mb-3 whitespace-pre-line line-clamp-4">{verseOfDay.sanskrit}</p>
-          <div className="border-t border-primary-foreground/20 pt-3">
-            <p className="text-sm text-gold-light font-sans leading-relaxed line-clamp-3">{verseOfDay.meaning}</p>
-          </div>
-          <p className="text-[10px] text-primary-foreground/40 font-sans mt-3">Dashakam {verseOfDay.dashakam} · Verse {verseOfDay.verse}</p>
-        </motion.div>
 
         {/* Insights */}
         <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.5 }}

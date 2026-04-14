@@ -121,13 +121,12 @@ export default function ChantPage() {
   // Use static dashakam for gist/benefits/title (always available)
   const dashakam = staticDashakam;
 
-  const SUPABASE_URL_PREFIX = "https://znglsaxfyhkuzyrfbuhn.supabase.co";
-
   // Convert dbVerses to display format — use learn_audio_file in learn mode
-  // Only use audio URLs that are valid Supabase URLs
+  // getStorageUrl converts relative paths to full Supabase Storage URLs
   const allVerses = dbVerses.map((mv) => {
     const rawUrl = getStorageUrl(chantMode === "learn" ? mv.learn_audio_file : mv.chant_audio_file);
-    const validAudio = rawUrl && rawUrl.startsWith(SUPABASE_URL_PREFIX) ? rawUrl : undefined;
+    // Accept any valid https URL (getStorageUrl already handles conversion)
+    const validAudio = rawUrl && rawUrl.startsWith("https://") ? rawUrl : undefined;
     return {
       id: `${selectedDashakam}-${mv.verse_no}`,
       dashakam: selectedDashakam,
@@ -715,7 +714,7 @@ export default function ChantPage() {
                         if (status === "started") return <span className="text-muted-foreground" title="Started">•</span>;
                         return null;
                       })()}
-                      Verse {verse.paragraph} · {verse.meter}
+                      Verse {verse.paragraph}{verse.meter ? ` · ${verse.meter}` : ''}
                     </span>
                     <div className="flex items-center gap-1">
                       <VerseIcons bell={verse.bell} prasadam={verse.prasadam} slokaAudioId={verse.sloka_audio_id} />
