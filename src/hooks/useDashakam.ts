@@ -169,37 +169,37 @@ export function prefetchDashakamList(): void {
 
 export function useDashakam(selectedDashakam: number, selectedLanguage: string = "en"): UseDashakamResult {
   const [dashakamList, setDashakamList] = useState<DashakamListItem[]>(dashakamListCache ?? []);
-  const [verses, setVerses] = useState<MergedVerse[]>(() => {
-    return verseCache.get(getCacheKey(selectedDashakam, selectedLanguage)) ?? [];
-  });
-  const [loading, setLoading] = useState(() => {
-    return !verseCache.has(getCacheKey(selectedDashakam, selectedLanguage));
-  });
+  const [verses, setVerses] = useState<MergedVerse[]>(
+    verseCache.get(getCacheKey(selectedDashakam, selectedLanguage)) ?? []
+  );
+  const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  // Load dashakam list — retry up to 3 times if empty
+  // Safety timeout — force loading off after 5s
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setLoading((prev) => {
+        if (prev) console.warn("[useDashakam] Safety timeout: forcing loading=false after 5s");
+        return false;
+      });
+    }, 5000);
+    return () => clearTimeout(timer);
+  }, [selectedDashakam, selectedLanguage]);
+
+  // Load dashakam list — single attempt, no retries
   useEffect(() => {
     let cancelled = false;
-    let retryTimer: ReturnType<typeof setTimeout> | null = null;
-
-    async function load(retries = 0) {
-      const list = await fetchDashakamList();
-      if (cancelled) return;
-      if (list.length > 0) {
-        setDashakamList(list);
-      } else if (retries < 3) {
-        console.log(`[useDashakam] dashakamList empty, retrying in ${(retries + 1) * 1500}ms...`);
-        retryTimer = setTimeout(() => load(retries + 1), (retries + 1) * 1500);
-      } else {
-        console.error("[useDashakam] dashakamList empty after 3 retries");
+    (async () => {
+      try {
+        const list = await fetchDashakamList();
+        if (!cancelled && list.length > 0) {
+          setDashakamList(list);
+        }
+      } catch {
+        // silently handled — list stays empty
       }
-    }
-
-    load();
-    return () => {
-      cancelled = true;
-      if (retryTimer) clearTimeout(retryTimer);
-    };
+    })();
+    return () => { cancelled = true; };
   }, []);
 
   // Load verse data
@@ -220,7 +220,6 @@ export function useDashakam(selectedDashakam: number, selectedLanguage: string =
 
     (async () => {
       try {
-        // Get num_verses from dashakam list
         const list = await fetchDashakamList();
         const dk = list.find((d) => d.dashakam_no === selectedDashakam);
         const numVerses = dk?.num_verses ?? 10;
