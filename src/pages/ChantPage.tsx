@@ -121,23 +121,30 @@ export default function ChantPage() {
   // Use static dashakam for gist/benefits/title (always available)
   const dashakam = staticDashakam;
 
+  const SUPABASE_URL_PREFIX = "https://znglsaxfyhkuzyrfbuhn.supabase.co";
+
   // Convert dbVerses to display format — use learn_audio_file in learn mode
-  const allVerses = dbVerses.map((mv) => ({
-    id: `${selectedDashakam}-${mv.verse_no}`,
-    dashakam: selectedDashakam,
-    paragraph: mv.verse_no,
-    sanskrit: mv.sanskrit_text,
-    english: mv.transliteration_text,
-    meaning_english: mv.translation_text,
-    meter: mv.meter,
-    audio: getStorageUrl(chantMode === "learn" ? mv.learn_audio_file : mv.chant_audio_file) || undefined,
-    bell: mv.has_bell,
-    prasadam: mv.prasadam_text || undefined,
-    sloka_audio_id: mv.sloka_audio_id,
-    tamil: "", malayalam: "", telugu: "", kannada: "", hindi: "", marathi: "",
-    meaning_tamil: "", meaning_malayalam: "", meaning_telugu: "",
-    meaning_kannada: "", meaning_hindi: "", meaning_marathi: "",
-  }));
+  // Only use audio URLs that are valid Supabase URLs
+  const allVerses = dbVerses.map((mv) => {
+    const rawUrl = getStorageUrl(chantMode === "learn" ? mv.learn_audio_file : mv.chant_audio_file);
+    const validAudio = rawUrl && rawUrl.startsWith(SUPABASE_URL_PREFIX) ? rawUrl : undefined;
+    return {
+      id: `${selectedDashakam}-${mv.verse_no}`,
+      dashakam: selectedDashakam,
+      paragraph: mv.verse_no,
+      sanskrit: mv.sanskrit_text,
+      english: mv.transliteration_text,
+      meaning_english: mv.translation_text,
+      meter: mv.meter,
+      audio: validAudio,
+      bell: mv.has_bell,
+      prasadam: mv.prasadam_text || undefined,
+      sloka_audio_id: mv.sloka_audio_id,
+      tamil: "", malayalam: "", telugu: "", kannada: "", hindi: "", marathi: "",
+      meaning_tamil: "", meaning_malayalam: "", meaning_telugu: "",
+      meaning_kannada: "", meaning_hindi: "", meaning_marathi: "",
+    };
+  });
 
   // Progressive loading: show first 3 verses instantly, rest after paint
   const [showAll, setShowAll] = useState(false);
