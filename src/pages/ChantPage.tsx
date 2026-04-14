@@ -379,6 +379,7 @@ export default function ChantPage() {
 
     if (currentVerse?.audio) {
       const loadStart = performance.now();
+      console.log('Playing audio URL:', currentVerse.audio);
       const audio = new Audio(currentVerse.audio);
       audioRef.current = audio;
       audio.playbackRate = speed;
