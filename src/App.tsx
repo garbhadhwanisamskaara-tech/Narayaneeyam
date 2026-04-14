@@ -8,9 +8,9 @@ import { AuthProvider } from "@/contexts/AuthContext";
 import Layout from "./components/Layout";
 import Index from "./pages/Index";
 import ChantPage from "./pages/ChantPage";
-import LearnPage from "./pages/LearnPage";
+
 import ScriptPage from "./pages/ScriptPage";
-// LessonPlanPage removed from navigation
+
 import DashboardPage from "./pages/DashboardPage";
 import PodcastPage from "./pages/PodcastPage";
 import AuthPage from "./pages/AuthPage";
@@ -52,7 +52,7 @@ const App = () => (
                 <Routes>
                   <Route path="/" element={<Index />} />
                   <Route path="/chant" element={<ChantPage />} />
-                  <Route path="/learn" element={<ChantPage />} />
+                  
                   <Route path="/script" element={<ScriptPage />} />
                   <Route path="/progress" element={<DashboardPage />} />
                   <Route path="/dashboard" element={<DashboardPage />} />
