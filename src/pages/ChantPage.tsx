@@ -944,7 +944,7 @@ export default function ChantPage() {
                         return null;
                       })()}
                       Verse {verse.paragraph}
-                      {verse.meter ? ` · ${verse.meter}` : ""}
+                      {verse.meter ? ` · Meter ${verse.meter}` : ""}
                     </span>
                     <div className="flex items-center gap-1">
                       <VerseIcons bell={verse.bell} prasadam={verse.prasadam} slokaAudioId={verse.sloka_audio_id} />
