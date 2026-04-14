@@ -186,19 +186,21 @@ export function useDashakam(selectedDashakam: number, selectedLanguage: string =
     return () => clearTimeout(timer);
   }, [selectedDashakam, selectedLanguage]);
 
-  // Load dashakam list — single attempt, no retries
+  // Sync from cache on mount — covers prefetch race
+  useEffect(() => {
+    if (dashakamListCache && dashakamListCache.length > 0 && dashakamList.length === 0) {
+      setDashakamList(dashakamListCache);
+    }
+  });
+
+  // Load dashakam list
   useEffect(() => {
     let cancelled = false;
-    (async () => {
-      try {
-        const list = await fetchDashakamList();
-        if (!cancelled && list.length > 0) {
-          setDashakamList(list);
-        }
-      } catch {
-        // silently handled — list stays empty
+    fetchDashakamList().then((list) => {
+      if (!cancelled && list.length > 0) {
+        setDashakamList(list);
       }
-    })();
+    }).catch(() => {});
     return () => { cancelled = true; };
   }, []);
 
