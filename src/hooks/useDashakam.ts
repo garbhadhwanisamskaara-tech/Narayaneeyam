@@ -122,7 +122,7 @@ export function useDashakam(
           const [audio, scriptSa, langTarget, prasTarget] = await Promise.all([
             supabase
               .from("verses_audio")
-              .select("verse_no, chant_audio_file, sloka_audio_id")
+              .select("verse_no, chant_audio_file, sloka_audio_id, meter")
               .eq("dashakam_no", selectedDashakam)
               .order("verse_no"),
 
