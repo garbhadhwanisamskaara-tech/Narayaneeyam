@@ -325,7 +325,7 @@ export default function LandingPage() {
       {/* FOOTER */}
       <footer className="landing-footer">
         <div className="landing-footer-logo">
-          <img src={LOGO_URL} alt="Sriman Narayaneeyam" className="landing-footer-logo-img" />
+          <img src={LOGO_URL} alt="Sriman Narayaneeyam" className="landing-footer-logo-img" style={{ background: "transparent" }} />
           Sriman Narayaneeyam
         </div>
         <p className="landing-footer-tagline">Chant · Learn · Grow · Experience Divine Grace</p>
