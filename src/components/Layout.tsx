@@ -71,13 +71,11 @@ export default function Layout({ children }: { children: React.ReactNode }) {
     <div className="min-h-screen bg-background">
       <header className="sticky top-0 z-50 bg-gradient-peacock shadow-peacock">
         <div className="container mx-auto flex items-center justify-between px-4 py-3">
-          <Link to="/" className="flex items-center gap-3">
-            <div className="h-10 w-10 rounded-full overflow-hidden">
-              <img src={logoImg} alt="Narayaneeyam Logo" className="h-full w-full rounded-full object-cover" />
-            </div>
-            <div>
-              <h1 className="font-display text-lg font-semibold text-primary-foreground leading-tight">Sriman Narayaneeyam</h1>
-              <p className="text-xs text-gold-light font-sans">Chant · Learn · Grow · Podcast</p>
+          <Link to="/" className="flex items-center gap-3 min-w-0">
+            <img src={logoImg} alt="Narayaneeyam Logo" className="h-10 w-10 rounded-full object-cover flex-shrink-0" />
+            <div className="min-w-0">
+              <h1 className="font-display text-base lg:text-lg font-semibold text-primary-foreground leading-tight truncate">Sriman Narayaneeyam</h1>
+              <p className="text-xs text-gold-light font-sans hidden sm:block">Chant · Learn · Grow · Podcast</p>
             </div>
           </Link>
 
