@@ -60,7 +60,7 @@ export default function RitualChantOverlay({ chants, useLearnAudio = false, titl
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
-      className="fixed inset-0 z-50 flex items-center justify-center bg-background/95 backdrop-blur-sm p-4"
+      className="fixed inset-0 z-40 flex items-center justify-center bg-background/95 backdrop-blur-sm p-4"
     >
       <div className="max-w-lg w-full text-center space-y-6">
         <p className="text-xs uppercase tracking-widest text-muted-foreground font-sans">{displayName}</p>

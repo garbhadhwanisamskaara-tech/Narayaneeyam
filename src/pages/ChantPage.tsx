@@ -468,9 +468,10 @@ export default function ChantPage() {
     if (!isPlaying || displayVerses.length === 0 || isSlokaPlaying) return;
 
     const currentVerse = displayVerses[highlightedVerse];
+    const audioEl = engine.audioElement.current;
 
-    // Resume from pause
-    if (pausedRef.current && engine.state.isPaused) {
+    // Resume from pause — read paused state directly from audio element to avoid stale closure
+    if (pausedRef.current && audioEl && audioEl.paused && audioEl.src) {
       engine.setSpeed(speed);
       engine.resume();
       pausedRef.current = false;
@@ -480,7 +481,10 @@ export default function ChantPage() {
       engine.onEnded.current = () => handleVerseEndedRef.current();
 
       const progressInterval = setInterval(() => {
-        setVerseProgress(engine.state.progress);
+        const a = engine.audioElement.current;
+        if (a && a.duration) {
+          setVerseProgress((a.currentTime / a.duration) * 100);
+        }
       }, 100);
 
       return () => {
