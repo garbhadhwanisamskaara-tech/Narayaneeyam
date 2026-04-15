@@ -70,7 +70,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
   return (
     <div className="min-h-screen bg-background">
       <header className="sticky top-0 z-50 bg-gradient-peacock shadow-peacock">
-        <div className="container mx-auto flex items-center justify-between px-4 py-3">
+        <div className="container mx-auto flex items-center justify-between px-3 sm:px-4 py-3 overflow-hidden">
           <Link to="/" className="flex items-center gap-3 min-w-0">
             <img src={logoImg} alt="Narayaneeyam Logo" className="h-10 w-10 rounded-full object-cover flex-shrink-0" />
             <div className="min-w-0">
