@@ -194,7 +194,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       console.error("Sign-out error:", e);
     } finally {
       await clearClientAuthState();
-      window.location.replace("/auth");
+      window.location.replace("/");
     }
   };
 
