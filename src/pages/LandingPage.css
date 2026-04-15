@@ -24,7 +24,7 @@
   font-weight: bold;
 }
 .landing-logo-img {
-  width: 40px; height: 40px; object-fit: contain; border-radius: 50%;
+  width: 40px; height: 40px; object-fit: contain; border-radius: 50%; background: transparent;
 }
 .landing-nav-links { display: flex; gap: 2rem; align-items: center; }
 .landing-nav-links a, .landing-nav-links button {
@@ -457,10 +457,10 @@
   margin-bottom: 0.5rem; letter-spacing: 0.08em;
 }
 .landing-footer-logo-img {
-  width: 35px; height: 35px; object-fit: contain; border-radius: 50%;
+  width: 35px; height: 35px; object-fit: contain; border-radius: 50%; background: transparent;
 }
 .landing-footer-tagline {
-  font-style: italic; color: rgba(240,233,216,0.2);
+  font-style: italic; color: rgba(240,233,216,0.65);
   font-size: 0.95rem; margin-bottom: 1.5rem;
 }
 .landing-footer-links {
@@ -468,14 +468,14 @@
   margin-bottom: 1.5rem;
 }
 .landing-footer-links a, .landing-footer-links button {
-  color: rgba(240,233,216,0.3); font-size: 0.85rem;
+  color: rgba(240,233,216,0.7); font-size: 0.85rem;
   text-decoration: none; letter-spacing: 0.05em;
   background: none; border: none; cursor: pointer;
   font-family: 'Cormorant Garamond', Georgia, serif;
 }
 .landing-footer-links a:hover, .landing-footer-links button:hover { color: #c9a84c; }
 .landing-footer-copy {
-  color: rgba(240,233,216,0.2); font-size: 0.8rem;
+  color: rgba(240,233,216,0.55); font-size: 0.8rem;
 }
 
 /* RESPONSIVE */

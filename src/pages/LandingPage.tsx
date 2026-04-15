@@ -68,7 +68,7 @@ export default function LandingPage() {
       {/* NAV */}
       <nav className="landing-nav">
         <a href="#" className="landing-nav-logo" onClick={(e) => { e.preventDefault(); scrollTo("hero"); }}>
-          <img src={LOGO_URL} alt="Sriman Narayaneeyam" className="landing-logo-img" />
+          <img src={LOGO_URL} alt="Sriman Narayaneeyam" className="landing-logo-img" style={{ background: "transparent" }} />
         </a>
         <div className="landing-nav-links">
           <button onClick={() => scrollTo("what")}>About</button>
