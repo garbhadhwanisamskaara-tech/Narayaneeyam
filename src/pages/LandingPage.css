@@ -457,7 +457,8 @@
   margin-bottom: 0.5rem; letter-spacing: 0.08em;
 }
 .landing-footer-logo-img {
-  width: 35px; height: 35px; object-fit: contain; border-radius: 50%; background: transparent;
+  width: 44px; height: 44px; object-fit: contain; border-radius: 50%;
+  background: transparent; border: none; box-shadow: none;
 }
 .landing-footer-tagline {
   font-style: italic; color: rgba(240,233,216,0.65);
