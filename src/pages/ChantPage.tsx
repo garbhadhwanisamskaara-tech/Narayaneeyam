@@ -24,6 +24,7 @@ import BookmarkButton from "@/components/BookmarkButton";
 import FavouriteButton from "@/components/FavouriteButton";
 import RemoveBottomSheet from "@/components/RemoveBottomSheet";
 import { TRANSLITERATION_LANGUAGES, type TransliterationLanguage } from "@/data/narayaneeyam";
+import { useActiveLanguages } from "@/hooks/useActiveLanguages";
 import { useDashakam } from "@/hooks/useDashakam";
 import { getStorageUrl } from "@/lib/storageUrl";
 import { useRitualChants } from "@/hooks/useRitualChants";
@@ -754,7 +755,7 @@ export default function ChantPage() {
               onChange={(e) => setTranslitLang(e.target.value as TransliterationLanguage)}
               className="rounded-lg border border-border bg-background px-3 py-2 text-sm font-sans text-foreground"
             >
-              {TRANSLITERATION_LANGUAGES.map((l) => (
+              {activeLanguages.map((l) => (
                 <option key={l.value} value={l.value}>
                   {l.label}
                 </option>
