@@ -1,7 +1,8 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { faqSections } from "@/data/faqData";
+import { supabase } from "@/integrations/supabase/client";
 import "./LandingPage.css";
 
 const LOGO_URL = "https://znglsaxfyhkuzyrfbuhn.supabase.co/storage/v1/object/public/images/SNlogo.png";
@@ -29,6 +30,39 @@ const stories = [
 export default function LandingPage() {
   const navigate = useNavigate();
   const observerRef = useRef<IntersectionObserver | null>(null);
+  const [festivalMessage, setFestivalMessage] = useState<string | null>(null);
+
+  // Fetch festival messages: show custom_message from 3 days before to festival_date (IST)
+  useEffect(() => {
+    async function fetchFestival() {
+      try {
+        // Get current date in IST
+        const nowIST = new Date(new Date().toLocaleString("en-US", { timeZone: "Asia/Kolkata" }));
+        const todayIST = nowIST.toISOString().split("T")[0];
+        
+        // 3 days from now in IST
+        const threeDaysAgo = new Date(nowIST);
+        threeDaysAgo.setDate(threeDaysAgo.getDate() + 3);
+        const maxDate = threeDaysAgo.toISOString().split("T")[0];
+
+        const { data } = await (supabase as any)
+          .from("festival_dashakams")
+          .select("festival_date, custom_message")
+          .eq("is_active", true)
+          .gte("festival_date", todayIST)
+          .lte("festival_date", maxDate)
+          .order("festival_date", { ascending: true })
+          .limit(1);
+
+        if (data && data.length > 0 && data[0].custom_message) {
+          setFestivalMessage(data[0].custom_message);
+        }
+      } catch {
+        // silent
+      }
+    }
+    fetchFestival();
+  }, []);
 
   useEffect(() => {
     document.title = "Sriman Narayaneeyam — Your Gateway to Divine Grace";
@@ -82,7 +116,12 @@ export default function LandingPage() {
 
       {/* HERO */}
       <section className="landing-hero" id="hero">
-        <div className="landing-hero-om">ॐ</div>
+        <div className="landing-hero-om-row">
+          <div className="landing-hero-om">ॐ</div>
+          {festivalMessage && (
+            <div className="landing-festival-flash">{festivalMessage}</div>
+          )}
+        </div>
         <span className="landing-hero-subtitle-top">A Sacred Digital Sanctuary</span>
         <h1 className="landing-hero-title">Sriman <span className="golden">Narayaneeyam</span></h1>
         <p className="landing-hero-tagline">Your Gateway to Divine Grace</p>

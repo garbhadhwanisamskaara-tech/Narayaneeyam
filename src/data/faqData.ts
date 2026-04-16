@@ -5,7 +5,7 @@ export const faqSections = [
       { q: "What is the primary goal of the Narayaneeyam app?", a: "The app is designed to make the 1,034 verses of the Narayaneeyam accessible to everyone. Whether you want to master the complex Sanskrit prosody through our Repeat Module, listen devotionally like a podcast, or chant along in real-time, the app scales to your personal spiritual pace." },
       { q: "What is Narayaneeyam?", a: "Narayaneeyam is a devotional Sanskrit text composed by Melpathur Narayana Bhattathiri, condensing the Bhagavata Purana into 1034 shlokas across 100 Dashakams. This app helps you chant, learn, and listen to it." },
       { q: "Is the app free to use?", a: "Yes, the core features — Chant, Learn, and Podcast — are free for all users." },
-      { q: "Do I need to create an account?", a: "You can browse and listen without an account. An account is needed to save your progress, bookmarks, and chanting history." },
+      { q: "Do I need to create an account?", a: "Yes, you need to sign up using an email address and confirm your email. Once verified, you have full access to the treasure of Narayaneeyam." },
       { q: "Is the app available on mobile?", a: "Yes, narayaneeyam.app works on any smartphone browser. Just open it in Chrome or Safari — no download needed." },
       { q: "Why should I use the app instead of a printed book?", a: "While books are sacred, the app offers audio-visual synchronization. You get the benefit of hearing the correct intonations, pronunciations and where to break the phrase to fit in the meter and tune. You can follow a printed book while listening on the app and make notes to help you chant independently." },
     ],
@@ -19,13 +19,6 @@ export const faqSections = [
       { q: "Can I chant a specific dashakam directly?", a: "Yes — use the Dashakam dropdown to jump to any of the 100 dashakams directly." },
       { q: "What language script is used for the shlokas?", a: "Sanskrit in Devanagari script is the default. Transliteration is also available in Tamil, English and Kannada. We plan to add more languages." },
       { q: "Can I customize the speed of chanting?", a: "Everyone learns at a different pace. You can slow it down while in learning mode and increase it to normal speed once you are ready to chant along. You can also set up a loop to repeat a particular dashakam several times." },
-    ],
-  },
-  {
-    heading: "Learn Module",
-    questions: [
-      { q: "I am a beginner. How does the Learn with Me module help me?", a: "Sanskrit can be intimidating! Our Learn with Me module breaks down each shloka into phrases with a gap between them — giving you space to repeat each phrase twice, just like in our regular classes, so you can perfect your pronunciation before moving to the next verse." },
-      { q: "How is the Learn module different from Chant?", a: "Learn focuses on understanding — after each phrase there is a gap for you to repeat it twice. Chant is continuous reading from the screen in the respective tune." },
       { q: "Are the meanings available in English?", a: "Yes, English meanings are provided for each shloka to help devotees who are not familiar with Sanskrit." },
       { q: "Can I bookmark shlokas I want to revisit?", a: "Yes — tap the bookmark icon on any shloka to save it to your favourites for quick access later." },
     ],
