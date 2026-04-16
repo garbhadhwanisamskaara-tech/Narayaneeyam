@@ -1,10 +1,11 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { Mic, FileText, Flame, BookOpen, Headphones, ChevronDown, ChevronUp, MoreHorizontal, LifeBuoy, Bookmark, Heart, Settings } from "lucide-react";
 import { getProgress } from "@/lib/progress";
 import heroBg from "@/assets/hero-bg.jpg";
 import FestivalBanner from "@/components/FestivalBanner";
+import { supabase } from "@/integrations/supabase/client";
 
 const mainFeatures = [
   { path: "/chant", icon: Mic, title: "Chant with Me", desc: "Chant along with synchronized text highlighting" },
@@ -23,6 +24,35 @@ export default function Index() {
   const progress = getProgress();
   const [showAbout, setShowAbout] = useState(false);
   const [showMore, setShowMore] = useState(false);
+  const [festivalMessage, setFestivalMessage] = useState<string | null>(null);
+
+  useEffect(() => {
+    async function fetchFestival() {
+      try {
+        const nowIST = new Date(new Date().toLocaleString("en-US", { timeZone: "Asia/Kolkata" }));
+        const todayIST = nowIST.toISOString().split("T")[0];
+        const threeDaysAhead = new Date(nowIST);
+        threeDaysAhead.setDate(threeDaysAhead.getDate() + 3);
+        const maxDate = threeDaysAhead.toISOString().split("T")[0];
+
+        const { data } = await (supabase as any)
+          .from("festival_dashakams")
+          .select("festival_date, custom_message")
+          .eq("is_active", true)
+          .gte("festival_date", todayIST)
+          .lte("festival_date", maxDate)
+          .order("festival_date", { ascending: true })
+          .limit(1);
+
+        if (data && data.length > 0 && data[0].custom_message) {
+          setFestivalMessage(data[0].custom_message);
+        }
+      } catch {
+        // silent
+      }
+    }
+    fetchFestival();
+  }, []);
 
   return (
     <div>
@@ -36,9 +66,19 @@ export default function Index() {
           <motion.div initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.8 }}>
             <h1 className="font-display text-4xl md:text-6xl font-bold text-primary-foreground mb-4 leading-tight">Sriman Narayaneeyam</h1>
             <p className="text-gold-light font-body text-lg md:text-xl max-w-2xl mx-auto mb-4">Your Gateway to Divine Grace</p>
-            <p className="text-primary-foreground/80 font-sans text-sm md:text-base max-w-2xl mx-auto mb-8">
+            <p className="text-primary-foreground/80 font-sans text-sm md:text-base max-w-2xl mx-auto mb-4">
               A sacred journey through 100 Dashakams — chant, learn, and grow in devotion with the divine grace of Guruvayurappan
             </p>
+            {festivalMessage && (
+              <motion.p
+                initial={{ opacity: 0 }}
+                animate={{ opacity: [0.4, 1, 0.4] }}
+                transition={{ duration: 2.5, repeat: Infinity, ease: "easeInOut" }}
+                className="font-sans text-sm md:text-base text-secondary font-semibold max-w-2xl mx-auto mb-4 text-center px-4 truncate"
+              >
+                {festivalMessage}
+              </motion.p>
+            )}
           </motion.div>
           {progress.lastSessionDate && (
             <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} transition={{ delay: 0.4 }}

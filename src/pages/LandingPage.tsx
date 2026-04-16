@@ -116,12 +116,10 @@ export default function LandingPage() {
 
       {/* HERO */}
       <section className="landing-hero" id="hero">
-        <div className="landing-hero-om-row">
-          <div className="landing-hero-om">ॐ</div>
-          {festivalMessage && (
-            <div className="landing-festival-flash">{festivalMessage}</div>
-          )}
-        </div>
+        <div className="landing-hero-om">ॐ</div>
+        {festivalMessage && (
+          <div className="landing-festival-flash">{festivalMessage}</div>
+        )}
         <span className="landing-hero-subtitle-top">A Sacred Digital Sanctuary</span>
         <h1 className="landing-hero-title">Sriman <span className="golden">Narayaneeyam</span></h1>
         <p className="landing-hero-tagline">Your Gateway to Divine Grace</p>
