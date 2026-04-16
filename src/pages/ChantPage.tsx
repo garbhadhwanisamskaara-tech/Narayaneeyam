@@ -75,6 +75,7 @@ export default function ChantPage() {
 
   // Global audio engine (singleton, survives navigation)
   const engine = useAudioEngine();
+  const activeLanguages = useActiveLanguages();
 
   const pausedRef = useRef(false);
   const gapTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
