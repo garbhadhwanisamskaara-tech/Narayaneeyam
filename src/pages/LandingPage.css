@@ -47,7 +47,31 @@
 }
 .landing-nav-cta:hover { background: #e8c96a !important; }
 
-/* HERO */
+/* Festival flash banner */
+.landing-hero-om-row {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 1.5rem;
+  width: 100%;
+}
+.landing-festival-flash {
+  font-family: 'Cinzel', serif;
+  font-size: 0.95rem;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  color: #e8c96a;
+  text-shadow: 0 0 8px rgba(201,168,76,0.4);
+  animation: festivalFlash 2s ease-in-out infinite;
+  text-align: left;
+  max-width: 400px;
+}
+@keyframes festivalFlash {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.2; }
+}
+
+
 .landing-hero {
   min-height: 100vh;
   background:
