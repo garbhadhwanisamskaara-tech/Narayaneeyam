@@ -65,6 +65,10 @@ export default function LandingPage() {
   }, []);
 
   useEffect(() => {
+    document.title = "Sriman Narayaneeyam — Your Gateway to Divine Grace";
+  }, []);
+
+  useEffect(() => {
     observerRef.current = new IntersectionObserver(
       (entries) => {
         entries.forEach((e) => {
