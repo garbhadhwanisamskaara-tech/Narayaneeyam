@@ -74,7 +74,7 @@ export default function Index() {
                 initial={{ opacity: 0 }}
                 animate={{ opacity: [0.4, 1, 0.4] }}
                 transition={{ duration: 2.5, repeat: Infinity, ease: "easeInOut" }}
-                className="font-sans text-sm md:text-base text-secondary font-semibold max-w-2xl mx-auto mb-4 text-center px-4 truncate"
+                className="font-sans text-base md:text-xl text-primary-foreground font-semibold max-w-3xl mx-auto mb-4 text-center px-4 break-words whitespace-normal leading-snug"
               >
                 {festivalMessage}
               </motion.p>
