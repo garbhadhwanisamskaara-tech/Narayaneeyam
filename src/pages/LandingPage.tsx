@@ -116,9 +116,18 @@ export default function LandingPage() {
 
       {/* HERO */}
       <section className="landing-hero" id="hero">
-        <div className="landing-hero-om">ॐ</div>
+        {/* Mobile: fixed top banner (yellow box, blinks, multi-line) */}
         {festivalMessage && (
-          <div className="landing-festival-flash">{festivalMessage}</div>
+          <div className="landing-festival-flash landing-festival-flash--mobile-top">
+            {festivalMessage}
+          </div>
+        )}
+        <div className="landing-hero-om">ॐ</div>
+        {/* Desktop: below Om (yellow box, blinks, multi-line) */}
+        {festivalMessage && (
+          <div className="landing-festival-flash landing-festival-flash--desktop">
+            {festivalMessage}
+          </div>
         )}
         <span className="landing-hero-subtitle-top">A Sacred Digital Sanctuary</span>
         <h1 className="landing-hero-title">Sriman <span className="golden">Narayaneeyam</span></h1>
