@@ -105,7 +105,9 @@ export function useDashakam(
   selectedDashakam: number,
   selectedLanguage: string = "en"
 ): UseDashakamResult {
-  const [dashakamList, setDashakamList] = useState<DashakamListItem[]>(dashakamCache.list || []);
+  const [dashakamList, setDashakamList] = useState<DashakamListItem[]>(
+    () => dashakamListCacheByLang.get(selectedLanguage) || dashakamListCacheByLang.get("en") || DASHAKAM_SEED
+  );
   const [verses, setVerses] = useState<MergedVerse[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -122,7 +124,7 @@ export function useDashakam(
 
       try {
         // 1. DASHAKAM LIST
-        const list = await fetchDashakamList();
+        const list = await fetchDashakamList(selectedLanguage);
 
         if (!isMounted || requestId !== requestRef.current) return;
         setDashakamList(list);
@@ -248,18 +250,17 @@ export function useDashakam(
 }
 
 /** Get dashakam name from cached list — also triggers fetch if cache empty */
-export function getDashakamName(dashakamNo: number): string {
-  // If cache exists, return from it
-  if (dashakamCache.list) {
-    const item = dashakamCache.list.find((d) => d.dashakam_no === dashakamNo);
-    return item?.dashakam_name || `Dashakam ${dashakamNo}`;
+export function getDashakamName(dashakamNo: number, lang: string = "en"): string {
+  const list = dashakamListCacheByLang.get(lang) || dashakamListCacheByLang.get("en");
+  if (list && list !== DASHAKAM_SEED) {
+    const item = list.find((d) => d.dashakam_no === dashakamNo);
+    if (item) return item.dashakam_name || `Dashakam ${dashakamNo}`;
   }
-  // Trigger background fetch so names are available next render
-  fetchDashakamList().catch(() => {});
+  fetchDashakamList(lang).catch(() => {});
   return `Dashakam ${dashakamNo}`;
 }
 
 /** Prefetch dashakam list — can be called from any page */
-export function prefetchDashakamList(): Promise<DashakamListItem[]> {
-  return fetchDashakamList();
+export function prefetchDashakamList(lang: string = "en"): Promise<DashakamListItem[]> {
+  return fetchDashakamList(lang);
 }
