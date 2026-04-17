@@ -54,7 +54,7 @@ export default function ChantPage() {
   const [searchParams] = useSearchParams();
   const [selectedDashakam, setSelectedDashakam] = useState(DEFAULT_DASHAKAM);
   const [selectedPara, setSelectedPara] = useState<number | null>(null);
-  const [translitLang, setTranslitLang] = useState<TransliterationLanguage>("english");
+  const [translitLang, setTranslitLang] = useState<string>("en");
   const [showMeaning, setShowMeaning] = useState(false);
   const [showGist, setShowGist] = useState(false);
   const [showBenefit, setShowBenefit] = useState(false);
@@ -146,7 +146,8 @@ export default function ChantPage() {
     setPlaylistId(undefined);
   };
 
-  const selectedLanguage = "en";
+  // Transliteration language drives the script shown in verses; ritual chants stay in English
+  const selectedLanguage = translitLang || "en";
 
   // Live data from Supabase
   const {
@@ -155,7 +156,7 @@ export default function ChantPage() {
     loading: dbLoading,
     audioReady,
   } = useDashakam(selectedDashakam, selectedLanguage);
-  const { openingChants, dashakamClosingChant, sessionClosingChant } = useRitualChants(selectedLanguage);
+  const { openingChants, dashakamClosingChant, sessionClosingChant } = useRitualChants("en");
 
   // Build the dashakam dropdown list from DB
   const dropdownList = dashakamList
@@ -612,8 +613,8 @@ export default function ChantPage() {
   };
 
   const getVerseText = (verse: (typeof allVerses)[0]) => {
-    if (translitLang === "sanskrit") return verse.sanskrit;
-    if (translitLang === "english") return verse.english;
+    // Sanskrit script always shows Devanagari; any other selection shows transliteration in chosen language
+    if (translitLang === "sa") return verse.sanskrit;
     return verse.english || verse.sanskrit;
   };
 
@@ -753,7 +754,7 @@ export default function ChantPage() {
             <label className="text-xs text-muted-foreground font-sans">Transliteration</label>
             <select
               value={translitLang}
-              onChange={(e) => setTranslitLang(e.target.value as TransliterationLanguage)}
+              onChange={(e) => setTranslitLang(e.target.value)}
               className="rounded-lg border border-border bg-background px-3 py-2 text-sm font-sans text-foreground"
             >
               {activeLanguages.map((l) => (

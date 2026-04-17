@@ -1,14 +1,21 @@
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { TRANSLITERATION_LANGUAGES, type TransliterationLanguage } from "@/data/narayaneeyam";
 
 interface LanguageOption {
-  value: TransliterationLanguage;
+  value: string; // 2-letter language_code as stored in Supabase (e.g. "en", "sa", "mr")
   label: string;
 }
 
+// Static fallback uses the same 2-letter codes the DB stores, so downstream
+// queries against language_script / prasadam continue to work even offline.
+const FALLBACK_LANGUAGES: LanguageOption[] = [
+  { value: "sa", label: "Sanskrit" },
+  { value: "en", label: "English" },
+  { value: "ta", label: "Tamil" },
+];
+
 export function useActiveLanguages(): LanguageOption[] {
-  const [languages, setLanguages] = useState<LanguageOption[]>(TRANSLITERATION_LANGUAGES);
+  const [languages, setLanguages] = useState<LanguageOption[]>(FALLBACK_LANGUAGES);
 
   useEffect(() => {
     async function fetch() {
@@ -21,13 +28,13 @@ export function useActiveLanguages(): LanguageOption[] {
 
         if (!error && data && data.length > 0) {
           const mapped: LanguageOption[] = data.map((r: any) => ({
-            value: r.code as TransliterationLanguage,
+            value: r.code as string,
             label: r.name as string,
           }));
           setLanguages(mapped);
         }
       } catch {
-        setLanguages(TRANSLITERATION_LANGUAGES);
+        setLanguages(FALLBACK_LANGUAGES);
       }
     }
     fetch();

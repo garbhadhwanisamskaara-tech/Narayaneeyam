@@ -134,7 +134,7 @@ export function useDashakam(
               .eq("language_code", "sa")
               .order("verse_no"),
 
-            // Target language transliteration + translation (e.g. "en")
+            // Target language transliteration + translation (e.g. "en", "mr", "ta")
             supabase
               .from("language_script")
               .select("verse_no, transliteration_text, translation_text")
@@ -156,8 +156,29 @@ export function useDashakam(
 
           const a = toMap(audio.data);
           const s = toMap(scriptSa.data);   // Sanskrit
-          const l = toMap(langTarget.data);  // Target language (en/ta/etc)
-          const p = toMap(prasTarget.data);
+          let l = toMap(langTarget.data);   // Target language (en/ta/mr/etc)
+          let p = toMap(prasTarget.data);
+
+          // Fallback to English if target language has no script rows
+          if (selectedLanguage !== "en" && Object.keys(l).length === 0) {
+            const langEn = await supabase
+              .from("language_script")
+              .select("verse_no, transliteration_text, translation_text")
+              .eq("dashakam_no", selectedDashakam)
+              .eq("language_code", "en")
+              .order("verse_no");
+            l = toMap(langEn.data);
+          }
+          // Fallback prasadam to English if missing
+          if (selectedLanguage !== "en" && Object.keys(p).length === 0) {
+            const prasEn = await supabase
+              .from("prasadam")
+              .select("verse_no, prasadam_text")
+              .eq("dashakam_no", selectedDashakam)
+              .eq("language_code", "en")
+              .order("verse_no");
+            p = toMap(prasEn.data);
+          }
 
           // Determine verse count from dashakam metadata or data
           const dk = list.find((d) => d.dashakam_no === selectedDashakam);
