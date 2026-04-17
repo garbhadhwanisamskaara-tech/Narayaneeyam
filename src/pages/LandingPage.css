@@ -518,10 +518,19 @@
   color: rgba(240,233,216,0.55); font-size: 0.8rem;
 }
 
+/* Festival visibility — desktop inline, mobile fixed top */
+.landing-festival-flash--desktop { display: block; }
+.landing-festival-flash--mobile-top { display: none; }
+
 /* RESPONSIVE */
 @media (max-width: 768px) {
   .landing-what-grid, .landing-auth-container { grid-template-columns: 1fr; }
   .landing-what-visual { display: none; }
   .landing-nav .landing-nav-links { display: none; }
   .landing-benefits-grid { grid-template-columns: 1fr; }
+  .landing-festival-flash--desktop { display: none; }
+  .landing-festival-flash--mobile-top { display: block; }
+  /* Add space so the fixed festival banner doesn't overlap title */
+  .landing-hero { padding-top: 150px; }
+  .landing-hero-title { font-size: clamp(2rem, 8vw, 3rem); word-break: break-word; }
 }
