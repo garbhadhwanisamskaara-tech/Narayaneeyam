@@ -38,52 +38,67 @@ const DASHAKAM_SEED: DashakamListItem[] = Array.from({ length: 100 }, (_, i) => 
   benefits: null,
 }));
 
-// ---- simple cache ----
-const dashakamCache: { list: DashakamListItem[]; fetched: boolean; loading: Promise<DashakamListItem[]> | null } = {
-  list: DASHAKAM_SEED,
-  fetched: false,
-  loading: null,
-};
+// ---- simple cache (per-language for dashakam list) ----
+const dashakamListCacheByLang = new Map<string, DashakamListItem[]>();
+const dashakamListInflight = new Map<string, Promise<DashakamListItem[]>>();
+// Seed English so first render isn't empty
+dashakamListCacheByLang.set("en", DASHAKAM_SEED);
+
 const verseCache = new Map<string, MergedVerse[]>();
 
 const getKey = (d: number, l: string) => `${d}_${l}`;
 
-/** Fetch dashakam list (shared, deduped) */
-async function fetchDashakamList(): Promise<DashakamListItem[]> {
-  if (dashakamCache.fetched) return dashakamCache.list;
-  if (dashakamCache.loading) return dashakamCache.loading;
+async function fetchDashakamListForLang(lang: string): Promise<DashakamListItem[]> {
+  const { data, error } = await supabase
+    .from("dashakams")
+    .select("dashakam_no, dashakam_name, num_verses, remarks, gist, benefits")
+    .eq("language_code", lang)
+    .order("dashakam_no");
 
-  dashakamCache.loading = (async () => {
+  if (error) throw error;
+
+  const seen = new Set<number>();
+  return (data || []).filter((d: any) => {
+    if (seen.has(d.dashakam_no)) return false;
+    seen.add(d.dashakam_no);
+    return true;
+  }) as DashakamListItem[];
+}
+
+/** Fetch dashakam list in given language; fall back to English if empty. Cached per language. */
+async function fetchDashakamList(lang: string = "en"): Promise<DashakamListItem[]> {
+  const cached = dashakamListCacheByLang.get(lang);
+  // Treat the seeded English as "not really fetched" so we still hit DB once
+  if (cached && cached !== DASHAKAM_SEED) return cached;
+
+  const inflight = dashakamListInflight.get(lang);
+  if (inflight) return inflight;
+
+  const promise = (async () => {
     try {
-      const { data, error } = await supabase
-        .from("dashakams")
-        .select("dashakam_no, dashakam_name, num_verses, remarks, gist, benefits")
-        .eq("language_code", "en")
-        .order("dashakam_no");
+      let list = await fetchDashakamListForLang(lang);
 
-      if (error) throw error;
+      // Fallback to English names if requested language has no rows
+      if (list.length === 0 && lang !== "en") {
+        console.log(`[useDashakam] no dashakams for '${lang}', falling back to 'en'`);
+        list = await fetchDashakamListForLang("en");
+      }
 
-      // dedupe
-      const seen = new Set<number>();
-      const list = (data || []).filter((d) => {
-        if (seen.has(d.dashakam_no)) return false;
-        seen.add(d.dashakam_no);
-        return true;
-      });
-
-      dashakamCache.list = list;
-      dashakamCache.fetched = true;
-      console.log("[useDashakam] fetched dashakam list:", list.length, "items");
-      return list;
+      if (list.length > 0) {
+        dashakamListCacheByLang.set(lang, list);
+      }
+      console.log(`[useDashakam] fetched dashakam list [${lang}]:`, list.length, "items");
+      return list.length > 0 ? list : (dashakamListCacheByLang.get("en") ?? DASHAKAM_SEED);
     } catch (err) {
       console.error("[useDashakam] fetchDashakamList failed:", err);
       throw err;
     } finally {
-      dashakamCache.loading = null; // always reset, even on failure
+      dashakamListInflight.delete(lang);
     }
   })();
 
-  return dashakamCache.loading;
+  dashakamListInflight.set(lang, promise);
+  return promise;
 }
 
 export function useDashakam(
