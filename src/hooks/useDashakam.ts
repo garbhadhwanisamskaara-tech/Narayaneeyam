@@ -176,15 +176,28 @@ export function useDashakam(
           let l = toMap(langTarget.data);   // Target language (en/ta/mr/etc)
           let p = toMap(prasTarget.data);
 
-          // Fallback to English if target language has no script rows
-          if (selectedLanguage !== "en" && Object.keys(l).length === 0) {
+          // Fallback to English if target language has no script rows OR
+          // any verse is missing translation_text (per-verse fallback)
+          const needsEnglishFallback =
+            selectedLanguage !== "en" &&
+            (Object.keys(l).length === 0 ||
+              Object.values(l).some(
+                (r: any) => !r?.translation_text || r.translation_text.trim() === ""
+              ));
+
+          let lEn: Record<string, any> = {};
+          if (needsEnglishFallback) {
             const langEn = await supabase
               .from("language_script")
               .select("verse_no, transliteration_text, translation_text")
               .eq("dashakam_no", selectedDashakam)
               .eq("language_code", "en")
               .order("verse_no");
-            l = toMap(langEn.data);
+            lEn = toMap(langEn.data);
+            // If selected lang had no rows at all, use English as base
+            if (Object.keys(l).length === 0) {
+              l = lEn;
+            }
           }
           // Fallback prasadam to English if missing
           if (selectedLanguage !== "en" && Object.keys(p).length === 0) {
@@ -207,6 +220,10 @@ export function useDashakam(
 
           merged = [];
           for (let i = 1; i <= max; i++) {
+            const translation =
+              (l[i]?.translation_text && l[i].translation_text.trim() !== ""
+                ? l[i].translation_text
+                : lEn[i]?.translation_text) ?? "";
             merged.push({
               verse_no: i,
               chant_audio_file: a[i]?.chant_audio_file ?? "",
@@ -214,7 +231,7 @@ export function useDashakam(
               sanskrit_text: s[i]?.transliteration_text ?? "",
               meter: a[i]?.meter ?? "",
               transliteration_text: l[i]?.transliteration_text ?? "",
-              translation_text: l[i]?.translation_text ?? "",
+              translation_text: translation,
               prasadam_text: p[i]?.prasadam_text ?? "",
             });
           }

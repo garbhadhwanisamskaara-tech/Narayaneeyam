@@ -1038,7 +1038,7 @@ export default function ChantPage() {
                       className="mt-4 border-t border-border pt-3"
                     >
                       <p className="text-xs text-muted-foreground font-sans uppercase tracking-wide mb-1">
-                        Translation (English)
+                        Translation ({activeLanguages.find((l) => l.value === translitLang)?.label || "English"})
                       </p>
                       <p className="text-sm text-muted-foreground font-sans leading-relaxed">{getMeaning(verse)}</p>
                     </motion.div>
