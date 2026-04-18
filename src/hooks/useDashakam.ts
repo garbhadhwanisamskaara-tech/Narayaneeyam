@@ -220,6 +220,10 @@ export function useDashakam(
 
           merged = [];
           for (let i = 1; i <= max; i++) {
+            const translation =
+              (l[i]?.translation_text && l[i].translation_text.trim() !== ""
+                ? l[i].translation_text
+                : lEn[i]?.translation_text) ?? "";
             merged.push({
               verse_no: i,
               chant_audio_file: a[i]?.chant_audio_file ?? "",
@@ -227,7 +231,7 @@ export function useDashakam(
               sanskrit_text: s[i]?.transliteration_text ?? "",
               meter: a[i]?.meter ?? "",
               transliteration_text: l[i]?.transliteration_text ?? "",
-              translation_text: l[i]?.translation_text ?? "",
+              translation_text: translation,
               prasadam_text: p[i]?.prasadam_text ?? "",
             });
           }
