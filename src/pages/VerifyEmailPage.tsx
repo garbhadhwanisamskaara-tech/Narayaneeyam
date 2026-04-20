@@ -6,6 +6,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import logoImg from "@/assets/logo.png";
+import SEO from "@/components/SEO";
 
 export default function VerifyEmailPage() {
   const { user, signOut } = useAuth();
@@ -30,6 +31,7 @@ export default function VerifyEmailPage() {
 
   return (
     <div className="min-h-screen bg-background flex items-center justify-center px-4">
+      <SEO path="/verify-email" title="Verify Email — Sriman Narayaneeyam" description="Confirm your email address to activate your Sriman Narayaneeyam account." />
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}

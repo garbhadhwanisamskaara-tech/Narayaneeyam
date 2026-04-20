@@ -4,6 +4,7 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { HelmetProvider } from "react-helmet-async";
 import { SentryErrorBoundary } from "@/components/SentryErrorBoundary";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { AudioProvider } from "@/contexts/AudioContext";
@@ -45,6 +46,7 @@ const App = () => {
 
   return (
   <SentryErrorBoundary>
+  <HelmetProvider>
   <QueryClientProvider client={queryClient}>
     <AudioProvider>
     <TooltipProvider>
@@ -91,6 +93,7 @@ const App = () => {
     </TooltipProvider>
     </AudioProvider>
   </QueryClientProvider>
+  </HelmetProvider>
   </SentryErrorBoundary>
   );
 };

@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
 import logoImg from "@/assets/logo.png";
+import SEO from "@/components/SEO";
 
 type Mode = "signin" | "signup" | "forgot";
 
@@ -93,6 +94,7 @@ export default function AuthPage() {
 
   return (
     <div className="min-h-[80vh] flex items-center justify-center px-4">
+      <SEO path="/auth" title="Sign In — Sriman Narayaneeyam" description="Sign in or create your account to track your Sriman Narayaneeyam chanting practice across devices." />
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}

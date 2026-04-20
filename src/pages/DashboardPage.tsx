@@ -7,6 +7,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useUserProgress } from "@/hooks/useUserProgress";
 import { Progress } from "@/components/ui/progress";
 import ProgressRing from "@/components/ProgressRing";
+import SEO from "@/components/SEO";
 
 export default function DashboardPage() {
   const localProgress = getProgress();
@@ -37,6 +38,7 @@ export default function DashboardPage() {
 
   return (
     <div className="container mx-auto px-4 py-8 pb-24">
+      <SEO path="/dashboard" title="Your Progress — Sriman Narayaneeyam" description="Track your devotional journey through Sriman Narayaneeyam — streak, completed Dashakams and your current chanting position." />
       <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
 
         {/* Greeting */}

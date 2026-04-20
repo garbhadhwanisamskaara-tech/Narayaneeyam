@@ -9,6 +9,7 @@ import { Slider } from "@/components/ui/slider";
 import PlaylistBuilder from "@/components/PlaylistBuilder";
 import PlaylistBar from "@/components/PlaylistBar";
 import { usePlaylist, type PlaylistItem } from "@/hooks/usePlaylist";
+import SEO from "@/components/SEO";
 
 type PlayMode = "single" | "playlist" | "all";
 
@@ -292,6 +293,7 @@ export default function PodcastPage() {
 
   return (
     <div className="container mx-auto px-4 py-8 select-none" onContextMenu={(e) => e.preventDefault()}>
+      <SEO path="/podcast" title="Podcast — Sriman Narayaneeyam" description="Listen to all 100 Dashakams of Sriman Narayaneeyam in the background — single, custom playlist or full sequence playback." />
       <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
         <div className="mb-8 flex items-center justify-between flex-wrap gap-2">
           <div>

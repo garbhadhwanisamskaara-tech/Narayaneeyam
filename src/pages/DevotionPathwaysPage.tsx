@@ -12,6 +12,7 @@ import PathwayDashakamList from "@/components/PathwayDashakamList";
 import FestivalPathwaysList from "@/components/FestivalPathwaysList";
 import HundredDayJourney from "@/components/HundredDayJourney";
 import { useFestivalPathways, type FestivalItem } from "@/hooks/useFestivalPathways";
+import SEO from "@/components/SEO";
 
 const iconMap: Record<string, React.ElementType> = {
   BookOpen, Sparkles, Star, Calendar, Zap,
@@ -245,6 +246,7 @@ export default function DevotionPathwaysPage() {
 
   return (
     <div className="container mx-auto px-4 py-6 max-w-3xl">
+      <SEO path="/devotion-pathways" title="Devotion Pathways — Sriman Narayaneeyam" description="Structured chanting journeys including Mini Narayaneeyam, the 100-Day Journey and Festival Pathways." />
       <h1 className="font-display text-2xl font-bold text-foreground mb-2">Devotion Pathways</h1>
       <p className="text-sm text-muted-foreground mb-6 font-sans">Structured devotional chanting journeys</p>
 

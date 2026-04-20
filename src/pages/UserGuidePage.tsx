@@ -6,6 +6,7 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from "@/components/ui/accordion";
+import SEO from "@/components/SEO";
 
 const sections = [
   {
@@ -169,6 +170,7 @@ const sections = [
 const UserGuidePage = () => {
   return (
     <div className="min-h-screen bg-background">
+      <SEO path="/user-guide" title="User Guide — Sriman Narayaneeyam" description="Step-by-step guide to using every feature of the Sriman Narayaneeyam app — chanting, podcast, progress and more." />
       {/* Hero */}
       <div className="bg-gradient-peacock text-primary-foreground py-10 px-4 text-center">
         <motion.div

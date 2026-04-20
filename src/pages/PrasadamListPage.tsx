@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import SEO from "@/components/SEO";
 
 interface PrasadamEntry {
   dashakam_no: number;
@@ -36,6 +37,7 @@ export default function PrasadamListPage() {
 
   return (
     <div className="container mx-auto px-4 py-6 max-w-3xl">
+      <SEO path="/prasadam" title="Prasadam List — Sriman Narayaneeyam" description="Recommended prasadam offerings for every Dashakam and verse of Sriman Narayaneeyam." />
       <h1 className="font-display text-2xl font-bold text-foreground mb-2">Prasadam List</h1>
       <p className="text-sm text-muted-foreground mb-6 font-sans">
         Recommended offerings for each Dashakam and verse

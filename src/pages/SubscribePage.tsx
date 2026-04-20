@@ -4,6 +4,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useSubscription } from "@/hooks/useSubscription";
 import { useToast } from "@/hooks/use-toast";
 import { Link } from "react-router-dom";
+import SEO from "@/components/SEO";
 
 const plans = [
   {
@@ -68,6 +69,7 @@ export default function SubscribePage() {
 
   return (
     <div className="container mx-auto px-4 py-8 max-w-5xl">
+      <SEO path="/subscribe" title="Subscribe — Sriman Narayaneeyam" description="Choose a plan to unlock all 100 Dashakams of Sriman Narayaneeyam — Chant, Podcast, Script Library and more." />
       <div className="text-center mb-8">
         <h1 className="font-display text-2xl font-bold text-foreground">Choose Your Plan</h1>
         <p className="text-sm text-muted-foreground font-sans mt-1">

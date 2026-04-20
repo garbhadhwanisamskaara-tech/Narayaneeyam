@@ -36,6 +36,7 @@ import { updateStreakSupabase, markVerseCompleted } from "@/lib/supabaseProgress
 import { useAudioEngine } from "@/contexts/AudioContext";
 
 import VerseIcons from "@/components/VerseIcons";
+import SEO from "@/components/SEO";
 import { Slider } from "@/components/ui/slider";
 import { useMemberProgress } from "@/hooks/useMemberProgress";
 import ContinueBanner from "@/components/ContinueBanner";
@@ -622,6 +623,7 @@ export default function ChantPage() {
 
   return (
     <div className="container mx-auto px-4 py-8 select-none" onContextMenu={(e) => e.preventDefault()}>
+      <SEO path="/chant" title="Chant with Me — Sriman Narayaneeyam" description="Chant along with synchronised audio and karaoke-style highlighting across all 100 Dashakams of Sriman Narayaneeyam." />
       <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
         <div className="mb-8 flex items-center justify-between flex-wrap gap-2">
           <div>

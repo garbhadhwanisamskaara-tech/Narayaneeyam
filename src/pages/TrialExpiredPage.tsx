@@ -3,12 +3,14 @@ import { Clock, Mail, LogOut } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 import logoImg from "@/assets/logo.png";
+import SEO from "@/components/SEO";
 
 export default function TrialExpiredPage() {
   const { user, signOut } = useAuth();
 
   return (
     <div className="min-h-screen bg-background flex items-center justify-center px-4">
+      <SEO path="/trial-expired" title="Trial Ended — Sriman Narayaneeyam" description="Your free trial has ended. Upgrade to continue your devotional journey through Sriman Narayaneeyam." />
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
