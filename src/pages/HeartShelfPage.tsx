@@ -7,6 +7,7 @@ import FavouriteButton from "@/components/FavouriteButton";
 import RemoveBottomSheet from "@/components/RemoveBottomSheet";
 import { toast } from "@/hooks/use-toast";
 import type { FavouriteEntry } from "@/lib/progress";
+import SEO from "@/components/SEO";
 
 export default function HeartShelfPage() {
   const { favourites, removeFavourite, undoRemoveFavourite } = useFavourites();
@@ -34,6 +35,7 @@ export default function HeartShelfPage() {
 
   return (
     <div className="container mx-auto px-4 py-8 pb-24">
+      <SEO path="/heart-shelf" title="Favourites — Sriman Narayaneeyam" description="Your collection of favourite Narayaneeyam slokas — verses close to your heart, ready whenever you need them." />
       <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
         <div className="flex items-center gap-3 mb-6">
           <Link to="/dashboard" className="p-2 text-muted-foreground hover:text-foreground">

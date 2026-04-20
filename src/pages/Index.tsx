@@ -6,6 +6,7 @@ import { getProgress } from "@/lib/progress";
 import heroBg from "@/assets/hero-bg.jpg";
 import FestivalBanner from "@/components/FestivalBanner";
 import { supabase } from "@/integrations/supabase/client";
+import SEO from "@/components/SEO";
 
 const mainFeatures = [
   { path: "/chant", icon: Mic, title: "Chant with Me", desc: "Chant along with synchronized text highlighting" },
@@ -56,6 +57,7 @@ export default function Index() {
 
   return (
     <div>
+      <SEO path="/" title="Sriman Narayaneeyam — Chant · Learn · Grow" description="A sacred journey through 100 Dashakams — chant, learn, and grow in devotion with the divine grace of Guruvayurappan." />
       {/* Hero Section */}
       <section className="relative overflow-hidden">
         <div className="absolute inset-0">

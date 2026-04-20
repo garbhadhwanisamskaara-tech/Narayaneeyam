@@ -15,6 +15,7 @@ import {
 } from "@/hooks/useSupportTickets";
 import { useToast } from "@/hooks/use-toast";
 import { Link } from "react-router-dom";
+import SEO from "@/components/SEO";
 
 const statusConfig: Record<string, { color: string; icon: any; bg: string }> = {
   Open: { color: "text-amber-700", icon: Clock, bg: "bg-amber-100" },
@@ -488,6 +489,7 @@ export default function SupportPage() {
 
   return (
     <div className="min-h-screen bg-background">
+      <SEO path="/support" title="Support — Sriman Narayaneeyam" description="Get help, raise a support ticket or report an issue with the Sriman Narayaneeyam app." />
       <div className="container mx-auto px-4 py-6 max-w-2xl">
         <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}>
           {view === "list" && (

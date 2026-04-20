@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
 import logoImg from "@/assets/logo.png";
+import SEO from "@/components/SEO";
 
 export default function ResetPasswordPage() {
   const [password, setPassword] = useState("");
@@ -57,6 +58,7 @@ export default function ResetPasswordPage() {
 
   return (
     <div className="min-h-[80vh] flex items-center justify-center px-4">
+      <SEO path="/reset-password" title="Reset Password — Sriman Narayaneeyam" description="Set a new password for your Sriman Narayaneeyam account." />
       <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="w-full max-w-md">
         <div className="rounded-2xl border border-border bg-card p-8 shadow-peacock">
           <div className="text-center mb-8">

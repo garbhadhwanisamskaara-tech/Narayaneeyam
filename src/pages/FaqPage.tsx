@@ -6,6 +6,7 @@ import {
   AccordionTrigger,
 } from "@/components/ui/accordion";
 import { faqSections } from "@/data/faqData";
+import SEO from "@/components/SEO";
 
 export default function FaqPage() {
   useEffect(() => {
@@ -25,6 +26,7 @@ export default function FaqPage() {
 
   return (
     <div className="container mx-auto px-4 py-8 max-w-3xl">
+      <SEO path="/faq" title="FAQ — Sriman Narayaneeyam" description="Frequently asked questions about the Sriman Narayaneeyam app — chanting, learning, podcast, progress tracking and more." />
       <h1 className="font-display text-3xl font-bold text-foreground mb-2">
         Frequently Asked Questions
       </h1>

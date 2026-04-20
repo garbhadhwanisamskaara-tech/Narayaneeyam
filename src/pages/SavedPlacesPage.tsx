@@ -7,6 +7,7 @@ import BookmarkButton from "@/components/BookmarkButton";
 import RemoveBottomSheet from "@/components/RemoveBottomSheet";
 import { toast } from "@/hooks/use-toast";
 import type { BookmarkEntry } from "@/lib/progress";
+import SEO from "@/components/SEO";
 
 export default function SavedPlacesPage() {
   const { bookmarks, removeBookmark, undoRemoveBookmark } = useBookmarks();
@@ -38,6 +39,7 @@ export default function SavedPlacesPage() {
 
   return (
     <div className="container mx-auto px-4 py-8 pb-24">
+      <SEO path="/saved-places" title="Bookmarks — Sriman Narayaneeyam" description="Your saved reading places across Sriman Narayaneeyam — pick up exactly where you left off." />
       <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
         <div className="flex items-center gap-3 mb-6">
           <Link to="/dashboard" className="p-2 text-muted-foreground hover:text-foreground">

@@ -4,6 +4,7 @@ import { Download, ChevronDown, ChevronUp, Loader2, BookOpen } from "lucide-reac
 import { useDashakam, type MergedVerse } from "@/hooks/useDashakam";
 import { supabase } from "@/integrations/supabase/client";
 import VerseIcons from "@/components/VerseIcons";
+import SEO from "@/components/SEO";
 
 const LANGUAGE_OPTIONS = [
   { code: "sa", label: "Sanskrit" },
@@ -67,6 +68,7 @@ export default function ScriptPage() {
 
   return (
     <div className="container mx-auto px-4 py-8">
+      <SEO path="/script" title="Script Library — Sriman Narayaneeyam" description="Read all 100 Dashakams of Sriman Narayaneeyam in your chosen script — Sanskrit, English, Tamil, Telugu, Malayalam, Kannada, Hindi or Marathi." />
       <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
         <div className="mb-8">
           <h1 className="font-display text-3xl font-bold text-foreground mb-2">Script Library</h1>

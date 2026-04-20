@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { faqSections } from "@/data/faqData";
 import { supabase } from "@/integrations/supabase/client";
+import SEO from "@/components/SEO";
 import "./LandingPage.css";
 
 const LOGO_URL = "https://znglsaxfyhkuzyrfbuhn.supabase.co/storage/v1/object/public/images/SNlogo.png";
@@ -99,6 +100,7 @@ export default function LandingPage() {
 
   return (
     <div className="landing-page">
+      <SEO path="/" title="Sriman Narayaneeyam — Chant · Learn · Grow" description="Chant, learn and grow with the 1,034-verse hymn of Sriman Narayaneeyam — synchronised audio, translations and a daily devotional practice." />
       {/* NAV */}
       <nav className="landing-nav">
         <a href="#" className="landing-nav-logo" onClick={(e) => { e.preventDefault(); scrollTo("hero"); }}>
