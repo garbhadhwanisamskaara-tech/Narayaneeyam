@@ -147,6 +147,7 @@ export default function ScriptPage() {
             </div>
           )}
 
+          {/* Download temporarily disabled — may reintroduce later
           <div className="flex flex-col gap-1 justify-end ml-auto">
             <button
               onClick={handleDownload}
@@ -156,6 +157,7 @@ export default function ScriptPage() {
               Download
             </button>
           </div>
+          */}
         </div>
 
         {/* Dashakam Title + Gist */}
@@ -243,12 +245,23 @@ export default function ScriptPage() {
                     <VerseIcons bell={false} prasadam={verse.prasadam_text} />
                   </div>
 
-                  {/* Sanskrit script — always shown */}
+                  {/* Script in selected language only.
+                      - If Sanskrit selected → show Devanagari (sanskrit_text)
+                      - Otherwise → show transliteration in selected language; fall back to Sanskrit if missing */}
+                  {selectedLangCode === "sa" ? (
+                    <p className="font-body text-lg leading-relaxed whitespace-pre-line text-foreground mb-3">
+                      {verse.sanskrit_text}
+                    </p>
+                  ) : (
+                    <p className="font-body text-lg leading-relaxed whitespace-pre-line text-foreground mb-3">
+                      {verse.transliteration_text || verse.sanskrit_text}
+                    </p>
+                  )}
+
+                  {/* Previously shown Sanskrit + transliteration together — kept for reference
                   <p className="font-body text-lg leading-relaxed whitespace-pre-line text-foreground mb-3">
                     {verse.sanskrit_text}
                   </p>
-
-                  {/* Transliteration — shown if language is not Sanskrit and text exists */}
                   {selectedLangCode !== "sa" && verse.transliteration_text && (
                     <div className="border-t border-border pt-3 mb-3">
                       <p className="text-xs text-muted-foreground font-sans uppercase tracking-wide mb-1">
@@ -259,6 +272,7 @@ export default function ScriptPage() {
                       </p>
                     </div>
                   )}
+                  */}
 
                   {/* Translation — shown if text exists */}
                   {verse.translation_text && (
