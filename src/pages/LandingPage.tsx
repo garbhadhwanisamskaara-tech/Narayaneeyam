@@ -4,6 +4,7 @@ import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/
 import { faqSections } from "@/data/faqData";
 import { supabase } from "@/integrations/supabase/client";
 import SEO from "@/components/SEO";
+import LandingBlog, { blogJsonLd } from "@/components/LandingBlog";
 import "./LandingPage.css";
 
 const SITE_URL = "https://www.narayaneeyam.app";
