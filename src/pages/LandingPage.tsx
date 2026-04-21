@@ -151,6 +151,7 @@ export default function LandingPage() {
           <button onClick={() => scrollTo("sloka")}>Sample Sloka</button>
           <button onClick={() => scrollTo("benefits")}>Stories</button>
           <button onClick={() => scrollTo("faq")}>FAQ</button>
+          <button onClick={() => scrollTo("blog")}>Blog</button>
           <button className="landing-nav-cta" onClick={goAuth}>Begin Journey</button>
         </div>
       </nav>
