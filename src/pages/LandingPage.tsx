@@ -138,7 +138,7 @@ export default function LandingPage() {
         path="/"
         title="Sriman Narayaneeyam — Chant · Learn · Grow in Devotion"
         description="Chant Sriman Narayaneeyam — 1,034 sacred verses by Bhattathiri with synchronised audio, multi-script text, meanings and a daily devotional practice."
-        jsonLd={[websiteJsonLd, faqJsonLd]}
+        jsonLd={[websiteJsonLd, faqJsonLd, blogJsonLd]}
       />
       {/* NAV */}
       <nav className="landing-nav">
