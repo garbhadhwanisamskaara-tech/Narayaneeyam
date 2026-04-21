@@ -4,6 +4,7 @@ import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/
 import { faqSections } from "@/data/faqData";
 import { supabase } from "@/integrations/supabase/client";
 import SEO from "@/components/SEO";
+import LandingBlog, { blogJsonLd } from "@/components/LandingBlog";
 import "./LandingPage.css";
 
 const SITE_URL = "https://www.narayaneeyam.app";
@@ -137,7 +138,7 @@ export default function LandingPage() {
         path="/"
         title="Sriman Narayaneeyam — Chant · Learn · Grow in Devotion"
         description="Chant Sriman Narayaneeyam — 1,034 sacred verses by Bhattathiri with synchronised audio, multi-script text, meanings and a daily devotional practice."
-        jsonLd={[websiteJsonLd, faqJsonLd]}
+        jsonLd={[websiteJsonLd, faqJsonLd, blogJsonLd]}
       />
       {/* NAV */}
       <nav className="landing-nav">
@@ -150,6 +151,7 @@ export default function LandingPage() {
           <button onClick={() => scrollTo("sloka")}>Sample Sloka</button>
           <button onClick={() => scrollTo("benefits")}>Stories</button>
           <button onClick={() => scrollTo("faq")}>FAQ</button>
+          <button onClick={() => scrollTo("blog")}>Blog</button>
           <button className="landing-nav-cta" onClick={goAuth}>Begin Journey</button>
         </div>
       </nav>
@@ -407,6 +409,9 @@ export default function LandingPage() {
           ))}
         </div>
       </section>
+
+      {/* BLOG */}
+      <LandingBlog />
 
       {/* FOOTER */}
       <footer className="landing-footer">
