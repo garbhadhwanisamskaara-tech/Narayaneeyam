@@ -410,6 +410,9 @@ export default function LandingPage() {
         </div>
       </section>
 
+      {/* BLOG */}
+      <LandingBlog />
+
       {/* FOOTER */}
       <footer className="landing-footer">
         <div className="landing-footer-logo">
