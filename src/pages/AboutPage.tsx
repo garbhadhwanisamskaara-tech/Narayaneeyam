@@ -3,7 +3,7 @@ import SEO from "@/components/SEO";
 export default function AboutPage() {
   return (
     <div className="container mx-auto px-4 py-6 max-w-2xl">
-      <SEO path="/about" title="About — Sriman Narayaneeyam" description="About Sriman Narayaneeyam Sadhana — a devotional web app for chanting and learning the 1,034-verse hymn by Melpathur Narayana Bhattathiri." />
+      <SEO path="/about" title="About Sriman Narayaneeyam — The 1,034-Verse Hymn" description="About Sriman Narayaneeyam — Bhattathiri's 1,034-verse condensation of the Bhagavata Purana, now a modern app to chant, learn and grow daily." />
       <h1 className="font-display text-2xl font-bold text-foreground mb-4">About</h1>
       <div className="prose prose-sm dark:prose-invert font-sans">
         <p>

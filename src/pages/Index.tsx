@@ -57,7 +57,7 @@ export default function Index() {
 
   return (
     <div>
-      <SEO path="/" title="Sriman Narayaneeyam — Chant · Learn · Grow" description="A sacred journey through 100 Dashakams — chant, learn, and grow in devotion with the divine grace of Guruvayurappan." />
+      <SEO path="/" title="Sriman Narayaneeyam — Chant, Learn & Grow in Devotion" description="Your gateway to Sriman Narayaneeyam — chant 1,034 verses with synchronised audio, track streaks and grow your daily devotional practice." />
       {/* Hero Section */}
       <section className="relative overflow-hidden">
         <div className="absolute inset-0">

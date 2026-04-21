@@ -6,6 +6,39 @@ import { supabase } from "@/integrations/supabase/client";
 import SEO from "@/components/SEO";
 import "./LandingPage.css";
 
+const SITE_URL = "https://www.narayaneeyam.app";
+
+const websiteJsonLd = {
+  "@context": "https://schema.org",
+  "@type": "WebSite",
+  name: "Sriman Narayaneeyam",
+  alternateName: "Narayaneeyam App",
+  url: SITE_URL,
+  description:
+    "Chant, learn and grow with the 1,034-verse Sriman Narayaneeyam by Melpathur Narayana Bhattathiri — synchronised audio, multi-script text and devotional practice tools.",
+  inLanguage: ["en", "sa"],
+  potentialAction: {
+    "@type": "SearchAction",
+    target: `${SITE_URL}/script?q={search_term_string}`,
+    "query-input": "required name=search_term_string",
+  },
+};
+
+const faqJsonLd = {
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  mainEntity: faqSections.flatMap((section) =>
+    section.questions.map((q) => ({
+      "@type": "Question",
+      name: q.q,
+      acceptedAnswer: {
+        "@type": "Answer",
+        text: q.a,
+      },
+    })),
+  ),
+};
+
 const LOGO_URL = "https://znglsaxfyhkuzyrfbuhn.supabase.co/storage/v1/object/public/images/SNlogo.png";
 
 const features = [
@@ -100,7 +133,12 @@ export default function LandingPage() {
 
   return (
     <div className="landing-page">
-      <SEO path="/" title="Sriman Narayaneeyam — Chant · Learn · Grow" description="Chant, learn and grow with the 1,034-verse hymn of Sriman Narayaneeyam — synchronised audio, translations and a daily devotional practice." />
+      <SEO
+        path="/"
+        title="Sriman Narayaneeyam — Chant · Learn · Grow in Devotion"
+        description="Chant Sriman Narayaneeyam — 1,034 sacred verses by Bhattathiri with synchronised audio, multi-script text, meanings and a daily devotional practice."
+        jsonLd={[websiteJsonLd, faqJsonLd]}
+      />
       {/* NAV */}
       <nav className="landing-nav">
         <a href="#" className="landing-nav-logo" onClick={(e) => { e.preventDefault(); scrollTo("hero"); }}>
