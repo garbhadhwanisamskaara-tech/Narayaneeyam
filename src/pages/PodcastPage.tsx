@@ -293,7 +293,7 @@ export default function PodcastPage() {
 
   return (
     <div className="container mx-auto px-4 py-8 select-none" onContextMenu={(e) => e.preventDefault()}>
-      <SEO path="/podcast" title="Podcast — Sriman Narayaneeyam" description="Listen to all 100 Dashakams of Sriman Narayaneeyam in the background — single, custom playlist or full sequence playback." />
+      <SEO path="/podcast" title="Podcast — Sriman Narayaneeyam" description="Listen to the Narayaneeyam podcast — devotional talks and explanations of the sacred text." />
       <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
         <div className="mb-8 flex items-center justify-between flex-wrap gap-2">
           <div>

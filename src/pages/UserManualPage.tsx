@@ -204,7 +204,7 @@ export default function UserManualPage() {
 
   return (
     <div className="container mx-auto px-4 py-8 max-w-3xl pb-24">
-      <SEO path="/user-manual" title="User Manual — Sriman Narayaneeyam" description="Comprehensive user manual for the Sriman Narayaneeyam app — features, navigation and how to chant effectively." />
+      <SEO path="/user-manual" title="User Manual — Sriman Narayaneeyam" description="Complete guide to using the Narayaneeyam app — admin guide and feature documentation." />
       {/* Hero */}
       <div className="flex items-center gap-3 mb-6">
         <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/10">

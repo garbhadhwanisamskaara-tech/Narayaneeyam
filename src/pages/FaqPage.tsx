@@ -26,7 +26,7 @@ export default function FaqPage() {
 
   return (
     <div className="container mx-auto px-4 py-8 max-w-3xl">
-      <SEO path="/faq" title="FAQ — Sriman Narayaneeyam" description="Frequently asked questions about the Sriman Narayaneeyam app — chanting, learning, podcast, progress tracking and more." />
+      <SEO path="/faq" title="FAQ — Sriman Narayaneeyam" description="Frequently asked questions about the Narayaneeyam app — chanting, features, and more." />
       <h1 className="font-display text-3xl font-bold text-foreground mb-2">
         Frequently Asked Questions
       </h1>
