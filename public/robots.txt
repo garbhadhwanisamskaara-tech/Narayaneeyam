@@ -1,4 +1,11 @@
 User-agent: *
 Allow: /
+Disallow: /chant
+Disallow: /podcast
+Disallow: /script
+Disallow: /progress
+Disallow: /dashboard
+Disallow: /admin
+Disallow: /auth
 
-Sitemap: https://narayaneeyam.app/sitemap.xml
+Sitemap: https://www.narayaneeyam.app/sitemap.xml
