@@ -623,7 +623,7 @@ export default function ChantPage() {
 
   return (
     <div className="container mx-auto px-4 py-8 select-none" onContextMenu={(e) => e.preventDefault()}>
-      <SEO path="/chant" title="Chant with Me — Sriman Narayaneeyam" description="Chant along with synchronised audio and karaoke-style highlighting across all 100 Dashakams of Sriman Narayaneeyam." />
+      <SEO path="/chant" title="Chant Narayaneeyam — All 100 Dashakams" description="Chant all 100 Dashakams of Sriman Narayaneeyam with audio, transliteration and meaning." />
       <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
         <div className="mb-8 flex items-center justify-between flex-wrap gap-2">
           <div>
