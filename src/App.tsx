@@ -23,6 +23,7 @@ import AdminFestivalsPage from "./pages/AdminFestivalsPage";
 import AdminContentPage from "./pages/AdminContentPage";
 import AdminRoute from "./components/AdminRoute";
 import ResetPasswordPage from "./pages/ResetPasswordPage";
+import JoinGroupPage from "./pages/JoinGroupPage";
 import DevotionPathwaysPage from "./pages/DevotionPathwaysPage";
 import PrasadamListPage from "./pages/PrasadamListPage";
 import AboutPage from "./pages/AboutPage";
@@ -58,6 +59,7 @@ const App = () => {
             <Route path="/" element={<HomeGate />} />
             <Route path="/auth" element={<AuthPage />} />
             <Route path="/reset-password" element={<ResetPasswordPage />} />
+            <Route path="/join/:token" element={<JoinGroupPage />} />
             <Route path="/*" element={
               <Layout>
                 <Routes>

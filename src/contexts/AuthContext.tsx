@@ -25,6 +25,8 @@ interface AuthContextType {
   profile: UserProfile | null;
   signUp: (email: string, password: string, name: string) => Promise<{ error: Error | null }>;
   signIn: (email: string, password: string) => Promise<{ error: Error | null }>;
+  signInWithPhone: (phone: string) => Promise<{ error: Error | null }>;
+  verifyPhoneOtp: (phone: string, token: string, name?: string) => Promise<{ error: Error | null }>;
   signOut: () => Promise<void>;
   refreshProfile: () => Promise<void>;
 }
@@ -143,9 +145,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     };
   }, []);
 
-  const displayName = user?.user_metadata?.display_name || user?.email?.split("@")[0] || "";
+  const displayName =
+    user?.user_metadata?.display_name ||
+    user?.email?.split("@")[0] ||
+    user?.phone ||
+    "";
 
-  const isEmailVerified = !!user?.email_confirmed_at;
+  // Phone-only users have no email to verify — treat as verified.
+  const isEmailVerified = !user?.email ? true : !!user?.email_confirmed_at;
 
   const trialExpiresAt = profile?.trial_expires_at ?? null;
   const isTrialActive = profile?.plan === "trial" && trialExpiresAt
@@ -178,6 +185,30 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     });
   };
 
+  const signInWithPhone = async (phone: string) => {
+    return trackSpan("auth.signInWithPhone", "auth", async () => {
+      const { error } = await supabase.auth.signInWithOtp({ phone });
+      return { error: error as Error | null };
+    });
+  };
+
+  const verifyPhoneOtp = async (phone: string, token: string, name?: string) => {
+    return trackSpan("auth.verifyPhoneOtp", "auth", async () => {
+      const { data, error } = await supabase.auth.verifyOtp({ phone, token, type: "sms" });
+      if (!error && data.user) {
+        logEvent("user_login");
+        // Persist display name on first verification
+        if (name) {
+          try {
+            await supabase.auth.updateUser({ data: { display_name: name } });
+            await supabase.from("profiles").update({ phone }).eq("id", data.user.id);
+          } catch { /* silent */ }
+        }
+      }
+      return { error: error as Error | null };
+    });
+  };
+
   const signOut = async () => {
     try {
       logEvent("user_logout");
@@ -202,7 +233,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     <AuthContext.Provider value={{
       user, session, loading, displayName, isAdmin, isFounder,
       isEmailVerified, isTrialActive, isTrialExpired, trialExpiresAt, profile,
-      signUp, signIn, signOut, refreshProfile,
+      signUp, signIn, signInWithPhone, verifyPhoneOtp, signOut, refreshProfile,
     }}>
       {children}
     </AuthContext.Provider>
