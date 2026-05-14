@@ -13,7 +13,7 @@ const navItems = [
   { path: "/chant", label: "Chant", icon: Mic },
   { path: "/podcast", label: "Podcast", icon: Headphones },
   { path: "/faq", label: "FAQ", icon: Info },
-  { path: "/user-manual", label: "Blog", icon: BookOpen },
+  { path: "/blog", label: "Blog", icon: BookOpen },
 ];
 
 export default function Layout({ children }: { children: React.ReactNode }) {
