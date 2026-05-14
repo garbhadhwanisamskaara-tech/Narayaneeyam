@@ -64,6 +64,10 @@ const App = () => {
             <Route path="/auth" element={<AuthPage />} />
             <Route path="/reset-password" element={<ResetPasswordPage />} />
             <Route path="/join/:token" element={<JoinGroupPage />} />
+            <Route path="/blog" element={<BlogIndexPage />} />
+            <Route path="/blog/how-chanting-narayaneeyam-gave-me-peace" element={<HowChantingGavePeace />} />
+            <Route path="/blog/how-to-do-100-day-narayaneeyam-parayanam" element={<HundredDayParayanam />} />
+            <Route path="/blog/how-to-learn-narayaneeyam-for-beginners" element={<LearnNarayaneeyamBeginners />} />
             <Route path="/*" element={
               <Layout>
                 <Routes>
