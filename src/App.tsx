@@ -39,6 +39,10 @@ import UserGuidePage from "./pages/UserGuidePage";
 import VerifyEmailPage from "./pages/VerifyEmailPage";
 import TrialExpiredPage from "./pages/TrialExpiredPage";
 import NotFound from "./pages/NotFound";
+import BlogIndexPage from "./pages/blog/BlogIndexPage";
+import HowChantingGavePeace from "./pages/blog/HowChantingGavePeace";
+import HundredDayParayanam from "./pages/blog/HundredDayParayanam";
+import LearnNarayaneeyamBeginners from "./pages/blog/LearnNarayaneeyamBeginners";
 
 const App = () => {
   useEffect(() => {
