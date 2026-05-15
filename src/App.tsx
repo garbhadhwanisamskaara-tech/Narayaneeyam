@@ -40,6 +40,7 @@ import VerifyEmailPage from "./pages/VerifyEmailPage";
 import TrialExpiredPage from "./pages/TrialExpiredPage";
 import NotFound from "./pages/NotFound";
 import BlogIndexPage from "./pages/blog/BlogIndexPage";
+import SankalpaMomentPage from "./pages/SankalpaMomentPage";
 import HowChantingGavePeace from "./pages/blog/HowChantingGavePeace";
 import HundredDayParayanam from "./pages/blog/HundredDayParayanam";
 import LearnNarayaneeyamBeginners from "./pages/blog/LearnNarayaneeyamBeginners";
@@ -68,6 +69,7 @@ const App = () => {
             <Route path="/blog/how-chanting-narayaneeyam-gave-me-peace" element={<HowChantingGavePeace />} />
             <Route path="/blog/how-to-do-100-day-narayaneeyam-parayanam" element={<HundredDayParayanam />} />
             <Route path="/blog/how-to-learn-narayaneeyam-for-beginners" element={<LearnNarayaneeyamBeginners />} />
+            <Route path="/challenges/sankalpa" element={<SankalpaMomentPage />} />
             <Route path="/*" element={
               <Layout>
                 <Routes>
