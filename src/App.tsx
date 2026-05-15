@@ -41,6 +41,7 @@ import TrialExpiredPage from "./pages/TrialExpiredPage";
 import NotFound from "./pages/NotFound";
 import BlogIndexPage from "./pages/blog/BlogIndexPage";
 import SankalpaMomentPage from "./pages/SankalpaMomentPage";
+import ChallengeCreationPage from "./pages/ChallengeCreationPage";
 import HowChantingGavePeace from "./pages/blog/HowChantingGavePeace";
 import HundredDayParayanam from "./pages/blog/HundredDayParayanam";
 import LearnNarayaneeyamBeginners from "./pages/blog/LearnNarayaneeyamBeginners";
@@ -79,6 +80,7 @@ const App = () => {
                   <Route path="/progress" element={<DashboardPage />} />
                   <Route path="/dashboard" element={<DashboardPage />} />
                   <Route path="/podcast" element={<PodcastPage />} />
+                  <Route path="/challenges/new" element={<ChallengeCreationPage />} />
                   <Route path="/devotion-pathways" element={<DevotionPathwaysPage />} />
                   <Route path="/prasadam" element={<PrasadamListPage />} />
                   <Route path="/about" element={<AboutPage />} />
