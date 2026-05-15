@@ -41,6 +41,7 @@ import TrialExpiredPage from "./pages/TrialExpiredPage";
 import NotFound from "./pages/NotFound";
 import BlogIndexPage from "./pages/blog/BlogIndexPage";
 import SankalpaMomentPage from "./pages/SankalpaMomentPage";
+import ChallengeCreationPage from "./pages/ChallengeCreationPage";
 import HowChantingGavePeace from "./pages/blog/HowChantingGavePeace";
 import HundredDayParayanam from "./pages/blog/HundredDayParayanam";
 import LearnNarayaneeyamBeginners from "./pages/blog/LearnNarayaneeyamBeginners";
