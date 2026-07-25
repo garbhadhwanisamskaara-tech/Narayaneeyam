@@ -77,6 +77,21 @@ export function saveProgress(progress: Partial<UserProgress>) {
   return updated;
 }
 
+/**
+ * Add real listening time (in seconds) to the user's total chanting time.
+ * Keeps sub-minute leftovers so short bursts eventually add up.
+ */
+export function addChantingSeconds(seconds: number): UserProgress {
+  if (!Number.isFinite(seconds) || seconds <= 0) return getProgress();
+  const current = getProgress();
+  const total = (current.chantingSecondsRemainder || 0) + seconds;
+  const wholeMinutes = Math.floor(total / 60);
+  return saveProgress({
+    totalChantingMinutes: current.totalChantingMinutes + wholeMinutes,
+    chantingSecondsRemainder: total - wholeMinutes * 60,
+  });
+}
+
 export function updateStreak() {
   const progress = getProgress();
   const today = new Date().toISOString().split("T")[0];
