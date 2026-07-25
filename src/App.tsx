@@ -24,6 +24,9 @@ import AdminContentPage from "./pages/AdminContentPage";
 import AdminRoute from "./components/AdminRoute";
 import ResetPasswordPage from "./pages/ResetPasswordPage";
 import JoinGroupPage from "./pages/JoinGroupPage";
+import GroupsPage from "./pages/GroupsPage";
+import GroupDetailPage from "./pages/GroupDetailPage";
+
 import DevotionPathwaysPage from "./pages/DevotionPathwaysPage";
 import PrasadamListPage from "./pages/PrasadamListPage";
 import AboutPage from "./pages/AboutPage";
