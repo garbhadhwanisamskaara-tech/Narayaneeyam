@@ -23,6 +23,8 @@ export interface UserProgress {
   completedVerses: string[]; // verse ids
   completedDashakams: number[];
   totalChantingMinutes: number;
+  /** Leftover listening seconds not yet rolled into totalChantingMinutes */
+  chantingSecondsRemainder?: number;
   currentStreak: number;
   longestStreak: number;
   lastSessionDate: string;
@@ -73,6 +75,21 @@ export function saveProgress(progress: Partial<UserProgress>) {
   const updated = { ...current, ...progress };
   localStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
   return updated;
+}
+
+/**
+ * Add real listening time (in seconds) to the user's total chanting time.
+ * Keeps sub-minute leftovers so short bursts eventually add up.
+ */
+export function addChantingSeconds(seconds: number): UserProgress {
+  if (!Number.isFinite(seconds) || seconds <= 0) return getProgress();
+  const current = getProgress();
+  const total = (current.chantingSecondsRemainder || 0) + seconds;
+  const wholeMinutes = Math.floor(total / 60);
+  return saveProgress({
+    totalChantingMinutes: current.totalChantingMinutes + wholeMinutes,
+    chantingSecondsRemainder: total - wholeMinutes * 60,
+  });
 }
 
 export function updateStreak() {
