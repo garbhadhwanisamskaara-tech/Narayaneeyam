@@ -92,9 +92,13 @@ export default function JoinGroupPage() {
             <p className="mt-2 text-sm text-muted-foreground font-sans">
               You've been invited to chant Narayaneeyam together.
             </p>
-            <button onClick={handleContinue} className="mt-6 w-full rounded-lg bg-gradient-peacock px-4 py-2 text-sm font-sans font-semibold text-primary-foreground hover:opacity-90">
-              {user ? "Join Group" : "Sign in to Join"}
+            <button onClick={handleContinue} disabled={joining} className="mt-6 w-full rounded-lg bg-gradient-peacock px-4 py-2 text-sm font-sans font-semibold text-primary-foreground hover:opacity-90 disabled:opacity-60">
+              {joining ? "Joining…" : user ? "Join Group" : "Sign in to Join"}
             </button>
+            {joinError && (
+              <p className="mt-3 text-sm text-destructive font-sans">{joinError}</p>
+            )}
+
           </>
         )}
       </div>
