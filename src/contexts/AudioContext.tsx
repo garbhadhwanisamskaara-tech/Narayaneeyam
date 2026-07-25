@@ -8,6 +8,8 @@ import {
   useMemo,
   type ReactNode,
 } from "react";
+import { addChantingSeconds } from "@/lib/progress";
+import { recordListeningTimeSupabase } from "@/lib/supabaseProgress";
 
 interface AudioState {
   src: string | null;
@@ -63,6 +65,52 @@ export function AudioProvider({ children }: { children: ReactNode }) {
 
   const onEndedRef = useRef<(() => void) | null>(null);
 
+  // --- Real listening-time tracking (wall clock, seek-proof) ---
+  const listenStartRef = useRef<number | null>(null);
+  const flushTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  /** Commit elapsed wall-clock time since listening started. */
+  const flushListeningTime = useCallback((keepTracking: boolean) => {
+    const startedAt = listenStartRef.current;
+    if (startedAt == null) return;
+    const elapsed = (Date.now() - startedAt) / 1000;
+    listenStartRef.current = keepTracking ? Date.now() : null;
+    if (elapsed <= 0.5) return;
+    addChantingSeconds(elapsed);
+    void recordListeningTimeSupabase(elapsed);
+  }, []);
+
+  const startTracking = useCallback(() => {
+    if (listenStartRef.current == null) listenStartRef.current = Date.now();
+    if (flushTimerRef.current == null) {
+      flushTimerRef.current = setInterval(() => flushListeningTime(true), 60000);
+    }
+  }, [flushListeningTime]);
+
+  const stopTracking = useCallback(() => {
+    flushListeningTime(false);
+    if (flushTimerRef.current != null) {
+      clearInterval(flushTimerRef.current);
+      flushTimerRef.current = null;
+    }
+  }, [flushListeningTime]);
+
+  // Flush on tab close / background so nothing is lost
+  useEffect(() => {
+    const onHide = () => {
+      if (listenStartRef.current != null) flushListeningTime(true);
+    };
+    window.addEventListener("pagehide", onHide);
+    document.addEventListener("visibilitychange", onHide);
+    return () => {
+      window.removeEventListener("pagehide", onHide);
+      document.removeEventListener("visibilitychange", onHide);
+    };
+  }, [flushListeningTime]);
+
+  // Cleanup on unmount
+  useEffect(() => stopTracking, [stopTracking]);
+
   // --- timeupdate handler ---
   useEffect(() => {
     const a = audio;
@@ -76,14 +124,17 @@ export function AudioProvider({ children }: { children: ReactNode }) {
       }));
     };
     const onEnded = () => {
+      stopTracking();
       setState((s) => ({ ...s, isPlaying: false, isPaused: false, progress: 100 }));
       onEndedRef.current?.();
     };
     const onPause = () => {
+      stopTracking();
       // Only mark paused if we didn't explicitly stop (src cleared)
       setState((s) => ({ ...s, isPlaying: false, isPaused: !!s.src }));
     };
     const onPlay = () => {
+      startTracking();
       setState((s) => ({ ...s, isPlaying: true, isPaused: false }));
     };
 
@@ -97,7 +148,7 @@ export function AudioProvider({ children }: { children: ReactNode }) {
       a.removeEventListener("pause", onPause);
       a.removeEventListener("play", onPlay);
     };
-  }, [audio]);
+  }, [audio, startTracking, stopTracking]);
 
   // --- Visibility change: resume if was playing ---
   useEffect(() => {
