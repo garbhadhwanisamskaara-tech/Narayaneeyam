@@ -17,22 +17,22 @@ export default function JoinGroupPage() {
   const navigate = useNavigate();
   const [status, setStatus] = useState<"loading" | "invalid" | "ready">("loading");
   const [groupName, setGroupName] = useState<string | null>(null);
+  const [joining, setJoining] = useState(false);
+  const [joinError, setJoinError] = useState<string | null>(null);
 
   useEffect(() => {
     if (!token) { setStatus("invalid"); return; }
     let cancelled = false;
     (async () => {
       try {
-        // Phase 3 will create group_invites; for now we only validate shape.
-        const { data } = await (supabase as any)
-          .from("group_invites")
-          .select("group_id, expires_at, max_uses, uses, groups(name)")
-          .eq("token", token)
-          .maybeSingle();
+        const { data, error } = await (supabase as any).rpc("get_invite_preview", {
+          invite_token: token,
+        });
 
         if (cancelled) return;
-        if (data && (!data.expires_at || new Date(data.expires_at) > new Date())) {
-          setGroupName(data.groups?.name ?? "a group");
+        const preview = Array.isArray(data) ? data[0] : data;
+        if (!error && preview?.valid) {
+          setGroupName(preview.group_name ?? "a group");
           setStatus("ready");
         } else {
           setStatus("invalid");
@@ -44,14 +44,28 @@ export default function JoinGroupPage() {
     return () => { cancelled = true; };
   }, [token]);
 
-  const handleContinue = () => {
+  const handleContinue = async () => {
     if (!user) {
       navigate(`/auth?next=${encodeURIComponent(`/join/${token}`)}`, { replace: true });
-    } else {
-      // Phase 3: call accept-invite edge function and redirect to /groups/:id
-      navigate("/groups", { replace: true });
+      return;
+    }
+    setJoining(true);
+    setJoinError(null);
+    try {
+      const { data, error } = await (supabase as any).rpc("accept_group_invite", {
+        invite_token: token,
+      });
+      if (error) throw error;
+      const groupId = Array.isArray(data) ? data[0]?.group_id ?? data[0] : data;
+      if (!groupId) throw new Error("Could not join this group.");
+      navigate(`/groups/${groupId}`, { replace: true });
+    } catch (e: any) {
+      setJoinError(e?.message ?? "Could not join this group. Please try again.");
+    } finally {
+      setJoining(false);
     }
   };
+
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-background px-4">
@@ -78,9 +92,13 @@ export default function JoinGroupPage() {
             <p className="mt-2 text-sm text-muted-foreground font-sans">
               You've been invited to chant Narayaneeyam together.
             </p>
-            <button onClick={handleContinue} className="mt-6 w-full rounded-lg bg-gradient-peacock px-4 py-2 text-sm font-sans font-semibold text-primary-foreground hover:opacity-90">
-              {user ? "Join Group" : "Sign in to Join"}
+            <button onClick={handleContinue} disabled={joining} className="mt-6 w-full rounded-lg bg-gradient-peacock px-4 py-2 text-sm font-sans font-semibold text-primary-foreground hover:opacity-90 disabled:opacity-60">
+              {joining ? "Joining…" : user ? "Join Group" : "Sign in to Join"}
             </button>
+            {joinError && (
+              <p className="mt-3 text-sm text-destructive font-sans">{joinError}</p>
+            )}
+
           </>
         )}
       </div>
