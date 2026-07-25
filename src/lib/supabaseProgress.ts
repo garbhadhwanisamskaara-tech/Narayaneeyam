@@ -42,6 +42,35 @@ export async function updateStreakSupabase(): Promise<UserProgress> {
   return updated;
 }
 
+// ─── Listening time ───────────────────────────────────────────────────────────
+
+/**
+ * Persist a chunk of real listening time (seconds) for signed-in users.
+ * Falls back silently to local-only when supabase is unavailable / signed out.
+ */
+export async function recordListeningTimeSupabase(seconds: number) {
+  if (!seconds || seconds <= 0) return;
+  try {
+    if (!supabase) return;
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return;
+
+    const endedAt = new Date();
+    const startedAt = new Date(endedAt.getTime() - seconds * 1000);
+
+    await (supabase as any).from("chant_sessions").insert({
+      user_id: user.id,
+      dashakam_id: getProgress().lastDashakam,
+      mode: "chant",
+      started_at: startedAt.toISOString(),
+      ended_at: endedAt.toISOString(),
+      duration_seconds: Math.round(seconds),
+    });
+  } catch {
+    // Silent — local storage already holds the time
+  }
+}
+
 // ─── Verse completion ─────────────────────────────────────────────────────────
 
 export async function markVerseCompleted(verseId: string, mode: "chant" | "learn" | "script" = "chant") {
