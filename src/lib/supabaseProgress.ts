@@ -64,7 +64,6 @@ export async function recordListeningTimeSupabase(seconds: number) {
       mode: "chant",
       started_at: startedAt.toISOString(),
       ended_at: endedAt.toISOString(),
-      duration_seconds: Math.round(seconds),
     });
   } catch {
     // Silent — local storage already holds the time
