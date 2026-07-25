@@ -2,7 +2,8 @@
 // Set VITE_AUDIO_CDN_URL in your .env / Vercel project settings.
 // Falls back to a placeholder so misconfiguration is obvious in dev rather than silently
 // resolving to a broken relative URL.
-const AUDIO_BASE_URL = (import.meta.env.VITE_AUDIO_CDN_URL || "").replace(/\/+$/, "");
+const DEFAULT_AUDIO_CDN_URL = "https://cdn.narayaneeyam.app";
+const AUDIO_BASE_URL = (import.meta.env.VITE_AUDIO_CDN_URL || DEFAULT_AUDIO_CDN_URL).replace(/\/+$/, "");
 
 /**
  * Convert a relative storage path (e.g. "Chant/SN001/SN001-01.mp3")
