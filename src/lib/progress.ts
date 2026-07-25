@@ -23,6 +23,8 @@ export interface UserProgress {
   completedVerses: string[]; // verse ids
   completedDashakams: number[];
   totalChantingMinutes: number;
+  /** Leftover listening seconds not yet rolled into totalChantingMinutes */
+  chantingSecondsRemainder?: number;
   currentStreak: number;
   longestStreak: number;
   lastSessionDate: string;
