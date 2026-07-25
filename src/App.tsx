@@ -24,6 +24,9 @@ import AdminContentPage from "./pages/AdminContentPage";
 import AdminRoute from "./components/AdminRoute";
 import ResetPasswordPage from "./pages/ResetPasswordPage";
 import JoinGroupPage from "./pages/JoinGroupPage";
+import GroupsPage from "./pages/GroupsPage";
+import GroupDetailPage from "./pages/GroupDetailPage";
+
 import DevotionPathwaysPage from "./pages/DevotionPathwaysPage";
 import PrasadamListPage from "./pages/PrasadamListPage";
 import AboutPage from "./pages/AboutPage";
@@ -81,6 +84,9 @@ const App = () => {
                   <Route path="/dashboard" element={<DashboardPage />} />
                   <Route path="/podcast" element={<PodcastPage />} />
                   <Route path="/challenges/new" element={<ChallengeCreationPage />} />
+                  <Route path="/groups" element={<GroupsPage />} />
+                  <Route path="/groups/:groupId" element={<GroupDetailPage />} />
+
                   <Route path="/devotion-pathways" element={<DevotionPathwaysPage />} />
                   <Route path="/prasadam" element={<PrasadamListPage />} />
                   <Route path="/about" element={<AboutPage />} />
