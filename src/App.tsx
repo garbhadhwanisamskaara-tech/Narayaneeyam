@@ -84,6 +84,9 @@ const App = () => {
                   <Route path="/dashboard" element={<DashboardPage />} />
                   <Route path="/podcast" element={<PodcastPage />} />
                   <Route path="/challenges/new" element={<ChallengeCreationPage />} />
+                  <Route path="/groups" element={<GroupsPage />} />
+                  <Route path="/groups/:groupId" element={<GroupDetailPage />} />
+
                   <Route path="/devotion-pathways" element={<DevotionPathwaysPage />} />
                   <Route path="/prasadam" element={<PrasadamListPage />} />
                   <Route path="/about" element={<AboutPage />} />
