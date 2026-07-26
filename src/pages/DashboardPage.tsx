@@ -10,9 +10,6 @@ import ProgressRing from "@/components/ProgressRing";
 import SEO from "@/components/SEO";
 import ActiveChallengeCard from "@/components/ActiveChallengeCard";
 import FeatherShelf from "@/components/FeatherShelf";
-import DashakamGarden from "@/components/DashakamGarden";
-import { useGroups } from "@/hooks/useGroups";
-import { useMemo } from "react";
 
 export default function DashboardPage() {
   const localProgress = getProgress();
@@ -29,49 +26,34 @@ export default function DashboardPage() {
 
   // Current position from local progress
   const currentDashakam = localProgress.chantState?.dashakam || localProgress.lastDashakam || 1;
-  const currentVerse = localProgress.chantState?.verse ? localProgress.chantState.verse + 1 : localProgress.lastParagraph || 1;
+  const currentVerse = localProgress.chantState?.verse
+    ? localProgress.chantState.verse + 1
+    : localProgress.lastParagraph || 1;
 
   // Estimated completion
-  const daysActive = completedDashakams.length > 0
-    ? Math.max(1, new Set(completedDashakams.map(c => c.completed_date)).size)
-    : Math.max(1, localProgress.totalSessions);
+  const daysActive =
+    completedDashakams.length > 0
+      ? Math.max(1, new Set(completedDashakams.map((c) => c.completed_date)).size)
+      : Math.max(1, localProgress.totalSessions);
   const avgPerDay = daysActive > 0 ? dashakamsCompleted / daysActive : 0;
   const remaining = 100 - dashakamsCompleted;
   const estDays = avgPerDay > 0 ? Math.ceil(remaining / avgPerDay) : null;
 
   const recentCompleted = completedDashakams.slice(0, 5);
 
-  // Personal garden — a lotus is either fully bloomed or a closed bud
-  const { groups, loading: groupsLoading } = useGroups();
-  const personalBlooms = useMemo(() => {
-    const map = new Map<number, number>();
-    for (const c of completedDashakams) map.set(c.dashakam_no, 100);
-    return map;
-  }, [completedDashakams]);
-
-
   return (
     <div className="container mx-auto px-4 py-8 pb-24">
-      <SEO path="/dashboard" title="Your Progress — Sriman Narayaneeyam" description="Track your devotional journey through Sriman Narayaneeyam — streak, completed Dashakams and your current chanting position." />
+      <SEO
+        path="/dashboard"
+        title="Your Progress — Sriman Narayaneeyam"
+        description="Track your devotional journey through Sriman Narayaneeyam — streak, completed Dashakams and your current chanting position."
+      />
       <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
-
         <ActiveChallengeCard />
-
-        {!groupsLoading && groups.length === 0 && (
-          <div className="mb-8">
-            <DashakamGarden
-              blooms={personalBlooms}
-              title="Your Dashakam Garden"
-              subtitle={`${dashakamsCompleted} of 100 lotuses in full bloom`}
-              loading={progressLoading}
-            />
-          </div>
-        )}
 
         <div className="mb-8">
           <FeatherShelf />
         </div>
-
 
         {/* Greeting */}
         <div className="mb-8">
@@ -85,15 +67,25 @@ export default function DashboardPage() {
 
         {/* Sign-in prompt for guests */}
         {isGuest && (
-          <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }}
-            className="rounded-xl border border-secondary/30 bg-secondary/5 p-5 mb-8">
+          <motion.div
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="rounded-xl border border-secondary/30 bg-secondary/5 p-5 mb-8"
+          >
             <div className="flex items-center gap-4">
               <LogIn className="h-6 w-6 text-secondary shrink-0" />
               <div className="flex-1">
                 <p className="font-display text-base font-semibold text-foreground">Sign in to track your progress</p>
-                <p className="text-sm text-muted-foreground font-sans">Your streak, completed dashakams, and journey progress will sync across devices.</p>
+                <p className="text-sm text-muted-foreground font-sans">
+                  Your streak, completed dashakams, and journey progress will sync across devices.
+                </p>
               </div>
-              <Link to="/auth" className="rounded-lg bg-gradient-gold px-5 py-2.5 font-sans text-sm font-semibold text-primary shadow-gold transition-transform hover:scale-105 shrink-0">Sign In</Link>
+              <Link
+                to="/auth"
+                className="rounded-lg bg-gradient-gold px-5 py-2.5 font-sans text-sm font-semibold text-primary shadow-gold transition-transform hover:scale-105 shrink-0"
+              >
+                Sign In
+              </Link>
             </div>
           </motion.div>
         )}
@@ -101,17 +93,44 @@ export default function DashboardPage() {
         {/* Key Stats Row */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
           {[
-            { label: "Dashakams", value: `${dashakamsCompleted}/100`, pct: completionPercentage, color: "hsl(var(--primary))" },
-            { label: "Current Position", value: `D${currentDashakam} · V${currentVerse}`, pct: (currentDashakam / 100) * 100, color: "hsl(var(--secondary))" },
-            { label: "Streak", value: `${currentStreak} day${currentStreak !== 1 ? "s" : ""}`, pct: Math.min(100, currentStreak * 10), color: "hsl(42, 70%, 50%)" },
-            { label: "Sessions", value: `${localProgress.totalSessions}`, pct: Math.min(100, localProgress.totalSessions * 5), color: "hsl(var(--primary))" },
+            {
+              label: "Dashakams",
+              value: `${dashakamsCompleted}/100`,
+              pct: completionPercentage,
+              color: "hsl(var(--primary))",
+            },
+            {
+              label: "Current Position",
+              value: `D${currentDashakam} · V${currentVerse}`,
+              pct: (currentDashakam / 100) * 100,
+              color: "hsl(var(--secondary))",
+            },
+            {
+              label: "Streak",
+              value: `${currentStreak} day${currentStreak !== 1 ? "s" : ""}`,
+              pct: Math.min(100, currentStreak * 10),
+              color: "hsl(42, 70%, 50%)",
+            },
+            {
+              label: "Sessions",
+              value: `${localProgress.totalSessions}`,
+              pct: Math.min(100, localProgress.totalSessions * 5),
+              color: "hsl(var(--primary))",
+            },
           ].map((item, i) => (
-            <motion.div key={item.label} initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} transition={{ delay: i * 0.1 }}
-              className="rounded-xl border border-border bg-card p-4 flex flex-col items-center">
+            <motion.div
+              key={item.label}
+              initial={{ opacity: 0, scale: 0.9 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ delay: i * 0.1 }}
+              className="rounded-xl border border-border bg-card p-4 flex flex-col items-center"
+            >
               <div className="relative">
                 <ProgressRing percent={item.pct} size={72} strokeWidth={5} color={item.color} />
                 <div className="absolute inset-0 flex items-center justify-center">
-                  <span className="font-display text-xs font-bold text-foreground text-center leading-tight">{item.value}</span>
+                  <span className="font-display text-xs font-bold text-foreground text-center leading-tight">
+                    {item.value}
+                  </span>
                 </div>
               </div>
               <span className="text-xs text-muted-foreground font-sans mt-2">{item.label}</span>
@@ -120,8 +139,12 @@ export default function DashboardPage() {
         </div>
 
         {/* Journey Completion Bar */}
-        <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.15 }}
-          className="rounded-xl border border-border bg-card p-5 mb-8">
+        <motion.div
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.15 }}
+          className="rounded-xl border border-border bg-card p-5 mb-8"
+        >
           <div className="flex items-center justify-between mb-2">
             <span className="font-display text-sm font-semibold text-foreground">
               Journey Progress — {dashakamsCompleted} / 100 Dashakams
@@ -132,7 +155,14 @@ export default function DashboardPage() {
 
           <div className="flex flex-wrap gap-4 text-xs text-muted-foreground font-sans">
             {lastActivity && (
-              <span>Last activity: {new Date(lastActivity).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" })}</span>
+              <span>
+                Last activity:{" "}
+                {new Date(lastActivity).toLocaleDateString("en-IN", {
+                  day: "numeric",
+                  month: "short",
+                  year: "numeric",
+                })}
+              </span>
             )}
             {estDays !== null && remaining > 0 && (
               <span className="flex items-center gap-1">
@@ -140,27 +170,35 @@ export default function DashboardPage() {
                 Est. completion: ~{estDays} day{estDays !== 1 ? "s" : ""} ({avgPerDay.toFixed(1)}/day)
               </span>
             )}
-            {remaining === 0 && (
-              <span className="text-secondary font-semibold">🎉 Journey Complete!</span>
-            )}
+            {remaining === 0 && <span className="text-secondary font-semibold">🎉 Journey Complete!</span>}
           </div>
         </motion.div>
 
         {/* Continue Chanting Button */}
-        <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }}
-          className="rounded-xl border border-secondary/30 bg-secondary/5 p-5 mb-8">
+        <motion.div
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.2 }}
+          className="rounded-xl border border-secondary/30 bg-secondary/5 p-5 mb-8"
+        >
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-xs text-muted-foreground font-sans uppercase tracking-wide mb-1">Continue where you left off</p>
+              <p className="text-xs text-muted-foreground font-sans uppercase tracking-wide mb-1">
+                Continue where you left off
+              </p>
               <p className="font-display text-lg font-semibold text-foreground">
                 Dashakam {currentDashakam} — Verse {currentVerse}
               </p>
               {localProgress.lastSessionDate && (
-                <p className="text-xs text-muted-foreground font-sans mt-1">Last session: {localProgress.lastSessionDate}</p>
+                <p className="text-xs text-muted-foreground font-sans mt-1">
+                  Last session: {localProgress.lastSessionDate}
+                </p>
               )}
             </div>
-            <Link to={`/chant?dashakam=${currentDashakam}`}
-              className="flex items-center gap-2 rounded-lg bg-gradient-gold px-5 py-2.5 font-sans text-sm font-semibold text-primary shadow-gold transition-transform hover:scale-105">
+            <Link
+              to={`/chant?dashakam=${currentDashakam}`}
+              className="flex items-center gap-2 rounded-lg bg-gradient-gold px-5 py-2.5 font-sans text-sm font-semibold text-primary shadow-gold transition-transform hover:scale-105"
+            >
               <Play className="h-4 w-4" /> Continue Chanting
             </Link>
           </div>
@@ -184,10 +222,17 @@ export default function DashboardPage() {
               color: "hsl(var(--secondary))",
             },
           ].map((mode) => (
-            <motion.div key={mode.label} initial={{ opacity: 0, x: -10 }} animate={{ opacity: 1, x: 0 }}
-              className="rounded-xl border border-border bg-card p-5">
+            <motion.div
+              key={mode.label}
+              initial={{ opacity: 0, x: -10 }}
+              animate={{ opacity: 1, x: 0 }}
+              className="rounded-xl border border-border bg-card p-5"
+            >
               <div className="flex items-center gap-3 mb-3">
-                <div className="flex h-10 w-10 items-center justify-center rounded-xl" style={{ backgroundColor: mode.color + "20" }}>
+                <div
+                  className="flex h-10 w-10 items-center justify-center rounded-xl"
+                  style={{ backgroundColor: mode.color + "20" }}
+                >
                   <mode.icon className="h-5 w-5" style={{ color: mode.color }} />
                 </div>
                 <div>
@@ -202,15 +247,21 @@ export default function DashboardPage() {
                 </div>
               </div>
               {mode.state && (
-                <Link to={mode.page} className="text-xs font-sans text-primary hover:underline">Resume →</Link>
+                <Link to={mode.page} className="text-xs font-sans text-primary hover:underline">
+                  Resume →
+                </Link>
               )}
             </motion.div>
           ))}
         </div>
 
         {/* Devotion Streak */}
-        <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }}
-          className="rounded-xl border border-border bg-card p-6 mb-8">
+        <motion.div
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.3 }}
+          className="rounded-xl border border-border bg-card p-6 mb-8"
+        >
           <div className="flex items-center gap-4">
             <div className="flex items-center gap-2">
               <span className="text-3xl">🪷</span>
@@ -229,24 +280,36 @@ export default function DashboardPage() {
 
         {/* Recently Completed */}
         {recentCompleted.length > 0 && (
-          <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.35 }}
-            className="rounded-xl border border-border bg-card p-5 mb-8">
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.35 }}
+            className="rounded-xl border border-border bg-card p-5 mb-8"
+          >
             <h3 className="font-display text-sm font-semibold text-foreground mb-3">Recently Completed</h3>
             <div className="flex flex-wrap gap-2">
               {recentCompleted.map((c) => (
-                <span key={`${c.pathway_id}-${c.dashakam_no}`} className="inline-flex items-center gap-1.5 rounded-lg bg-primary/10 px-3 py-1.5 text-xs font-sans">
+                <span
+                  key={`${c.pathway_id}-${c.dashakam_no}`}
+                  className="inline-flex items-center gap-1.5 rounded-lg bg-primary/10 px-3 py-1.5 text-xs font-sans"
+                >
                   <span className="font-semibold text-primary">D{c.dashakam_no}</span>
-                  <span className="text-muted-foreground">{new Date(c.completed_date).toLocaleDateString("en-IN", { day: "numeric", month: "short" })}</span>
+                  <span className="text-muted-foreground">
+                    {new Date(c.completed_date).toLocaleDateString("en-IN", { day: "numeric", month: "short" })}
+                  </span>
                 </span>
               ))}
             </div>
           </motion.div>
         )}
 
-
         {/* Insights */}
-        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.5 }}
-          className="rounded-xl border border-border bg-card p-6">
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 0.5 }}
+          className="rounded-xl border border-border bg-card p-6"
+        >
           <h3 className="font-display text-lg font-semibold text-foreground mb-4">Insights</h3>
           <div className="grid grid-cols-2 gap-3">
             {[
@@ -265,7 +328,6 @@ export default function DashboardPage() {
             ))}
           </div>
         </motion.div>
-
       </motion.div>
     </div>
   );
