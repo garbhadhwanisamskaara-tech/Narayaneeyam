@@ -45,9 +45,21 @@ export default function DashboardPage() {
 
         <ActiveChallengeCard />
 
+        {!groupsLoading && groups.length === 0 && (
+          <div className="mb-8">
+            <DashakamGarden
+              blooms={personalBlooms}
+              title="Your Dashakam Garden"
+              subtitle={`${dashakamsCompleted} of 100 lotuses in full bloom`}
+              loading={progressLoading}
+            />
+          </div>
+        )}
+
         <div className="mb-8">
           <FeatherShelf />
         </div>
+
 
         {/* Greeting */}
         <div className="mb-8">
