@@ -37,6 +37,8 @@ export default function PodcastPage() {
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const pausedRef = useRef(false);
   const advanceRef = useRef<() => void>(() => {});
+  const speedRef = useRef(1);
+  speedRef.current = speed;
 
   // ── Playlist state ──
   const [playlistBuilderOpen, setPlaylistBuilderOpen] = useState(false);
@@ -180,8 +182,8 @@ export default function PodcastPage() {
     if (!isPlaying) return;
 
     if (pausedRef.current && audioRef.current && !audioRef.current.ended) {
-      audioRef.current.defaultPlaybackRate = speed;
-      audioRef.current.playbackRate = speed;
+      audioRef.current.defaultPlaybackRate = speedRef.current;
+      audioRef.current.playbackRate = speedRef.current;
       audioRef.current.play().catch((err) => console.error("Audio play error:", err));
       pausedRef.current = false;
       const audio = audioRef.current;
@@ -205,9 +207,9 @@ export default function PodcastPage() {
 
     const audio = new Audio(url);
     audioRef.current = audio;
-    audio.defaultPlaybackRate = speed;
-    audio.playbackRate = speed;
-    audio.addEventListener("loadedmetadata", () => { audio.playbackRate = speed; });
+    audio.defaultPlaybackRate = speedRef.current;
+    audio.playbackRate = speedRef.current;
+    audio.addEventListener("loadedmetadata", () => { audio.playbackRate = speedRef.current; });
     pausedRef.current = false;
     audio.play().catch((err) => console.error("Audio play error:", err));
 
@@ -221,7 +223,8 @@ export default function PodcastPage() {
     audio.addEventListener("timeupdate", updateProgress);
     audio.onended = () => advanceRef.current();
     return () => { audio.pause(); audio.removeEventListener("timeupdate", updateProgress); audio.onended = null; };
-  }, [isPlaying, currentDashakam, speed, currentLoop, playlistLoop, getAudioUrl]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isPlaying, currentDashakam, currentLoop, playlistLoop, getAudioUrl]);
 
   const handlePlayPause = () => {
     if (isPlaying) {

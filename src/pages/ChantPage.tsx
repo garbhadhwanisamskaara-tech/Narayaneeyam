@@ -62,6 +62,8 @@ export default function ChantPage() {
   const [isPlaying, setIsPlaying] = useState(false);
   const [highlightedVerse, setHighlightedVerse] = useState(0);
   const [speed, setSpeed] = useState(1);
+  const speedRef = useRef(1);
+  speedRef.current = speed;
   const [loopCount, setLoopCount] = useState(1);
   const [currentLoopIteration, setCurrentLoopIteration] = useState(0);
   const [verseProgress, setVerseProgress] = useState(0);
@@ -476,7 +478,7 @@ export default function ChantPage() {
 
     // Resume from pause — read paused state directly from audio element to avoid stale closure
     if (pausedRef.current && audioEl && audioEl.paused && audioEl.src) {
-      engine.setSpeed(speed);
+      engine.setSpeed(speedRef.current);
       engine.resume();
       pausedRef.current = false;
       logAudioEvent("audio_play", selectedDashakam, currentVerse?.paragraph || 0, "resume");
@@ -505,7 +507,7 @@ export default function ChantPage() {
       const dashakamName = dashakamMeta?.dashakam_name || `Dashakam ${selectedDashakam}`;
       engine.setMediaMetadata(`${dashakamName} - Verse ${currentVerse.paragraph}`, "Sriman Narayaneeyam");
 
-      engine.setSpeed(speed);
+      engine.setSpeed(speedRef.current);
       engine.play(currentVerse.audio);
       pausedRef.current = false;
 
@@ -563,7 +565,7 @@ export default function ChantPage() {
       };
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isPlaying, highlightedVerse, displayVerses.length, speed, isSlokaPlaying]);
+  }, [isPlaying, highlightedVerse, displayVerses.length, isSlokaPlaying]);
 
   // Cleanup gap timers on unmount (but NOT audio — let it persist)
   useEffect(() => {
