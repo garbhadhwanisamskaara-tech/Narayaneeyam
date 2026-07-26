@@ -10,6 +10,8 @@ import PlaylistBuilder from "@/components/PlaylistBuilder";
 import PlaylistBar from "@/components/PlaylistBar";
 import { usePlaylist, type PlaylistItem } from "@/hooks/usePlaylist";
 import SEO from "@/components/SEO";
+import { awardFeather } from "@/hooks/useFeathers";
+import { useAuth } from "@/contexts/AuthContext";
 
 type PlayMode = "single" | "playlist" | "all";
 
