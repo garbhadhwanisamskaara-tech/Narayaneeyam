@@ -114,7 +114,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
                 Sriman Narayaneeyam
               </h1>
               <p className="text-[10px] lg:text-xs text-gold-light font-sans hidden sm:block">
-                Chant · Learn · Grow · Podcast
+                Learn · Chant · Listen · Grow
               </p>
             </div>
           </Link>
