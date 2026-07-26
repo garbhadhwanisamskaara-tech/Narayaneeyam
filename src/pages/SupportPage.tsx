@@ -1,18 +1,33 @@
 import { useState } from "react";
 import { motion } from "framer-motion";
 import {
-  LifeBuoy, Plus, ArrowLeft, Send, Paperclip, X, Image,
-  Clock, AlertTriangle, CheckCircle, XCircle, RotateCcw,
+  LifeBuoy,
+  Plus,
+  ArrowLeft,
+  Send,
+  Paperclip,
+  X,
+  Image,
+  Clock,
+  AlertTriangle,
+  CheckCircle,
+  XCircle,
+  RotateCcw,
+  Mail,
 } from "lucide-react";
+
+/** lucide-react has no brand icons, so this is a small inline WhatsApp glyph. */
+function WhatsAppIcon({ className }: { className?: string }) {
+  return (
+    <svg viewBox="0 0 24 24" className={className} fill="currentColor" aria-hidden="true">
+      <path d="M17.5 14.4c-.3-.1-1.7-.8-1.9-.9-.3-.1-.4-.1-.6.1-.2.3-.7.9-.8 1-.2.2-.3.2-.5.1-.3-.1-1.2-.4-2.2-1.3-.8-.7-1.4-1.6-1.5-1.9-.2-.3 0-.5.1-.6.1-.1.3-.3.4-.5.1-.1.2-.3.3-.4.1-.2 0-.3 0-.5-.1-.1-.6-1.4-.8-1.9-.2-.5-.4-.4-.6-.4h-.5c-.2 0-.5.1-.7.3-.2.3-.9.9-.9 2.1 0 1.2.9 2.4 1 2.6.1.2 1.8 2.8 4.4 3.9.6.3 1.1.4 1.5.6.6.2 1.2.2 1.6.1.5-.1 1.5-.6 1.7-1.2.2-.6.2-1.1.2-1.2-.1-.1-.2-.2-.5-.3z" />
+      <path d="M12 2C6.5 2 2 6.5 2 12c0 1.9.5 3.7 1.5 5.3L2 22l4.8-1.4c1.5.9 3.3 1.4 5.2 1.4 5.5 0 10-4.5 10-10S17.5 2 12 2zm0 18.3c-1.7 0-3.3-.5-4.7-1.3l-.3-.2-3.2.9.9-3.1-.2-.3C3.6 14.7 3.1 13.4 3.1 12c0-4.9 4-8.9 8.9-8.9s8.9 4 8.9 8.9-4 8.9-8.9 8.9z" />
+    </svg>
+  );
+}
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/AuthContext";
-import {
-  useSupportTickets,
-  useTicketDetail,
-  CATEGORIES,
-  PRIORITIES,
-  type Ticket,
-} from "@/hooks/useSupportTickets";
+import { useSupportTickets, useTicketDetail, CATEGORIES, PRIORITIES, type Ticket } from "@/hooks/useSupportTickets";
 import { useToast } from "@/hooks/use-toast";
 import { Link } from "react-router-dom";
 import SEO from "@/components/SEO";
@@ -28,7 +43,9 @@ function StatusBadge({ status }: { status: string }) {
   const cfg = statusConfig[status] || statusConfig.Open;
   const Icon = cfg.icon;
   return (
-    <span className={`inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-[11px] font-sans font-semibold ${cfg.bg} ${cfg.color}`}>
+    <span
+      className={`inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-[11px] font-sans font-semibold ${cfg.bg} ${cfg.color}`}
+    >
       <Icon className="h-3 w-3" /> {status}
     </span>
   );
@@ -41,7 +58,9 @@ function PriorityBadge({ priority }: { priority: string }) {
     Urgent: "bg-red-100 text-red-700",
   };
   return (
-    <span className={`inline-flex rounded-full px-2 py-0.5 text-[11px] font-sans font-semibold ${colors[priority] || colors.Normal}`}>
+    <span
+      className={`inline-flex rounded-full px-2 py-0.5 text-[11px] font-sans font-semibold ${colors[priority] || colors.Normal}`}
+    >
       {priority}
     </span>
   );
@@ -60,12 +79,18 @@ function RaiseTicketForm({ onSuccess, onCancel }: { onSuccess: (id: string) => v
 
   const addFiles = (newFiles: FileList | null) => {
     if (!newFiles) return;
-    const valid = Array.from(newFiles).filter(f => {
-      if (!f.type.startsWith("image/")) { toast({ title: "Only images allowed", variant: "destructive" }); return false; }
-      if (f.size > 2 * 1024 * 1024) { toast({ title: "Max 2MB per file", variant: "destructive" }); return false; }
+    const valid = Array.from(newFiles).filter((f) => {
+      if (!f.type.startsWith("image/")) {
+        toast({ title: "Only images allowed", variant: "destructive" });
+        return false;
+      }
+      if (f.size > 2 * 1024 * 1024) {
+        toast({ title: "Max 2MB per file", variant: "destructive" });
+        return false;
+      }
       return true;
     });
-    setFiles(prev => [...prev, ...valid].slice(0, 3));
+    setFiles((prev) => [...prev, ...valid].slice(0, 3));
   };
 
   const handleSubmit = async () => {
@@ -78,7 +103,7 @@ function RaiseTicketForm({ onSuccess, onCancel }: { onSuccess: (id: string) => v
       const ticket = await createTicket({ subject, category, priority, description });
       // Upload attachments if any — we'll use the ticket detail hook for that
       if (ticket && files.length > 0) {
-        const { uploadAttachment } = await import("@/hooks/useSupportTickets").then(m => {
+        const { uploadAttachment } = await import("@/hooks/useSupportTickets").then((m) => {
           // Can't use hook here, so do direct upload
           return { uploadAttachment: null };
         });
@@ -96,7 +121,10 @@ function RaiseTicketForm({ onSuccess, onCancel }: { onSuccess: (id: string) => v
           });
         }
       }
-      toast({ title: `Ticket raised! ID: ${ticket?.id?.slice(0, 8)}`, description: "We will respond within 24 hours." });
+      toast({
+        title: `Ticket raised! ID: ${ticket?.id?.slice(0, 8)}`,
+        description: "We will respond within 24 hours.",
+      });
       onSuccess(ticket?.id || "");
     } catch (e: any) {
       toast({ title: "Failed to create ticket", description: e.message, variant: "destructive" });
@@ -118,7 +146,7 @@ function RaiseTicketForm({ onSuccess, onCancel }: { onSuccess: (id: string) => v
         <label className="text-xs font-sans font-medium text-foreground mb-1 block">Subject *</label>
         <input
           value={subject}
-          onChange={e => setSubject(e.target.value)}
+          onChange={(e) => setSubject(e.target.value)}
           placeholder="Brief summary of the issue"
           className="w-full rounded-lg border border-border bg-card px-3 py-2 text-sm font-sans text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary"
         />
@@ -129,29 +157,39 @@ function RaiseTicketForm({ onSuccess, onCancel }: { onSuccess: (id: string) => v
           <label className="text-xs font-sans font-medium text-foreground mb-1 block">Category</label>
           <select
             value={category}
-            onChange={e => setCategory(e.target.value)}
+            onChange={(e) => setCategory(e.target.value)}
             className="w-full rounded-lg border border-border bg-card px-3 py-2 text-sm font-sans text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
           >
-            {CATEGORIES.map(c => <option key={c} value={c}>{c}</option>)}
+            {CATEGORIES.map((c) => (
+              <option key={c} value={c}>
+                {c}
+              </option>
+            ))}
           </select>
         </div>
         <div>
           <label className="text-xs font-sans font-medium text-foreground mb-1 block">Priority</label>
           <select
             value={priority}
-            onChange={e => setPriority(e.target.value)}
+            onChange={(e) => setPriority(e.target.value)}
             className="w-full rounded-lg border border-border bg-card px-3 py-2 text-sm font-sans text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
           >
-            {PRIORITIES.map(p => <option key={p} value={p}>{p}</option>)}
+            {PRIORITIES.map((p) => (
+              <option key={p} value={p}>
+                {p}
+              </option>
+            ))}
           </select>
         </div>
       </div>
 
       <div>
-        <label className="text-xs font-sans font-medium text-foreground mb-1 block">Description * (min 20 characters)</label>
+        <label className="text-xs font-sans font-medium text-foreground mb-1 block">
+          Description * (min 20 characters)
+        </label>
         <textarea
           value={description}
-          onChange={e => setDescription(e.target.value)}
+          onChange={(e) => setDescription(e.target.value)}
           rows={5}
           placeholder="Describe the issue in detail…"
           className="w-full rounded-lg border border-border bg-card px-3 py-2 text-sm font-sans text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary resize-none"
@@ -160,13 +198,15 @@ function RaiseTicketForm({ onSuccess, onCancel }: { onSuccess: (id: string) => v
       </div>
 
       <div>
-        <label className="text-xs font-sans font-medium text-foreground mb-1 block">Screenshots (max 3, images only, 2MB each)</label>
+        <label className="text-xs font-sans font-medium text-foreground mb-1 block">
+          Screenshots (max 3, images only, 2MB each)
+        </label>
         <div className="flex items-center gap-2 flex-wrap">
           {files.map((f, i) => (
             <div key={i} className="flex items-center gap-1 bg-muted rounded-lg px-2 py-1 text-xs font-sans">
               <Image className="h-3 w-3 text-muted-foreground" />
               <span className="truncate max-w-[120px]">{f.name}</span>
-              <button onClick={() => setFiles(prev => prev.filter((_, j) => j !== i))}>
+              <button onClick={() => setFiles((prev) => prev.filter((_, j) => j !== i))}>
                 <X className="h-3 w-3 text-muted-foreground hover:text-foreground" />
               </button>
             </div>
@@ -174,7 +214,13 @@ function RaiseTicketForm({ onSuccess, onCancel }: { onSuccess: (id: string) => v
           {files.length < 3 && (
             <label className="cursor-pointer flex items-center gap-1 border border-dashed border-border rounded-lg px-3 py-1.5 text-xs font-sans text-muted-foreground hover:bg-muted transition-colors">
               <Paperclip className="h-3 w-3" /> Attach
-              <input type="file" accept="image/*" multiple className="hidden" onChange={e => addFiles(e.target.files)} />
+              <input
+                type="file"
+                accept="image/*"
+                multiple
+                className="hidden"
+                onChange={(e) => addFiles(e.target.files)}
+              />
             </label>
           )}
         </div>
@@ -209,7 +255,7 @@ function TicketDetailView({
   if (loading) return <p className="text-sm text-muted-foreground font-sans p-4">Loading…</p>;
   if (!ticket) return <p className="text-sm text-muted-foreground font-sans p-4">Ticket not found</p>;
 
-  const ticketAttachments = attachments.filter(a => !a.update_id);
+  const ticketAttachments = attachments.filter((a) => !a.update_id);
 
   const handleSendUpdate = async () => {
     if (!message.trim()) return;
@@ -261,22 +307,28 @@ function TicketDetailView({
         <div className="flex gap-2 flex-wrap">
           <select
             value={ticket.status}
-            onChange={e => handleStatusChange(e.target.value)}
+            onChange={(e) => handleStatusChange(e.target.value)}
             className="rounded-lg border border-border bg-card px-2 py-1 text-xs font-sans"
           >
-            {["Open", "In Progress", "Resolved", "Closed"].map(s => (
-              <option key={s} value={s}>{s}</option>
+            {["Open", "In Progress", "Resolved", "Closed"].map((s) => (
+              <option key={s} value={s}>
+                {s}
+              </option>
             ))}
           </select>
           <select
             value={ticket.priority}
-            onChange={async e => {
+            onChange={async (e) => {
               await updateTicketPriority(ticketId, e.target.value);
               refetch();
             }}
             className="rounded-lg border border-border bg-card px-2 py-1 text-xs font-sans"
           >
-            {PRIORITIES.map(p => <option key={p} value={p}>{p}</option>)}
+            {PRIORITIES.map((p) => (
+              <option key={p} value={p}>
+                {p}
+              </option>
+            ))}
           </select>
           {ticket.user_email && (
             <span className="text-xs text-muted-foreground font-sans self-center">User: {ticket.user_email}</span>
@@ -290,9 +342,14 @@ function TicketDetailView({
         <p className="text-sm font-sans text-foreground whitespace-pre-wrap">{ticket.description}</p>
         {ticketAttachments.length > 0 && (
           <div className="flex gap-2 mt-3 flex-wrap">
-            {ticketAttachments.map(a => (
-              <a key={a.id} href={a.file_url} target="_blank" rel="noopener noreferrer"
-                className="rounded-lg border border-border overflow-hidden w-20 h-20 block">
+            {ticketAttachments.map((a) => (
+              <a
+                key={a.id}
+                href={a.file_url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="rounded-lg border border-border overflow-hidden w-20 h-20 block"
+              >
                 <img src={a.file_url} alt={a.file_name} className="w-full h-full object-cover" />
               </a>
             ))}
@@ -303,13 +360,11 @@ function TicketDetailView({
       {/* Timeline */}
       <div className="space-y-2">
         <p className="text-xs font-sans font-medium text-foreground">Timeline</p>
-        {updates.length === 0 && (
-          <p className="text-xs text-muted-foreground font-sans italic">No updates yet</p>
-        )}
+        {updates.length === 0 && <p className="text-xs text-muted-foreground font-sans italic">No updates yet</p>}
         {updates
-          .filter(u => isAdmin || !u.is_internal)
-          .map(u => {
-            const updateAttachments = attachments.filter(a => a.update_id === u.id);
+          .filter((u) => isAdmin || !u.is_internal)
+          .map((u) => {
+            const updateAttachments = attachments.filter((a) => a.update_id === u.id);
             return (
               <div
                 key={u.id}
@@ -317,24 +372,27 @@ function TicketDetailView({
                   u.is_internal
                     ? "bg-muted/50 border border-dashed border-border"
                     : u.is_admin_reply
-                    ? "bg-primary/10 border border-primary/20"
-                    : "bg-secondary/10 border border-secondary/20"
+                      ? "bg-primary/10 border border-primary/20"
+                      : "bg-secondary/10 border border-secondary/20"
                 }`}
               >
                 <div className="flex justify-between mb-1">
                   <span className="text-[11px] font-semibold text-foreground">
                     {u.is_internal ? "🔒 Internal Note" : u.is_admin_reply ? "Admin" : u.user_email || "User"}
                   </span>
-                  <span className="text-[10px] text-muted-foreground">
-                    {new Date(u.created_at).toLocaleString()}
-                  </span>
+                  <span className="text-[10px] text-muted-foreground">{new Date(u.created_at).toLocaleString()}</span>
                 </div>
                 <p className="text-foreground whitespace-pre-wrap">{u.message}</p>
                 {updateAttachments.length > 0 && (
                   <div className="flex gap-2 mt-2 flex-wrap">
-                    {updateAttachments.map(a => (
-                      <a key={a.id} href={a.file_url} target="_blank" rel="noopener noreferrer"
-                        className="rounded border border-border overflow-hidden w-16 h-16 block">
+                    {updateAttachments.map((a) => (
+                      <a
+                        key={a.id}
+                        href={a.file_url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="rounded border border-border overflow-hidden w-16 h-16 block"
+                      >
                         <img src={a.file_url} alt={a.file_name} className="w-full h-full object-cover" />
                       </a>
                     ))}
@@ -351,18 +409,28 @@ function TicketDetailView({
         {isAdmin && (
           <div className="flex gap-3 text-xs font-sans">
             <label className="flex items-center gap-1">
-              <input type="checkbox" checked={replyAsAdmin} onChange={e => setReplyAsAdmin(e.target.checked)} className="rounded" />
+              <input
+                type="checkbox"
+                checked={replyAsAdmin}
+                onChange={(e) => setReplyAsAdmin(e.target.checked)}
+                className="rounded"
+              />
               Reply as Admin
             </label>
             <label className="flex items-center gap-1">
-              <input type="checkbox" checked={isInternal} onChange={e => setIsInternal(e.target.checked)} className="rounded" />
+              <input
+                type="checkbox"
+                checked={isInternal}
+                onChange={(e) => setIsInternal(e.target.checked)}
+                className="rounded"
+              />
               Internal note
             </label>
           </div>
         )}
         <textarea
           value={message}
-          onChange={e => setMessage(e.target.value)}
+          onChange={(e) => setMessage(e.target.value)}
           rows={3}
           placeholder="Write your update…"
           className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm font-sans text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary resize-none"
@@ -372,7 +440,7 @@ function TicketDetailView({
             {newFiles.map((f, i) => (
               <span key={i} className="text-[10px] font-sans bg-muted rounded px-1.5 py-0.5 flex items-center gap-1">
                 {f.name}
-                <button onClick={() => setNewFiles(prev => prev.filter((_, j) => j !== i))}>
+                <button onClick={() => setNewFiles((prev) => prev.filter((_, j) => j !== i))}>
                   <X className="h-2.5 w-2.5" />
                 </button>
               </span>
@@ -385,16 +453,21 @@ function TicketDetailView({
                   accept="image/*"
                   multiple
                   className="hidden"
-                  onChange={e => {
+                  onChange={(e) => {
                     if (e.target.files) {
-                      setNewFiles(prev => [...prev, ...Array.from(e.target.files!)].slice(0, 3));
+                      setNewFiles((prev) => [...prev, ...Array.from(e.target.files!)].slice(0, 3));
                     }
                   }}
                 />
               </label>
             )}
           </div>
-          <Button size="sm" onClick={handleSendUpdate} disabled={sending || !message.trim()} className="bg-primary text-primary-foreground">
+          <Button
+            size="sm"
+            onClick={handleSendUpdate}
+            disabled={sending || !message.trim()}
+            className="bg-primary text-primary-foreground"
+          >
             <Send className="h-3.5 w-3.5 mr-1" /> {sending ? "Sending…" : "Send"}
           </Button>
         </div>
@@ -403,21 +476,11 @@ function TicketDetailView({
       {/* Close / Reopen */}
       <div className="flex gap-2">
         {ticket.status !== "Closed" ? (
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => handleStatusChange("Closed")}
-            className="text-xs"
-          >
+          <Button variant="outline" size="sm" onClick={() => handleStatusChange("Closed")} className="text-xs">
             <XCircle className="h-3.5 w-3.5 mr-1" /> Close Ticket
           </Button>
         ) : (
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => handleStatusChange("Open")}
-            className="text-xs"
-          >
+          <Button variant="outline" size="sm" onClick={() => handleStatusChange("Open")} className="text-xs">
             <RotateCcw className="h-3.5 w-3.5 mr-1" /> Reopen Ticket
           </Button>
         )}
@@ -440,7 +503,7 @@ function TicketsList({ tickets, onSelect }: { tickets: Ticket[]; onSelect: (id: 
 
   return (
     <div className="space-y-2">
-      {tickets.map(t => (
+      {tickets.map((t) => (
         <button
           key={t.id}
           onClick={() => onSelect(t.id)}
@@ -489,7 +552,11 @@ export default function SupportPage() {
 
   return (
     <div className="min-h-screen bg-background">
-      <SEO path="/support" title="Support — Sriman Narayaneeyam" description="Get help, raise a support ticket or report an issue with the Sriman Narayaneeyam app." />
+      <SEO
+        path="/support"
+        title="Help & Support — Sriman Narayaneeyam"
+        description="Get help, raise a support ticket or report an issue with the Sriman Narayaneeyam app."
+      />
       <div className="container mx-auto px-4 py-6 max-w-2xl">
         <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}>
           {view === "list" && (
@@ -497,11 +564,36 @@ export default function SupportPage() {
               <div className="flex items-center justify-between mb-6">
                 <div className="flex items-center gap-2">
                   <LifeBuoy className="h-5 w-5 text-primary" />
-                  <h1 className="font-display text-xl font-bold text-foreground">Support</h1>
+                  <h1 className="font-display text-xl font-bold text-foreground">Help & Support</h1>
                 </div>
                 <Button onClick={() => setView("create")} size="sm" className="bg-primary text-primary-foreground">
                   <Plus className="h-4 w-4 mr-1" /> Raise Ticket
                 </Button>
+              </div>
+
+              <div className="mb-6 rounded-xl border border-border bg-muted/30 p-4">
+                <h2 className="font-display text-base font-semibold text-foreground mb-1">We're Here for You</h2>
+                <p className="text-xs text-muted-foreground font-sans mb-3">
+                  Have a quick question? Reach out anytime.
+                </p>
+                <div className="space-y-2">
+                  <a
+                    href="https://wa.me/919176610702"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center gap-2 text-sm font-sans text-foreground hover:text-primary transition-colors"
+                  >
+                    <WhatsAppIcon className="h-4 w-4 text-secondary" />
+                    +91 91766 10702
+                  </a>
+                  <a
+                    href="mailto:namaste@narayaneeyam.app"
+                    className="flex items-center gap-2 text-sm font-sans text-foreground hover:text-primary transition-colors"
+                  >
+                    <Mail className="h-4 w-4 text-secondary" />
+                    namaste@narayaneeyam.app
+                  </a>
+                </div>
               </div>
 
               {loading ? (
@@ -509,7 +601,10 @@ export default function SupportPage() {
               ) : (
                 <TicketsList
                   tickets={tickets}
-                  onSelect={id => { setSelectedTicketId(id); setView("detail"); }}
+                  onSelect={(id) => {
+                    setSelectedTicketId(id);
+                    setView("detail");
+                  }}
                 />
               )}
             </>
@@ -517,7 +612,10 @@ export default function SupportPage() {
 
           {view === "create" && (
             <RaiseTicketForm
-              onSuccess={id => { setSelectedTicketId(id); setView("detail"); }}
+              onSuccess={(id) => {
+                setSelectedTicketId(id);
+                setView("detail");
+              }}
               onCancel={() => setView("list")}
             />
           )}
@@ -525,7 +623,10 @@ export default function SupportPage() {
           {view === "detail" && selectedTicketId && (
             <TicketDetailView
               ticketId={selectedTicketId}
-              onBack={() => { setSelectedTicketId(null); setView("list"); }}
+              onBack={() => {
+                setSelectedTicketId(null);
+                setView("list");
+              }}
             />
           )}
         </motion.div>
