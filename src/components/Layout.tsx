@@ -248,6 +248,20 @@ export default function Layout({ children }: { children: React.ReactNode }) {
               {user ? (
                 <>
                   <Link
+                    to="/groups"
+                    onClick={() => setMobileOpen(false)}
+                    className="flex items-center gap-3 rounded-lg px-3 py-3 text-sm font-sans text-primary-foreground/70"
+                  >
+                    <Users className="h-4 w-4" /> My Groups
+                  </Link>
+                  <Link
+                    to="/subscribe"
+                    onClick={() => setMobileOpen(false)}
+                    className="flex items-center gap-3 rounded-lg px-3 py-3 text-sm font-sans text-primary-foreground/70"
+                  >
+                    <CreditCard className="h-4 w-4" /> Subscription
+                  </Link>
+                  <Link
                     to="/support"
                     onClick={() => setMobileOpen(false)}
                     className="flex items-center gap-3 rounded-lg px-3 py-3 text-sm font-sans text-primary-foreground/70"
