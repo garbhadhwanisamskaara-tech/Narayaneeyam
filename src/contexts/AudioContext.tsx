@@ -211,6 +211,8 @@ export function AudioProvider({ children }: { children: ReactNode }) {
 
   const setSpeed = useCallback(
     (rate: number) => {
+      rateRef.current = rate;
+      audio.defaultPlaybackRate = rate;
       audio.playbackRate = rate;
     },
     [audio],
