@@ -139,15 +139,22 @@ export function AudioProvider({ children }: { children: ReactNode }) {
       setState((s) => ({ ...s, isPlaying: true, isPaused: false }));
     };
 
+    const onLoadedMetadata = () => {
+      // Some browsers reset the rate when new media loads
+      if (a.playbackRate !== rateRef.current) a.playbackRate = rateRef.current;
+    };
+
     a.addEventListener("timeupdate", onTimeUpdate);
     a.addEventListener("ended", onEnded);
     a.addEventListener("pause", onPause);
     a.addEventListener("play", onPlay);
+    a.addEventListener("loadedmetadata", onLoadedMetadata);
     return () => {
       a.removeEventListener("timeupdate", onTimeUpdate);
       a.removeEventListener("ended", onEnded);
       a.removeEventListener("pause", onPause);
       a.removeEventListener("play", onPlay);
+      a.removeEventListener("loadedmetadata", onLoadedMetadata);
     };
   }, [audio, startTracking, stopTracking]);
 
