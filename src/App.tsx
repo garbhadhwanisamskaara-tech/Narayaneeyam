@@ -26,6 +26,8 @@ import ResetPasswordPage from "./pages/ResetPasswordPage";
 import JoinGroupPage from "./pages/JoinGroupPage";
 import GroupsPage from "./pages/GroupsPage";
 import GroupDetailPage from "./pages/GroupDetailPage";
+import GroupSchedulePage from "./pages/GroupSchedulePage";
+
 
 import DevotionPathwaysPage from "./pages/DevotionPathwaysPage";
 import PrasadamListPage from "./pages/PrasadamListPage";
