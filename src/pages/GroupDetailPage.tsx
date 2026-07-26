@@ -34,6 +34,9 @@ export default function GroupDetailPage() {
     loading: loadingMembers,
     removeMember,
   } = useGroupMembers(groupId, group?.active_challenge_session_id);
+  const { blooms: gardenBlooms, loading: gardenLoading } = useGroupGarden(groupId);
+
+
 
   useEffect(() => {
     if (!groupId) return;
