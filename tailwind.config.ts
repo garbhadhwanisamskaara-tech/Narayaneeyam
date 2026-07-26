@@ -68,6 +68,9 @@ export default {
         },
         "bookmark-gold": "hsl(var(--bookmark-gold))",
         "favourite-rose": "hsl(var(--favourite-rose))",
+        "feather-chant": "hsl(var(--feather-chant))",
+        "feather-learn": "hsl(var(--feather-learn))",
+        "feather-podcast": "hsl(var(--feather-podcast))",
         sidebar: {
           DEFAULT: "hsl(var(--sidebar-background))",
           foreground: "hsl(var(--sidebar-foreground))",
