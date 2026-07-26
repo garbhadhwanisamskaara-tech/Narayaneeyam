@@ -1,13 +1,9 @@
 import { motion } from "framer-motion";
 import { BookOpen, Headphones, Music, BarChart3, Heart, Languages, Sparkles, Play } from "lucide-react";
-import {
-  Accordion,
-  AccordionContent,
-  AccordionItem,
-  AccordionTrigger,
-} from "@/components/ui/accordion";
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import SEO from "@/components/SEO";
 import ReminderSettings from "@/components/ReminderSettings";
+import LanguagePreferences from "@/components/LanguagePreferences";
 
 const sections = [
   {
@@ -171,22 +167,18 @@ const sections = [
 const UserGuidePage = () => {
   return (
     <div className="min-h-screen bg-background">
-      <SEO path="/user-guide" title="User Guide — Sriman Narayaneeyam" description="Step-by-step guide to using every feature of the Sriman Narayaneeyam app — chanting, podcast, progress and more." />
+      <SEO
+        path="/user-guide"
+        title="User Guide — Sriman Narayaneeyam"
+        description="Step-by-step guide to using every feature of the Sriman Narayaneeyam app — chanting, podcast, progress and more."
+      />
       {/* Hero */}
       <div className="bg-gradient-peacock text-primary-foreground py-10 px-4 text-center">
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6 }}
-        >
-          <h1 className="text-3xl md:text-4xl font-bold mb-3">
-            How to Use Narayaneeyam App
-          </h1>
+        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6 }}>
+          <h1 className="text-3xl md:text-4xl font-bold mb-3">How to Use Narayaneeyam App</h1>
           <p className="text-base md:text-lg max-w-2xl mx-auto opacity-90">
-            Welcome, dear devotee! 🙏 This simple guide will walk you through
-            every feature of the app so you can chant, learn, and grow in
-            devotion with ease and joy. No technical knowledge needed — just
-            an open heart.
+            Welcome, dear devotee! 🙏 This simple guide will walk you through every feature of the app so you can chant,
+            learn, and grow in devotion with ease and joy. No technical knowledge needed — just an open heart.
           </p>
         </motion.div>
       </div>
@@ -216,12 +208,8 @@ const UserGuidePage = () => {
                   <div className="space-y-4">
                     {section.items.map((item, i) => (
                       <div key={i} className="pl-2 border-l-2 border-primary/30">
-                        <p className="font-medium text-foreground mb-1">
-                          {item.q}
-                        </p>
-                        <p className="text-muted-foreground text-sm leading-relaxed">
-                          {item.a}
-                        </p>
+                        <p className="font-medium text-foreground mb-1">{item.q}</p>
+                        <p className="text-muted-foreground text-sm leading-relaxed">{item.a}</p>
                       </div>
                     ))}
                   </div>
