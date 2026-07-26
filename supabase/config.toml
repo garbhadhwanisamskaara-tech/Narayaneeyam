@@ -1,2 +1,5 @@
 [functions.b2-audio]
 verify_jwt = false
+
+[functions.delete-account]
+verify_jwt = true

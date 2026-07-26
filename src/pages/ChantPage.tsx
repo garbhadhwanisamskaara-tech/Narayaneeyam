@@ -778,12 +778,9 @@ export default function ChantPage() {
               }}
               className="rounded-lg border border-border bg-background px-3 py-2 text-sm font-sans text-foreground"
             >
-              <option value={0.5}>0.5×</option>
               <option value={0.75}>0.75×</option>
               <option value={1}>1×</option>
               <option value={1.25}>1.25×</option>
-              <option value={1.5}>1.5×</option>
-              <option value={2}>2×</option>
             </select>
           </div>
 
@@ -940,7 +937,7 @@ export default function ChantPage() {
                           );
                         return null;
                       })()}
-                      Verse {verse.paragraph}
+                      Dashakam {verse.dashakam} · Verse {verse.paragraph}
                       {verse.meter ? ` · Meter ${verse.meter}` : ""}
                     </span>
                     <div className="flex items-center gap-1">
@@ -1119,7 +1116,7 @@ export default function ChantPage() {
           {/* Speed control buttons */}
           <div className="flex items-center justify-center gap-1.5 mt-3">
             <span className="text-[10px] text-primary-foreground/50 font-sans mr-1">Speed</span>
-            {[0.5, 0.75, 1, 1.25, 1.5, 2].map((s) => (
+            {[0.75, 1, 1.25].map((s) => (
               <button
                 key={s}
                 onClick={() => {
@@ -1137,7 +1134,7 @@ export default function ChantPage() {
             ))}
           </div>
           <div className="text-center text-xs text-primary-foreground/60 mt-2 font-sans">
-            Verse {highlightedVerse + 1} of {displayVerses.length}
+            Dashakam {selectedDashakam} · Verse {highlightedVerse + 1} of {displayVerses.length}
             {loopCount > 1 && ` · Loop ${currentLoopIteration + 1}/${loopCount}`}
             {isSlokaPlaying && " · 📿 Sloka playing"}
           </div>
