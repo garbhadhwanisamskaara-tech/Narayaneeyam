@@ -189,7 +189,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
                   <DropdownMenuItem asChild className="cursor-pointer">
                     <Link to="/support">
                       <LifeBuoy className="mr-2 h-4 w-4" />
-                      Support
+                      Help & Support
                     </Link>
                   </DropdownMenuItem>
                   <DropdownMenuItem onClick={() => signOut()} className="cursor-pointer">
@@ -279,7 +279,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
                     onClick={() => setMobileOpen(false)}
                     className="flex items-center gap-3 rounded-lg px-3 py-3 text-sm font-sans text-primary-foreground/70"
                   >
-                    <LifeBuoy className="h-4 w-4" /> Support
+                    <LifeBuoy className="h-4 w-4" /> Help & Support
                   </Link>
                   <div className="flex items-center justify-between px-3 py-3">
                     <div className="flex items-center gap-2">
