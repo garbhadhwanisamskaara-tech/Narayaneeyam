@@ -13,6 +13,8 @@ import {
   LifeBuoy,
   Info,
   BookOpen,
+  Users,
+  CreditCard,
   ChevronDown,
 } from "lucide-react";
 import { useState, useEffect } from "react";
