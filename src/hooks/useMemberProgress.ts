@@ -162,6 +162,10 @@ export function useMemberProgress(mode: "chant" | "learn") {
           description: `${name} — well done.`,
         });
 
+        // Award a feather for this dashakam + mode (duplicates are a no-op)
+        awardFeather(user.id, dashakamNo, mode);
+
+
         // Update user_progress table for streak tracking
         try {
           const today = new Date().toISOString().split("T")[0];
