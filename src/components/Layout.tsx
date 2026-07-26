@@ -168,6 +168,18 @@ export default function Layout({ children }: { children: React.ReactNode }) {
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end" className="min-w-[180px]">
                   <DropdownMenuItem asChild className="cursor-pointer">
+                    <Link to="/groups">
+                      <Users className="mr-2 h-4 w-4" />
+                      My Groups
+                    </Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem asChild className="cursor-pointer">
+                    <Link to="/subscribe">
+                      <CreditCard className="mr-2 h-4 w-4" />
+                      Subscription
+                    </Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem asChild className="cursor-pointer">
                     <Link to="/support">
                       <LifeBuoy className="mr-2 h-4 w-4" />
                       Support
