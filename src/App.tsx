@@ -86,6 +86,8 @@ const App = () => {
                   <Route path="/challenges/new" element={<ChallengeCreationPage />} />
                   <Route path="/groups" element={<GroupsPage />} />
                   <Route path="/groups/:groupId" element={<GroupDetailPage />} />
+                  <Route path="/groups/:groupId/schedule" element={<GroupSchedulePage />} />
+
 
                   <Route path="/devotion-pathways" element={<DevotionPathwaysPage />} />
                   <Route path="/prasadam" element={<PrasadamListPage />} />
