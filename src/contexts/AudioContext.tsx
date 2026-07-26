@@ -64,6 +64,7 @@ export function AudioProvider({ children }: { children: ReactNode }) {
   });
 
   const onEndedRef = useRef<(() => void) | null>(null);
+  const rateRef = useRef(1);
 
   // --- Real listening-time tracking (wall clock, seek-proof) ---
   const listenStartRef = useRef<number | null>(null);
