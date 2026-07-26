@@ -15,6 +15,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useGroupInvite, useGroupMembers, inviteLink, type Group } from "@/hooks/useGroups";
 import SEO from "@/components/SEO";
+import DashakamGarden from "@/components/DashakamGarden";
+import { useGroupGarden } from "@/hooks/useGarden";
 
 export default function GroupDetailPage() {
   const { groupId } = useParams<{ groupId: string }>();
@@ -32,6 +34,9 @@ export default function GroupDetailPage() {
     loading: loadingMembers,
     removeMember,
   } = useGroupMembers(groupId, group?.active_challenge_session_id);
+  const { blooms: gardenBlooms, loading: gardenLoading } = useGroupGarden(groupId);
+
+
 
   useEffect(() => {
     if (!groupId) return;
@@ -141,6 +146,14 @@ export default function GroupDetailPage() {
               </Link>
             </section>
           )}
+
+          <div className="mt-6">
+            <DashakamGarden
+              blooms={gardenBlooms}
+              title="Group Dashakam Garden"
+              loading={gardenLoading}
+            />
+          </div>
 
           <section className="mt-6 rounded-2xl border border-border bg-card p-5 shadow-peacock">
             <h2 className="font-display text-lg font-semibold text-foreground">Members</h2>

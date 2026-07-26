@@ -10,6 +10,9 @@ import ProgressRing from "@/components/ProgressRing";
 import SEO from "@/components/SEO";
 import ActiveChallengeCard from "@/components/ActiveChallengeCard";
 import FeatherShelf from "@/components/FeatherShelf";
+import DashakamGarden from "@/components/DashakamGarden";
+import { useGroups } from "@/hooks/useGroups";
+import { useMemo } from "react";
 
 export default function DashboardPage() {
   const localProgress = getProgress();
@@ -38,6 +41,15 @@ export default function DashboardPage() {
 
   const recentCompleted = completedDashakams.slice(0, 5);
 
+  // Personal garden — a lotus is either fully bloomed or a closed bud
+  const { groups, loading: groupsLoading } = useGroups();
+  const personalBlooms = useMemo(() => {
+    const map = new Map<number, number>();
+    for (const c of completedDashakams) map.set(c.dashakam_no, 100);
+    return map;
+  }, [completedDashakams]);
+
+
   return (
     <div className="container mx-auto px-4 py-8 pb-24">
       <SEO path="/dashboard" title="Your Progress — Sriman Narayaneeyam" description="Track your devotional journey through Sriman Narayaneeyam — streak, completed Dashakams and your current chanting position." />
@@ -45,9 +57,21 @@ export default function DashboardPage() {
 
         <ActiveChallengeCard />
 
+        {!groupsLoading && groups.length === 0 && (
+          <div className="mb-8">
+            <DashakamGarden
+              blooms={personalBlooms}
+              title="Your Dashakam Garden"
+              subtitle={`${dashakamsCompleted} of 100 lotuses in full bloom`}
+              loading={progressLoading}
+            />
+          </div>
+        )}
+
         <div className="mb-8">
           <FeatherShelf />
         </div>
+
 
         {/* Greeting */}
         <div className="mb-8">
