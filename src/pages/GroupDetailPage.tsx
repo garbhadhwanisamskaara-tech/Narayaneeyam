@@ -15,6 +15,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useGroupInvite, useGroupMembers, inviteLink, type Group } from "@/hooks/useGroups";
 import SEO from "@/components/SEO";
+import DashakamGarden from "@/components/DashakamGarden";
+import { useGroupGarden } from "@/hooks/useGarden";
 
 export default function GroupDetailPage() {
   const { groupId } = useParams<{ groupId: string }>();
