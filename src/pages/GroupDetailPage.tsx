@@ -142,6 +142,14 @@ export default function GroupDetailPage() {
             </section>
           )}
 
+          <div className="mt-6">
+            <DashakamGarden
+              blooms={gardenBlooms}
+              title="Group Dashakam Garden"
+              loading={gardenLoading}
+            />
+          </div>
+
           <section className="mt-6 rounded-2xl border border-border bg-card p-5 shadow-peacock">
             <h2 className="font-display text-lg font-semibold text-foreground">Members</h2>
             {loadingMembers ? (
