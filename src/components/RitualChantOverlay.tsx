@@ -40,7 +40,9 @@ export default function RitualChantOverlay({ chants, useLearnAudio = false, titl
     if (audioFile) {
       const audio = new Audio(audioFile);
       audioRef.current = audio;
+      audio.defaultPlaybackRate = speed;
       audio.playbackRate = speed;
+      audio.addEventListener("loadedmetadata", () => { audio.playbackRate = speed; });
       audio.play().catch(() => {});
       audio.onended = () => advance();
       return () => { audio.pause(); audio.onended = null; };

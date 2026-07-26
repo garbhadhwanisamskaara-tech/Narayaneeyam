@@ -14,7 +14,7 @@ export default function BottomNav() {
   const location = useLocation();
   const [moreOpen, setMoreOpen] = useState(false);
 
-  const morePaths = ["/script", "/heart-shelf", "/saved-places", "/support"];
+  const morePaths = ["/script", "/heart-shelf", "/saved-places", "/faq", "/blog", "/user-guide"];
   const isMoreActive = morePaths.includes(location.pathname);
 
   return (

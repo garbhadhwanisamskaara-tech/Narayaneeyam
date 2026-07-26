@@ -13,6 +13,8 @@ import {
   LifeBuoy,
   Info,
   BookOpen,
+  Users,
+  CreditCard,
   ChevronDown,
 } from "lucide-react";
 import { useState, useEffect } from "react";
@@ -114,7 +116,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
                 Sriman Narayaneeyam
               </h1>
               <p className="text-[10px] lg:text-xs text-gold-light font-sans hidden sm:block">
-                Chant · Learn · Grow · Podcast
+                Learn · Chant · Listen · Grow
               </p>
             </div>
           </Link>
@@ -167,6 +169,18 @@ export default function Layout({ children }: { children: React.ReactNode }) {
                   </button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end" className="min-w-[180px]">
+                  <DropdownMenuItem asChild className="cursor-pointer">
+                    <Link to="/groups">
+                      <Users className="mr-2 h-4 w-4" />
+                      My Groups
+                    </Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem asChild className="cursor-pointer">
+                    <Link to="/subscribe">
+                      <CreditCard className="mr-2 h-4 w-4" />
+                      Subscription
+                    </Link>
+                  </DropdownMenuItem>
                   <DropdownMenuItem asChild className="cursor-pointer">
                     <Link to="/support">
                       <LifeBuoy className="mr-2 h-4 w-4" />
@@ -233,6 +247,20 @@ export default function Layout({ children }: { children: React.ReactNode }) {
             <div className="mt-2 pt-2 border-t border-primary-foreground/10">
               {user ? (
                 <>
+                  <Link
+                    to="/groups"
+                    onClick={() => setMobileOpen(false)}
+                    className="flex items-center gap-3 rounded-lg px-3 py-3 text-sm font-sans text-primary-foreground/70"
+                  >
+                    <Users className="h-4 w-4" /> My Groups
+                  </Link>
+                  <Link
+                    to="/subscribe"
+                    onClick={() => setMobileOpen(false)}
+                    className="flex items-center gap-3 rounded-lg px-3 py-3 text-sm font-sans text-primary-foreground/70"
+                  >
+                    <CreditCard className="h-4 w-4" /> Subscription
+                  </Link>
                   <Link
                     to="/support"
                     onClick={() => setMobileOpen(false)}

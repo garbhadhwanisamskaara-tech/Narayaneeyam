@@ -105,7 +105,9 @@ export function useSlokaPlayback(): UseSlokaPlaybackReturn {
         if (resolvedAudioFile && !cancelledRef.current) {
           const audio = new Audio(resolvedAudioFile);
           audioRef.current = audio;
+          audio.defaultPlaybackRate = speed;
           audio.playbackRate = speed;
+          audio.addEventListener("loadedmetadata", () => { audio.playbackRate = speed; });
 
           audio.onended = async () => {
             if (cancelledRef.current) return;

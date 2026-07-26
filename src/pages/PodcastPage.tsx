@@ -180,6 +180,7 @@ export default function PodcastPage() {
     if (!isPlaying) return;
 
     if (pausedRef.current && audioRef.current && !audioRef.current.ended) {
+      audioRef.current.defaultPlaybackRate = speed;
       audioRef.current.playbackRate = speed;
       audioRef.current.play().catch((err) => console.error("Audio play error:", err));
       pausedRef.current = false;
@@ -204,7 +205,9 @@ export default function PodcastPage() {
 
     const audio = new Audio(url);
     audioRef.current = audio;
+    audio.defaultPlaybackRate = speed;
     audio.playbackRate = speed;
+    audio.addEventListener("loadedmetadata", () => { audio.playbackRate = speed; });
     pausedRef.current = false;
     audio.play().catch((err) => console.error("Audio play error:", err));
 
@@ -484,7 +487,7 @@ export default function PodcastPage() {
                 onChange={(e) => {
                   const s = Number(e.target.value);
                   setSpeed(s);
-                  if (audioRef.current) audioRef.current.playbackRate = s;
+                  if (audioRef.current) { audioRef.current.defaultPlaybackRate = s; audioRef.current.playbackRate = s; }
                 }}
                 className="rounded-lg bg-primary-foreground/20 text-primary-foreground px-3 py-1.5 text-xs font-sans border border-primary-foreground/20 appearance-none cursor-pointer [&>option]:bg-card [&>option]:text-foreground"
               >

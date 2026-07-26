@@ -64,6 +64,7 @@ export function AudioProvider({ children }: { children: ReactNode }) {
   });
 
   const onEndedRef = useRef<(() => void) | null>(null);
+  const rateRef = useRef(1);
 
   // --- Real listening-time tracking (wall clock, seek-proof) ---
   const listenStartRef = useRef<number | null>(null);
@@ -138,15 +139,22 @@ export function AudioProvider({ children }: { children: ReactNode }) {
       setState((s) => ({ ...s, isPlaying: true, isPaused: false }));
     };
 
+    const onLoadedMetadata = () => {
+      // Some browsers reset the rate when new media loads
+      if (a.playbackRate !== rateRef.current) a.playbackRate = rateRef.current;
+    };
+
     a.addEventListener("timeupdate", onTimeUpdate);
     a.addEventListener("ended", onEnded);
     a.addEventListener("pause", onPause);
     a.addEventListener("play", onPlay);
+    a.addEventListener("loadedmetadata", onLoadedMetadata);
     return () => {
       a.removeEventListener("timeupdate", onTimeUpdate);
       a.removeEventListener("ended", onEnded);
       a.removeEventListener("pause", onPause);
       a.removeEventListener("play", onPlay);
+      a.removeEventListener("loadedmetadata", onLoadedMetadata);
     };
   }, [audio, startTracking, stopTracking]);
 
@@ -165,9 +173,13 @@ export function AudioProvider({ children }: { children: ReactNode }) {
     async (url: string) => {
       audio.src = url;
       audio.load();
+      // load() resets playbackRate to defaultPlaybackRate — re-apply the chosen speed
+      audio.defaultPlaybackRate = rateRef.current;
+      audio.playbackRate = rateRef.current;
       setState((s) => ({ ...s, src: url, progress: 0, isPlaying: true, isPaused: false }));
       try {
         await audio.play();
+        audio.playbackRate = rateRef.current;
       } catch (e) {
         console.error("AudioEngine play error:", e);
       }
@@ -206,6 +218,8 @@ export function AudioProvider({ children }: { children: ReactNode }) {
 
   const setSpeed = useCallback(
     (rate: number) => {
+      rateRef.current = rate;
+      audio.defaultPlaybackRate = rate;
       audio.playbackRate = rate;
     },
     [audio],
