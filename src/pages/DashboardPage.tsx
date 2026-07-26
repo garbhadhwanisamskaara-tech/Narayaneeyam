@@ -41,6 +41,15 @@ export default function DashboardPage() {
 
   const recentCompleted = completedDashakams.slice(0, 5);
 
+  // Personal garden — a lotus is either fully bloomed or a closed bud
+  const { groups, loading: groupsLoading } = useGroups();
+  const personalBlooms = useMemo(() => {
+    const map = new Map<number, number>();
+    for (const c of completedDashakams) map.set(c.dashakam_no, 100);
+    return map;
+  }, [completedDashakams]);
+
+
   return (
     <div className="container mx-auto px-4 py-8 pb-24">
       <SEO path="/dashboard" title="Your Progress — Sriman Narayaneeyam" description="Track your devotional journey through Sriman Narayaneeyam — streak, completed Dashakams and your current chanting position." />
