@@ -21,6 +21,7 @@ interface PodcastEntry {
 }
 
 export default function PodcastPage() {
+  const { user } = useAuth();
   const [currentDashakam, setCurrentDashakam] = useState(1);
   const [isPlaying, setIsPlaying] = useState(false);
   const [playMode, setPlayMode] = useState<PlayMode>("single");
