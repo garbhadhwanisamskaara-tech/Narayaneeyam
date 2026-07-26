@@ -253,6 +253,13 @@ export default function Layout({ children }: { children: React.ReactNode }) {
               {user ? (
                 <>
                   <Link
+                    to="/preferences"
+                    onClick={() => setMobileOpen(false)}
+                    className="flex items-center gap-3 rounded-lg px-3 py-3 text-sm font-sans text-primary-foreground/70"
+                  >
+                    <SlidersHorizontal className="h-4 w-4" /> My Preferences
+                  </Link>
+                  <Link
                     to="/groups"
                     onClick={() => setMobileOpen(false)}
                     className="flex items-center gap-3 rounded-lg px-3 py-3 text-sm font-sans text-primary-foreground/70"
@@ -266,6 +273,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
                   >
                     <CreditCard className="h-4 w-4" /> Subscription
                   </Link>
+                  <div className="my-1 border-t border-primary-foreground/10" />
                   <Link
                     to="/support"
                     onClick={() => setMobileOpen(false)}
