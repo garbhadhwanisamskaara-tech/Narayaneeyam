@@ -4,8 +4,10 @@ import { useAuth } from "@/contexts/AuthContext";
 
 export interface Group {
   id: string;
-  name: string;
+  group_name: string;
   owner_id: string;
+  active_challenge_session_id: string | null;
+  status: string;
   created_at: string;
 }
 
@@ -17,6 +19,19 @@ export interface GroupInvite {
   revoked: boolean;
   created_at: string;
 }
+
+export interface GroupMember {
+  id: string;
+  group_id: string;
+  user_id: string;
+  role: string;
+  joined_at: string;
+  left_at: string | null;
+  display_name: string;
+  completed: number;
+}
+
+const GROUP_COLS = "id, group_name, owner_id, active_challenge_session_id, status, created_at";
 
 function randomToken() {
   const bytes = new Uint8Array(16);
@@ -41,15 +56,40 @@ export function useGroups() {
       return;
     }
     setLoading(true);
-    const { data, error: err } = await (supabase as any)
-      .from("groups")
-      .select("id, name, owner_id, created_at")
-      .order("created_at", { ascending: false });
-    if (err) setError(err.message);
-    else {
-      setError(null);
-      setGroups((data ?? []) as Group[]);
+
+    // Groups the user belongs to (via group_members) plus groups they own.
+    const [memberRes, ownedRes] = await Promise.all([
+      (supabase as any)
+        .from("group_members")
+        .select("group_id")
+        .eq("user_id", user.id)
+        .is("left_at", null),
+      (supabase as any).from("groups").select(GROUP_COLS).eq("owner_id", user.id),
+    ]);
+
+    if (memberRes.error && ownedRes.error) {
+      setError(memberRes.error.message);
+      setLoading(false);
+      return;
     }
+
+    const memberIds: string[] = (memberRes.data ?? []).map((r: any) => r.group_id);
+    let joined: Group[] = [];
+    if (memberIds.length) {
+      const { data } = await (supabase as any)
+        .from("groups")
+        .select(GROUP_COLS)
+        .in("id", memberIds);
+      joined = (data ?? []) as Group[];
+    }
+
+    const all = [...((ownedRes.data ?? []) as Group[]), ...joined];
+    const unique = Array.from(new Map(all.map((g) => [g.id, g])).values()).sort((a, b) =>
+      a.created_at < b.created_at ? 1 : -1
+    );
+
+    setError(null);
+    setGroups(unique);
     setLoading(false);
   }, [user]);
 
@@ -66,10 +106,16 @@ export function useGroups() {
 
       const { data, error: err } = await (supabase as any)
         .from("groups")
-        .insert({ name: trimmed, owner_id: user.id })
-        .select("id, name, owner_id, created_at")
+        .insert({ group_name: trimmed, owner_id: user.id })
+        .select(GROUP_COLS)
         .single();
       if (err) throw new Error(err.message);
+
+      // Owner is a member too, so member lists and progress include them.
+      await (supabase as any)
+        .from("group_members")
+        .insert({ group_id: data.id, user_id: user.id, role: "owner" });
+
       await refresh();
       return data as Group;
     },
@@ -77,6 +123,84 @@ export function useGroups() {
   );
 
   return { groups, loading, error, refresh, createGroup };
+}
+
+/** Members of a group, with display name and progress in the group's active session. */
+export function useGroupMembers(groupId: string | undefined, sessionId: string | null | undefined) {
+  const [members, setMembers] = useState<GroupMember[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  const refresh = useCallback(async () => {
+    if (!groupId) return;
+    setLoading(true);
+
+    const { data, error: err } = await (supabase as any)
+      .from("group_members")
+      .select("id, group_id, user_id, role, joined_at, left_at")
+      .eq("group_id", groupId)
+      .is("left_at", null)
+      .order("joined_at", { ascending: true });
+
+    if (err) {
+      setError(err.message);
+      setMembers([]);
+      setLoading(false);
+      return;
+    }
+
+    const rows = (data ?? []) as Omit<GroupMember, "display_name" | "completed">[];
+    const ids = rows.map((r) => r.user_id);
+
+    const [profRes, progRes] = await Promise.all([
+      ids.length
+        ? (supabase as any).from("profiles").select("id, display_name").in("id", ids)
+        : Promise.resolve({ data: [] }),
+      sessionId && ids.length
+        ? (supabase as any)
+            .from("user_progress")
+            .select("user_id, dashakam_no")
+            .eq("challenge_session_id", sessionId)
+            .in("user_id", ids)
+        : Promise.resolve({ data: [] }),
+    ]);
+
+    const nameById = new Map<string, string>(
+      (profRes.data ?? []).map((p: any) => [p.id, p.display_name ?? "Devotee"])
+    );
+    const counts = new Map<string, number>();
+    for (const row of (progRes.data ?? []) as any[]) {
+      counts.set(row.user_id, (counts.get(row.user_id) ?? 0) + 1);
+    }
+
+    setError(null);
+    setMembers(
+      rows.map((r) => ({
+        ...r,
+        display_name: nameById.get(r.user_id) ?? "Devotee",
+        completed: counts.get(r.user_id) ?? 0,
+      }))
+    );
+    setLoading(false);
+  }, [groupId, sessionId]);
+
+  useEffect(() => {
+    void refresh();
+  }, [refresh]);
+
+  const removeMember = useCallback(
+    async (memberId: string) => {
+      const { error: err } = await (supabase as any)
+        .from("group_members")
+        .update({ left_at: new Date().toISOString() })
+        .eq("id", memberId);
+      if (err) throw new Error(err.message);
+      await refresh();
+    },
+    [refresh]
+  );
+
+  return { members, loading, error, refresh, removeMember };
 }
 
 export function useGroupInvite(groupId: string | undefined) {
