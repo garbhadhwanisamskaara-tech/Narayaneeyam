@@ -54,6 +54,9 @@
     --cream-dark: 40 25% 90%;
     --bookmark-gold: 42 72% 53%;
     --favourite-rose: 340 70% 55%;
+    --feather-chant: 220 75% 42%;
+    --feather-learn: 158 72% 34%;
+    --feather-podcast: 272 62% 52%;
 
     --sidebar-background: 183 100% 14%;
     --sidebar-foreground: 40 30% 97%;
@@ -95,6 +98,9 @@
     --sidebar-ring: 42 65% 55%;
     --bookmark-gold: 42 72% 58%;
     --favourite-rose: 340 70% 60%;
+    --feather-chant: 220 80% 62%;
+    --feather-learn: 158 65% 48%;
+    --feather-podcast: 272 70% 68%;
   }
 }
 

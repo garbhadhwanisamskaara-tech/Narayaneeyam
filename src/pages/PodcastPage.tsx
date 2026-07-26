@@ -10,6 +10,8 @@ import PlaylistBuilder from "@/components/PlaylistBuilder";
 import PlaylistBar from "@/components/PlaylistBar";
 import { usePlaylist, type PlaylistItem } from "@/hooks/usePlaylist";
 import SEO from "@/components/SEO";
+import { awardFeather } from "@/hooks/useFeathers";
+import { useAuth } from "@/contexts/AuthContext";
 
 type PlayMode = "single" | "playlist" | "all";
 
@@ -19,6 +21,7 @@ interface PodcastEntry {
 }
 
 export default function PodcastPage() {
+  const { user } = useAuth();
   const [currentDashakam, setCurrentDashakam] = useState(1);
   const [isPlaying, setIsPlaying] = useState(false);
   const [playMode, setPlayMode] = useState<PlayMode>("single");
@@ -121,6 +124,8 @@ export default function PodcastPage() {
 
   // Advance to next dashakam
   const advanceToNext = useCallback(() => {
+    // The current dashakam just finished playing — award a feather
+    awardFeather(user?.id, currentDashakam, "podcast");
     if (inPlaylistMode) {
       const nextLoop = playlistLoop + 1;
       const maxLoops = playlistItems![playlistIndex]?.loops ?? 1;
@@ -165,7 +170,7 @@ export default function PodcastPage() {
         setCurrentLoop(0);
       }
     }
-  }, [inPlaylistMode, playlistItems, playlistIndex, playlistLoop, playlistId, playMode, currentDashakam, loopCount, currentLoop, savePlaylistProg]);
+  }, [inPlaylistMode, playlistItems, playlistIndex, playlistLoop, playlistId, playMode, currentDashakam, loopCount, currentLoop, savePlaylistProg, user]);
 
   // Keep ref in sync
   useEffect(() => { advanceRef.current = advanceToNext; }, [advanceToNext]);

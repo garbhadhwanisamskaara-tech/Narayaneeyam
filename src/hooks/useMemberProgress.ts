@@ -3,6 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "@/hooks/use-toast";
 import { getDashakamName } from "@/hooks/useDashakam";
+import { awardFeather } from "@/hooks/useFeathers";
 
 export interface VerseStatus {
   verse_number: number;
@@ -161,6 +162,10 @@ export function useMemberProgress(mode: "chant" | "learn") {
           title: `🙏 Dashakam ${dashakamNo} complete!`,
           description: `${name} — well done.`,
         });
+
+        // Award a feather for this dashakam + mode (duplicates are a no-op)
+        awardFeather(user.id, dashakamNo, mode);
+
 
         // Update user_progress table for streak tracking
         try {

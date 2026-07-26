@@ -9,6 +9,7 @@ import { Progress } from "@/components/ui/progress";
 import ProgressRing from "@/components/ProgressRing";
 import SEO from "@/components/SEO";
 import ActiveChallengeCard from "@/components/ActiveChallengeCard";
+import FeatherShelf from "@/components/FeatherShelf";
 
 export default function DashboardPage() {
   const localProgress = getProgress();
@@ -43,6 +44,10 @@ export default function DashboardPage() {
       <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
 
         <ActiveChallengeCard />
+
+        <div className="mb-8">
+          <FeatherShelf />
+        </div>
 
         {/* Greeting */}
         <div className="mb-8">
