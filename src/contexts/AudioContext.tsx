@@ -165,9 +165,13 @@ export function AudioProvider({ children }: { children: ReactNode }) {
     async (url: string) => {
       audio.src = url;
       audio.load();
+      // load() resets playbackRate to defaultPlaybackRate — re-apply the chosen speed
+      audio.defaultPlaybackRate = rateRef.current;
+      audio.playbackRate = rateRef.current;
       setState((s) => ({ ...s, src: url, progress: 0, isPlaying: true, isPaused: false }));
       try {
         await audio.play();
+        audio.playbackRate = rateRef.current;
       } catch (e) {
         console.error("AudioEngine play error:", e);
       }
