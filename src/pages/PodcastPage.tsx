@@ -170,7 +170,7 @@ export default function PodcastPage() {
         setCurrentLoop(0);
       }
     }
-  }, [inPlaylistMode, playlistItems, playlistIndex, playlistLoop, playlistId, playMode, currentDashakam, loopCount, currentLoop, savePlaylistProg]);
+  }, [inPlaylistMode, playlistItems, playlistIndex, playlistLoop, playlistId, playMode, currentDashakam, loopCount, currentLoop, savePlaylistProg, user]);
 
   // Keep ref in sync
   useEffect(() => { advanceRef.current = advanceToNext; }, [advanceToNext]);
