@@ -11,10 +11,9 @@ import {
   Sun,
   Moon,
   LifeBuoy,
-  Info,
-  BookOpen,
   Users,
   CreditCard,
+  SlidersHorizontal,
   ChevronDown,
 } from "lucide-react";
 import { useState, useEffect } from "react";
@@ -26,6 +25,7 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 
@@ -33,8 +33,6 @@ const navItems = [
   { path: "/", label: "Home", icon: LayoutDashboard },
   { path: "/chant", label: "Chant", icon: Mic },
   { path: "/podcast", label: "Podcast", icon: Headphones },
-  { path: "/faq", label: "FAQ", icon: Info },
-  { path: "/blog", label: "Blog", icon: BookOpen },
 ];
 
 export default function Layout({ children }: { children: React.ReactNode }) {
@@ -170,6 +168,12 @@ export default function Layout({ children }: { children: React.ReactNode }) {
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end" className="min-w-[180px]">
                   <DropdownMenuItem asChild className="cursor-pointer">
+                    <Link to="/preferences">
+                      <SlidersHorizontal className="mr-2 h-4 w-4" />
+                      My Preferences
+                    </Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem asChild className="cursor-pointer">
                     <Link to="/groups">
                       <Users className="mr-2 h-4 w-4" />
                       My Groups
@@ -181,6 +185,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
                       Subscription
                     </Link>
                   </DropdownMenuItem>
+                  <DropdownMenuSeparator />
                   <DropdownMenuItem asChild className="cursor-pointer">
                     <Link to="/support">
                       <LifeBuoy className="mr-2 h-4 w-4" />
