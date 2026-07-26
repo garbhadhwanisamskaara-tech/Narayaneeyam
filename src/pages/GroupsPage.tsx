@@ -73,7 +73,7 @@ export default function GroupsPage() {
                   className="flex items-center gap-3 rounded-xl border border-border bg-card p-4 hover:border-primary"
                 >
                   <Users className="h-5 w-5 text-primary" />
-                  <span className="font-sans text-sm font-semibold text-foreground">{g.name}</span>
+                  <span className="font-sans text-sm font-semibold text-foreground">{g.group_name}</span>
                 </Link>
               </li>
             ))}
