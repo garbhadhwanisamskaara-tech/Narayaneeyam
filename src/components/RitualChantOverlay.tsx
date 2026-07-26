@@ -21,6 +21,15 @@ interface Props {
 export default function RitualChantOverlay({ chants, useLearnAudio = false, title, onComplete, speed = 1 }: Props) {
   const [currentIdx, setCurrentIdx] = useState(0);
   const audioRef = useRef<HTMLAudioElement | null>(null);
+  const speedRef = useRef(speed);
+  speedRef.current = speed;
+
+  useEffect(() => {
+    if (audioRef.current) {
+      audioRef.current.defaultPlaybackRate = speed;
+      audioRef.current.playbackRate = speed;
+    }
+  }, [speed]);
 
   const current = chants[currentIdx];
 
@@ -40,9 +49,9 @@ export default function RitualChantOverlay({ chants, useLearnAudio = false, titl
     if (audioFile) {
       const audio = new Audio(audioFile);
       audioRef.current = audio;
-      audio.defaultPlaybackRate = speed;
-      audio.playbackRate = speed;
-      audio.addEventListener("loadedmetadata", () => { audio.playbackRate = speed; });
+      audio.defaultPlaybackRate = speedRef.current;
+      audio.playbackRate = speedRef.current;
+      audio.addEventListener("loadedmetadata", () => { audio.playbackRate = speedRef.current; });
       audio.play().catch(() => {});
       audio.onended = () => advance();
       return () => { audio.pause(); audio.onended = null; };
@@ -50,7 +59,7 @@ export default function RitualChantOverlay({ chants, useLearnAudio = false, titl
       const t = setTimeout(advance, 4000);
       return () => clearTimeout(t);
     }
-  }, [currentIdx, current, useLearnAudio, speed, advance]);
+  }, [currentIdx, current, useLearnAudio, advance]);
 
   if (!current) return null;
 
