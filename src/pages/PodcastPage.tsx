@@ -121,6 +121,8 @@ export default function PodcastPage() {
 
   // Advance to next dashakam
   const advanceToNext = useCallback(() => {
+    // The current dashakam just finished playing — award a feather
+    awardFeather(user?.id, currentDashakam, "podcast");
     if (inPlaylistMode) {
       const nextLoop = playlistLoop + 1;
       const maxLoops = playlistItems![playlistIndex]?.loops ?? 1;
