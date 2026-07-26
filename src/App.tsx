@@ -8,6 +8,8 @@ import { HelmetProvider } from "react-helmet-async";
 import { SentryErrorBoundary } from "@/components/SentryErrorBoundary";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { AudioProvider } from "@/contexts/AudioContext";
+import { PreferencesProvider } from "@/contexts/PreferencesContext";
+import PreferencesPage from "./pages/PreferencesPage";
 import { prefetchDashakamList } from "@/hooks/useDashakam";
 import { queryClient } from "@/lib/queryClient";
 import Layout from "./components/Layout";
@@ -60,6 +62,7 @@ const App = () => {
   <SentryErrorBoundary>
   <HelmetProvider>
   <QueryClientProvider client={queryClient}>
+    <PreferencesProvider>
     <AudioProvider>
     <TooltipProvider>
       <Toaster />
@@ -101,6 +104,7 @@ const App = () => {
                   <Route path="/support" element={<SupportPage />} />
                   <Route path="/subscribe" element={<SubscribePage />} />
                   <Route path="/user-guide" element={<UserGuidePage />} />
+                  <Route path="/preferences" element={<PreferencesPage />} />
                   <Route path="/verify-email" element={<VerifyEmailPage />} />
                   <Route path="/trial-expired" element={<TrialExpiredPage />} />
                   <Route path="/admin/festivals" element={<AdminRoute><AdminFestivalsPage /></AdminRoute>} />
@@ -116,6 +120,7 @@ const App = () => {
       </BrowserRouter>
     </TooltipProvider>
     </AudioProvider>
+    </PreferencesProvider>
   </QueryClientProvider>
   </HelmetProvider>
   </SentryErrorBoundary>
