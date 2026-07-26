@@ -44,6 +44,10 @@ export default function DashboardPage() {
 
         <ActiveChallengeCard />
 
+        <div className="mb-8">
+          <FeatherShelf />
+        </div>
+
         {/* Greeting */}
         <div className="mb-8">
           <h1 className="font-display text-3xl font-bold text-foreground mb-1 flex items-center gap-2">
