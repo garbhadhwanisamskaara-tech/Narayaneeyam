@@ -1,12 +1,31 @@
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
-import { LayoutDashboard, Mic, Headphones, Menu, X, LogIn, LogOut, User, Sun, Moon, LifeBuoy, Info, BookOpen, ChevronDown } from "lucide-react";
+import {
+  LayoutDashboard,
+  Mic,
+  Headphones,
+  X,
+  LogIn,
+  LogOut,
+  User,
+  Sun,
+  Moon,
+  LifeBuoy,
+  Info,
+  BookOpen,
+  ChevronDown,
+} from "lucide-react";
 import { useState, useEffect } from "react";
 import logoImg from "@/assets/logo.png";
 import { useAuth } from "@/contexts/AuthContext";
 import BottomNav from "@/components/BottomNav";
 import SubscriptionBanner from "@/components/SubscriptionBanner";
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 const navItems = [
   { path: "/", label: "Home", icon: LayoutDashboard },
@@ -39,9 +58,18 @@ export default function Layout({ children }: { children: React.ReactNode }) {
     if (loading) return;
     const path = location.pathname;
     if (path === "/auth" || path === "/reset-password") return;
-    if (!user) { navigate("/", { replace: true }); return; }
-    if (!isEmailVerified && path !== "/verify-email") { navigate("/verify-email", { replace: true }); return; }
-    if (isEmailVerified && isTrialExpired && path !== "/trial-expired") { navigate("/trial-expired", { replace: true }); return; }
+    if (!user) {
+      navigate("/", { replace: true });
+      return;
+    }
+    if (!isEmailVerified && path !== "/verify-email") {
+      navigate("/verify-email", { replace: true });
+      return;
+    }
+    if (isEmailVerified && isTrialExpired && path !== "/trial-expired") {
+      navigate("/trial-expired", { replace: true });
+      return;
+    }
     if (isEmailVerified && !isTrialExpired) {
       if (path === "/verify-email" || path === "/trial-expired") navigate("/", { replace: true });
     }
@@ -49,8 +77,12 @@ export default function Layout({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     const saved = localStorage.getItem("theme");
-    if (saved === "dark") { document.documentElement.classList.add("dark"); setIsDark(true); }
-    else { document.documentElement.classList.remove("dark"); }
+    if (saved === "dark") {
+      document.documentElement.classList.add("dark");
+      setIsDark(true);
+    } else {
+      document.documentElement.classList.remove("dark");
+    }
   }, []);
 
   // Block rendering until auth state is resolved — never flash protected content
@@ -72,10 +104,18 @@ export default function Layout({ children }: { children: React.ReactNode }) {
       <header className="sticky top-0 z-50 bg-gradient-peacock shadow-peacock">
         <div className="container mx-auto flex items-center justify-between px-3 sm:px-4 py-2 lg:py-3 overflow-hidden min-w-0">
           <Link to="/" className="flex items-center gap-2 lg:gap-3 min-w-0 flex-1">
-            <img src={logoImg} alt="Narayaneeyam Logo" className="h-8 w-8 lg:h-10 lg:w-10 rounded-full object-cover flex-shrink-0 bg-transparent" />
+            <img
+              src={logoImg}
+              alt="Narayaneeyam Logo"
+              className="h-8 w-8 lg:h-10 lg:w-10 rounded-full object-cover flex-shrink-0 bg-transparent"
+            />
             <div className="min-w-0 flex-1">
-              <h1 className="font-display text-sm lg:text-lg font-semibold text-primary-foreground leading-tight truncate">Sriman Narayaneeyam</h1>
-              <p className="text-[10px] lg:text-xs text-gold-light font-sans hidden sm:block">Chant · Learn · Grow · Podcast</p>
+              <h1 className="font-display text-sm lg:text-lg font-semibold text-primary-foreground leading-tight truncate">
+                Sriman Narayaneeyam
+              </h1>
+              <p className="text-[10px] lg:text-xs text-gold-light font-sans hidden sm:block">
+                Chant · Learn · Grow · Podcast
+              </p>
             </div>
           </Link>
 
@@ -83,12 +123,19 @@ export default function Layout({ children }: { children: React.ReactNode }) {
             {navItems.map((item) => {
               const isActive = location.pathname === item.path;
               return (
-                <Link key={item.path} to={item.path}
-                  className={`relative flex items-center gap-2 px-3 py-2 text-sm font-sans transition-colors ${isActive ? "text-secondary font-semibold" : "text-primary-foreground/70 hover:text-primary-foreground"}`}>
+                <Link
+                  key={item.path}
+                  to={item.path}
+                  className={`relative flex items-center gap-2 px-3 py-2 text-sm font-sans transition-colors ${isActive ? "text-secondary font-semibold" : "text-primary-foreground/70 hover:text-primary-foreground"}`}
+                >
                   <item.icon className="h-4 w-4" />
                   {item.label}
                   {isActive && (
-                    <motion.div layoutId="nav-underline" className="absolute bottom-0 left-2 right-2 h-0.5 rounded-full bg-secondary" transition={{ type: "spring", bounce: 0.2, duration: 0.6 }} />
+                    <motion.div
+                      layoutId="nav-underline"
+                      className="absolute bottom-0 left-2 right-2 h-0.5 rounded-full bg-secondary"
+                      transition={{ type: "spring", bounce: 0.2, duration: 0.6 }}
+                    />
                   )}
                 </Link>
               );
@@ -96,24 +143,36 @@ export default function Layout({ children }: { children: React.ReactNode }) {
           </nav>
 
           <div className="hidden lg:flex items-center gap-3">
-            {user && (
-              <Link to="/support" className="flex items-center justify-center rounded-lg p-2 text-primary-foreground/70 hover:text-primary-foreground transition-colors" title="Support">
-                <LifeBuoy className="h-4 w-4" />
-              </Link>
-            )}
-            <button type="button" onClick={toggleTheme} className="flex items-center justify-center rounded-lg p-2 text-primary-foreground/70 hover:text-primary-foreground transition-colors" title={isDark ? "Morning Mode" : "Night Mode"}>
+            <button
+              type="button"
+              onClick={toggleTheme}
+              className="flex items-center justify-center rounded-lg p-2 text-primary-foreground/70 hover:text-primary-foreground transition-colors"
+              title={isDark ? "Morning Mode" : "Night Mode"}
+            >
               {isDark ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
             </button>
             {!loading && user ? (
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <button type="button" className="flex items-center gap-2 rounded-lg bg-primary-foreground/10 px-3 py-1.5 text-primary-foreground transition-colors hover:bg-primary-foreground/15" title="Account menu">
-                    <div className="flex h-7 w-7 items-center justify-center rounded-full bg-secondary text-secondary-foreground"><User className="h-4 w-4" /></div>
+                  <button
+                    type="button"
+                    className="flex items-center gap-2 rounded-lg bg-primary-foreground/10 px-3 py-1.5 text-primary-foreground transition-colors hover:bg-primary-foreground/15"
+                    title="Account menu"
+                  >
+                    <div className="flex h-7 w-7 items-center justify-center rounded-full bg-secondary text-secondary-foreground">
+                      <User className="h-4 w-4" />
+                    </div>
                     <span className="text-sm font-sans font-medium max-w-[120px] truncate">{displayName}</span>
                     <ChevronDown className="h-4 w-4 text-primary-foreground/70" />
                   </button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end" className="min-w-[180px]">
+                  <DropdownMenuItem asChild className="cursor-pointer">
+                    <Link to="/support">
+                      <LifeBuoy className="mr-2 h-4 w-4" />
+                      Support
+                    </Link>
+                  </DropdownMenuItem>
                   <DropdownMenuItem onClick={() => signOut()} className="cursor-pointer">
                     <LogOut className="mr-2 h-4 w-4" />
                     Sign Out
@@ -121,7 +180,10 @@ export default function Layout({ children }: { children: React.ReactNode }) {
                 </DropdownMenuContent>
               </DropdownMenu>
             ) : !loading ? (
-              <Link to="/auth" className="flex items-center gap-2 rounded-lg bg-secondary/90 px-4 py-2 text-sm font-sans font-semibold text-secondary-foreground hover:bg-secondary transition-colors">
+              <Link
+                to="/auth"
+                className="flex items-center gap-2 rounded-lg bg-secondary/90 px-4 py-2 text-sm font-sans font-semibold text-secondary-foreground hover:bg-secondary transition-colors"
+              >
                 <LogIn className="h-4 w-4" /> Sign In
               </Link>
             ) : null}
@@ -129,48 +191,78 @@ export default function Layout({ children }: { children: React.ReactNode }) {
 
           <div className="lg:hidden flex items-center gap-1 flex-shrink-0">
             {!loading && user && (
-              <div className="flex h-7 w-7 items-center justify-center rounded-full bg-secondary text-secondary-foreground text-xs font-bold" title={displayName}>
-                {(displayName?.[0] ?? "U").toUpperCase()}
-              </div>
+              <button
+                type="button"
+                onClick={() => setMobileOpen(!mobileOpen)}
+                className="flex h-8 w-8 items-center justify-center rounded-full bg-secondary text-secondary-foreground text-xs font-bold transition-transform"
+                title="Account menu"
+              >
+                {mobileOpen ? <X className="h-4 w-4" /> : (displayName?.[0] ?? "U").toUpperCase()}
+              </button>
             )}
-            {!loading && user && (
-              <Link to="/support" className="text-primary-foreground/70 hover:text-primary-foreground p-1.5 transition-colors" title="Support"><LifeBuoy className="h-4 w-4" /></Link>
-            )}
-            {!loading && user && (
-              <button type="button" onClick={() => signOut()} className="text-primary-foreground/70 hover:text-primary-foreground p-1.5 transition-colors" title="Sign out"><LogOut className="h-4 w-4" /></button>
-            )}
-            <button type="button" className="text-primary-foreground p-1.5" onClick={() => setMobileOpen(!mobileOpen)}>
-              {mobileOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
-            </button>
           </div>
         </div>
 
         {mobileOpen && (
-          <motion.nav initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} className="lg:hidden border-t border-primary-foreground/10 px-4 pb-4">
+          <motion.nav
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="lg:hidden border-t border-primary-foreground/10 px-4 pb-4"
+          >
             {navItems.map((item) => {
               const isActive = location.pathname === item.path;
               return (
-                <Link key={item.path} to={item.path} onClick={() => setMobileOpen(false)}
-                  className={`flex items-center gap-3 rounded-lg px-3 py-3 text-sm font-sans ${isActive ? "text-secondary font-semibold border-l-2 border-secondary" : "text-primary-foreground/70"}`}>
+                <Link
+                  key={item.path}
+                  to={item.path}
+                  onClick={() => setMobileOpen(false)}
+                  className={`flex items-center gap-3 rounded-lg px-3 py-3 text-sm font-sans ${isActive ? "text-secondary font-semibold border-l-2 border-secondary" : "text-primary-foreground/70"}`}
+                >
                   <item.icon className="h-4 w-4" /> {item.label}
                 </Link>
               );
             })}
-            <button type="button" onClick={toggleTheme} className="flex items-center gap-3 rounded-lg px-3 py-3 text-sm font-sans text-primary-foreground/70">
+            <button
+              type="button"
+              onClick={toggleTheme}
+              className="flex items-center gap-3 rounded-lg px-3 py-3 text-sm font-sans text-primary-foreground/70"
+            >
               {isDark ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
               {isDark ? "Morning Mode" : "Night Mode"}
             </button>
             <div className="mt-2 pt-2 border-t border-primary-foreground/10">
               {user ? (
-                <div className="flex items-center justify-between px-3 py-3">
-                  <div className="flex items-center gap-2">
-                    <User className="h-4 w-4 text-secondary" />
-                    <span className="text-sm font-sans text-primary-foreground">{displayName}</span>
+                <>
+                  <Link
+                    to="/support"
+                    onClick={() => setMobileOpen(false)}
+                    className="flex items-center gap-3 rounded-lg px-3 py-3 text-sm font-sans text-primary-foreground/70"
+                  >
+                    <LifeBuoy className="h-4 w-4" /> Support
+                  </Link>
+                  <div className="flex items-center justify-between px-3 py-3">
+                    <div className="flex items-center gap-2">
+                      <User className="h-4 w-4 text-secondary" />
+                      <span className="text-sm font-sans text-primary-foreground">{displayName}</span>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        void signOut();
+                        setMobileOpen(false);
+                      }}
+                      className="text-xs text-primary-foreground/60 font-sans"
+                    >
+                      Sign Out
+                    </button>
                   </div>
-                  <button type="button" onClick={() => { void signOut(); setMobileOpen(false); }} className="text-xs text-primary-foreground/60 font-sans">Sign Out</button>
-                </div>
+                </>
               ) : (
-                <Link to="/auth" onClick={() => setMobileOpen(false)} className="flex items-center gap-3 rounded-lg px-3 py-3 text-sm font-sans text-secondary">
+                <Link
+                  to="/auth"
+                  onClick={() => setMobileOpen(false)}
+                  className="flex items-center gap-3 rounded-lg px-3 py-3 text-sm font-sans text-secondary"
+                >
                   <LogIn className="h-4 w-4" /> Sign In / Sign Up
                 </Link>
               )}
