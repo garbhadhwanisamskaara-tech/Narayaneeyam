@@ -32,6 +32,10 @@ export default function AuthPage() {
   const [showResend, setShowResend] = useState(false);
   const { signIn, signUp } = useAuth();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  // Preserve the destination (e.g. a group invite) across the login round-trip.
+  const nextParam = searchParams.get("next");
+  const nextPath = nextParam && nextParam.startsWith("/") ? nextParam : "/";
   const { toast } = useToast();
 
   const handleResendConfirmation = async () => {
