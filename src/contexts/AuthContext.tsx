@@ -147,7 +147,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       ]);
       setIsAdmin(roles.isAdmin);
       setIsFounder(roles.isFounder);
-      setProfile(prof);
+      setProfile(await initialiseNewProfile(currentUser, prof));
     } else {
       setIsAdmin(false);
       setIsFounder(false);
