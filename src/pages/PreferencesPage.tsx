@@ -22,6 +22,7 @@ export default function PreferencesPage() {
   const { fontSize, setFontSize } = usePreferences();
   const { signOut, user } = useAuth();
   const [deleting, setDeleting] = useState(false);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [confirmText, setConfirmText] = useState("");
   const [currentPassword, setCurrentPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
@@ -132,6 +133,7 @@ export default function PreferencesPage() {
         const payload = await parseInvokeError(error);
         if (payload?.error === "OWNERSHIP_TRANSFER_REQUIRED" && Array.isArray(payload.groups) && payload.groups.length > 0) {
           const nextGroup: TransferGroup = payload.groups[0];
+          setDeleteDialogOpen(false);
           setTransferGroup(nextGroup);
           setDeleting(false);
           await loadMembers(nextGroup.id);
@@ -284,9 +286,10 @@ export default function PreferencesPage() {
         <p className="text-xs text-muted-foreground font-sans mb-4">
           Removing your account will sign you out and permanently remove your personal data, progress and saved places.
         </p>
-        <AlertDialog onOpenChange={(open) => { if (!open) setConfirmText(""); }}>
+        <AlertDialog open={deleteDialogOpen} onOpenChange={(open) => { setDeleteDialogOpen(open); if (!open) setConfirmText(""); }}>
           <AlertDialogTrigger asChild>
             <button
+              onClick={() => setDeleteDialogOpen(true)}
               disabled={deleting}
               className="w-full rounded-lg border border-destructive px-4 py-2.5 text-sm font-sans font-semibold text-destructive hover:bg-destructive/10 transition-colors disabled:opacity-60"
             >
@@ -313,7 +316,7 @@ export default function PreferencesPage() {
               />
             </div>
             <AlertDialogFooter>
-              <AlertDialogCancel>Cancel</AlertDialogCancel>
+              <AlertDialogCancel onClick={() => setDeleteDialogOpen(false)}>Cancel</AlertDialogCancel>
               <button
                 onClick={handleDelete}
                 disabled={confirmText !== "DELETE" || deleting}
