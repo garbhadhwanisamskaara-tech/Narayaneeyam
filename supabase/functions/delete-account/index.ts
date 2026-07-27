@@ -35,7 +35,46 @@ Deno.serve(async (req) => {
     }
 
     const admin = createClient(supabaseUrl, serviceKey);
-    const { error: deleteError } = await admin.auth.admin.deleteUser(userData.user.id);
+    const uid = userData.user.id;
+
+    // Clean up dependent rows first, children before parents,
+    // so the final auth.users delete doesn't hit a foreign key error.
+    const cleanupSteps: Array<{ label: string; run: () => Promise<{ error: any }> }> = [
+      { label: "playlist_progress", run: () => admin.from("playlist_progress").delete().eq("user_id", uid) },
+      { label: "ticket_updates", run: () => admin.from("ticket_updates").delete().eq("user_id", uid) },
+      { label: "support_tickets", run: () => admin.from("support_tickets").delete().eq("user_id", uid) },
+      { label: "group_members", run: () => admin.from("group_members").delete().eq("user_id", uid) },
+      { label: "feathers", run: () => admin.from("feathers").delete().eq("user_id", uid) },
+      { label: "user_roles", run: () => admin.from("user_roles").delete().eq("user_id", uid) },
+      { label: "push_subscriptions", run: () => admin.from("push_subscriptions").delete().eq("user_id", uid) },
+      { label: "notification_log", run: () => admin.from("notification_log").delete().eq("user_id", uid) },
+      { label: "payments", run: () => admin.from("payments").delete().eq("user_id", uid) },
+      { label: "member_progress", run: () => admin.from("member_progress").delete().eq("user_id", uid) },
+      { label: "user_progress", run: () => admin.from("user_progress").delete().eq("user_id", uid) },
+      { label: "certificates", run: () => admin.from("certificates").delete().eq("user_id", uid) },
+      { label: "challenge_sessions", run: () => admin.from("challenge_sessions").delete().eq("user_id", uid) },
+      { label: "active_sessions", run: () => admin.from("active_sessions").delete().eq("user_id", uid) },
+      { label: "app_events", run: () => admin.from("app_events").delete().eq("user_id", uid) },
+      { label: "user_playlists", run: () => admin.from("user_playlists").delete().eq("user_id", uid) },
+      {
+        label: "parayanam_schedule",
+        run: () => admin.from("parayanam_schedule").update({ assigned_user_id: null }).eq("assigned_user_id", uid),
+      },
+      { label: "profiles", run: () => admin.from("profiles").delete().eq("id", uid) },
+    ];
+
+    for (const step of cleanupSteps) {
+      const { error } = await step.run();
+      if (error) {
+        console.error(`Cleanup failed at ${step.label}:`, error.message);
+        return new Response(JSON.stringify({ error: `Failed while cleaning up ${step.label}: ${error.message}` }), {
+          status: 500,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+    }
+
+    const { error: deleteError } = await admin.auth.admin.deleteUser(uid);
     if (deleteError) throw deleteError;
 
     return new Response(JSON.stringify({ success: true }), {
