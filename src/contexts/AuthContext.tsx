@@ -177,6 +177,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [isAdmin, setIsAdmin] = useState(false);
   const [isFounder, setIsFounder] = useState(false);
   const [profile, setProfile] = useState<UserProfile | null>(null);
+  const [subscriptionPlan, setSubscriptionPlan] = useState<SubscriptionPlanSummary | null>(null);
 
   const loadUserData = async (currentUser: User | null) => {
     if (currentUser) {
@@ -186,11 +187,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       ]);
       setIsAdmin(roles.isAdmin);
       setIsFounder(roles.isFounder);
-      setProfile(await initialiseNewProfile(currentUser, prof));
+      const nextProfile = await initialiseNewProfile(currentUser, prof);
+      setProfile(nextProfile);
+      setSubscriptionPlan(await fetchPlan(nextProfile?.subscription_plan_id));
     } else {
       setIsAdmin(false);
       setIsFounder(false);
       setProfile(null);
+      setSubscriptionPlan(null);
     }
   };
 
@@ -198,8 +202,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     if (user) {
       const prof = await fetchProfile(user.id);
       setProfile(prof);
+      setSubscriptionPlan(await fetchPlan(prof?.subscription_plan_id));
     }
   };
+
 
   useEffect(() => {
     let isActive = true;
