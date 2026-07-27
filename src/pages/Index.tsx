@@ -25,33 +25,37 @@ import FestivalReminder from "@/components/FestivalReminder";
 import { supabase } from "@/integrations/supabase/client";
 import SEO from "@/components/SEO";
 
-const mainFeatures = [
-  { path: "/chant", icon: Mic, title: "Chant with Me", desc: "Chant along with synchronized text highlighting" },
-  { path: "/podcast", icon: Headphones, title: "Podcast", desc: "Listen to dashakams in the background" },
-];
-
-const moreFeatures = [
-  {
-    path: "/script",
-    icon: FileText,
-    title: "Script Library",
-    desc: "View slokas in multiple scripts with transliteration",
-  },
-  { path: "/saved-places", icon: Bookmark, title: "Bookmarks", desc: "Your saved verses for quick access" },
-  { path: "/heart-shelf", icon: Heart, title: "Favourites", desc: "Slokas close to your heart" },
-  {
-    path: "/groups",
-    icon: Users,
-    title: "My Groups",
-    desc: "Chant together, become an Achaarya, and see your group's Garden",
-  },
-  { path: "/subscribe", icon: Crown, title: "Subscription", desc: "View your plan, upgrade, or renew" },
-  { path: "/blog", icon: Newspaper, title: "Blog", desc: "Stories and guides for your Narayaneeyam journey" },
-  { path: "/faq", icon: HelpCircle, title: "FAQ", desc: "Answers to common questions" },
-  { path: "/user-guide", icon: Settings, title: "Settings & Guide", desc: "App guide and preferences" },
-];
-
 export default function Index() {
+  // Defined inside the component so icon components are referenced at render
+  // time (module-level references can hit a TDZ ReferenceError when the chunk
+  // graph initialises out of order in production builds).
+  const mainFeatures = [
+    { path: "/chant", icon: Mic, title: "Chant with Me", desc: "Chant along with synchronized text highlighting" },
+    { path: "/podcast", icon: Headphones, title: "Podcast", desc: "Listen to dashakams in the background" },
+  ];
+
+  const moreFeatures = [
+    {
+      path: "/script",
+      icon: FileText,
+      title: "Script Library",
+      desc: "View slokas in multiple scripts with transliteration",
+    },
+    { path: "/saved-places", icon: Bookmark, title: "Bookmarks", desc: "Your saved verses for quick access" },
+    { path: "/heart-shelf", icon: Heart, title: "Favourites", desc: "Slokas close to your heart" },
+    {
+      path: "/groups",
+      icon: Users,
+      title: "My Groups",
+      desc: "Chant together, become an Achaarya, and see your group's Garden",
+    },
+    { path: "/subscribe", icon: Crown, title: "Subscription", desc: "View your plan, upgrade, or renew" },
+    { path: "/blog", icon: Newspaper, title: "Blog", desc: "Stories and guides for your Narayaneeyam journey" },
+    { path: "/faq", icon: HelpCircle, title: "FAQ", desc: "Answers to common questions" },
+    { path: "/user-guide", icon: Settings, title: "Settings & Guide", desc: "App guide and preferences" },
+  ];
+
+
   const progress = getProgress();
   const [showAbout, setShowAbout] = useState(false);
   const [showMore, setShowMore] = useState(false);
