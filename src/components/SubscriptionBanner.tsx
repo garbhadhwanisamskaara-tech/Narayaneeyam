@@ -10,14 +10,19 @@ function daysUntil(dateStr: string) {
 
 export default function SubscriptionBanner() {
   const { user, loading, isTrialActive, isTrialExpired, trialExpiresAt, profile } = useAuth();
-  const { subscription, isActive, daysRemaining } = useSubscription();
 
   if (!user || loading) return null;
 
   // Paid subscription — remind to renew 10 days before it ends.
   if (profile && profile.subscription_status && profile.subscription_status !== "trial") {
-    if (isActive && subscription?.expires_at && daysRemaining <= REMINDER_WINDOW_DAYS) {
-
+    const endsAt = profile.subscription_end;
+    const daysRemaining = endsAt ? daysUntil(endsAt) : null;
+    if (
+      profile.subscription_status === "active" &&
+      daysRemaining !== null &&
+      daysRemaining >= 0 &&
+      daysRemaining <= REMINDER_WINDOW_DAYS
+    ) {
       return (
         <div className="bg-amber-50 dark:bg-amber-900/20 border-b border-amber-200 dark:border-amber-800 px-4 py-2 flex items-center justify-center gap-3 text-xs font-sans text-foreground">
           <span>
@@ -35,6 +40,7 @@ export default function SubscriptionBanner() {
     }
     return null;
   }
+
 
   if (isTrialActive && trialExpiresAt) {
     const left = daysUntil(trialExpiresAt);
