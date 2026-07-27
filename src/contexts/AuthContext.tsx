@@ -9,7 +9,11 @@ import type { User, Session } from "@supabase/supabase-js";
 interface UserProfile {
   plan: string;
   trial_expires_at: string | null;
+  preferred_script_language?: string | null;
+  preferred_translation_language?: string | null;
 }
+
+const TRIAL_DAYS = 30;
 
 interface AuthContextType {
   user: User | null;
