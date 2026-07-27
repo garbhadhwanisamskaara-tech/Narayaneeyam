@@ -2,52 +2,54 @@ import { useState, useEffect, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 
+/**
+ * Current subscription state comes from `profiles`
+ * (subscription_plan_id / subscription_status / subscription_start / subscription_end);
+ * plan metadata comes from `subscription_plans`.
+ */
 export interface Subscription {
-  id: string;
-  user_id: string;
-  tier: string;
-  status: string;
-  started_at: string;
-  expires_at: string;
-  notes?: string;
+  plan_id: string | null;
+  /** plan_key of the linked subscription plan, when available. */
+  tier: string | null;
+  status: string | null;
+  started_at: string | null;
+  expires_at: string | null;
 }
 
 export function useSubscription() {
-  const { user } = useAuth();
-  const [subscription, setSubscription] = useState<Subscription | null>(null);
-  const [loading, setLoading] = useState(true);
+  const { user, profile, subscriptionPlan, loading: authLoading } = useAuth();
   const [hasUsedTrial, setHasUsedTrial] = useState(false);
+  const [checkingTrial, setCheckingTrial] = useState(true);
 
-  const fetchSubscription = useCallback(async () => {
+  const fetchTrialHistory = useCallback(async () => {
     if (!user) {
-      setSubscription(null);
-      setLoading(false);
+      setHasUsedTrial(false);
+      setCheckingTrial(false);
       return;
     }
     try {
-      const { data } = await supabase
-        .from("subscriptions")
-        .select("*")
-        .eq("user_id", user.id)
-        .order("created_at", { ascending: false })
-        .limit(1);
-
-      const sub = data?.[0] ?? null;
-      setSubscription(sub);
-
-      // Check if user ever had a trial
-      const { data: trialData } = await supabase.rpc("has_used_trial", { _user_id: user.id });
-      setHasUsedTrial(!!trialData);
+      const { data } = await supabase.rpc("has_used_trial", { _user_id: user.id });
+      setHasUsedTrial(!!data);
     } catch {
-      setSubscription(null);
+      setHasUsedTrial(false);
     } finally {
-      setLoading(false);
+      setCheckingTrial(false);
     }
   }, [user]);
 
   useEffect(() => {
-    fetchSubscription();
-  }, [fetchSubscription]);
+    fetchTrialHistory();
+  }, [fetchTrialHistory]);
+
+  const subscription: Subscription | null = profile
+    ? {
+        plan_id: profile.subscription_plan_id,
+        tier: subscriptionPlan?.plan_key ?? null,
+        status: profile.subscription_status,
+        started_at: profile.subscription_start,
+        expires_at: profile.subscription_end,
+      }
+    : null;
 
   const daysRemaining = subscription?.expires_at
     ? Math.max(0, Math.ceil((new Date(subscription.expires_at).getTime() - Date.now()) / 86400000))
@@ -56,12 +58,14 @@ export function useSubscription() {
   const isTrialActive = subscription?.status === "trial" && daysRemaining > 0;
   const isTrialExpired = subscription?.status === "trial" && daysRemaining <= 0;
   const isActive = subscription?.status === "active" && daysRemaining > 0;
-  const isExpired = (subscription?.status === "active" || subscription?.status === "expired") && daysRemaining <= 0;
+  const isExpired =
+    (subscription?.status === "active" || subscription?.status === "expired") && daysRemaining <= 0;
   const isPaused = subscription?.status === "paused";
 
   return {
     subscription,
-    loading,
+    plan: subscriptionPlan,
+    loading: authLoading || checkingTrial,
     daysRemaining,
     isTrialActive,
     isTrialExpired,
@@ -69,6 +73,6 @@ export function useSubscription() {
     isExpired,
     isPaused,
     hasUsedTrial,
-    refetch: fetchSubscription,
+    refetch: fetchTrialHistory,
   };
 }
