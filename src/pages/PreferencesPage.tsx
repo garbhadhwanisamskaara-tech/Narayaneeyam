@@ -325,6 +325,70 @@ export default function PreferencesPage() {
           </AlertDialogContent>
         </AlertDialog>
       </section>
+
+      <AlertDialog open={!!transferGroup} onOpenChange={(open) => { if (!open) cancelTransfer(); }}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Transfer Group Ownership</AlertDialogTitle>
+            <AlertDialogDescription>
+              You own “{transferGroup?.group_name}”, which still has other members. Please pass ownership to a member
+              before your account is removed.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+
+          {loadingMembers ? (
+            <p className="text-sm text-muted-foreground font-sans">Loading members…</p>
+          ) : (
+            <div className="space-y-2 max-h-64 overflow-y-auto">
+              {members.map((m) => (
+                <label
+                  key={m.user_id}
+                  className="flex items-start gap-3 rounded-lg border border-border p-3 cursor-pointer hover:bg-muted"
+                >
+                  <input
+                    type="radio"
+                    name="new-owner"
+                    className="mt-1"
+                    value={m.user_id}
+                    checked={selectedMemberId === m.user_id}
+                    onChange={() => setSelectedMemberId(m.user_id)}
+                  />
+                  <span className="min-w-0">
+                    <span className="block text-sm font-sans text-foreground">{m.display_name}</span>
+                    <span className="block text-xs font-sans text-muted-foreground break-all">
+                      {m.email ?? "email not available"}
+                    </span>
+                  </span>
+                </label>
+              ))}
+            </div>
+          )}
+
+          {members.length > 0 && (
+            <p className="text-xs font-sans text-muted-foreground">
+              If you don't choose, we'll transfer ownership to {members[0].display_name}, who has been in this group the
+              longest.
+            </p>
+          )}
+
+          <AlertDialogFooter>
+            <button
+              onClick={cancelTransfer}
+              className="rounded-md border border-border px-4 py-2 text-sm font-sans font-semibold text-foreground hover:bg-muted"
+            >
+              Cancel
+            </button>
+            <button
+              onClick={handleTransfer}
+              disabled={transferring || loadingMembers || members.length === 0}
+              className="rounded-md bg-primary px-4 py-2 text-sm font-sans font-semibold text-primary-foreground hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {transferring ? "Transferring…" : "Transfer & Continue"}
+            </button>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
+
   );
 }
