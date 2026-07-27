@@ -6,14 +6,32 @@ import { queryClient } from "@/lib/queryClient";
 
 import type { User, Session } from "@supabase/supabase-js";
 
+export interface SubscriptionPlanSummary {
+  id: string;
+  plan_key: string;
+  display_name: string;
+  duration_label: string | null;
+  duration_days: number | null;
+  price_inr: number | null;
+  is_trial: boolean;
+  features: string[] | null;
+}
+
 interface UserProfile {
-  plan: string;
-  trial_expires_at: string | null;
+  subscription_plan_id: string | null;
+  subscription_status: string | null;
+  subscription_start: string | null;
+  subscription_end: string | null;
   preferred_script_language?: string | null;
   preferred_translation_language?: string | null;
 }
 
 const TRIAL_DAYS = 30;
+
+/** A user is on the free trial when their subscription state says so. */
+function isTrialStatus(status: string | null | undefined) {
+  return !status || status === "trial";
+}
 
 interface AuthContextType {
   user: User | null;
@@ -27,6 +45,7 @@ interface AuthContextType {
   isTrialExpired: boolean;
   trialExpiresAt: string | null;
   profile: UserProfile | null;
+  subscriptionPlan: SubscriptionPlanSummary | null;
   signUp: (
     email: string,
     password: string,
@@ -61,10 +80,27 @@ async function fetchProfile(userId: string): Promise<UserProfile | null> {
   try {
     const { data } = await supabase
       .from("profiles")
-      .select("plan, trial_expires_at, preferred_script_language, preferred_translation_language")
+      .select(
+        "subscription_plan_id, subscription_status, subscription_start, subscription_end, preferred_script_language, preferred_translation_language",
+      )
       .eq("id", userId)
       .maybeSingle();
     return (data as UserProfile) ?? null;
+  } catch {
+    return null;
+  }
+}
+
+/** Plan metadata always comes from subscription_plans, never from profiles. */
+async function fetchPlan(planId: string | null | undefined): Promise<SubscriptionPlanSummary | null> {
+  if (!planId) return null;
+  try {
+    const { data } = await supabase
+      .from("subscription_plans")
+      .select("id, plan_key, display_name, duration_label, duration_days, price_inr, is_trial, features")
+      .eq("id", planId)
+      .maybeSingle();
+    return (data as SubscriptionPlanSummary) ?? null;
   } catch {
     return null;
   }
@@ -88,16 +124,18 @@ async function initialiseNewProfile(user: User, prof: UserProfile | null): Promi
   }
 
   // One month free trial counted from account creation, applied once.
-  if (prof.plan === "trial" && meta.trial_initialised !== "1" && user.created_at) {
+  if (isTrialStatus(prof.subscription_status) && !prof.subscription_end && meta.trial_initialised !== "1" && user.created_at) {
     const start = new Date(user.created_at).getTime();
-    patch.trial_expires_at = new Date(start + TRIAL_DAYS * 86400000).toISOString();
+    patch.subscription_status = "trial";
+    patch.subscription_start = new Date(start).toISOString();
+    patch.subscription_end = new Date(start + TRIAL_DAYS * 86400000).toISOString();
   }
 
   if (Object.keys(patch).length === 0) return prof;
 
   try {
     await supabase.from("profiles").update(patch).eq("id", user.id);
-    if (patch.trial_expires_at) {
+    if (patch.subscription_end) {
       await supabase.auth.updateUser({ data: { trial_initialised: "1" } });
     }
   } catch {
@@ -106,6 +144,7 @@ async function initialiseNewProfile(user: User, prof: UserProfile | null): Promi
 
   return { ...prof, ...patch } as UserProfile;
 }
+
 
 
 function clearStoredAuthTokens(storage: Storage | undefined) {
