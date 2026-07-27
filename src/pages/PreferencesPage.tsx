@@ -70,12 +70,70 @@ export default function PreferencesPage() {
   };
 
 
-  const handleDelete = async () => {
-    if (confirmText !== "DELETE") return;
+  type TransferGroup = { id: string; group_name: string };
+  type TransferMember = { user_id: string; display_name: string; email: string | null };
+
+  const parseInvokeError = async (error: unknown): Promise<any> => {
+    const ctx = (error as any)?.context;
+    if (ctx && typeof ctx.json === "function") {
+      try {
+        return await ctx.json();
+      } catch {
+        return null;
+      }
+    }
+    return null;
+  };
+
+  const loadMembers = async (groupId: string) => {
+    setLoadingMembers(true);
+    setMembers([]);
+    setSelectedMemberId("");
+    const { data: rows, error } = await supabase
+      .from("group_members")
+      .select("user_id, joined_at")
+      .eq("group_id", groupId)
+      .neq("user_id", user?.id ?? "")
+      .order("joined_at", { ascending: true });
+    if (error) {
+      setLoadingMembers(false);
+      toast({ title: "Could not load members", description: error.message, variant: "destructive" });
+      return;
+    }
+    const ids = (rows ?? []).map((r: any) => r.user_id);
+    let profilesById = new Map<string, { display_name: string | null; email: string | null }>();
+    if (ids.length > 0) {
+      const { data: profiles } = await supabase
+        .from("profiles")
+        .select("id, display_name, email")
+        .in("id", ids);
+      profilesById = new Map((profiles ?? []).map((p: any) => [p.id, p]));
+    }
+    setMembers(
+      (rows ?? []).map((r: any) => ({
+        user_id: r.user_id,
+        display_name: profilesById.get(r.user_id)?.display_name || "Unnamed member",
+        email: profilesById.get(r.user_id)?.email ?? null,
+      })),
+    );
+    setLoadingMembers(false);
+  };
+
+  const attemptDelete = async (): Promise<void> => {
     setDeleting(true);
     try {
       const { error } = await supabase.functions.invoke("delete-account");
-      if (error) throw error;
+      if (error) {
+        const payload = await parseInvokeError(error);
+        if (payload?.error === "OWNERSHIP_TRANSFER_REQUIRED" && Array.isArray(payload.groups) && payload.groups.length > 0) {
+          const nextGroup: TransferGroup = payload.groups[0];
+          setTransferGroup(nextGroup);
+          setDeleting(false);
+          await loadMembers(nextGroup.id);
+          return;
+        }
+        throw new Error(payload?.error || error.message);
+      }
       toast({ title: "Account removed", description: "Your account and data have been permanently removed." });
       await signOut();
     } catch (e) {
@@ -88,6 +146,46 @@ export default function PreferencesPage() {
       setDeleting(false);
     }
   };
+
+  const handleDelete = async () => {
+    if (confirmText !== "DELETE") return;
+    await attemptDelete();
+  };
+
+  const handleTransfer = async () => {
+    if (!transferGroup) return;
+    setTransferring(true);
+    try {
+      const body: Record<string, string> = { group_id: transferGroup.id };
+      if (selectedMemberId) body.new_owner_id = selectedMemberId;
+      const { error } = await supabase.functions.invoke("transfer-group-ownership", { body });
+      if (error) {
+        const payload = await parseInvokeError(error);
+        throw new Error(payload?.error || error.message);
+      }
+      setTransferring(false);
+      setTransferGroup(null);
+      setMembers([]);
+      setSelectedMemberId("");
+      await attemptDelete();
+    } catch (e) {
+      setTransferring(false);
+      toast({
+        title: "Could not transfer ownership",
+        description: e instanceof Error ? e.message : "Please try again.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const cancelTransfer = () => {
+    setTransferGroup(null);
+    setMembers([]);
+    setSelectedMemberId("");
+    setDeleting(false);
+    setConfirmText("");
+  };
+
 
   return (
     <div className="container mx-auto px-4 py-8 max-w-2xl">
