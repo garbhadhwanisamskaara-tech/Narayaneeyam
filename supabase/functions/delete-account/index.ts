@@ -60,12 +60,76 @@ Deno.serve(async (req) => {
         label: "parayanam_schedule",
         run: () => admin.from("parayanam_schedule").update({ assigned_user_id: null }).eq("assigned_user_id", uid),
       },
+      {
+        // Groups this user owns are only safe to auto-delete if they're the SOLE member.
+        // If other members exist, deletion must be blocked — ownership has to be
+        // transferred first via the transfer-group-ownership function.
+        label: "owned_groups",
+        run: async () => {
+          const { data: ownedGroups, error: fetchErr } = await admin
+            .from("groups")
+            .select("id, group_name")
+            .eq("owner_id", uid);
+          if (fetchErr) return { error: fetchErr };
+
+          const blocking: Array<{ id: string; group_name: string }> = [];
+          const soloGroupIds: string[] = [];
+
+          for (const g of ownedGroups ?? []) {
+            const { count, error: countErr } = await admin
+              .from("group_members")
+              .select("id", { count: "exact", head: true })
+              .eq("group_id", g.id)
+              .neq("user_id", uid);
+            if (countErr) return { error: countErr };
+            if ((count ?? 0) > 0) {
+              blocking.push(g);
+            } else {
+              soloGroupIds.push(g.id);
+            }
+          }
+
+          if (blocking.length > 0) {
+            return {
+              error: {
+                message: "OWNERSHIP_TRANSFER_REQUIRED",
+                groups: blocking,
+              },
+            };
+          }
+
+          if (soloGroupIds.length > 0) {
+            const { error: invitesErr } = await admin.from("group_invites").delete().in("group_id", soloGroupIds);
+            if (invitesErr) return { error: invitesErr };
+            const { error: membersErr } = await admin.from("group_members").delete().in("group_id", soloGroupIds);
+            if (membersErr) return { error: membersErr };
+            const { error: groupsErr } = await admin.from("groups").delete().in("id", soloGroupIds);
+            if (groupsErr) return { error: groupsErr };
+          }
+
+          return { error: null };
+        },
+      },
+      { label: "group_invites_created", run: () => admin.from("group_invites").delete().eq("created_by", uid) },
+      {
+        label: "dashakam_sets",
+        run: () => admin.from("dashakam_sets").update({ created_by: null }).eq("created_by", uid),
+      },
       { label: "profiles", run: () => admin.from("profiles").delete().eq("id", uid) },
     ];
 
     for (const step of cleanupSteps) {
       const { error } = await step.run();
       if (error) {
+        if ((error as any).message === "OWNERSHIP_TRANSFER_REQUIRED") {
+          return new Response(
+            JSON.stringify({
+              error: "OWNERSHIP_TRANSFER_REQUIRED",
+              groups: (error as any).groups,
+            }),
+            { status: 409, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+          );
+        }
         console.error(`Cleanup failed at ${step.label}:`, error.message);
         return new Response(JSON.stringify({ error: `Failed while cleaning up ${step.label}: ${error.message}` }), {
           status: 500,
