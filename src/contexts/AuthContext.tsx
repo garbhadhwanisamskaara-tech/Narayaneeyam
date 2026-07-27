@@ -209,13 +209,24 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     ? new Date(trialExpiresAt).getTime() <= Date.now()
     : false;
 
-  const signUp = async (email: string, password: string, name: string) => {
+  const signUp = async (
+    email: string,
+    password: string,
+    name: string,
+    prefs?: { scriptLanguage?: string | null; translationLanguage?: string | null },
+  ) => {
     return trackSpan("auth.signUp", "auth", async () => {
       const { error } = await supabase.auth.signUp({
         email,
         password,
         options: {
-          data: { display_name: name },
+          data: {
+            display_name: name,
+            ...(prefs?.scriptLanguage ? { preferred_script_language: prefs.scriptLanguage } : {}),
+            ...(prefs?.translationLanguage
+              ? { preferred_translation_language: prefs.translationLanguage }
+              : {}),
+          },
           emailRedirectTo: window.location.origin,
         },
       });
