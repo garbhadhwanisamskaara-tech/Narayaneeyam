@@ -286,9 +286,10 @@ export default function PreferencesPage() {
         <p className="text-xs text-muted-foreground font-sans mb-4">
           Removing your account will sign you out and permanently remove your personal data, progress and saved places.
         </p>
-        <AlertDialog onOpenChange={(open) => { if (!open) setConfirmText(""); }}>
+        <AlertDialog open={deleteDialogOpen} onOpenChange={(open) => { setDeleteDialogOpen(open); if (!open) setConfirmText(""); }}>
           <AlertDialogTrigger asChild>
             <button
+              onClick={() => setDeleteDialogOpen(true)}
               disabled={deleting}
               className="w-full rounded-lg border border-destructive px-4 py-2.5 text-sm font-sans font-semibold text-destructive hover:bg-destructive/10 transition-colors disabled:opacity-60"
             >
@@ -315,7 +316,7 @@ export default function PreferencesPage() {
               />
             </div>
             <AlertDialogFooter>
-              <AlertDialogCancel>Cancel</AlertDialogCancel>
+              <AlertDialogCancel onClick={() => setDeleteDialogOpen(false)}>Cancel</AlertDialogCancel>
               <button
                 onClick={handleDelete}
                 disabled={confirmText !== "DELETE" || deleting}
