@@ -27,6 +27,11 @@ export default function PreferencesPage() {
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [savingPassword, setSavingPassword] = useState(false);
+  const [transferGroup, setTransferGroup] = useState<{ id: string; group_name: string } | null>(null);
+  const [members, setMembers] = useState<{ user_id: string; display_name: string; email: string | null }[]>([]);
+  const [selectedMemberId, setSelectedMemberId] = useState("");
+  const [loadingMembers, setLoadingMembers] = useState(false);
+  const [transferring, setTransferring] = useState(false);
 
   const handleChangePassword = async (e: React.FormEvent) => {
     e.preventDefault();
