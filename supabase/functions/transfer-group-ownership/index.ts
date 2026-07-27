@@ -80,8 +80,43 @@ Deno.serve(async (req) => {
       .eq("owner_id", uid);
     if (updateErr) return json({ error: updateErr.message }, 500);
 
-    // Best-effort role bump; ignore failures if the column/role isn't present.
+    // Keep group_members.role in sync on both sides:
+    // new owner becomes "owner", old owner steps down to "member".
     await admin.from("group_members").update({ role: "owner" }).eq("group_id", groupId).eq("user_id", newOwnerId);
+    await admin.from("group_members").update({ role: "member" }).eq("group_id", groupId).eq("user_id", uid);
+
+    // Look up display names for the notification text.
+    const { data: profileRows, error: profilesErr } = await admin
+      .from("profiles")
+      .select("id, display_name")
+      .in("id", [uid, newOwnerId]);
+    if (profilesErr) console.error("Could not fetch names for notification text:", profilesErr.message);
+
+    const nameById = new Map(
+      (profileRows ?? []).map((p: { id: string; display_name: string | null }) => [p.id, p.display_name || "A member"])
+    );
+    const oldOwnerName = nameById.get(uid) ?? "A member";
+    const newOwnerName = nameById.get(newOwnerId) ?? "A member";
+
+    // Queue a notification for old owner, new owner, and every remaining member.
+    // dispatch-notifications drains notification_queue on its regular run.
+    const allMemberIds = [uid, ...eligible.map((m) => m.user_id)];
+    const queueRows = allMemberIds.map((memberId) => ({
+      user_id: memberId,
+      notification_type: "group_ownership_transferred",
+      status: "pending",
+      template_vars: {
+        group_id: group.id,
+        group_name: group.group_name,
+        old_owner_name: oldOwnerName,
+        new_owner_name: newOwnerName,
+      },
+    }));
+    const { error: notifyErr } = await admin.from("notification_queue").insert(queueRows);
+    if (notifyErr) {
+      // Don't fail the whole transfer just because notifications couldn't be queued.
+      console.error("Failed to queue ownership-transfer notifications:", notifyErr.message);
+    }
 
     return json({ success: true, group_id: groupId, new_owner_id: newOwnerId });
   } catch (e) {
