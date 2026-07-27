@@ -62,13 +62,13 @@ const App = () => {
   <SentryErrorBoundary>
   <HelmetProvider>
   <QueryClientProvider client={queryClient}>
+    <AuthProvider>
     <PreferencesProvider>
     <AudioProvider>
     <TooltipProvider>
       <Toaster />
       <Sonner />
       <BrowserRouter>
-        <AuthProvider>
           <Routes>
             <Route path="/" element={<HomeGate />} />
             <Route path="/auth" element={<AuthPage />} />
