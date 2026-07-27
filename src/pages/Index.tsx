@@ -21,6 +21,7 @@ import {
 import { getProgress } from "@/lib/progress";
 import heroBg from "@/assets/hero-bg.jpg";
 import FestivalBanner from "@/components/FestivalBanner";
+import FestivalReminder from "@/components/FestivalReminder";
 import { supabase } from "@/integrations/supabase/client";
 import SEO from "@/components/SEO";
 
@@ -149,6 +150,7 @@ export default function Index() {
       </section>
 
       <section className="container mx-auto px-4 -mt-4 relative z-20">
+        <FestivalReminder />
         <FestivalBanner />
       </section>
 

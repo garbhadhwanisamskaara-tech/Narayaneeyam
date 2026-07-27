@@ -9,6 +9,14 @@ import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
 import logoImg from "@/assets/logo.png";
 import SEO from "@/components/SEO";
+import { useActiveLanguages } from "@/hooks/useActiveLanguages";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 type Mode = "signin" | "signup" | "forgot";
 
@@ -17,6 +25,9 @@ export default function AuthPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [name, setName] = useState("");
+  const [scriptLang, setScriptLang] = useState("");
+  const [translationLang, setTranslationLang] = useState("");
+  const languages = useActiveLanguages();
   const [loading, setLoading] = useState(false);
   const [showResend, setShowResend] = useState(false);
   const { signIn, signUp } = useAuth();
@@ -56,7 +67,10 @@ export default function AuthPage() {
         setMode("signin");
       }
     } else if (mode === "signup") {
-      const { error } = await signUp(email, password, name);
+      const { error } = await signUp(email, password, name, {
+        scriptLanguage: scriptLang || null,
+        translationLanguage: translationLang || null,
+      });
       if (error) {
         toast({ title: "Sign up failed", description: error.message, variant: "destructive" });
       } else {
@@ -114,6 +128,40 @@ export default function AuthPage() {
               <div className="relative">
                 <User className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
                 <Input placeholder="Your name" value={name} onChange={(e) => setName(e.target.value)} className="pl-10" required />
+              </div>
+            )}
+            {mode === "signup" && (
+              <div className="grid gap-3 sm:grid-cols-2">
+                <div className="space-y-1">
+                  <label className="text-xs font-sans text-muted-foreground">
+                    Preferred language for lyrics
+                  </label>
+                  <Select value={scriptLang} onValueChange={setScriptLang}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Choose…" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {languages.map((l) => (
+                        <SelectItem key={l.value} value={l.value}>{l.label}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-1">
+                  <label className="text-xs font-sans text-muted-foreground">
+                    Preferred language for translation
+                  </label>
+                  <Select value={translationLang} onValueChange={setTranslationLang}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Choose…" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {languages.map((l) => (
+                        <SelectItem key={l.value} value={l.value}>{l.label}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
               </div>
             )}
             <div className="relative">

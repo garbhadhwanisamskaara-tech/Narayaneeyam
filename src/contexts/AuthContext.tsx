@@ -9,7 +9,11 @@ import type { User, Session } from "@supabase/supabase-js";
 interface UserProfile {
   plan: string;
   trial_expires_at: string | null;
+  preferred_script_language?: string | null;
+  preferred_translation_language?: string | null;
 }
+
+const TRIAL_DAYS = 30;
 
 interface AuthContextType {
   user: User | null;
@@ -23,7 +27,12 @@ interface AuthContextType {
   isTrialExpired: boolean;
   trialExpiresAt: string | null;
   profile: UserProfile | null;
-  signUp: (email: string, password: string, name: string) => Promise<{ error: Error | null }>;
+  signUp: (
+    email: string,
+    password: string,
+    name: string,
+    prefs?: { scriptLanguage?: string | null; translationLanguage?: string | null },
+  ) => Promise<{ error: Error | null }>;
   signIn: (email: string, password: string) => Promise<{ error: Error | null }>;
   signInWithPhone: (phone: string) => Promise<{ error: Error | null }>;
   verifyPhoneOtp: (phone: string, token: string, name?: string) => Promise<{ error: Error | null }>;
@@ -52,14 +61,52 @@ async function fetchProfile(userId: string): Promise<UserProfile | null> {
   try {
     const { data } = await supabase
       .from("profiles")
-      .select("plan, trial_expires_at")
+      .select("plan, trial_expires_at, preferred_script_language, preferred_translation_language")
       .eq("id", userId)
       .maybeSingle();
-    return data ?? null;
+    return (data as UserProfile) ?? null;
   } catch {
     return null;
   }
 }
+
+/**
+ * First-login initialisation: copy the language preferences chosen at sign-up
+ * into the profile row, and start the 1-month free trial from the sign-up date.
+ */
+async function initialiseNewProfile(user: User, prof: UserProfile | null): Promise<UserProfile | null> {
+  if (!prof) return prof;
+
+  const meta = (user.user_metadata ?? {}) as Record<string, string | undefined>;
+  const patch: Record<string, string> = {};
+
+  if (!prof.preferred_script_language && meta.preferred_script_language) {
+    patch.preferred_script_language = meta.preferred_script_language;
+  }
+  if (!prof.preferred_translation_language && meta.preferred_translation_language) {
+    patch.preferred_translation_language = meta.preferred_translation_language;
+  }
+
+  // One month free trial counted from account creation, applied once.
+  if (prof.plan === "trial" && meta.trial_initialised !== "1" && user.created_at) {
+    const start = new Date(user.created_at).getTime();
+    patch.trial_expires_at = new Date(start + TRIAL_DAYS * 86400000).toISOString();
+  }
+
+  if (Object.keys(patch).length === 0) return prof;
+
+  try {
+    await supabase.from("profiles").update(patch).eq("id", user.id);
+    if (patch.trial_expires_at) {
+      await supabase.auth.updateUser({ data: { trial_initialised: "1" } });
+    }
+  } catch {
+    return prof;
+  }
+
+  return { ...prof, ...patch } as UserProfile;
+}
+
 
 function clearStoredAuthTokens(storage: Storage | undefined) {
   if (!storage) return;
@@ -100,7 +147,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       ]);
       setIsAdmin(roles.isAdmin);
       setIsFounder(roles.isFounder);
-      setProfile(prof);
+      setProfile(await initialiseNewProfile(currentUser, prof));
     } else {
       setIsAdmin(false);
       setIsFounder(false);
@@ -162,13 +209,24 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     ? new Date(trialExpiresAt).getTime() <= Date.now()
     : false;
 
-  const signUp = async (email: string, password: string, name: string) => {
+  const signUp = async (
+    email: string,
+    password: string,
+    name: string,
+    prefs?: { scriptLanguage?: string | null; translationLanguage?: string | null },
+  ) => {
     return trackSpan("auth.signUp", "auth", async () => {
       const { error } = await supabase.auth.signUp({
         email,
         password,
         options: {
-          data: { display_name: name },
+          data: {
+            display_name: name,
+            ...(prefs?.scriptLanguage ? { preferred_script_language: prefs.scriptLanguage } : {}),
+            ...(prefs?.translationLanguage
+              ? { preferred_translation_language: prefs.translationLanguage }
+              : {}),
+          },
           emailRedirectTo: window.location.origin,
         },
       });
