@@ -61,14 +61,52 @@ async function fetchProfile(userId: string): Promise<UserProfile | null> {
   try {
     const { data } = await supabase
       .from("profiles")
-      .select("plan, trial_expires_at")
+      .select("plan, trial_expires_at, preferred_script_language, preferred_translation_language")
       .eq("id", userId)
       .maybeSingle();
-    return data ?? null;
+    return (data as UserProfile) ?? null;
   } catch {
     return null;
   }
 }
+
+/**
+ * First-login initialisation: copy the language preferences chosen at sign-up
+ * into the profile row, and start the 1-month free trial from the sign-up date.
+ */
+async function initialiseNewProfile(user: User, prof: UserProfile | null): Promise<UserProfile | null> {
+  if (!prof) return prof;
+
+  const meta = (user.user_metadata ?? {}) as Record<string, string | undefined>;
+  const patch: Record<string, string> = {};
+
+  if (!prof.preferred_script_language && meta.preferred_script_language) {
+    patch.preferred_script_language = meta.preferred_script_language;
+  }
+  if (!prof.preferred_translation_language && meta.preferred_translation_language) {
+    patch.preferred_translation_language = meta.preferred_translation_language;
+  }
+
+  // One month free trial counted from account creation, applied once.
+  if (prof.plan === "trial" && meta.trial_initialised !== "1" && user.created_at) {
+    const start = new Date(user.created_at).getTime();
+    patch.trial_expires_at = new Date(start + TRIAL_DAYS * 86400000).toISOString();
+  }
+
+  if (Object.keys(patch).length === 0) return prof;
+
+  try {
+    await supabase.from("profiles").update(patch).eq("id", user.id);
+    if (patch.trial_expires_at) {
+      await supabase.auth.updateUser({ data: { trial_initialised: "1" } });
+    }
+  } catch {
+    return prof;
+  }
+
+  return { ...prof, ...patch } as UserProfile;
+}
+
 
 function clearStoredAuthTokens(storage: Storage | undefined) {
   if (!storage) return;
