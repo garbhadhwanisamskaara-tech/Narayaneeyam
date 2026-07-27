@@ -15,8 +15,9 @@ export default function SubscriptionBanner() {
   if (!user || loading) return null;
 
   // Paid subscription — remind to renew 10 days before it ends.
-  if (profile && profile.plan !== "trial") {
+  if (profile && profile.subscription_status && profile.subscription_status !== "trial") {
     if (isActive && subscription?.expires_at && daysRemaining <= REMINDER_WINDOW_DAYS) {
+
       return (
         <div className="bg-amber-50 dark:bg-amber-900/20 border-b border-amber-200 dark:border-amber-800 px-4 py-2 flex items-center justify-center gap-3 text-xs font-sans text-foreground">
           <span>
