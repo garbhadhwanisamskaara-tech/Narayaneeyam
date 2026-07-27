@@ -75,7 +75,10 @@ export default function SubscribePage() {
           {plans.map((plan, i) => {
             if (plan.is_trial && hasUsedTrial) return null;
             const Icon = planIcon(plan);
-            const isCurrent = subscription?.tier === plan.plan_key && (isActive || isTrialActive);
+            const isCurrent =
+              (subscription?.plan_id === plan.id || subscription?.tier === plan.plan_key) &&
+              (isActive || isTrialActive);
+
             const isRecommended = previousTier === plan.plan_key;
 
             return (
