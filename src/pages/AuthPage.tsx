@@ -98,7 +98,7 @@ export default function AuthPage() {
           toast({ title: "Sign in failed", description: error.message, variant: "destructive" });
         }
       } else {
-        navigate("/");
+        navigate(nextPath, { replace: true });
       }
     }
     setLoading(false);
