@@ -116,11 +116,11 @@ const App = () => {
               </Layout>
             } />
           </Routes>
-        </AuthProvider>
       </BrowserRouter>
     </TooltipProvider>
     </AudioProvider>
     </PreferencesProvider>
+    </AuthProvider>
   </QueryClientProvider>
   </HelmetProvider>
   </SentryErrorBoundary>
