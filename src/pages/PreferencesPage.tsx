@@ -133,6 +133,7 @@ export default function PreferencesPage() {
         const payload = await parseInvokeError(error);
         if (payload?.error === "OWNERSHIP_TRANSFER_REQUIRED" && Array.isArray(payload.groups) && payload.groups.length > 0) {
           const nextGroup: TransferGroup = payload.groups[0];
+          setDeleteDialogOpen(false);
           setTransferGroup(nextGroup);
           setDeleting(false);
           await loadMembers(nextGroup.id);
