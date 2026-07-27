@@ -131,17 +131,27 @@ export default function PreferencesPage() {
           <h2 className="font-display text-base font-semibold text-foreground">Change Password</h2>
         </div>
         <p className="text-xs text-muted-foreground font-sans mb-4">
-          Choose a new password of at least 6 characters.
+          Enter your current password, then choose a new one of at least 6 characters.
         </p>
         <form onSubmit={handleChangePassword} className="space-y-3">
+          <Input
+            type="password"
+            placeholder="Current password"
+            value={currentPassword}
+            onChange={(e) => setCurrentPassword(e.target.value)}
+            autoComplete="current-password"
+            required
+          />
           <Input
             type="password"
             placeholder="New password"
             value={newPassword}
             onChange={(e) => setNewPassword(e.target.value)}
             minLength={6}
+            autoComplete="new-password"
             required
           />
+
           <Input
             type="password"
             placeholder="Confirm new password"
