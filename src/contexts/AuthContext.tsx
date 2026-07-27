@@ -246,13 +246,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   // Phone-only users have no email to verify — treat as verified.
   const isEmailVerified = !user?.email ? true : !!user?.email_confirmed_at;
 
-  const trialExpiresAt = profile?.trial_expires_at ?? null;
-  const isTrialActive = profile?.plan === "trial" && trialExpiresAt
+  const trialExpiresAt = profile?.subscription_end ?? null;
+  const onTrial = isTrialStatus(profile?.subscription_status) && !!profile;
+  const isTrialActive = onTrial && trialExpiresAt
     ? new Date(trialExpiresAt).getTime() > Date.now()
     : false;
-  const isTrialExpired = profile?.plan === "trial" && trialExpiresAt
+  const isTrialExpired = onTrial && trialExpiresAt
     ? new Date(trialExpiresAt).getTime() <= Date.now()
     : false;
+
 
   const signUp = async (
     email: string,
