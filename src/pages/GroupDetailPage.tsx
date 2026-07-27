@@ -91,7 +91,7 @@ export default function GroupDetailPage() {
   const handleCopy = async () => {
     if (!invite) return;
     try {
-      await navigator.clipboard.writeText(`https://${inviteLink(invite.token)}`);
+      await navigator.clipboard.writeText(inviteLink(invite.token));
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
     } catch {
