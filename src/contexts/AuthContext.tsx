@@ -322,6 +322,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setIsAdmin(false);
       setIsFounder(false);
       setProfile(null);
+      setSubscriptionPlan(null);
       setLoading(false);
       setSentryUser(null);
 
@@ -337,9 +338,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   return (
     <AuthContext.Provider value={{
       user, session, loading, displayName, isAdmin, isFounder,
-      isEmailVerified, isTrialActive, isTrialExpired, trialExpiresAt, profile,
+      isEmailVerified, isTrialActive, isTrialExpired, trialExpiresAt, profile, subscriptionPlan,
       signUp, signIn, signInWithPhone, verifyPhoneOtp, signOut, refreshProfile,
     }}>
+
       {children}
     </AuthContext.Provider>
   );
