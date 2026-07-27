@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { motion } from "framer-motion";
 import { Mail, Lock, User, LogIn, UserPlus, KeyRound, RefreshCw } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
@@ -32,6 +32,10 @@ export default function AuthPage() {
   const [showResend, setShowResend] = useState(false);
   const { signIn, signUp } = useAuth();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  // Preserve the destination (e.g. a group invite) across the login round-trip.
+  const nextParam = searchParams.get("next");
+  const nextPath = nextParam && nextParam.startsWith("/") ? nextParam : "/";
   const { toast } = useToast();
 
   const handleResendConfirmation = async () => {
@@ -94,7 +98,7 @@ export default function AuthPage() {
           toast({ title: "Sign in failed", description: error.message, variant: "destructive" });
         }
       } else {
-        navigate("/");
+        navigate(nextPath, { replace: true });
       }
     }
     setLoading(false);

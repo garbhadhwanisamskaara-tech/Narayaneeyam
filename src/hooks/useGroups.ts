@@ -39,8 +39,13 @@ function randomToken() {
   return Array.from(bytes, (b) => b.toString(16).padStart(2, "0")).join("");
 }
 
+/** Absolute invite URL for the deployment the user is currently on. */
 export function inviteLink(token: string) {
-  return `narayaneeyam.app/join/${token}`;
+  const origin =
+    typeof window !== "undefined" && window.location?.origin
+      ? window.location.origin
+      : "https://www.narayaneeyam.app";
+  return `${origin}/join/${token}`;
 }
 
 export function useGroups() {

@@ -1,5 +1,5 @@
-import { useEffect, useState } from "react";
-import { Link, useNavigate, useParams } from "react-router-dom";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { Link, useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { Loader2, Users } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
@@ -15,10 +15,13 @@ export default function JoinGroupPage() {
   const { token } = useParams<{ token: string }>();
   const { user, loading } = useAuth();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const autoJoin = searchParams.get("auto") === "1";
   const [status, setStatus] = useState<"loading" | "invalid" | "ready">("loading");
   const [groupName, setGroupName] = useState<string | null>(null);
   const [joining, setJoining] = useState(false);
   const [joinError, setJoinError] = useState<string | null>(null);
+  const autoAttempted = useRef(false);
 
   useEffect(() => {
     if (!token) { setStatus("invalid"); return; }
@@ -44,9 +47,9 @@ export default function JoinGroupPage() {
     return () => { cancelled = true; };
   }, [token]);
 
-  const handleContinue = async () => {
+  const handleContinue = useCallback(async () => {
     if (!user) {
-      navigate(`/auth?next=${encodeURIComponent(`/join/${token}`)}`, { replace: true });
+      navigate(`/auth?next=${encodeURIComponent(`/join/${token}?auto=1`)}`, { replace: true });
       return;
     }
     setJoining(true);
@@ -64,7 +67,15 @@ export default function JoinGroupPage() {
     } finally {
       setJoining(false);
     }
-  };
+  }, [user, token, navigate]);
+
+  // Returning from sign-in: continue the join automatically.
+  useEffect(() => {
+    if (!autoJoin || loading || !user || status !== "ready" || autoAttempted.current) return;
+    autoAttempted.current = true;
+    void handleContinue();
+  }, [autoJoin, loading, user, status, handleContinue]);
+
 
 
   return (
