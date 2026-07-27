@@ -27,6 +27,11 @@ export default function PreferencesPage() {
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [savingPassword, setSavingPassword] = useState(false);
+  const [transferGroup, setTransferGroup] = useState<{ id: string; group_name: string } | null>(null);
+  const [members, setMembers] = useState<{ user_id: string; display_name: string; email: string | null }[]>([]);
+  const [selectedMemberId, setSelectedMemberId] = useState("");
+  const [loadingMembers, setLoadingMembers] = useState(false);
+  const [transferring, setTransferring] = useState(false);
 
   const handleChangePassword = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -70,12 +75,70 @@ export default function PreferencesPage() {
   };
 
 
-  const handleDelete = async () => {
-    if (confirmText !== "DELETE") return;
+  type TransferGroup = { id: string; group_name: string };
+  type TransferMember = { user_id: string; display_name: string; email: string | null };
+
+  const parseInvokeError = async (error: unknown): Promise<any> => {
+    const ctx = (error as any)?.context;
+    if (ctx && typeof ctx.json === "function") {
+      try {
+        return await ctx.json();
+      } catch {
+        return null;
+      }
+    }
+    return null;
+  };
+
+  const loadMembers = async (groupId: string) => {
+    setLoadingMembers(true);
+    setMembers([]);
+    setSelectedMemberId("");
+    const { data: rows, error } = await supabase
+      .from("group_members")
+      .select("user_id, joined_at")
+      .eq("group_id", groupId)
+      .neq("user_id", user?.id ?? "")
+      .order("joined_at", { ascending: true });
+    if (error) {
+      setLoadingMembers(false);
+      toast({ title: "Could not load members", description: error.message, variant: "destructive" });
+      return;
+    }
+    const ids = (rows ?? []).map((r: any) => r.user_id);
+    let profilesById = new Map<string, { display_name: string | null; email: string | null }>();
+    if (ids.length > 0) {
+      const { data: profiles } = await supabase
+        .from("profiles")
+        .select("id, display_name, email")
+        .in("id", ids);
+      profilesById = new Map((profiles ?? []).map((p: any) => [p.id, p]));
+    }
+    setMembers(
+      (rows ?? []).map((r: any) => ({
+        user_id: r.user_id,
+        display_name: profilesById.get(r.user_id)?.display_name || "Unnamed member",
+        email: profilesById.get(r.user_id)?.email ?? null,
+      })),
+    );
+    setLoadingMembers(false);
+  };
+
+  const attemptDelete = async (): Promise<void> => {
     setDeleting(true);
     try {
       const { error } = await supabase.functions.invoke("delete-account");
-      if (error) throw error;
+      if (error) {
+        const payload = await parseInvokeError(error);
+        if (payload?.error === "OWNERSHIP_TRANSFER_REQUIRED" && Array.isArray(payload.groups) && payload.groups.length > 0) {
+          const nextGroup: TransferGroup = payload.groups[0];
+          setTransferGroup(nextGroup);
+          setDeleting(false);
+          await loadMembers(nextGroup.id);
+          return;
+        }
+        throw new Error(payload?.error || error.message);
+      }
       toast({ title: "Account removed", description: "Your account and data have been permanently removed." });
       await signOut();
     } catch (e) {
@@ -88,6 +151,46 @@ export default function PreferencesPage() {
       setDeleting(false);
     }
   };
+
+  const handleDelete = async () => {
+    if (confirmText !== "DELETE") return;
+    await attemptDelete();
+  };
+
+  const handleTransfer = async () => {
+    if (!transferGroup) return;
+    setTransferring(true);
+    try {
+      const body: Record<string, string> = { group_id: transferGroup.id };
+      if (selectedMemberId) body.new_owner_id = selectedMemberId;
+      const { error } = await supabase.functions.invoke("transfer-group-ownership", { body });
+      if (error) {
+        const payload = await parseInvokeError(error);
+        throw new Error(payload?.error || error.message);
+      }
+      setTransferring(false);
+      setTransferGroup(null);
+      setMembers([]);
+      setSelectedMemberId("");
+      await attemptDelete();
+    } catch (e) {
+      setTransferring(false);
+      toast({
+        title: "Could not transfer ownership",
+        description: e instanceof Error ? e.message : "Please try again.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const cancelTransfer = () => {
+    setTransferGroup(null);
+    setMembers([]);
+    setSelectedMemberId("");
+    setDeleting(false);
+    setConfirmText("");
+  };
+
 
   return (
     <div className="container mx-auto px-4 py-8 max-w-2xl">
@@ -222,6 +325,70 @@ export default function PreferencesPage() {
           </AlertDialogContent>
         </AlertDialog>
       </section>
+
+      <AlertDialog open={!!transferGroup} onOpenChange={(open) => { if (!open) cancelTransfer(); }}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Transfer Group Ownership</AlertDialogTitle>
+            <AlertDialogDescription>
+              You own “{transferGroup?.group_name}”, which still has other members. Please pass ownership to a member
+              before your account is removed.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+
+          {loadingMembers ? (
+            <p className="text-sm text-muted-foreground font-sans">Loading members…</p>
+          ) : (
+            <div className="space-y-2 max-h-64 overflow-y-auto">
+              {members.map((m) => (
+                <label
+                  key={m.user_id}
+                  className="flex items-start gap-3 rounded-lg border border-border p-3 cursor-pointer hover:bg-muted"
+                >
+                  <input
+                    type="radio"
+                    name="new-owner"
+                    className="mt-1"
+                    value={m.user_id}
+                    checked={selectedMemberId === m.user_id}
+                    onChange={() => setSelectedMemberId(m.user_id)}
+                  />
+                  <span className="min-w-0">
+                    <span className="block text-sm font-sans text-foreground">{m.display_name}</span>
+                    <span className="block text-xs font-sans text-muted-foreground break-all">
+                      {m.email ?? "email not available"}
+                    </span>
+                  </span>
+                </label>
+              ))}
+            </div>
+          )}
+
+          {members.length > 0 && (
+            <p className="text-xs font-sans text-muted-foreground">
+              If you don't choose, we'll transfer ownership to {members[0].display_name}, who has been in this group the
+              longest.
+            </p>
+          )}
+
+          <AlertDialogFooter>
+            <button
+              onClick={cancelTransfer}
+              className="rounded-md border border-border px-4 py-2 text-sm font-sans font-semibold text-foreground hover:bg-muted"
+            >
+              Cancel
+            </button>
+            <button
+              onClick={handleTransfer}
+              disabled={transferring || loadingMembers || members.length === 0}
+              className="rounded-md bg-primary px-4 py-2 text-sm font-sans font-semibold text-primary-foreground hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {transferring ? "Transferring…" : "Transfer & Continue"}
+            </button>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
+
   );
 }
