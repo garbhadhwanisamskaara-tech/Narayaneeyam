@@ -22,6 +22,7 @@ export default function PreferencesPage() {
   const { fontSize, setFontSize } = usePreferences();
   const { signOut, user } = useAuth();
   const [deleting, setDeleting] = useState(false);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [confirmText, setConfirmText] = useState("");
   const [currentPassword, setCurrentPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
