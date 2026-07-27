@@ -20,15 +20,20 @@ import {
 
 export default function PreferencesPage() {
   const { fontSize, setFontSize } = usePreferences();
-  const { signOut } = useAuth();
+  const { signOut, user } = useAuth();
   const [deleting, setDeleting] = useState(false);
   const [confirmText, setConfirmText] = useState("");
+  const [currentPassword, setCurrentPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [savingPassword, setSavingPassword] = useState(false);
 
   const handleChangePassword = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!currentPassword) {
+      toast({ title: "Current password required", description: "Please enter your existing password.", variant: "destructive" });
+      return;
+    }
     if (newPassword.length < 6) {
       toast({ title: "Password too short", description: "Please use at least 6 characters.", variant: "destructive" });
       return;
@@ -37,17 +42,33 @@ export default function PreferencesPage() {
       toast({ title: "Passwords do not match", description: "Please re-enter the same password.", variant: "destructive" });
       return;
     }
+    if (!user?.email) {
+      toast({ title: "Not available", description: "Password change needs an email-based account.", variant: "destructive" });
+      return;
+    }
     setSavingPassword(true);
+    // Verify the existing password before allowing a change.
+    const { error: verifyError } = await supabase.auth.signInWithPassword({
+      email: user.email,
+      password: currentPassword,
+    });
+    if (verifyError) {
+      setSavingPassword(false);
+      toast({ title: "Current password is incorrect", description: "Please try again.", variant: "destructive" });
+      return;
+    }
     const { error } = await supabase.auth.updateUser({ password: newPassword });
     setSavingPassword(false);
     if (error) {
       toast({ title: "Could not change password", description: error.message, variant: "destructive" });
     } else {
+      setCurrentPassword("");
       setNewPassword("");
       setConfirmPassword("");
       toast({ title: "Password updated", description: "Your new password is now active." });
     }
   };
+
 
   const handleDelete = async () => {
     if (confirmText !== "DELETE") return;
@@ -110,17 +131,27 @@ export default function PreferencesPage() {
           <h2 className="font-display text-base font-semibold text-foreground">Change Password</h2>
         </div>
         <p className="text-xs text-muted-foreground font-sans mb-4">
-          Choose a new password of at least 6 characters.
+          Enter your current password, then choose a new one of at least 6 characters.
         </p>
         <form onSubmit={handleChangePassword} className="space-y-3">
+          <Input
+            type="password"
+            placeholder="Current password"
+            value={currentPassword}
+            onChange={(e) => setCurrentPassword(e.target.value)}
+            autoComplete="current-password"
+            required
+          />
           <Input
             type="password"
             placeholder="New password"
             value={newPassword}
             onChange={(e) => setNewPassword(e.target.value)}
             minLength={6}
+            autoComplete="new-password"
             required
           />
+
           <Input
             type="password"
             placeholder="Confirm new password"
