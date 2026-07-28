@@ -66,9 +66,8 @@ export function useGroups() {
     const [memberRes, ownedRes] = await Promise.all([
       (supabase as any)
         .from("group_members")
-        .select("group_id")
-        .eq("user_id", user.id)
-        .is("left_at", null),
+        .select("group_id, left_at")
+        .eq("user_id", user.id),
       (supabase as any)
         .from("groups")
         .select(GROUP_COLS)
@@ -82,7 +81,11 @@ export function useGroups() {
       return;
     }
 
-    const memberIds: string[] = (memberRes.data ?? []).map((r: any) => r.group_id);
+    const memberRows = (memberRes.data ?? []) as { group_id: string; left_at: string | null }[];
+    const activeIds = new Set(memberRows.filter((r) => !r.left_at).map((r) => r.group_id));
+    const leftIds = new Set(memberRows.filter((r) => r.left_at).map((r) => r.group_id));
+
+    const memberIds = Array.from(activeIds);
     let joined: Group[] = [];
     if (memberIds.length) {
       const { data } = await (supabase as any)
@@ -93,7 +96,13 @@ export function useGroups() {
       joined = (data ?? []) as Group[];
     }
 
-    const all = [...((ownedRes.data ?? []) as Group[]), ...joined];
+    // A former owner who has left (e.g. sole-member owner) should not see the group.
+    const owned = ((ownedRes.data ?? []) as Group[]).filter(
+      (g) => activeIds.has(g.id) || !leftIds.has(g.id)
+    );
+
+    const all = [...owned, ...joined];
+
     const unique = Array.from(new Map(all.map((g) => [g.id, g])).values()).sort((a, b) =>
       a.created_at < b.created_at ? 1 : -1
     );
