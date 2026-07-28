@@ -3,3 +3,27 @@ verify_jwt = false
 
 [functions.delete-account]
 verify_jwt = true
+
+[functions.transfer-group-ownership]
+verify_jwt = true
+
+[functions.leave-group]
+verify_jwt = true
+
+[functions.dissolve-group]
+verify_jwt = true
+
+[functions.create-razorpay-order]
+verify_jwt = true
+
+[functions.verify-razorpay-payment]
+verify_jwt = true
+
+[functions.narayaneeyam-razorpayment-webhook]
+verify_jwt = false
+
+[functions.dispatch-notifications]
+verify_jwt = false
+
+[functions.send-daily-reminders]
+verify_jwt = false
