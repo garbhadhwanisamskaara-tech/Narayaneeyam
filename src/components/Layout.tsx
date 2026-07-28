@@ -4,6 +4,7 @@ import {
   LayoutDashboard,
   Mic,
   Headphones,
+  BarChart3,
   X,
   LogIn,
   LogOut,
@@ -33,6 +34,7 @@ const navItems = [
   { path: "/", label: "Home", icon: LayoutDashboard },
   { path: "/chant", label: "Chant", icon: Mic },
   { path: "/podcast", label: "Podcast", icon: Headphones },
+  { path: "/progress", label: "Progress", icon: BarChart3 },
 ];
 
 export default function Layout({ children }: { children: React.ReactNode }) {

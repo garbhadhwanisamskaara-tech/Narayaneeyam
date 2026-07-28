@@ -1,6 +1,6 @@
 import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
-import { Flame, BookOpen, Clock, Mic, BarChart3, LogIn, TrendingUp, Play, Feather } from "lucide-react";
+import { Flame, BookOpen, Clock, Mic, BarChart3, LogIn, TrendingUp, Play } from "lucide-react";
 import { getProgress } from "@/lib/progress";
 import { TOTAL_VERSES } from "@/data/narayaneeyam";
 import { useAuth } from "@/contexts/AuthContext";
@@ -10,6 +10,7 @@ import ProgressRing from "@/components/ProgressRing";
 import SEO from "@/components/SEO";
 import ActiveChallengeCard from "@/components/ActiveChallengeCard";
 import FeatherShelf from "@/components/FeatherShelf";
+import PeacockFeather from "@/components/icons/PeacockFeatherIcon";
 import { useFeathers } from "@/hooks/useFeathers";
 
 export default function DashboardPage() {
@@ -149,7 +150,7 @@ export default function DashboardPage() {
           className="rounded-xl border border-border bg-card p-5 mb-8 flex items-center gap-4"
         >
           <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-secondary/15">
-            <Feather className="h-6 w-6 text-secondary" />
+            <PeacockFeather className="h-6 w-6 text-secondary" />
           </div>
           <div>
             <p className="text-xs text-muted-foreground font-sans uppercase tracking-wide">Feathers Earned</p>
