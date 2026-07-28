@@ -10,6 +10,7 @@ import ProgressRing from "@/components/ProgressRing";
 import SEO from "@/components/SEO";
 import ActiveChallengeCard from "@/components/ActiveChallengeCard";
 import FeatherShelf from "@/components/FeatherShelf";
+import { useFeathers } from "@/hooks/useFeathers";
 
 export default function DashboardPage() {
   const localProgress = getProgress();
@@ -23,6 +24,8 @@ export default function DashboardPage() {
     loading: progressLoading,
     isGuest,
   } = useUserProgress();
+  const { feathers } = useFeathers();
+  const feathersEarned = feathers.length;
 
   // Current position from local progress
   const currentDashakam = localProgress.chantState?.dashakam || localProgress.lastDashakam || 1;
