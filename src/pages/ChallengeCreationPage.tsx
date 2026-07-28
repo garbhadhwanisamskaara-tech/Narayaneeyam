@@ -1,253 +1,217 @@
-import { useState } from "react";
-import { useNavigate } from "react-router-dom";
-import { DayPicker } from "react-day-picker";
-import "react-day-picker/dist/style.css";
-import { motion } from "framer-motion";
-import { Check, ChevronLeft, ChevronRight, Calendar as CalendarIcon, Sparkles } from "lucide-react";
+import { useEffect, useMemo, useState } from "react";
+import { Link } from "react-router-dom";
+import { ArrowLeft, Copy, Loader2, Sparkles, Sprout } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
-import { toast } from "@/hooks/use-toast";
+import { useDashakamSets, type DashakamSet } from "@/hooks/useDashakamSets";
+import { useParayanamSchedule } from "@/hooks/useParayanamSchedule";
+import BudGrid from "@/components/BudGrid";
 import SEO from "@/components/SEO";
-import { cn } from "@/lib/utils";
 
-type Mode = "saptaah" | "21_day" | "100_day" | "daily";
+const today = () => new Date().toISOString().slice(0, 10);
+const plusDays = (n: number) => {
+  const d = new Date();
+  d.setDate(d.getDate() + n);
+  return d.toISOString().slice(0, 10);
+};
 
-const MODES: { id: Mode; title: string; days: string; pace: string }[] = [
-  { id: "saptaah", title: "Saptaah", days: "7 days", pace: "14–15 dashakams/day" },
-  { id: "21_day", title: "21-Day Parayanam", days: "21 days", pace: "5 dashakams/day" },
-  { id: "100_day", title: "100-Day Parayanam", days: "100 days", pace: "1 dashakam/day" },
-  { id: "daily", title: "Daily", days: "Open-ended", pace: "1 dashakam/day" },
-];
-
-function toIso(d: Date): string {
-  const y = d.getFullYear();
-  const m = String(d.getMonth() + 1).padStart(2, "0");
-  const day = String(d.getDate()).padStart(2, "0");
-  return `${y}-${m}-${day}`;
-}
-
-function addDays(d: Date, n: number): Date {
-  const copy = new Date(d);
-  copy.setDate(copy.getDate() + n);
-  return copy;
-}
-
-function calcEndDate(mode: Mode, start: Date): Date | null {
-  if (mode === "saptaah") return addDays(start, 7);
-  if (mode === "21_day") return addDays(start, 21);
-  if (mode === "100_day") return addDays(start, 100);
-  return null;
-}
-
-function formatDate(d: Date): string {
-  return d.toLocaleDateString("en-IN", { weekday: "long", day: "numeric", month: "long", year: "numeric" });
-}
-
+/** Personal parayanam creation — same flow as the group schedule page, minus group options. */
 export default function ChallengeCreationPage() {
-  const navigate = useNavigate();
   const { user } = useAuth();
-  const [step, setStep] = useState<1 | 2 | 3>(1);
-  const [mode, setMode] = useState<Mode | null>(null);
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
-  const [startDate, setStartDate] = useState<Date>(today);
-  const [submitting, setSubmitting] = useState(false);
 
-  const endDate = mode ? calcEndDate(mode, startDate) : null;
+  const [setId, setSetId] = useState<string>("");
+  const [startDate, setStartDate] = useState(today());
+  const [endDate, setEndDate] = useState(plusDays(99));
+  const [sessionId, setSessionId] = useState<string | null>(null);
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [notice, setNotice] = useState<string | null>(null);
 
-  const handleSubmit = async () => {
-    if (!user || !mode) return;
-    setSubmitting(true);
+  const { sets, loading: loadingSets, forkSet } = useDashakamSets();
+  const { rows, loading: loadingRows, generate } = useParayanamSchedule(sessionId);
+
+  useEffect(() => {
+    if (!setId && sets.length) setSetId(sets[0].id);
+  }, [sets, setId]);
+
+  const selectedSet: DashakamSet | undefined = useMemo(
+    () => sets.find((s) => s.id === setId),
+    [sets, setId]
+  );
+
+  const handleFork = async () => {
+    if (!selectedSet) return;
+    setBusy(true);
+    setError(null);
     try {
-      const { data, error } = await (supabase as any)
-        .from("challenge_sessions")
-        .insert({
-          user_id: user.id,
-          mode,
-          challenge_type: "personal",
-          start_date: toIso(startDate),
-          end_date: endDate ? toIso(endDate) : null,
-          spiritual_state: "sankalpam_taken",
-          technical_state: "ACTIVE",
-          dashakams_target: 100,
-          dashakams_done: 0,
-        })
-        .select();
-
-      if (error) throw error;
-      const session_id = data?.[0]?.id;
-      navigate("/challenges/sankalpa", {
-        state: { session_id, mode, start_date: toIso(startDate) },
-      });
+      const copy = await forkSet(selectedSet, `${selectedSet.set_name} (mine)`);
+      setSetId(copy.id);
+      setNotice(`Created "${copy.set_name}" — this copy is yours to edit.`);
     } catch (e: any) {
-      toast({ title: "Could not start parayanam", description: e?.message ?? "Please try again.", variant: "destructive" });
-      setSubmitting(false);
+      setError(e?.message ?? "Could not customize this set.");
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const handleGenerate = async () => {
+    if (!user || !selectedSet) return;
+    if (endDate < startDate) {
+      setError("The end date must be on or after the start date.");
+      return;
+    }
+    setBusy(true);
+    setError(null);
+    setNotice(null);
+    try {
+      const sessionPayload = {
+        user_id: user.id,
+        mode: "chant",
+        challenge_type: "personal",
+        start_date: startDate,
+        end_date: endDate,
+        technical_state: "ACTIVE",
+        spiritual_state: "in_progress",
+        dashakams_target: selectedSet.dashakam_list.length,
+        dashakam_list: selectedSet.dashakam_list,
+        dashakam_set_id: selectedSet.id,
+      };
+
+      let id = sessionId;
+      if (id) {
+        const { error: upErr } = await (supabase as any)
+          .from("challenge_sessions")
+          .update(sessionPayload)
+          .eq("id", id);
+        if (upErr) throw new Error(upErr.message);
+      } else {
+        const { data, error: insErr } = await (supabase as any)
+          .from("challenge_sessions")
+          .insert(sessionPayload)
+          .select("id")
+          .single();
+        if (insErr) throw new Error(insErr.message);
+        id = data.id as string;
+        setSessionId(id);
+      }
+
+      // "split" across a single member list of just me → every row assigned to me.
+      await generate(id!, selectedSet.dashakam_list, startDate, endDate, "split", [user.id]);
+      setNotice("Your parayanam is ready. Tap a bud below as you complete each dashakam.");
+    } catch (e: any) {
+      setError(e?.message ?? "Could not create your parayanam.");
+    } finally {
+      setBusy(false);
     }
   };
 
   return (
-    <div className="container mx-auto px-4 py-8 pb-24 max-w-2xl">
-      <SEO path="/challenges/new" title="Begin a Parayanam — Sriman Narayaneeyam" description="Begin your personal Narayaneeyam parayanam — choose a mode, set a start date, and take your sankalpa." />
+    <div className="mx-auto w-full max-w-3xl px-4 py-6">
+      <SEO
+        path="/challenges/new"
+        title="Start a Parayanam — Sriman Narayaneeyam"
+        description="Choose a dashakam set and a timeline for your personal Narayaneeyam parayanam."
+      />
+      <Link
+        to="/progress"
+        className="inline-flex items-center gap-1 font-sans text-sm text-muted-foreground hover:text-foreground"
+      >
+        <ArrowLeft className="h-4 w-4" /> My progress
+      </Link>
 
-      {/* Stepper */}
-      <div className="flex items-center justify-center gap-3 mb-8">
-        {[1, 2, 3].map((s) => (
-          <div key={s} className="flex items-center gap-3">
-            <div
-              className={cn(
-                "h-8 w-8 rounded-full flex items-center justify-center font-display text-sm font-semibold border",
-                step >= s
-                  ? "bg-secondary text-primary border-secondary"
-                  : "bg-card text-muted-foreground border-border",
-              )}
+      <h1 className="mt-4 font-display text-2xl font-bold text-foreground">Start a Parayanam</h1>
+      <p className="mt-1 font-sans text-sm text-muted-foreground">
+        Pick a dashakam set and the days you would like to chant it over.
+      </p>
+
+      <section className="mt-6 space-y-5 rounded-2xl border border-border bg-card p-5 shadow-peacock">
+        <div>
+          <label htmlFor="set" className="font-sans text-sm font-semibold text-foreground">
+            Dashakam set
+          </label>
+          {loadingSets ? (
+            <Loader2 className="mt-2 h-5 w-5 animate-spin text-primary" />
+          ) : (
+            <select
+              id="set"
+              value={setId}
+              onChange={(e) => setSetId(e.target.value)}
+              className="mt-2 w-full rounded-lg border border-border bg-background px-3 py-2 font-sans text-sm text-foreground outline-none focus:ring-2 focus:ring-primary"
             >
-              {step > s ? <Check className="h-4 w-4" /> : s}
-            </div>
-            {s < 3 && <div className={cn("h-px w-8", step > s ? "bg-secondary" : "bg-border")} />}
+              {sets.map((s) => (
+                <option key={s.id} value={s.id}>
+                  {s.set_name} ({s.dashakam_list.length} dashakams)
+                  {s.is_official ? "" : " · yours"}
+                </option>
+              ))}
+            </select>
+          )}
+          {selectedSet?.description && (
+            <p className="mt-2 font-sans text-xs text-muted-foreground">{selectedSet.description}</p>
+          )}
+          {selectedSet?.is_official && (
+            <button
+              onClick={handleFork}
+              disabled={busy}
+              className="mt-3 inline-flex items-center gap-2 rounded-lg border border-border px-3 py-1.5 font-sans text-xs font-semibold text-foreground hover:border-primary disabled:opacity-60"
+            >
+              <Copy className="h-3.5 w-3.5" /> Make my own copy
+            </button>
+          )}
+        </div>
+
+        <div className="grid gap-4 sm:grid-cols-2">
+          <div>
+            <label htmlFor="start" className="font-sans text-sm font-semibold text-foreground">
+              Start date
+            </label>
+            <input
+              id="start"
+              type="date"
+              value={startDate}
+              onChange={(e) => setStartDate(e.target.value)}
+              className="mt-2 w-full rounded-lg border border-border bg-background px-3 py-2 font-sans text-sm text-foreground outline-none focus:ring-2 focus:ring-primary"
+            />
           </div>
-        ))}
-      </div>
+          <div>
+            <label htmlFor="end" className="font-sans text-sm font-semibold text-foreground">
+              End date
+            </label>
+            <input
+              id="end"
+              type="date"
+              value={endDate}
+              onChange={(e) => setEndDate(e.target.value)}
+              className="mt-2 w-full rounded-lg border border-border bg-background px-3 py-2 font-sans text-sm text-foreground outline-none focus:ring-2 focus:ring-primary"
+            />
+          </div>
+        </div>
 
-      <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}>
-        {step === 1 && (
-          <>
-            <h1 className="font-display text-2xl md:text-3xl font-bold text-foreground mb-2 flex items-center gap-2">
-              <Sparkles className="h-6 w-6 text-secondary" /> Choose your parayanam
-            </h1>
-            <p className="text-muted-foreground font-sans mb-6">Select a mode that suits your devotion and rhythm.</p>
+        <button
+          onClick={handleGenerate}
+          disabled={busy || !selectedSet}
+          className="inline-flex items-center gap-2 rounded-lg bg-gradient-peacock px-4 py-2 font-sans text-sm font-semibold text-primary-foreground hover:opacity-90 disabled:opacity-60"
+        >
+          {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4" />}
+          {rows.length ? "Regenerate parayanam" : "Create my parayanam"}
+        </button>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
-              {MODES.map((m) => {
-                const selected = mode === m.id;
-                return (
-                  <button
-                    key={m.id}
-                    onClick={() => setMode(m.id)}
-                    className={cn(
-                      "text-left rounded-xl border bg-card p-5 transition-all",
-                      selected
-                        ? "border-secondary border-2 shadow-gold ring-1 ring-secondary/40"
-                        : "border-border hover:border-secondary/50",
-                    )}
-                  >
-                    <p className="font-display text-lg font-semibold text-foreground">{m.title}</p>
-                    <p className="text-xs uppercase tracking-wide text-secondary font-sans mt-1">{m.days}</p>
-                    <p className="text-sm text-muted-foreground font-sans mt-2">{m.pace}</p>
-                  </button>
-                );
-              })}
-            </div>
+        {error && <p className="font-sans text-sm text-destructive">{error}</p>}
+        {notice && <p className="font-sans text-sm text-primary">{notice}</p>}
+      </section>
 
-            <div className="flex justify-end">
-              <button
-                disabled={!mode}
-                onClick={() => setStep(2)}
-                className="inline-flex items-center gap-2 rounded-full bg-gradient-gold px-6 py-2.5 font-sans text-sm font-semibold text-primary shadow-gold transition-transform hover:scale-105 disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:scale-100"
-              >
-                Next <ChevronRight className="h-4 w-4" />
-              </button>
-            </div>
-          </>
-        )}
-
-        {step === 2 && (
-          <>
-            <h1 className="font-display text-2xl md:text-3xl font-bold text-foreground mb-2 flex items-center gap-2">
-              <CalendarIcon className="h-6 w-6 text-secondary" /> When will you begin?
-            </h1>
-            <p className="text-muted-foreground font-sans mb-6">Choose an auspicious start date.</p>
-
-            <div className="flex gap-2 mb-4">
-              <button
-                onClick={() => setStartDate(today)}
-                className="rounded-full border border-border bg-card px-4 py-1.5 text-sm font-sans hover:border-secondary"
-              >
-                Today
-              </button>
-              <button
-                onClick={() => setStartDate(addDays(today, 1))}
-                className="rounded-full border border-border bg-card px-4 py-1.5 text-sm font-sans hover:border-secondary"
-              >
-                Tomorrow
-              </button>
-            </div>
-
-            <div className="rounded-xl border border-border bg-card p-4 mb-6 inline-block">
-              <DayPicker
-                mode="single"
-                selected={startDate}
-                onSelect={(d) => d && setStartDate(d)}
-                disabled={{ before: today }}
-                className="pointer-events-auto"
-              />
-            </div>
-
-            <p className="text-sm text-foreground font-sans mb-6">
-              Selected: <span className="font-semibold text-secondary">{formatDate(startDate)}</span>
-            </p>
-
-            <div className="flex items-center justify-between">
-              <button
-                onClick={() => setStep(1)}
-                className="inline-flex items-center gap-2 rounded-full border border-border bg-card px-5 py-2 font-sans text-sm font-medium text-foreground hover:border-secondary"
-              >
-                <ChevronLeft className="h-4 w-4" /> Back
-              </button>
-              <button
-                onClick={() => setStep(3)}
-                className="inline-flex items-center gap-2 rounded-full bg-gradient-gold px-6 py-2.5 font-sans text-sm font-semibold text-primary shadow-gold transition-transform hover:scale-105"
-              >
-                Next <ChevronRight className="h-4 w-4" />
-              </button>
-            </div>
-          </>
-        )}
-
-        {step === 3 && mode && (
-          <>
-            <h1 className="font-display text-2xl md:text-3xl font-bold text-foreground mb-2">
-              Confirm your sankalpa
-            </h1>
-            <p className="text-muted-foreground font-sans mb-6">Review your parayanam details before beginning.</p>
-
-            <div className="rounded-xl border border-secondary/40 bg-card p-6 mb-8 space-y-4">
-              <div>
-                <p className="text-xs uppercase tracking-wide text-muted-foreground font-sans">Mode</p>
-                <p className="font-display text-xl font-semibold text-secondary">
-                  {MODES.find((m) => m.id === mode)!.title}
-                </p>
-              </div>
-              <div>
-                <p className="text-xs uppercase tracking-wide text-muted-foreground font-sans">Start date</p>
-                <p className="font-display text-base font-semibold text-foreground">{formatDate(startDate)}</p>
-              </div>
-              <div>
-                <p className="text-xs uppercase tracking-wide text-muted-foreground font-sans">End date</p>
-                <p className="font-display text-base font-semibold text-foreground">
-                  {endDate ? formatDate(endDate) : "Open-ended"}
-                </p>
-              </div>
-            </div>
-
-            <div className="flex items-center justify-between">
-              <button
-                onClick={() => setStep(2)}
-                disabled={submitting}
-                className="inline-flex items-center gap-2 rounded-full border border-border bg-card px-5 py-2 font-sans text-sm font-medium text-foreground hover:border-secondary disabled:opacity-40"
-              >
-                <ChevronLeft className="h-4 w-4" /> Back
-              </button>
-              <button
-                onClick={handleSubmit}
-                disabled={submitting}
-                className="inline-flex items-center gap-2 rounded-full bg-gradient-gold px-6 py-2.5 font-sans text-sm font-semibold text-primary shadow-gold transition-transform hover:scale-105 disabled:opacity-40"
-              >
-                {submitting ? "Beginning…" : "Continue to sankalpa"}
-              </button>
-            </div>
-          </>
-        )}
-      </motion.div>
+      {sessionId && (
+        <section className="mt-6 rounded-2xl border border-border bg-card p-5">
+          <h2 className="mb-4 flex items-center gap-2 font-display text-lg font-semibold text-foreground">
+            <Sprout className="h-5 w-5 text-secondary" /> Parayanam Progress
+          </h2>
+          {loadingRows ? (
+            <Loader2 className="h-5 w-5 animate-spin text-primary" />
+          ) : (
+            <BudGrid challengeSessionId={sessionId} parayanamName={selectedSet?.set_name} />
+          )}
+        </section>
+      )}
     </div>
   );
 }
