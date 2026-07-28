@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { LogOut, Trash2 } from "lucide-react";
+import { AlertTriangle, LogOut, Trash2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "@/hooks/use-toast";
@@ -160,8 +160,14 @@ export default function GroupDangerZone({ groupId, groupName, isOwner }: GroupDa
   };
 
   return (
-    <section className="mt-6 rounded-2xl border border-destructive/40 bg-card p-5 shadow-peacock">
-      <h2 className="font-display text-lg font-semibold text-destructive">Danger Zone</h2>
+    <section className="mt-6 rounded-xl border border-destructive/40 bg-destructive/5 p-5">
+      <div className="mb-1 flex items-center gap-2">
+        <AlertTriangle className="h-4 w-4 text-destructive" />
+        <h2 className="font-display text-sm font-semibold uppercase tracking-wide text-destructive">Danger Zone</h2>
+      </div>
+      <p className="mb-3 font-sans text-xs text-destructive/80">
+        These actions are permanent and cannot be undone. Please read carefully before proceeding.
+      </p>
 
       <div className="mt-4">
         <p className="font-sans text-sm text-muted-foreground">
@@ -169,14 +175,14 @@ export default function GroupDangerZone({ groupId, groupName, isOwner }: GroupDa
         </p>
         <button
           onClick={() => setLeaveDialogOpen(true)}
-          className="mt-3 inline-flex items-center gap-2 rounded-lg border border-destructive px-4 py-2 font-sans text-sm font-semibold text-destructive hover:bg-destructive/10"
+          className="mt-3 inline-flex w-full items-center justify-center gap-2 rounded-lg border border-destructive px-4 py-2.5 font-sans text-sm font-semibold text-destructive transition-colors hover:bg-destructive/10"
         >
           <LogOut className="h-4 w-4" /> Leave Group
         </button>
       </div>
 
       {isOwner && (
-        <div className="mt-6 border-t border-border pt-5">
+        <div className="mt-6 border-t border-destructive/30 pt-5">
           <p className="font-sans text-sm text-muted-foreground">
             Dissolving is permanent. All group parayanams will be cancelled and every member becomes an independent
             user, keeping their own individual chanting history and feathers.
@@ -186,7 +192,7 @@ export default function GroupDangerZone({ groupId, groupName, isOwner }: GroupDa
               setConfirmText("");
               setDissolveOpen(true);
             }}
-            className="mt-3 inline-flex items-center gap-2 rounded-lg bg-destructive px-4 py-2 font-sans text-sm font-semibold text-destructive-foreground hover:bg-destructive/90"
+            className="mt-3 inline-flex w-full items-center justify-center gap-2 rounded-lg bg-destructive px-4 py-2.5 font-sans text-sm font-semibold text-destructive-foreground transition-colors hover:bg-destructive/90"
           >
             <Trash2 className="h-4 w-4" /> Dissolve Group
           </button>
