@@ -155,6 +155,10 @@ export default function GroupDetailPage() {
             />
           </div>
 
+          <GroupBloomsSection groupId={groupId} isOwner={isOwner} />
+
+
+
           <section className="mt-6 rounded-2xl border border-border bg-card p-5 shadow-peacock">
             <h2 className="font-display text-lg font-semibold text-foreground">Members</h2>
             {loadingMembers ? (
