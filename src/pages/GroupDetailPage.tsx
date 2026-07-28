@@ -166,7 +166,12 @@ export default function GroupDetailPage() {
             />
           </div>
 
-          <GroupBloomsSection groupId={groupId} isOwner={isOwner} />
+          <GroupBloomsSection
+            groupId={groupId}
+            isOwner={isOwner}
+            activeChallengeSessionId={group.active_challenge_session_id}
+          />
+
 
 
 

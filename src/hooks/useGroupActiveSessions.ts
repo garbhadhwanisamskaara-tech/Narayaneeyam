@@ -41,7 +41,7 @@ export function useGroupActiveSessions(groupId: string | undefined) {
       .eq("group_id", groupId)
       .eq("challenge_type", "group")
       .eq("technical_state", "ACTIVE")
-      .order("start_date", { ascending: true });
+      .order("start_date", { ascending: false });
 
     const rows = (data ?? []) as Omit<ActiveGroupSession, "set_name">[];
     const setIds = Array.from(new Set(rows.map((r) => r.dashakam_set_id).filter(Boolean))) as string[];
