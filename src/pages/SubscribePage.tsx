@@ -1,10 +1,12 @@
+import { useState } from "react";
 import { motion } from "framer-motion";
-import { Check, Crown, BookOpen, Mic } from "lucide-react";
+import { Check, Crown, BookOpen, Mic, Loader2 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useSubscription } from "@/hooks/useSubscription";
 import { useSubscriptionPlans, type SubscriptionPlan } from "@/hooks/useSubscriptionPlans";
 import { useToast } from "@/hooks/use-toast";
 import { Link } from "react-router-dom";
+import { supabase } from "@/integrations/supabase/client";
 import SEO from "@/components/SEO";
 
 /** Icon choice is a display concern, not stored data -- derived from the plan's flags. */
@@ -14,17 +16,124 @@ function planIcon(plan: SubscriptionPlan) {
   return Mic;
 }
 
+// Loads the Razorpay Checkout script once and caches the promise so repeated
+// clicks don't re-inject the <script> tag.
+let razorpayScriptPromise: Promise<boolean> | null = null;
+function loadRazorpayScript(): Promise<boolean> {
+  if (razorpayScriptPromise) return razorpayScriptPromise;
+  razorpayScriptPromise = new Promise((resolve) => {
+    if ((window as any).Razorpay) return resolve(true);
+    const script = document.createElement("script");
+    script.src = "https://checkout.razorpay.com/v1/checkout.js";
+    script.onload = () => resolve(true);
+    script.onerror = () => resolve(false);
+    document.body.appendChild(script);
+  });
+  return razorpayScriptPromise;
+}
+
+declare global {
+  interface Window {
+    Razorpay: any;
+  }
+}
+
 export default function SubscribePage() {
-  const { user } = useAuth();
+  const { user, refreshProfile } = useAuth();
   const { subscription, hasUsedTrial, isActive, isTrialActive, loading: subLoading } = useSubscription();
   const { plans, loading: plansLoading } = useSubscriptionPlans();
   const { toast } = useToast();
+  const [processingPlan, setProcessingPlan] = useState<string | null>(null);
 
-  const handleSubscribe = (planKey: string) => {
-    toast({
-      title: "Coming soon",
-      description: "Payment integration will be available shortly. Your interest has been noted!",
-    });
+  const handleSubscribe = async (planKey: string) => {
+    if (!user) return;
+    setProcessingPlan(planKey);
+
+    try {
+      // 1. Ask our backend to create a Razorpay order (and a matching `payments` row).
+      const { data: orderData, error: orderError } = await supabase.functions.invoke("create-razorpay-order", {
+        body: { plan_key: planKey },
+      });
+
+      if (orderError || orderData?.error) {
+        throw new Error(orderData?.error || orderError?.message || "Could not start checkout");
+      }
+
+      // 2. Load Razorpay's Checkout script (no-op if already loaded).
+      const scriptLoaded = await loadRazorpayScript();
+      if (!scriptLoaded) {
+        throw new Error("Could not load payment gateway. Check your connection and try again.");
+      }
+
+      // 3. Open the Razorpay Checkout modal with the order we just created.
+      const razorpay = new window.Razorpay({
+        key: orderData.key_id,
+        amount: orderData.amount,
+        currency: orderData.currency,
+        name: "Sriman Narayaneeyam",
+        description: orderData.plan_display_name,
+        order_id: orderData.order_id,
+        prefill: {
+          email: user.email ?? undefined,
+        },
+        theme: { color: "#0f766e" },
+        handler: async (response: {
+          razorpay_order_id: string;
+          razorpay_payment_id: string;
+          razorpay_signature: string;
+        }) => {
+          // 4. Verify the payment client-side for instant UI feedback.
+          //    (The webhook independently activates the subscription server-side
+          //    as the source of truth, so this succeeding is a bonus, not required.)
+          const { data: verifyData, error: verifyError } = await supabase.functions.invoke("verify-razorpay-payment", {
+            body: response,
+          });
+
+          if (verifyError || verifyData?.error) {
+            toast({
+              title: "Payment received, confirming...",
+              description:
+                "Your payment went through. It may take a minute to reflect here — refresh shortly if it doesn't update automatically.",
+            });
+            setProcessingPlan(null);
+            return;
+          }
+
+          toast({
+            title: "Subscription activated!",
+            description: `You're all set with ${orderData.plan_display_name}.`,
+          });
+
+          // Re-pull profiles/subscriptionPlan from AuthContext so the new
+          // status shows up everywhere without a full page reload.
+          await refreshProfile();
+          setProcessingPlan(null);
+        },
+        modal: {
+          ondismiss: () => {
+            setProcessingPlan(null);
+          },
+        },
+      });
+
+      razorpay.on("payment.failed", (response: any) => {
+        toast({
+          title: "Payment failed",
+          description: response?.error?.description || "Something went wrong. Please try again.",
+          variant: "destructive",
+        });
+        setProcessingPlan(null);
+      });
+
+      razorpay.open();
+    } catch (err) {
+      toast({
+        title: "Couldn't start checkout",
+        description: err instanceof Error ? err.message : "Please try again.",
+        variant: "destructive",
+      });
+      setProcessingPlan(null);
+    }
   };
 
   if (!user) {
@@ -80,6 +189,7 @@ export default function SubscribePage() {
               (isActive || isTrialActive);
 
             const isRecommended = previousTier === plan.plan_key;
+            const isProcessing = processingPlan === plan.plan_key;
 
             return (
               <motion.div
@@ -130,11 +240,13 @@ export default function SubscribePage() {
                 ) : (
                   <button
                     onClick={() => handleSubscribe(plan.plan_key)}
-                    className={`rounded-lg px-4 py-2.5 text-sm font-sans font-semibold transition-opacity hover:opacity-90 ${
+                    disabled={isProcessing || processingPlan !== null}
+                    className={`rounded-lg px-4 py-2.5 text-sm font-sans font-semibold transition-opacity hover:opacity-90 disabled:opacity-60 disabled:cursor-not-allowed flex items-center justify-center gap-2 ${
                       plan.is_featured ? "bg-secondary text-secondary-foreground" : "bg-primary text-primary-foreground"
                     }`}
                   >
-                    {plan.is_trial ? "Start Free Trial" : "Subscribe"}
+                    {isProcessing && <Loader2 className="h-4 w-4 animate-spin" />}
+                    {isProcessing ? "Processing..." : plan.is_trial ? "Start Free Trial" : "Subscribe"}
                   </button>
                 )}
               </motion.div>
