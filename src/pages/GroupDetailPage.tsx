@@ -18,6 +18,8 @@ import SEO from "@/components/SEO";
 import DashakamGarden from "@/components/DashakamGarden";
 import { useGroupGarden } from "@/hooks/useGarden";
 import GroupBloomsSection from "@/components/GroupBloomsSection";
+import GroupDangerZone from "@/components/GroupDangerZone";
+
 
 export default function GroupDetailPage() {
   const { groupId } = useParams<{ groupId: string }>();
