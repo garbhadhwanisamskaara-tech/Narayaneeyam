@@ -69,7 +69,11 @@ export function useGroups() {
         .select("group_id")
         .eq("user_id", user.id)
         .is("left_at", null),
-      (supabase as any).from("groups").select(GROUP_COLS).eq("owner_id", user.id),
+      (supabase as any)
+        .from("groups")
+        .select(GROUP_COLS)
+        .eq("owner_id", user.id)
+        .neq("status", "dissolved"),
     ]);
 
     if (memberRes.error && ownedRes.error) {
@@ -84,7 +88,8 @@ export function useGroups() {
       const { data } = await (supabase as any)
         .from("groups")
         .select(GROUP_COLS)
-        .in("id", memberIds);
+        .in("id", memberIds)
+        .neq("status", "dissolved");
       joined = (data ?? []) as Group[];
     }
 

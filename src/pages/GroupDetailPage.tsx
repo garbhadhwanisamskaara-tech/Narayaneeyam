@@ -128,6 +128,19 @@ export default function GroupDetailPage() {
         <Loader2 className="mt-6 h-5 w-5 animate-spin text-primary" />
       ) : !group ? (
         <p className="mt-6 font-sans text-sm text-muted-foreground">This group could not be found.</p>
+      ) : group.status === "dissolved" ? (
+        <div className="mt-6 rounded-2xl border border-border bg-card p-6 shadow-peacock">
+          <h1 className="font-display text-xl font-bold text-foreground">{group.group_name}</h1>
+          <p className="mt-2 font-sans text-sm text-muted-foreground">
+            This group has been dissolved. Everyone keeps their own chanting history and feathers.
+          </p>
+          <Link
+            to="/groups"
+            className="mt-4 inline-flex items-center gap-2 rounded-lg bg-gradient-peacock px-4 py-2 font-sans text-sm font-semibold text-primary-foreground hover:opacity-90"
+          >
+            Back to your groups
+          </Link>
+        </div>
       ) : (
         <>
           <h1 className="mt-4 font-display text-2xl font-bold text-foreground">{group.group_name}</h1>
