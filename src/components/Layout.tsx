@@ -4,6 +4,7 @@ import {
   LayoutDashboard,
   Mic,
   Headphones,
+  BarChart3,
   X,
   LogIn,
   LogOut,
