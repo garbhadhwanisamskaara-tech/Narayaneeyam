@@ -1,6 +1,6 @@
 import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
-import { Flame, BookOpen, Clock, Mic, BarChart3, LogIn, TrendingUp, Play } from "lucide-react";
+import { Flame, BookOpen, Clock, Mic, BarChart3, LogIn, TrendingUp, Play, Feather } from "lucide-react";
 import { getProgress } from "@/lib/progress";
 import { TOTAL_VERSES } from "@/data/narayaneeyam";
 import { useAuth } from "@/contexts/AuthContext";
