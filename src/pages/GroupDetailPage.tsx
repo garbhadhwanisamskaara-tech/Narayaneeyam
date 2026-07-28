@@ -17,6 +17,7 @@ import { useGroupInvite, useGroupMembers, inviteLink, type Group } from "@/hooks
 import SEO from "@/components/SEO";
 import DashakamGarden from "@/components/DashakamGarden";
 import { useGroupGarden } from "@/hooks/useGarden";
+import GroupBloomsSection from "@/components/GroupBloomsSection";
 
 export default function GroupDetailPage() {
   const { groupId } = useParams<{ groupId: string }>();
