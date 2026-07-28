@@ -57,7 +57,7 @@ export default function ActiveChallengeCard() {
           </p>
         </div>
         <button
-          onClick={() => navigate("/challenges/new")}
+          onClick={() => navigate("/parayanam/new")}
           className="rounded-full bg-gradient-gold px-5 py-2 font-sans text-sm font-semibold text-primary shadow-gold transition-transform hover:scale-105"
         >
           Start a parayanam
