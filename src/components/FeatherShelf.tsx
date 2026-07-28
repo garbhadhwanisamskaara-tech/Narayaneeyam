@@ -3,6 +3,7 @@ import { ChevronDown, ChevronUp } from "lucide-react";
 import { Progress } from "@/components/ui/progress";
 import { useFeathers, type FeatherMode } from "@/hooks/useFeathers";
 import { getDashakamName } from "@/hooks/useDashakam";
+import PeacockFeatherIcon from "@/components/icons/PeacockFeatherIcon";
 
 const MODES: { key: FeatherMode; label: string; color: string; ring: string; bg: string }[] = [
   {
@@ -27,31 +28,6 @@ const MODES: { key: FeatherMode; label: string; color: string; ring: string; bg:
     bg: "bg-feather-podcast/15",
   },
 ];
-
-/**
- * A peacock feather (mayura pincham) -- replaces the generic lucide
- * Feather icon so the reward visual matches Krishna/Narayana
- * iconography rather than a plain bird feather.
- */
-function PeacockFeather({ className }: { className?: string }) {
-  return (
-    <svg viewBox="0 0 24 24" className={className} fill="none" aria-hidden="true">
-      <path
-        d="M12 2c2.5 2.2 3.8 5 3.8 8 0 2.6-1.1 4.6-2.2 6.1L12 22l-1.6-5.9C9.3 14.6 8.2 12.6 8.2 10c0-3 1.3-5.8 3.8-8z"
-        fill="currentColor"
-        opacity="0.18"
-      />
-      <path
-        d="M12 3.2c2 2 3 4.4 3 6.9 0 2.2-.9 4-1.9 5.4L12 20l-1.1-4.5C9.9 14.1 9 12.3 9 10.1c0-2.5 1-4.9 3-6.9z"
-        fill="currentColor"
-        opacity="0.4"
-      />
-      <circle cx="12" cy="9.4" r="2.1" fill="currentColor" />
-      <circle cx="12" cy="9.4" r="1.1" fill="hsl(var(--card))" />
-      <path d="M12 15.5v6.5" stroke="currentColor" strokeWidth="1" strokeLinecap="round" opacity="0.6" />
-    </svg>
-  );
-}
 
 function FeatherCell({
   num,
