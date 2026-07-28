@@ -3,7 +3,7 @@ import { ChevronDown, ChevronUp } from "lucide-react";
 import { Progress } from "@/components/ui/progress";
 import { useFeathers, type FeatherMode } from "@/hooks/useFeathers";
 import { getDashakamName } from "@/hooks/useDashakam";
-import PeacockFeatherIcon from "@/components/icons/PeacockFeatherIcon";
+import PeacockFeather from "@/components/icons/PeacockFeatherIcon";
 
 const MODES: { key: FeatherMode; label: string; color: string; ring: string; bg: string }[] = [
   {
