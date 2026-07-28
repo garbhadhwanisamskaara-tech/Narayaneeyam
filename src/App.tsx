@@ -49,6 +49,7 @@ import NotFound from "./pages/NotFound";
 import BlogIndexPage from "./pages/blog/BlogIndexPage";
 import SankalpaMomentPage from "./pages/SankalpaMomentPage";
 import ChallengeCreationPage from "./pages/ChallengeCreationPage";
+import CreateParayanamPage from "./pages/CreateParayanamPage";
 import HowChantingGavePeace from "./pages/blog/HowChantingGavePeace";
 import HundredDayParayanam from "./pages/blog/HundredDayParayanam";
 import LearnNarayaneeyamBeginners from "./pages/blog/LearnNarayaneeyamBeginners";
@@ -89,6 +90,8 @@ const App = () => {
                   <Route path="/dashboard" element={<DashboardPage />} />
                   <Route path="/podcast" element={<PodcastPage />} />
                   <Route path="/challenges/new" element={<ChallengeCreationPage />} />
+                  <Route path="/parayanam/new" element={<CreateParayanamPage />} />
+
                   <Route path="/groups" element={<GroupsPage />} />
                   <Route path="/groups/:groupId" element={<GroupDetailPage />} />
                   <Route path="/groups/:groupId/schedule" element={<GroupSchedulePage />} />

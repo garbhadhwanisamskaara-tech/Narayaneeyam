@@ -17,6 +17,7 @@ import { useGroupInvite, useGroupMembers, inviteLink, type Group } from "@/hooks
 import SEO from "@/components/SEO";
 import DashakamGarden from "@/components/DashakamGarden";
 import { useGroupGarden } from "@/hooks/useGarden";
+import GroupBloomsSection from "@/components/GroupBloomsSection";
 
 export default function GroupDetailPage() {
   const { groupId } = useParams<{ groupId: string }>();
@@ -137,13 +138,21 @@ export default function GroupDetailPage() {
                   ? "Review or reassign the dashakams for your group."
                   : "Choose a dashakam set, a timeline and how the dashakams are shared."}
               </p>
-              <Link
-                to={`/groups/${group.id}/schedule`}
-                className="mt-4 inline-flex items-center gap-2 rounded-lg bg-gradient-peacock px-4 py-2 font-sans text-sm font-semibold text-primary-foreground hover:opacity-90"
-              >
-                <CalendarDays className="h-4 w-4" />
-                {group.active_challenge_session_id ? "Manage schedule" : "Plan parayanam"}
-              </Link>
+              <div className="mt-4 flex flex-wrap gap-3">
+                <Link
+                  to={`/groups/${group.id}/schedule`}
+                  className="inline-flex items-center gap-2 rounded-lg bg-gradient-peacock px-4 py-2 font-sans text-sm font-semibold text-primary-foreground hover:opacity-90"
+                >
+                  <CalendarDays className="h-4 w-4" />
+                  {group.active_challenge_session_id ? "Manage schedule" : "Plan parayanam"}
+                </Link>
+                <Link
+                  to={`/parayanam/new?group=${group.id}`}
+                  className="inline-flex items-center gap-2 rounded-lg border border-border px-4 py-2 font-sans text-sm font-semibold text-foreground hover:border-primary"
+                >
+                  Create a Parayanam
+                </Link>
+              </div>
             </section>
           )}
 
@@ -154,6 +163,10 @@ export default function GroupDetailPage() {
               loading={gardenLoading}
             />
           </div>
+
+          <GroupBloomsSection groupId={groupId} isOwner={isOwner} />
+
+
 
           <section className="mt-6 rounded-2xl border border-border bg-card p-5 shadow-peacock">
             <h2 className="font-display text-lg font-semibold text-foreground">Members</h2>
