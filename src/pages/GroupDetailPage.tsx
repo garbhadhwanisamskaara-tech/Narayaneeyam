@@ -18,6 +18,8 @@ import SEO from "@/components/SEO";
 import DashakamGarden from "@/components/DashakamGarden";
 import { useGroupGarden } from "@/hooks/useGarden";
 import GroupBloomsSection from "@/components/GroupBloomsSection";
+import GroupDangerZone from "@/components/GroupDangerZone";
+
 
 export default function GroupDetailPage() {
   const { groupId } = useParams<{ groupId: string }>();
@@ -264,6 +266,9 @@ export default function GroupDetailPage() {
               {actionError && <p className="mt-3 font-sans text-sm text-destructive">{actionError}</p>}
             </section>
           )}
+
+          <GroupDangerZone groupId={group.id} groupName={group.group_name} isOwner={isOwner} />
+
         </>
       )}
     </div>
