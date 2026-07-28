@@ -150,7 +150,7 @@ export default function DashboardPage() {
           className="rounded-xl border border-border bg-card p-5 mb-8 flex items-center gap-4"
         >
           <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-secondary/15">
-            <Feather className="h-6 w-6 text-secondary" />
+            <PeacockFeather className="h-6 w-6 text-secondary" />
           </div>
           <div>
             <p className="text-xs text-muted-foreground font-sans uppercase tracking-wide">Feathers Earned</p>
