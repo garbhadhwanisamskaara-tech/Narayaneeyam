@@ -135,9 +135,9 @@ export default function AuthPage() {
               </div>
             )}
             {mode === "signup" && (
-              <div className="grid gap-3 sm:grid-cols-2">
+              <div className="grid gap-3 sm:grid-cols-2 items-end">
                 <div className="space-y-1">
-                  <label className="text-xs font-sans text-muted-foreground">
+                  <label className="block min-h-[2rem] text-xs font-sans text-muted-foreground leading-tight">
                     Preferred language for lyrics
                   </label>
                   <Select value={scriptLang} onValueChange={setScriptLang}>
@@ -152,7 +152,7 @@ export default function AuthPage() {
                   </Select>
                 </div>
                 <div className="space-y-1">
-                  <label className="text-xs font-sans text-muted-foreground">
+                  <label className="block min-h-[2rem] text-xs font-sans text-muted-foreground leading-tight">
                     Preferred language for translation
                   </label>
                   <Select value={translationLang} onValueChange={setTranslationLang}>
