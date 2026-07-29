@@ -1,36 +1,32 @@
-Goal: Make the Progress page reachable from the desktop header (it is already in the mobile bottom nav), and replace the feather reward visuals with a proper peacock-feather SVG icon.
+## What's happening today
 
-## What I found
-- The desktop header navigation in `src/components/Layout.tsx` only shows Home, Chant, Podcast. The mobile bottom nav (`src/components/BottomNav.tsx`) already shows Progress.
-- The Feather Shelf in `src/components/FeatherShelf.tsx` already has a local `PeacockFeather` SVG, but it is very abstract and the Dashboard stat card still uses the generic `lucide-react` `Feather` icon.
+- The bell (`Common/BellFinal.mp3`) is triggered in exactly one place: `useSlokaPlayback` — after a verse's linked **sloka** audio finishes.
+- I checked `verses_audio` for Dashakam 1: all 10 verses have `sloka_audio_id = null`, so the app never rings the bell there. The bell you heard before verse 9 is **baked into the recording** `Chant/SN001/SN001_08.mp3` on the CDN — that one needs an audio-file re-cut, not a code change.
+- Dashakam 1's `prasadam` table has exactly one row: verse 10 ("Any fruit or water").
 
-## Proposed changes
+## Changes to make
 
-1. **Add Progress to the desktop header nav**
-   - Add `BarChart3` to the `lucide-react` import in `src/components/Layout.tsx`.
-   - Add `{ path: "/progress", label: "Progress", icon: BarChart3 }` to the `navItems` array so the desktop header shows a "Progress" link with the same icon/label used on mobile.
-   - The same `navItems` array is also used for the mobile hamburger menu, so Progress will appear there too; the bottom nav already has it, making the navigation consistent across all breakpoints.
+### 1. Bell rings only after a Prasadam verse
 
-2. **Create a shared peacock-feather SVG icon component**
-   - Create `src/components/icons/PeacockFeatherIcon.tsx` containing a detailed, stylized peacock-feather SVG.
-   - The SVG will use `currentColor` for its main stroke/fill so it automatically matches the theme color classes passed in (e.g., `text-feather-chant`, `text-secondary`, `text-primary`).
-   - Include `aria-hidden="true"` and a `title` prop so the icon is accessible when used as a meaningful image.
+The verse data already carries `prasadam` (from `useDashakam` → `prasadam_text`). In `ChantPage.tsx`'s `handleVerseEnded`, drive the bell off that flag instead of off sloka:
 
-3. **Replace feather visuals everywhere they appear**
-   - In `src/components/FeatherShelf.tsx`, replace the local `PeacockFeather` SVG with the new `PeacockFeatherIcon` component.
-   - In `src/pages/DashboardPage.tsx`, replace the generic `lucide-react` `Feather` icon in the "Feathers Earned" stat card with `PeacockFeatherIcon`, and remove the unused `Feather` import.
-   - Keep the existing mode colors (`text-feather-chant`, `text-feather-learn`, `text-feather-podcast`) and the secondary color used in the Dashboard stat card.
+```text
+verse audio ends
+  ├─ has sloka?      → play sloka script + audio
+  ├─ has prasadam?   → ring bell
+  └─ then            → next verse
+```
 
-## Files modified
-- `src/components/Layout.tsx` — add Progress to the desktop nav.
-- `src/components/FeatherShelf.tsx` — use the shared peacock-feather icon.
-- `src/pages/DashboardPage.tsx` — use the peacock-feather icon in the Feathers Earned card.
+- `src/hooks/useSlokaPlayback.ts` — remove the unconditional `await playBellAudio()` after sloka audio; add an optional `playBell` argument so the caller decides.
+- `src/pages/ChantPage.tsx` — pass `!!currentVerse.prasadam` through to `handlePostVerse`, and for verses with **no** sloka but **with** prasadam, ring the bell before advancing.
 
-## New files
-- `src/components/icons/PeacockFeatherIcon.tsx` — reusable peacock-feather SVG icon.
+Net effect: in Dashakam 1 the bell rings once, after verse 10, and nowhere else.
 
-## Technical notes
-- No new npm packages or dependencies are needed.
-- No data/schema changes are needed.
-- The icon remains a vector, so it stays crisp on all screen sizes and supports the existing Tailwind `text-*` color classes.
-- This change does not affect fonts, colors, or other navigation items; it only adds the missing Progress link and updates the feather icon.
+### 2. Never stall when audio is missing
+
+- `src/pages/ChantPage.tsx` — the "no valid audio URL" branch currently waits `setTimeout(..., 2000)` before moving on. Advance immediately instead (keep a minimal tick so React state settles), and also advance on the audio `error` event rather than sitting on a dead verse.
+- `src/hooks/useSlokaPlayback.ts` — the no-sloka-audio branch waits 2000 ms; drop it so the flow continues right away. Same for the existing `onerror` / failed-`play()` paths (already advance, just confirm no delay).
+
+### Not in scope
+
+The `has_bell` field that `AdminUploadPage.tsx` reads and writes does not exist as a column on `verses_audio` — that admin toggle is dead. Leaving it alone unless you want it cleaned up separately; the new rule reads Prasadam, so the toggle isn't needed.
