@@ -795,6 +795,7 @@ export default function ChantPage() {
               <option value={0.75}>0.75×</option>
               <option value={1}>1×</option>
               <option value={1.25}>1.25×</option>
+              <option value={2}>2×</option>
             </select>
           </div>
 
@@ -1130,7 +1131,7 @@ export default function ChantPage() {
           {/* Speed control buttons */}
           <div className="flex items-center justify-center gap-1.5 mt-3">
             <span className="text-[10px] text-primary-foreground/50 font-sans mr-1">Speed</span>
-            {[0.75, 1, 1.25].map((s) => (
+            {[0.75, 1, 1.25, 2].map((s) => (
               <button
                 key={s}
                 onClick={() => {

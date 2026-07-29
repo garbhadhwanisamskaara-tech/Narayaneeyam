@@ -497,6 +497,7 @@ export default function PodcastPage() {
                 <option value={0.75}>0.75×</option>
                 <option value={1}>1×</option>
                 <option value={1.25}>1.25×</option>
+                <option value={2}>2×</option>
               </select>
             </div>
             {playMode === "single" && !inPlaylistMode && (

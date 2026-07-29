@@ -3,6 +3,7 @@
  * Plays the real bell audio for 3 seconds with a 1-second fade-out (every 10ms).
  */
 import { getStorageUrl } from "@/lib/storageUrl";
+import { isMuted } from "@/lib/globalMute";
 
 let bellAudioInstance: HTMLAudioElement | null = null;
 let fadeInterval: ReturnType<typeof setInterval> | null = null;
@@ -32,6 +33,7 @@ export function playBellAudio(): Promise<void> {
     const audio = new Audio(bellUrl);
     bellAudioInstance = audio;
     audio.volume = 1.0;
+    audio.muted = isMuted();
 
     audio.play().catch(() => {
       // Silently handle play interruptions
