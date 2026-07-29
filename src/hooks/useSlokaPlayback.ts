@@ -58,9 +58,14 @@ export function useSlokaPlayback(): UseSlokaPlaybackReturn {
       languageCode: string,
       mode: "chant" | "learn",
       speed: number,
-      onComplete: () => void
+      onComplete: () => void,
+      playBell = false
     ) => {
       if (!slokaAudioId) {
+        if (playBell) {
+          cancelledRef.current = false;
+          await playBellAudio();
+        }
         onComplete();
         return;
       }
