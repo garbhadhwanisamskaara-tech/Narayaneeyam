@@ -544,7 +544,7 @@ export default function ChantPage() {
       };
       engine.audioElement.current.addEventListener("canplaythrough", onCanPlay, { once: true });
 
-      // Error handling
+      // Error handling — never stall on a broken file, move to the next verse
       const onError = () => {
         const errMsg = engine.audioElement.current.error?.message || "Unknown audio error";
         logAudioEvent("audio_error", selectedDashakam, currentVerse.paragraph, currentVerse.audio!, {
@@ -555,6 +555,7 @@ export default function ChantPage() {
           verse: currentVerse.paragraph,
           audio_file: currentVerse.audio,
         });
+        handleVerseEndedRef.current();
       };
       engine.audioElement.current.addEventListener("error", onError, { once: true });
 
@@ -569,7 +570,8 @@ export default function ChantPage() {
       };
     } else {
       console.warn("No valid audio URL for verse", currentVerse?.paragraph, "— skipping");
-      gapTimerRef.current = setTimeout(() => handleVerseEndedRef.current(), 2000);
+      // No audio for this verse — proceed immediately, don't sit on it
+      gapTimerRef.current = setTimeout(() => handleVerseEndedRef.current(), 0);
       return () => {
         if (gapTimerRef.current) clearTimeout(gapTimerRef.current);
       };
