@@ -1,6 +1,8 @@
 import { Helmet } from "react-helmet-async";
 import { Link } from "react-router-dom";
 import BlogShell from "@/components/BlogShell";
+import InstagramFollow from "@/components/InstagramFollow";
+
 
 const posts = [
   {
@@ -57,6 +59,10 @@ export default function BlogIndexPage() {
           <span className="text-xs font-sans uppercase tracking-[0.2em] text-secondary">From Our Blog</span>
           <h1 className="font-display text-3xl sm:text-4xl text-primary mt-3 mb-3">Narayaneeyam Blog</h1>
           <div className="mx-auto h-[2px] w-20 bg-gradient-gold rounded-full" />
+          <div className="mt-4 flex justify-center">
+            <InstagramFollow variant="inline" label="Follow us" size={18} />
+          </div>
+
           <p className="mt-5 text-foreground/70 font-sans leading-relaxed">
             Devotional articles, chanting guides and personal stories from devotees of Sriman Narayaneeyam.
           </p>
