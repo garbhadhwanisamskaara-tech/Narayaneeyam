@@ -152,7 +152,9 @@ export default function LandingPage() {
           <button onClick={() => scrollTo("benefits")}>Stories</button>
           <button onClick={() => scrollTo("faq")}>FAQ</button>
           <button onClick={() => navigate("/blog")}>Blog</button>
+          <InstagramFollow variant="icon" />
           <button className="landing-nav-cta" onClick={goAuth}>Begin Journey</button>
+
         </div>
       </nav>
 
