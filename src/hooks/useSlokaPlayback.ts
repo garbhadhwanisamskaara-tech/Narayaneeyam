@@ -2,6 +2,7 @@ import { useState, useRef, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { playBellAudio } from "@/lib/bellAudio";
 import { getStorageUrl } from "@/lib/storageUrl";
+import { registerAudioElement } from "@/lib/globalMute";
 
 export interface SlokaData {
   sloka_audio_id: string;
@@ -125,6 +126,7 @@ export function useSlokaPlayback(): UseSlokaPlaybackReturn {
         if (resolvedAudioFile && !cancelledRef.current) {
           const audio = new Audio(resolvedAudioFile);
           audioRef.current = audio;
+          registerAudioElement(audio);
           audio.defaultPlaybackRate = speed;
           audio.playbackRate = speed;
           audio.addEventListener("loadedmetadata", () => { audio.playbackRate = speed; });

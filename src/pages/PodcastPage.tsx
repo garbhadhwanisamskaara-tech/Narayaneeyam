@@ -12,6 +12,8 @@ import { usePlaylist, type PlaylistItem } from "@/hooks/usePlaylist";
 import SEO from "@/components/SEO";
 import { awardFeather } from "@/hooks/useFeathers";
 import { useAuth } from "@/contexts/AuthContext";
+import { registerAudioElement, useGlobalMute } from "@/lib/globalMute";
+import { VolumeX } from "lucide-react";
 
 type PlayMode = "single" | "playlist" | "all";
 
@@ -22,6 +24,7 @@ interface PodcastEntry {
 
 export default function PodcastPage() {
   const { user } = useAuth();
+  const [muted, toggleMuted] = useGlobalMute();
   const [currentDashakam, setCurrentDashakam] = useState(1);
   const [isPlaying, setIsPlaying] = useState(false);
   const [playMode, setPlayMode] = useState<PlayMode>("single");
@@ -207,6 +210,7 @@ export default function PodcastPage() {
 
     const audio = new Audio(url);
     audioRef.current = audio;
+    const unregisterMute = registerAudioElement(audio);
     audio.defaultPlaybackRate = speedRef.current;
     audio.playbackRate = speedRef.current;
     audio.addEventListener("loadedmetadata", () => { audio.playbackRate = speedRef.current; });
@@ -222,7 +226,7 @@ export default function PodcastPage() {
     };
     audio.addEventListener("timeupdate", updateProgress);
     audio.onended = () => advanceRef.current();
-    return () => { audio.pause(); audio.removeEventListener("timeupdate", updateProgress); audio.onended = null; };
+    return () => { unregisterMute(); audio.pause(); audio.removeEventListener("timeupdate", updateProgress); audio.onended = null; };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isPlaying, currentDashakam, currentLoop, playlistLoop, getAudioUrl]);
 
@@ -497,7 +501,19 @@ export default function PodcastPage() {
                 <option value={0.75}>0.75×</option>
                 <option value={1}>1×</option>
                 <option value={1.25}>1.25×</option>
+                <option value={2}>2×</option>
               </select>
+            </div>
+            <div className="flex flex-col items-center gap-1">
+              <label className="text-[10px] text-primary-foreground/50 font-sans">Sound</label>
+              <button
+                onClick={toggleMuted}
+                aria-label={muted ? "Unmute audio" : "Mute audio"}
+                title={muted ? "Unmute audio" : "Mute audio"}
+                className={`rounded-lg px-3 py-1.5 text-xs font-sans border border-primary-foreground/20 transition-colors ${muted ? "bg-secondary text-secondary-foreground" : "bg-primary-foreground/20 text-primary-foreground hover:bg-primary-foreground/30"}`}
+              >
+                {muted ? <VolumeX className="h-4 w-4" /> : <Volume2 className="h-4 w-4" />}
+              </button>
             </div>
             {playMode === "single" && !inPlaylistMode && (
               <div className="flex flex-col items-center gap-1">

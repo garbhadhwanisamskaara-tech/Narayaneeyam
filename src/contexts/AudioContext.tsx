@@ -10,6 +10,7 @@ import {
 } from "react";
 import { addChantingSeconds } from "@/lib/progress";
 import { recordListeningTimeSupabase } from "@/lib/supabaseProgress";
+import { registerAudioElement } from "@/lib/globalMute";
 
 interface AudioState {
   src: string | null;
@@ -49,6 +50,7 @@ export function AudioProvider({ children }: { children: ReactNode }) {
     a.preload = "auto";
     a.setAttribute("playsinline", "true");
     a.setAttribute("webkit-playsinline", "true");
+    registerAudioElement(a);
     audioRef.current = a;
   }
 
