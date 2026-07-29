@@ -115,45 +115,28 @@ export function useSlokaPlayback(): UseSlokaPlaybackReturn {
           audio.playbackRate = speed;
           audio.addEventListener("loadedmetadata", () => { audio.playbackRate = speed; });
 
-          audio.onended = async () => {
+          const finish = async (withBell: boolean) => {
             if (cancelledRef.current) return;
-            // Play bell after sloka audio ends
-            await playBellAudio();
-            if (cancelledRef.current) return;
-            setActiveSlokaScript(null);
-            setActiveSlokaTranslation(null);
-            setIsSlokaPlaying(false);
-            onComplete();
-          };
-
-          audio.onerror = () => {
-            if (cancelledRef.current) return;
-            setActiveSlokaScript(null);
-            setActiveSlokaTranslation(null);
-            setIsSlokaPlaying(false);
-            onComplete();
-          };
-
-          audio.play().catch(() => {
-            if (!cancelledRef.current) {
-              setActiveSlokaScript(null);
-              setActiveSlokaTranslation(null);
-              setIsSlokaPlaying(false);
-              onComplete();
+            // Bell only for verses that have a Prasadam entry
+            if (withBell) {
+              await playBellAudio();
+              if (cancelledRef.current) return;
             }
-          });
+            setActiveSlokaScript(null);
+            setActiveSlokaTranslation(null);
+            setIsSlokaPlaying(false);
+            onComplete();
+          };
+
+          audio.onended = () => void finish(playBell);
+
+          // Missing/broken audio — don't stall, move on immediately
+          audio.onerror = () => void finish(false);
+
+          audio.play().catch(() => void finish(false));
         } else {
-          // No audio file — still show script briefly, then continue
-          if (!cancelledRef.current) {
-            setTimeout(() => {
-              if (!cancelledRef.current) {
-                setActiveSlokaScript(null);
-                setActiveSlokaTranslation(null);
-                setIsSlokaPlaying(false);
-                onComplete();
-              }
-            }, 2000);
-          }
+          // No sloka audio file — continue immediately, no waiting
+          if (!cancelledRef.current) void finishWithoutAudio();
         }
       } catch {
         if (!cancelledRef.current) {
