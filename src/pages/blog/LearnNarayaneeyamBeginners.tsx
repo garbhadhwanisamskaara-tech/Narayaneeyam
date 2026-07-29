@@ -1,6 +1,7 @@
 import { Helmet } from "react-helmet-async";
 import { Link } from "react-router-dom";
 import BlogShell from "@/components/BlogShell";
+import InstagramFollow from "@/components/InstagramFollow";
 
 const TITLE = "How to Learn Narayaneeyam for Beginners";
 const DESCRIPTION =
@@ -106,6 +107,8 @@ export default function LearnNarayaneeyamBeginners() {
         <p className="mb-4">
           You do not need perfect Sanskrit or prior experience. Devotion grows through sincere, consistent practice. Start slowly. Listen daily. Learn patiently. The Lord meets every effort, however small.
         </p>
+
+        <InstagramFollow variant="cta" label="Follow us on Instagram" />
 
         <div className="text-center mt-12">
           <Link

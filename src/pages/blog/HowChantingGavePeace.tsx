@@ -1,6 +1,7 @@
 import { Helmet } from "react-helmet-async";
 import { Link } from "react-router-dom";
 import BlogShell from "@/components/BlogShell";
+import InstagramFollow from "@/components/InstagramFollow";
 
 const TITLE = "How Chanting Narayaneeyam Gave Me Peace";
 const DESCRIPTION =
@@ -59,6 +60,8 @@ export default function HowChantingGavePeace() {
           <li>Keep a fixed time — early morning works best.</li>
           <li>Visualise the Lord's form as you chant.</li>
         </ul>
+
+        <InstagramFollow variant="cta" label="Follow us on Instagram" />
 
         <div className="text-center mt-12">
           <Link

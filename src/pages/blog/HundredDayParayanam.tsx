@@ -1,6 +1,7 @@
 import { Helmet } from "react-helmet-async";
 import { Link } from "react-router-dom";
 import BlogShell from "@/components/BlogShell";
+import InstagramFollow from "@/components/InstagramFollow";
 
 const TITLE = "How to Do 100 Day Narayaneeyam Parayanam";
 const DESCRIPTION =
@@ -94,6 +95,8 @@ export default function HundredDayParayanam() {
           <li>Avoid breaks in the 100-day cycle — continuity is part of the practice.</li>
           <li>Combine the parayanam with Ekadashi fasts for additional grace.</li>
         </ul>
+
+        <InstagramFollow variant="cta" label="Follow us on Instagram" />
 
         <div className="text-center mt-12">
           <Link
