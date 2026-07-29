@@ -108,25 +108,26 @@ export function useSlokaPlayback(): UseSlokaPlaybackReturn {
             : audioData?.chant_audio_file;
 
         const resolvedAudioFile = getStorageUrl(audioFile);
+
+        const finish = async (withBell: boolean) => {
+          if (cancelledRef.current) return;
+          // Bell only for verses that have a Prasadam entry
+          if (withBell) {
+            await playBellAudio();
+            if (cancelledRef.current) return;
+          }
+          setActiveSlokaScript(null);
+          setActiveSlokaTranslation(null);
+          setIsSlokaPlaying(false);
+          onComplete();
+        };
+
         if (resolvedAudioFile && !cancelledRef.current) {
           const audio = new Audio(resolvedAudioFile);
           audioRef.current = audio;
           audio.defaultPlaybackRate = speed;
           audio.playbackRate = speed;
           audio.addEventListener("loadedmetadata", () => { audio.playbackRate = speed; });
-
-          const finish = async (withBell: boolean) => {
-            if (cancelledRef.current) return;
-            // Bell only for verses that have a Prasadam entry
-            if (withBell) {
-              await playBellAudio();
-              if (cancelledRef.current) return;
-            }
-            setActiveSlokaScript(null);
-            setActiveSlokaTranslation(null);
-            setIsSlokaPlaying(false);
-            onComplete();
-          };
 
           audio.onended = () => void finish(playBell);
 
@@ -136,7 +137,7 @@ export function useSlokaPlayback(): UseSlokaPlaybackReturn {
           audio.play().catch(() => void finish(false));
         } else {
           // No sloka audio file — continue immediately, no waiting
-          if (!cancelledRef.current) void finishWithoutAudio();
+          void finish(playBell);
         }
       } catch {
         if (!cancelledRef.current) {
