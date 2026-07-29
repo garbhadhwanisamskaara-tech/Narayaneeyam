@@ -5,6 +5,8 @@ import { faqSections } from "@/data/faqData";
 import { supabase } from "@/integrations/supabase/client";
 import SEO from "@/components/SEO";
 import LandingBlog, { blogJsonLd } from "@/components/LandingBlog";
+import InstagramFollow from "@/components/InstagramFollow";
+
 import "./LandingPage.css";
 
 const SITE_URL = "https://www.narayaneeyam.app";
@@ -429,7 +431,11 @@ export default function LandingPage() {
           <button onClick={() => scrollTo("benefits")}>Stories</button>
           <button onClick={goAuth}>Sign In</button>
         </div>
+        <div style={{ marginTop: 12, display: "flex", justifyContent: "center" }}>
+          <InstagramFollow variant="inline" />
+        </div>
         <p className="landing-footer-copy">
+
           © 2026 Narayaneeyam App · narayaneeyam.app · Made with devotion for devotees everywhere
         </p>
       </footer>
