@@ -27,7 +27,8 @@ interface UseSlokaPlaybackReturn {
     languageCode: string,
     mode: "chant" | "learn",
     speed: number,
-    onComplete: () => void
+    onComplete: () => void,
+    playBell?: boolean
   ) => void;
   /** Stop any in-progress sloka playback */
   stopSloka: () => void;
