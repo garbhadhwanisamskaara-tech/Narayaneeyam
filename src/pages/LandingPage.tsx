@@ -6,6 +6,7 @@ import { supabase } from "@/integrations/supabase/client";
 import SEO from "@/components/SEO";
 import LandingBlog, { blogJsonLd } from "@/components/LandingBlog";
 import InstagramFollow from "@/components/InstagramFollow";
+import LandingFlute from "@/components/LandingFlute";
 
 import "./LandingPage.css";
 
@@ -154,6 +155,7 @@ export default function LandingPage() {
           <button onClick={() => scrollTo("benefits")}>Stories</button>
           <button onClick={() => scrollTo("faq")}>FAQ</button>
           <button onClick={() => navigate("/blog")}>Blog</button>
+          <LandingFlute />
           <InstagramFollow variant="icon" />
           <button className="landing-nav-cta" onClick={goAuth}>Begin Journey</button>
 

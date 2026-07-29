@@ -10,6 +10,7 @@ import {
   ChevronDown,
   ChevronUp,
   Volume2,
+  VolumeX,
   Square,
   ListMusic,
 } from "lucide-react";
@@ -34,6 +35,7 @@ import VerseSkeleton from "@/components/VerseSkeleton";
 import { getProgress, saveProgress } from "@/lib/progress";
 import { updateStreakSupabase, markVerseCompleted } from "@/lib/supabaseProgress";
 import { useAudioEngine } from "@/contexts/AudioContext";
+import { useGlobalMute } from "@/lib/globalMute";
 
 import VerseIcons from "@/components/VerseIcons";
 import SEO from "@/components/SEO";
@@ -78,6 +80,7 @@ export default function ChantPage() {
 
   // Global audio engine (singleton, survives navigation)
   const engine = useAudioEngine();
+  const [muted, toggleMuted] = useGlobalMute();
   const activeLanguages = useActiveLanguages();
 
   const pausedRef = useRef(false);
@@ -1130,6 +1133,14 @@ export default function ChantPage() {
           </div>
           {/* Speed control buttons */}
           <div className="flex items-center justify-center gap-1.5 mt-3">
+            <button
+              onClick={toggleMuted}
+              aria-label={muted ? "Unmute audio" : "Mute audio"}
+              title={muted ? "Unmute audio (script keeps scrolling while muted)" : "Mute audio (script keeps scrolling)"}
+              className={`mr-2 rounded-full p-1.5 transition-colors ${muted ? "bg-secondary text-secondary-foreground" : "bg-primary-foreground/10 text-primary-foreground/70 hover:bg-primary-foreground/20"}`}
+            >
+              {muted ? <VolumeX className="h-3.5 w-3.5" /> : <Volume2 className="h-3.5 w-3.5" />}
+            </button>
             <span className="text-[10px] text-primary-foreground/50 font-sans mr-1">Speed</span>
             {[0.75, 1, 1.25, 2].map((s) => (
               <button
