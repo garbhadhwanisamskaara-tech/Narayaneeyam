@@ -210,17 +210,18 @@ export default function CreateParayanamPage() {
 
             {setId === "custom" && (
               <div className="mt-4 grid grid-cols-10 gap-1.5">
-                {ALL.map((n) => (
+                {publishedList.map((d) => (
                   <button
-                    key={n}
-                    onClick={() => toggleCustom(n)}
+                    key={d.dashakam_no}
+                    onClick={() => toggleCustom(d.dashakam_no)}
+                    title={d.dashakam_name}
                     className={`aspect-square rounded-md border font-sans text-[11px] font-semibold transition-colors ${
-                      custom.includes(n)
+                      custom.includes(d.dashakam_no)
                         ? "border-primary bg-primary/15 text-primary"
                         : "border-border text-muted-foreground hover:border-primary"
                     }`}
                   >
-                    {n}
+                    {d.dashakam_no}
                   </button>
                 ))}
               </div>
