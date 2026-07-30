@@ -62,6 +62,7 @@ export default function ChantPage() {
   const [showGist, setShowGist] = useState(false);
   const [showBenefit, setShowBenefit] = useState(false);
   const [isPlaying, setIsPlaying] = useState(false);
+  const [isPaused, setIsPaused] = useState(false);
   const [highlightedVerse, setHighlightedVerse] = useState(0);
   const [speed, setSpeed] = useState(1);
   const speedRef = useRef(1);
@@ -292,7 +293,8 @@ export default function ChantPage() {
   // Sync verse progress from global engine
   useEffect(() => {
     if (!isPlaying) {
-      setActiveLine(null);
+      // Keep the current highlight frozen while paused
+      if (!isPaused) setActiveLine(null);
       return;
     }
     const verse = displayVerses[highlightedVerse];
@@ -309,7 +311,7 @@ export default function ChantPage() {
     }
     const lineIdx = Math.min(Math.floor((verseProgress / 100) * lines.length), lines.length - 1);
     setActiveLine(lineIdx);
-  }, [verseProgress, isPlaying, highlightedVerse, displayVerses.length]);
+  }, [verseProgress, isPlaying, isPaused, highlightedVerse, displayVerses.length]);
 
   // Auto-scroll to active line during playback
   useEffect(() => {
@@ -598,6 +600,7 @@ export default function ChantPage() {
       stopSloka();
       logAudioEvent("audio_pause", selectedDashakam, displayVerses[highlightedVerse]?.paragraph || 0, "");
       setIsPlaying(false);
+      setIsPaused(true);
     } else {
       if (!audioReady) {
         console.warn("Audio not ready — waiting for Supabase data");
@@ -608,6 +611,7 @@ export default function ChantPage() {
         return;
       }
       logEvent("chant_started", { dashakam: selectedDashakam });
+      setIsPaused(false);
       setIsPlaying(true);
     }
   };
@@ -616,6 +620,7 @@ export default function ChantPage() {
     stopAudio();
     stopSloka();
     setIsPlaying(false);
+    setIsPaused(false);
     if (sessionClosingChant) {
       setRitualPhase("session_end");
     } else {
@@ -935,7 +940,7 @@ export default function ChantPage() {
                   initial={{ opacity: 0, x: -10 }}
                   animate={{ opacity: 1, x: 0 }}
                   transition={{ delay: idx * 0.05 }}
-                  className={`rounded-xl border p-5 transition-all duration-500 ${idx === highlightedVerse && isPlaying ? "border-secondary bg-secondary/10 shadow-gold" : "border-border bg-card"}`}
+                  className={`rounded-xl border p-5 transition-all duration-500 ${idx === highlightedVerse && (isPlaying || isPaused) ? "border-secondary bg-secondary/10 shadow-gold" : "border-border bg-card"}`}
                 >
                   <div className="flex items-start justify-between mb-3">
                     <span className="text-xs text-muted-foreground font-sans flex items-center gap-1.5">
@@ -1006,7 +1011,7 @@ export default function ChantPage() {
                     {(() => {
                       const text = getVerseText(verse);
                       const lines = text.split("\n").filter(Boolean);
-                      const isActiveVerse = idx === highlightedVerse && isPlaying;
+                      const isActiveVerse = idx === highlightedVerse && (isPlaying || isPaused);
                       if (lines.length <= 1 || !isActiveVerse) {
                         return (
                           <p
@@ -1177,6 +1182,7 @@ export default function ChantPage() {
                 setRitualPhase("idle");
                 setHasPlayedOpening(true);
                 logEvent("chant_started", { dashakam: selectedDashakam });
+                setIsPaused(false);
                 setIsPlaying(true);
               }}
             />
