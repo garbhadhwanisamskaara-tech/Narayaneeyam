@@ -8,6 +8,7 @@ export interface DashakamListItem {
   remarks: string | null;
   gist: string | null;
   benefits: string | null;
+  is_published: boolean;
 }
 
 export interface MergedVerse {
@@ -36,6 +37,7 @@ const DASHAKAM_SEED: DashakamListItem[] = Array.from({ length: 100 }, (_, i) => 
   remarks: null,
   gist: null,
   benefits: null,
+  is_published: true,
 }));
 
 // ---- simple cache (per-language for dashakam list) ----
@@ -51,8 +53,9 @@ const getKey = (d: number, l: string) => `${d}_${l}`;
 async function fetchDashakamListForLang(lang: string): Promise<DashakamListItem[]> {
   const { data, error } = await supabase
     .from("dashakams")
-    .select("dashakam_no, dashakam_name, num_verses, remarks, gist, benefits")
+    .select("dashakam_no, dashakam_name, num_verses, remarks, gist, benefits, is_published")
     .eq("language_code", lang)
+    .eq("is_published", true)
     .order("dashakam_no");
 
   if (error) throw error;
