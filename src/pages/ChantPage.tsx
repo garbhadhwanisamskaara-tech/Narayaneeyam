@@ -1011,7 +1011,7 @@ export default function ChantPage() {
                     {(() => {
                       const text = getVerseText(verse);
                       const lines = text.split("\n").filter(Boolean);
-                      const isActiveVerse = idx === highlightedVerse && isPlaying;
+                      const isActiveVerse = idx === highlightedVerse && (isPlaying || isPaused);
                       if (lines.length <= 1 || !isActiveVerse) {
                         return (
                           <p
