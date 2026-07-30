@@ -65,6 +65,16 @@ export default function PodcastPage() {
       .catch(() => {});
   }, []);
   const publishedNos = useMemo(() => new Set(publishedList.map((d) => d.dashakam_no)), [publishedList]);
+  const publishedPodcastData = useMemo(() => podcastData.filter((p) => publishedNos.has(p.dashakam)), [podcastData, publishedNos]);
+
+  // Redirect to the first published dashakam if the current one is not available
+  useEffect(() => {
+    if (publishedList.length === 0) return;
+    if (!publishedNos.has(currentDashakam)) {
+      setCurrentDashakam(publishedList[0].dashakam_no);
+    }
+  }, [publishedList, currentDashakam, publishedNos]);
+
 
   // Fetch podcast data from Supabase
   useEffect(() => {
