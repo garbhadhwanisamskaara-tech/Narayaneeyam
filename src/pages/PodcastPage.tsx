@@ -327,11 +327,10 @@ export default function PodcastPage() {
     { value: "all", label: "All 100", desc: "Play all sequentially" },
   ];
 
-  // Build dropdown list — use 1-100 range with DB names
-  const dashakamDropdown = Array.from({ length: 100 }, (_, i) => {
-    const no = i + 1;
-    const hasPodcast = podcastData.some((p) => p.dashakam === no);
-    return { id: no, title: getDashakamName(no), titleSanskrit: "", hasPodcast };
+  // Build dropdown list — only published dashakams
+  const dashakamDropdown = publishedList.map((d) => {
+    const hasPodcast = publishedPodcastData.some((p) => p.dashakam === d.dashakam_no);
+    return { id: d.dashakam_no, title: d.dashakam_name, titleSanskrit: "", hasPodcast };
   });
 
   return (
