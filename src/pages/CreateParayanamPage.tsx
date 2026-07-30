@@ -15,7 +15,7 @@ const plusDays = (n: number) => {
   d.setDate(d.getDate() + n);
   return d.toISOString().slice(0, 10);
 };
-const ALL = Array.from({ length: 100 }, (_, i) => i + 1);
+const [publishedList, setPublishedList] = useState<{ dashakam_no: number; dashakam_name: string }[]>([]);
 
 export default function CreateParayanamPage() {
   const [params] = useSearchParams();
