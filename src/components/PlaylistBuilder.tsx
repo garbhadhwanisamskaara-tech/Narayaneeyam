@@ -33,8 +33,16 @@ export default function PlaylistBuilder({ mode, open, onClose, onStartPlaylist }
   const [showSaved, setShowSaved] = useState(false);
   const [saveName, setSaveName] = useState("");
   const [showSaveInput, setShowSaveInput] = useState(false);
+  const [publishedList, setPublishedList] = useState<{ dashakam_no: number; dashakam_name: string }[]>([]);
+
+  useEffect(() => {
+    prefetchDashakamList()
+      .then((list) => setPublishedList(list.map((d) => ({ dashakam_no: d.dashakam_no, dashakam_name: d.dashakam_name }))))
+      .catch(() => {});
+  }, []);
 
   const selectedNos = useMemo(() => new Set(selected.map(s => s.dashakam_no)), [selected]);
+  const publishedNos = useMemo(() => new Set(publishedList.map(d => d.dashakam_no)), [publishedList]);
 
   const toggleDashakam = (no: number) => {
     if (selectedNos.has(no)) {
@@ -45,7 +53,7 @@ export default function PlaylistBuilder({ mode, open, onClose, onStartPlaylist }
   };
 
   const applyPreset = (nos: number[]) => {
-    setSelected(nos.map(n => ({ dashakam_no: n, loops: 1 })));
+    setSelected(nos.filter(n => publishedNos.has(n)).map(n => ({ dashakam_no: n, loops: 1 })));
   };
 
   const updateLoops = (no: number, delta: number) => {
