@@ -53,11 +53,17 @@ export default function PodcastPage() {
 
   const inPlaylistMode = playlistItems !== null && playlistItems.length > 0;
 
-  // Prefetch dashakam names so dropdown shows real names
-  const [namesReady, setNamesReady] = useState(false);
+  // Published dashakams so the dropdown only lists available ones
+  const [publishedList, setPublishedList] = useState<{ dashakam_no: number; dashakam_name: string }[]>([]);
   useEffect(() => {
-    prefetchDashakamList().then(() => setNamesReady(true)).catch(() => {});
+    prefetchDashakamList()
+      .then((list) => {
+        setPublishedList(list.map((d) => ({ dashakam_no: d.dashakam_no, dashakam_name: d.dashakam_name })));
+        setNamesReady(true);
+      })
+      .catch(() => {});
   }, []);
+  const publishedNos = useMemo(() => new Set(publishedList.map((d) => d.dashakam_no)), [publishedList]);
 
   // Fetch podcast data from Supabase
   useEffect(() => {
