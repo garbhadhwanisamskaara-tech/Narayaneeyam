@@ -311,7 +311,7 @@ export default function ChantPage() {
     }
     const lineIdx = Math.min(Math.floor((verseProgress / 100) * lines.length), lines.length - 1);
     setActiveLine(lineIdx);
-  }, [verseProgress, isPlaying, highlightedVerse, displayVerses.length]);
+  }, [verseProgress, isPlaying, isPaused, highlightedVerse, displayVerses.length]);
 
   // Auto-scroll to active line during playback
   useEffect(() => {
