@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   ListMusic, X, Play, Shuffle, Save, FolderOpen, Trash2,
@@ -14,7 +14,7 @@ import {
   type PlaylistItem,
   type Playlist,
 } from "@/hooks/usePlaylist";
-import { getDashakamName } from "@/hooks/useDashakam";
+import { getDashakamName, prefetchDashakamList } from "@/hooks/useDashakam";
 
 interface PlaylistBuilderProps {
   mode: "chant" | "learn" | "podcast";
