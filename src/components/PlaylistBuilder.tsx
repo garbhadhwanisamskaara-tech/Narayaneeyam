@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   ListMusic, X, Play, Shuffle, Save, FolderOpen, Trash2,
@@ -14,7 +14,7 @@ import {
   type PlaylistItem,
   type Playlist,
 } from "@/hooks/usePlaylist";
-import { getDashakamName } from "@/hooks/useDashakam";
+import { getDashakamName, prefetchDashakamList } from "@/hooks/useDashakam";
 
 interface PlaylistBuilderProps {
   mode: "chant" | "learn" | "podcast";
@@ -33,8 +33,16 @@ export default function PlaylistBuilder({ mode, open, onClose, onStartPlaylist }
   const [showSaved, setShowSaved] = useState(false);
   const [saveName, setSaveName] = useState("");
   const [showSaveInput, setShowSaveInput] = useState(false);
+  const [publishedList, setPublishedList] = useState<{ dashakam_no: number; dashakam_name: string }[]>([]);
+
+  useEffect(() => {
+    prefetchDashakamList()
+      .then((list) => setPublishedList(list.map((d) => ({ dashakam_no: d.dashakam_no, dashakam_name: d.dashakam_name }))))
+      .catch(() => {});
+  }, []);
 
   const selectedNos = useMemo(() => new Set(selected.map(s => s.dashakam_no)), [selected]);
+  const publishedNos = useMemo(() => new Set(publishedList.map(d => d.dashakam_no)), [publishedList]);
 
   const toggleDashakam = (no: number) => {
     if (selectedNos.has(no)) {
@@ -45,7 +53,7 @@ export default function PlaylistBuilder({ mode, open, onClose, onStartPlaylist }
   };
 
   const applyPreset = (nos: number[]) => {
-    setSelected(nos.map(n => ({ dashakam_no: n, loops: 1 })));
+    setSelected(nos.filter(n => publishedNos.has(n)).map(n => ({ dashakam_no: n, loops: 1 })));
   };
 
   const updateLoops = (no: number, delta: number) => {
@@ -203,7 +211,7 @@ export default function PlaylistBuilder({ mode, open, onClose, onStartPlaylist }
                   <button onClick={() => applyPreset(SUPER_MINI)} className="rounded-lg border border-secondary/30 bg-secondary/10 px-3 py-1.5 text-xs font-sans text-foreground hover:bg-secondary/20 transition-colors">
                     Super Mini (5)
                   </button>
-                  <button onClick={() => setSelected(Array.from({ length: 100 }, (_, i) => ({ dashakam_no: i + 1, loops: 1 })))} className="rounded-lg border border-border bg-muted px-3 py-1.5 text-xs font-sans text-muted-foreground hover:text-foreground transition-colors">
+                  <button onClick={() => setSelected(publishedList.map((d) => ({ dashakam_no: d.dashakam_no, loops: 1 })))} className="rounded-lg border border-border bg-muted px-3 py-1.5 text-xs font-sans text-muted-foreground hover:text-foreground transition-colors">
                     Select All
                   </button>
                   <button onClick={() => setSelected([])} className="rounded-lg border border-border bg-muted px-3 py-1.5 text-xs font-sans text-muted-foreground hover:text-foreground transition-colors">
@@ -211,23 +219,28 @@ export default function PlaylistBuilder({ mode, open, onClose, onStartPlaylist }
                   </button>
                 </div>
 
-                {/* 100-box Grid */}
+                {/* Published Dashakam Grid */}
                 <div className="grid grid-cols-10 gap-1">
-                  {Array.from({ length: 100 }, (_, i) => i + 1).map(no => (
+                  {publishedList.map((d) => (
                     <button
-                      key={no}
-                      onClick={() => toggleDashakam(no)}
-                      title={getDashakamName(no)}
+                      key={d.dashakam_no}
+                      onClick={() => toggleDashakam(d.dashakam_no)}
+                      title={d.dashakam_name}
                       className={`aspect-square rounded-md text-[10px] font-sans font-semibold transition-all ${
-                        selectedNos.has(no)
+                        selectedNos.has(d.dashakam_no)
                           ? "bg-secondary text-secondary-foreground shadow-sm scale-105"
                           : "bg-muted text-muted-foreground hover:bg-muted/80"
                       }`}
                     >
-                      {no}
+                      {d.dashakam_no}
                     </button>
                   ))}
                 </div>
+                {publishedList.length === 0 && (
+                  <p className="text-sm text-muted-foreground font-sans text-center py-4">
+                    No Dashakams are available yet.
+                  </p>
+                )}
 
                 {/* Selected list */}
                 {selected.length > 0 && (

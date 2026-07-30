@@ -1,32 +1,45 @@
-## What's happening today
+# Plan: Respect `is_published` in Dashakam selection lists
 
-- The bell (`Common/BellFinal.mp3`) is triggered in exactly one place: `useSlokaPlayback` — after a verse's linked **sloka** audio finishes.
-- I checked `verses_audio` for Dashakam 1: all 10 verses have `sloka_audio_id = null`, so the app never rings the bell there. The bell you heard before verse 9 is **baked into the recording** `Chant/SN001/SN001_08.mp3` on the CDN — that one needs an audio-file re-cut, not a code change.
-- Dashakam 1's `prasadam` table has exactly one row: verse 10 ("Any fruit or water").
+## Goal
+Only Dashakams marked `is_published = true` in the `dashakams` table should appear in user-facing lists used to build playlists, choose a Dashakam to chant/listen to, or schedule a parayanam.
 
-## Changes to make
+## Current state
+- `is_published` exists on `public.dashakams` and is editable in `AdminUploadPage.tsx`.
+- `useDashakam.ts` fetches all rows matching `language_code` without selecting or filtering `is_published`.
+- The playlist builder, chant page, podcast page, and parayanam creation page all render the full 1–100 range or unfiltered rows.
 
-### 1. Bell rings only after a Prasadam verse
+## Changes
 
-The verse data already carries `prasadam` (from `useDashakam` → `prasadam_text`). In `ChantPage.tsx`'s `handleVerseEnded`, drive the bell off that flag instead of off sloka:
+### 1. Data model (`src/hooks/useDashakam.ts`)
+- Add `is_published: boolean` to `DashakamListItem`.
+- In `fetchDashakamListForLang`, include `is_published` in the select and add `.eq("is_published", true)`.
+- Update the fallback `DASHAKAM_SEED` to include `is_published: true` so the seed still works.
+- Ensure `getDashakamName` and `prefetchDashakamList` use the same filtered list.
 
-```text
-verse audio ends
-  ├─ has sloka?      → play sloka script + audio
-  ├─ has prasadam?   → ring bell
-  └─ then            → next verse
-```
+### 2. Hook consumers
+- `useDashakam` already returns `dashakamList`; after the change it will contain only published Dashakams. Components that read it will automatically get the filtered list.
+- `useDashakamSets.ts`: filter each set’s `dashakam_list` array to only numbers that are present in the published list. Official sets can therefore be partially hidden if some Dashakams are unpublished.
 
-- `src/hooks/useSlokaPlayback.ts` — remove the unconditional `await playBellAudio()` after sloka audio; add an optional `playBell` argument so the caller decides.
-- `src/pages/ChantPage.tsx` — pass `!!currentVerse.prasadam` through to `handlePostVerse`, and for verses with **no** sloka but **with** prasadam, ring the bell before advancing.
+### 3. UI updates
+- `src/components/PlaylistBuilder.tsx`: replace the hardcoded `Array.from({ length: 100 }, ...)` grid with the published `dashakamList`. Update "Select All" to select only published Dashakams. Show an empty state if none are published.
+- `src/pages/ChantPage.tsx`: drive the Dashakam dropdown from `dashakamList` (published only). If a URL points to an unpublished Dashakam, redirect to the first published one or show a message.
+- `src/pages/PodcastPage.tsx`: filter the `podcastData` entries so only Dashakams that are also published can be selected or auto-advanced to.
+- `src/pages/CreateParayanamPage.tsx`: drive the custom 1–100 selector from published `dashakamList` instead of the hardcoded `ALL` array.
+- `src/pages/ChallengeCreationPage.tsx`: check for any custom Dashakam selector and apply the same filter.
 
-Net effect: in Dashakam 1 the bell rings once, after verse 10, and nowhere else.
+### 4. Edge cases
+- Preserved playlists/parayanams that contain unpublished Dashakams will still play them (do not break existing user data). The filter applies only to **selection lists**.
+- If no Dashakams are published, show a clear empty state with a message like "No Dashakams are available yet."
+- The `is_published` flag should be language-agnostic: a Dashakam is either published or not; filtering on the English row is sufficient.
 
-### 2. Never stall when audio is missing
+## Files to modify
+- `src/hooks/useDashakam.ts`
+- `src/hooks/useDashakamSets.ts`
+- `src/components/PlaylistBuilder.tsx`
+- `src/pages/ChantPage.tsx`
+- `src/pages/PodcastPage.tsx`
+- `src/pages/CreateParayanamPage.tsx`
+- `src/pages/ChallengeCreationPage.tsx` (audit only; modify if it has a selector)
 
-- `src/pages/ChantPage.tsx` — the "no valid audio URL" branch currently waits `setTimeout(..., 2000)` before moving on. Advance immediately instead (keep a minimal tick so React state settles), and also advance on the audio `error` event rather than sitting on a dead verse.
-- `src/hooks/useSlokaPlayback.ts` — the no-sloka-audio branch waits 2000 ms; drop it so the flow continues right away. Same for the existing `onerror` / failed-`play()` paths (already advance, just confirm no delay).
-
-### Not in scope
-
-The `has_bell` field that `AdminUploadPage.tsx` reads and writes does not exist as a column on `verses_audio` — that admin toggle is dead. Leaving it alone unless you want it cleaned up separately; the new rule reads Prasadam, so the toggle isn't needed.
+## No new files
+All work is done in existing components/hooks.

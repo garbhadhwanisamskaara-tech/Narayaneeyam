@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect, useCallback } from "react";
+import { useState, useRef, useEffect, useCallback, useMemo } from "react";
 import { motion } from "framer-motion";
 import { Play, Pause, SkipBack, SkipForward, ListMusic, Volume2 } from "lucide-react";
 import { useDashakam, getDashakamName, prefetchDashakamList } from "@/hooks/useDashakam";
@@ -53,11 +53,28 @@ export default function PodcastPage() {
 
   const inPlaylistMode = playlistItems !== null && playlistItems.length > 0;
 
-  // Prefetch dashakam names so dropdown shows real names
+  // Published dashakams so the dropdown only lists available ones
   const [namesReady, setNamesReady] = useState(false);
+  const [publishedList, setPublishedList] = useState<{ dashakam_no: number; dashakam_name: string }[]>([]);
   useEffect(() => {
-    prefetchDashakamList().then(() => setNamesReady(true)).catch(() => {});
+    prefetchDashakamList()
+      .then((list) => {
+        setPublishedList(list.map((d) => ({ dashakam_no: d.dashakam_no, dashakam_name: d.dashakam_name })));
+        setNamesReady(true);
+      })
+      .catch(() => {});
   }, []);
+  const publishedNos = useMemo(() => new Set(publishedList.map((d) => d.dashakam_no)), [publishedList]);
+  const publishedPodcastData = useMemo(() => podcastData.filter((p) => publishedNos.has(p.dashakam)), [podcastData, publishedNos]);
+
+  // Redirect to the first published dashakam if the current one is not available
+  useEffect(() => {
+    if (publishedList.length === 0) return;
+    if (!publishedNos.has(currentDashakam)) {
+      setCurrentDashakam(publishedList[0].dashakam_no);
+    }
+  }, [publishedList, currentDashakam, publishedNos]);
+
 
   // Fetch podcast data from Supabase
   useEffect(() => {
@@ -117,15 +134,19 @@ export default function PodcastPage() {
 
   // Get audio URL for a dashakam — prefer podcast table, fallback to static
   const getAudioUrl = useCallback((dashakamNo: number): string | null => {
-    const entry = podcastData.find((p) => p.dashakam === dashakamNo);
+    const entry = publishedPodcastData.find((p) => p.dashakam === dashakamNo);
     if (entry?.podcast_audio_file) return getStorageUrl(entry.podcast_audio_file);
     // Fallback: check static data for individual verse audio (not ideal for podcast)
     return null;
-  }, [podcastData]);
+  }, [publishedPodcastData]);
 
   const dashakamName = getDashakamName(currentDashakam);
   const audioUrl = getAudioUrl(currentDashakam);
-  const nextDashakamName = getDashakamName(currentDashakam + 1);
+  const nextDashakamNo = useMemo(() => {
+    const idx = publishedList.findIndex((d) => d.dashakam_no === currentDashakam);
+    return idx >= 0 && idx < publishedList.length - 1 ? publishedList[idx + 1].dashakam_no : null;
+  }, [publishedList, currentDashakam]);
+  const nextDashakamName = nextDashakamNo ? getDashakamName(nextDashakamNo) : "";
 
   // Advance to next dashakam
   const advanceToNext = useCallback(() => {
@@ -154,8 +175,9 @@ export default function PodcastPage() {
         }
       }
     } else if (playMode === "all") {
-      if (currentDashakam < 100) {
-        setCurrentDashakam((prev) => prev + 1);
+      const idx = publishedList.findIndex((d) => d.dashakam_no === currentDashakam);
+      if (idx >= 0 && idx < publishedList.length - 1) {
+        setCurrentDashakam(publishedList[idx + 1].dashakam_no);
         setProgress(0);
         setElapsed(0);
         setCurrentLoop(0);
@@ -255,10 +277,13 @@ export default function PodcastPage() {
         setPlaylistLoop(0);
         setCurrentDashakam(playlistItems![nextIdx].dashakam_no);
       }
-    } else if (currentDashakam < 100) {
-      setCurrentDashakam((prev) => prev + 1);
+    } else {
+      const idx = publishedList.findIndex((d) => d.dashakam_no === currentDashakam);
+      if (idx >= 0 && idx < publishedList.length - 1) {
+        setCurrentDashakam(publishedList[idx + 1].dashakam_no);
+      }
     }
-  }, [currentDashakam, inPlaylistMode, playlistItems, playlistIndex]);
+  }, [currentDashakam, inPlaylistMode, playlistItems, playlistIndex, publishedList]);
 
   const handlePrev = () => {
     if (audioRef.current) { audioRef.current.pause(); audioRef.current = null; }
@@ -274,8 +299,11 @@ export default function PodcastPage() {
         setPlaylistLoop(0);
         setCurrentDashakam(playlistItems![newIdx].dashakam_no);
       }
-    } else if (currentDashakam > 1) {
-      setCurrentDashakam((prev) => prev - 1);
+    } else {
+      const idx = publishedList.findIndex((d) => d.dashakam_no === currentDashakam);
+      if (idx > 0) {
+        setCurrentDashakam(publishedList[idx - 1].dashakam_no);
+      }
     }
   };
 
@@ -299,11 +327,10 @@ export default function PodcastPage() {
     { value: "all", label: "All 100", desc: "Play all sequentially" },
   ];
 
-  // Build dropdown list — use 1-100 range with DB names
-  const dashakamDropdown = Array.from({ length: 100 }, (_, i) => {
-    const no = i + 1;
-    const hasPodcast = podcastData.some((p) => p.dashakam === no);
-    return { id: no, title: getDashakamName(no), titleSanskrit: "", hasPodcast };
+  // Build dropdown list — only published dashakams
+  const dashakamDropdown = publishedList.map((d) => {
+    const hasPodcast = publishedPodcastData.some((p) => p.dashakam === d.dashakam_no);
+    return { id: d.dashakam_no, title: d.dashakam_name, titleSanskrit: "", hasPodcast };
   });
 
   return (

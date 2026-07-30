@@ -4,6 +4,7 @@ import { ArrowLeft, Loader2, Sparkles } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useDashakamSets } from "@/hooks/useDashakamSets";
+import { prefetchDashakamList } from "@/hooks/useDashakam";
 import { useGroupMembers } from "@/hooks/useGroups";
 import { buildSchedule } from "@/hooks/useParayanamSchedule";
 import SEO from "@/components/SEO";
@@ -14,7 +15,7 @@ const plusDays = (n: number) => {
   d.setDate(d.getDate() + n);
   return d.toISOString().slice(0, 10);
 };
-const ALL = Array.from({ length: 100 }, (_, i) => i + 1);
+
 
 export default function CreateParayanamPage() {
   const [params] = useSearchParams();
@@ -35,6 +36,13 @@ export default function CreateParayanamPage() {
   const [manualAssign, setManualAssign] = useState<Record<string, string>>({});
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [publishedList, setPublishedList] = useState<{ dashakam_no: number; dashakam_name: string }[]>([]);
+
+  useEffect(() => {
+    prefetchDashakamList()
+      .then((list) => setPublishedList(list.map((d) => ({ dashakam_no: d.dashakam_no, dashakam_name: d.dashakam_name }))))
+      .catch(() => {});
+  }, []);
 
   useEffect(() => {
     if (!setId && sets.length) setSetId(sets[0].id);
@@ -202,17 +210,18 @@ export default function CreateParayanamPage() {
 
             {setId === "custom" && (
               <div className="mt-4 grid grid-cols-10 gap-1.5">
-                {ALL.map((n) => (
+                {publishedList.map((d) => (
                   <button
-                    key={n}
-                    onClick={() => toggleCustom(n)}
+                    key={d.dashakam_no}
+                    onClick={() => toggleCustom(d.dashakam_no)}
+                    title={d.dashakam_name}
                     className={`aspect-square rounded-md border font-sans text-[11px] font-semibold transition-colors ${
-                      custom.includes(n)
+                      custom.includes(d.dashakam_no)
                         ? "border-primary bg-primary/15 text-primary"
                         : "border-border text-muted-foreground hover:border-primary"
                     }`}
                   >
-                    {n}
+                    {d.dashakam_no}
                   </button>
                 ))}
               </div>

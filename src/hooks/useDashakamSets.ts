@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
+import { prefetchDashakamList } from "@/hooks/useDashakam";
 
 export interface DashakamSet {
   id: string;
@@ -23,20 +24,34 @@ export function useDashakamSets() {
 
   const refresh = useCallback(async () => {
     setLoading(true);
-    const filter = user ? `is_official.eq.true,created_by.eq.${user.id}` : "is_official.eq.true";
-    const { data, error: err } = await (supabase as any)
-      .from("dashakam_sets")
-      .select(SET_COLS)
-      .eq("is_active", true)
-      .or(filter)
-      .order("is_official", { ascending: false })
-      .order("set_name", { ascending: true });
-    if (err) setError(err.message);
-    else {
-      setError(null);
-      setSets((data ?? []) as DashakamSet[]);
+    try {
+      const filter = user ? `is_official.eq.true,created_by.eq.${user.id}` : "is_official.eq.true";
+      const [publishedList, { data, error: err }] = await Promise.all([
+        prefetchDashakamList("en"),
+        (supabase as any)
+          .from("dashakam_sets")
+          .select(SET_COLS)
+          .eq("is_active", true)
+          .or(filter)
+          .order("is_official", { ascending: false })
+          .order("set_name", { ascending: true }),
+      ]);
+      if (err) {
+        setError(err.message);
+      } else {
+        const publishedSet = new Set(publishedList.map((d) => d.dashakam_no));
+        const filtered = (data ?? []).map((s: any) => ({
+          ...s,
+          dashakam_list: (s.dashakam_list || []).filter((n: number) => publishedSet.has(n)),
+        }));
+        setError(null);
+        setSets(filtered as DashakamSet[]);
+      }
+    } catch (e: any) {
+      setError(e?.message ?? "Failed to load sets");
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
   }, [user]);
 
   useEffect(() => {
