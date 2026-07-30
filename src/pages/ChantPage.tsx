@@ -1182,6 +1182,7 @@ export default function ChantPage() {
                 setRitualPhase("idle");
                 setHasPlayedOpening(true);
                 logEvent("chant_started", { dashakam: selectedDashakam });
+                setIsPaused(false);
                 setIsPlaying(true);
               }}
             />
