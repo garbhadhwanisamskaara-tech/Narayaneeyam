@@ -175,8 +175,9 @@ export default function PodcastPage() {
         }
       }
     } else if (playMode === "all") {
-      if (currentDashakam < 100) {
-        setCurrentDashakam((prev) => prev + 1);
+      const idx = publishedList.findIndex((d) => d.dashakam_no === currentDashakam);
+      if (idx >= 0 && idx < publishedList.length - 1) {
+        setCurrentDashakam(publishedList[idx + 1].dashakam_no);
         setProgress(0);
         setElapsed(0);
         setCurrentLoop(0);
