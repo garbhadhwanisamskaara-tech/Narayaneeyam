@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect, useCallback } from "react";
+import { useState, useRef, useEffect, useCallback, useMemo } from "react";
 import { motion } from "framer-motion";
 import { Play, Pause, SkipBack, SkipForward, ListMusic, Volume2 } from "lucide-react";
 import { useDashakam, getDashakamName, prefetchDashakamList } from "@/hooks/useDashakam";
@@ -54,6 +54,7 @@ export default function PodcastPage() {
   const inPlaylistMode = playlistItems !== null && playlistItems.length > 0;
 
   // Published dashakams so the dropdown only lists available ones
+  const [namesReady, setNamesReady] = useState(false);
   const [publishedList, setPublishedList] = useState<{ dashakam_no: number; dashakam_name: string }[]>([]);
   useEffect(() => {
     prefetchDashakamList()
