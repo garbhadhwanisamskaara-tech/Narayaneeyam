@@ -277,10 +277,13 @@ export default function PodcastPage() {
         setPlaylistLoop(0);
         setCurrentDashakam(playlistItems![nextIdx].dashakam_no);
       }
-    } else if (currentDashakam < 100) {
-      setCurrentDashakam((prev) => prev + 1);
+    } else {
+      const idx = publishedList.findIndex((d) => d.dashakam_no === currentDashakam);
+      if (idx >= 0 && idx < publishedList.length - 1) {
+        setCurrentDashakam(publishedList[idx + 1].dashakam_no);
+      }
     }
-  }, [currentDashakam, inPlaylistMode, playlistItems, playlistIndex]);
+  }, [currentDashakam, inPlaylistMode, playlistItems, playlistIndex, publishedList]);
 
   const handlePrev = () => {
     if (audioRef.current) { audioRef.current.pause(); audioRef.current = null; }
@@ -296,8 +299,11 @@ export default function PodcastPage() {
         setPlaylistLoop(0);
         setCurrentDashakam(playlistItems![newIdx].dashakam_no);
       }
-    } else if (currentDashakam > 1) {
-      setCurrentDashakam((prev) => prev - 1);
+    } else {
+      const idx = publishedList.findIndex((d) => d.dashakam_no === currentDashakam);
+      if (idx > 0) {
+        setCurrentDashakam(publishedList[idx - 1].dashakam_no);
+      }
     }
   };
 
