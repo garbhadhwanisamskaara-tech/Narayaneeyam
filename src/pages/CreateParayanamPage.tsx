@@ -36,6 +36,13 @@ export default function CreateParayanamPage() {
   const [manualAssign, setManualAssign] = useState<Record<string, string>>({});
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [publishedList, setPublishedList] = useState<{ dashakam_no: number; dashakam_name: string }[]>([]);
+
+  useEffect(() => {
+    prefetchDashakamList()
+      .then((list) => setPublishedList(list.map((d) => ({ dashakam_no: d.dashakam_no, dashakam_name: d.dashakam_name }))))
+      .catch(() => {});
+  }, []);
 
   useEffect(() => {
     if (!setId && sets.length) setSetId(sets[0].id);
