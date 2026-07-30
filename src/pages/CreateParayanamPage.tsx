@@ -3,7 +3,7 @@ import { useNavigate, useSearchParams, Link } from "react-router-dom";
 import { ArrowLeft, Loader2, Sparkles } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
-import { useDashakamSets } from "@/hooks/useDashakamSets";
+import { useDashakamSets, prefetchDashakamList } from "@/hooks/useDashakamSets";
 import { useGroupMembers } from "@/hooks/useGroups";
 import { buildSchedule } from "@/hooks/useParayanamSchedule";
 import SEO from "@/components/SEO";
