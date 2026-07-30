@@ -134,15 +134,19 @@ export default function PodcastPage() {
 
   // Get audio URL for a dashakam — prefer podcast table, fallback to static
   const getAudioUrl = useCallback((dashakamNo: number): string | null => {
-    const entry = podcastData.find((p) => p.dashakam === dashakamNo);
+    const entry = publishedPodcastData.find((p) => p.dashakam === dashakamNo);
     if (entry?.podcast_audio_file) return getStorageUrl(entry.podcast_audio_file);
     // Fallback: check static data for individual verse audio (not ideal for podcast)
     return null;
-  }, [podcastData]);
+  }, [publishedPodcastData]);
 
   const dashakamName = getDashakamName(currentDashakam);
   const audioUrl = getAudioUrl(currentDashakam);
-  const nextDashakamName = getDashakamName(currentDashakam + 1);
+  const nextDashakamNo = useMemo(() => {
+    const idx = publishedList.findIndex((d) => d.dashakam_no === currentDashakam);
+    return idx >= 0 && idx < publishedList.length - 1 ? publishedList[idx + 1].dashakam_no : null;
+  }, [publishedList, currentDashakam]);
+  const nextDashakamName = nextDashakamNo ? getDashakamName(nextDashakamNo) : "";
 
   // Advance to next dashakam
   const advanceToNext = useCallback(() => {
