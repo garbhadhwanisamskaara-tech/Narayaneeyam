@@ -611,6 +611,7 @@ export default function ChantPage() {
         return;
       }
       logEvent("chant_started", { dashakam: selectedDashakam });
+      setIsPaused(false);
       setIsPlaying(true);
     }
   };
@@ -619,6 +620,7 @@ export default function ChantPage() {
     stopAudio();
     stopSloka();
     setIsPlaying(false);
+    setIsPaused(false);
     if (sessionClosingChant) {
       setRitualPhase("session_end");
     } else {
