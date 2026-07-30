@@ -293,7 +293,8 @@ export default function ChantPage() {
   // Sync verse progress from global engine
   useEffect(() => {
     if (!isPlaying) {
-      setActiveLine(null);
+      // Keep the current highlight frozen while paused
+      if (!isPaused) setActiveLine(null);
       return;
     }
     const verse = displayVerses[highlightedVerse];
