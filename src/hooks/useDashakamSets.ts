@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
+import { prefetchDashakamList } from "@/hooks/useDashakam";
 
 export interface DashakamSet {
   id: string;
