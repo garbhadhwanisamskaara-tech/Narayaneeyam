@@ -600,6 +600,7 @@ export default function ChantPage() {
       stopSloka();
       logAudioEvent("audio_pause", selectedDashakam, displayVerses[highlightedVerse]?.paragraph || 0, "");
       setIsPlaying(false);
+      setIsPaused(true);
     } else {
       if (!audioReady) {
         console.warn("Audio not ready — waiting for Supabase data");
