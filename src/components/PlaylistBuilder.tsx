@@ -236,6 +236,11 @@ export default function PlaylistBuilder({ mode, open, onClose, onStartPlaylist }
                     </button>
                   ))}
                 </div>
+                {publishedList.length === 0 && !open && (
+                  <p className="text-sm text-muted-foreground font-sans text-center py-4">
+                    No Dashakams are available yet.
+                  </p>
+                )}
 
                 {/* Selected list */}
                 {selected.length > 0 && (
