@@ -1,45 +1,32 @@
-# Plan: Respect `is_published` in Dashakam selection lists
-
 ## Goal
-Only Dashakams marked `is_published = true` in the `dashakams` table should appear in user-facing lists used to build playlists, choose a Dashakam to chant/listen to, or schedule a parayanam.
+Replace the three hardcoded blog post components with a single dynamic post page driven by the `blog_posts` table in Lovable Cloud, and make the blog index fetch live rows.
 
-## Current state
-- `is_published` exists on `public.dashakams` and is editable in `AdminUploadPage.tsx`.
-- `useDashakam.ts` fetches all rows matching `language_code` without selecting or filtering `is_published`.
-- The playlist builder, chant page, podcast page, and parayanam creation page all render the full 1–100 range or unfiltered rows.
+## Steps
 
-## Changes
+**1. Verify the `blog_posts` table**
+Confirm the table exists with `slug, title, excerpt, body, meta_description, is_published, published_at`. If it doesn't exist, create it with public read access for published rows only (`GRANT SELECT` to anon/authenticated, RLS policy `is_published = true`) and seed it with the three current posts so nothing disappears from the live blog.
 
-### 1. Data model (`src/hooks/useDashakam.ts`)
-- Add `is_published: boolean` to `DashakamListItem`.
-- In `fetchDashakamListForLang`, include `is_published` in the select and add `.eq("is_published", true)`.
-- Update the fallback `DASHAKAM_SEED` to include `is_published: true` so the seed still works.
-- Ensure `getDashakamName` and `prefetchDashakamList` use the same filtered list.
+**2. New `src/pages/blog/BlogPostPage.tsx`**
+- Read `slug` from `useParams()`.
+- Fetch the single row where `slug = :slug AND is_published = true`.
+- Loading state (simple spinner/skeleton), and a "Post not found" state with a link back to `/blog` when nothing matches.
+- Wrap in `BlogShell`, same typography classes as the current post pages.
+- `<Helmet>`: title `{title} | Narayaneeyam App`, meta description from `meta_description` (fallback `excerpt`), og:title/description/url/type=article, canonical to `https://narayaneeyam.app/blog/{slug}`, plus Article JSON-LD using `published_at`.
+- Render `body` HTML via `dangerouslySetInnerHTML` inside a scoped wrapper that styles `h2/h3/p/ul/li` to match the existing blog look. Sanitize the HTML with DOMPurify before rendering.
+- Keep the `InstagramFollow` CTA block and the "Start Your Chanting Journey" CTA at the end.
 
-### 2. Hook consumers
-- `useDashakam` already returns `dashakamList`; after the change it will contain only published Dashakams. Components that read it will automatically get the filtered list.
-- `useDashakamSets.ts`: filter each set’s `dashakam_list` array to only numbers that are present in the published list. Official sets can therefore be partially hidden if some Dashakams are unpublished.
+**3. Update `src/pages/blog/BlogIndexPage.tsx`**
+- Replace the hardcoded `posts` array with a query for all published rows ordered by `published_at desc`.
+- Layout, styling and the Blog/BlogPosting JSON-LD stay identical, just driven by fetched data.
+- Add loading and empty states.
 
-### 3. UI updates
-- `src/components/PlaylistBuilder.tsx`: replace the hardcoded `Array.from({ length: 100 }, ...)` grid with the published `dashakamList`. Update "Select All" to select only published Dashakams. Show an empty state if none are published.
-- `src/pages/ChantPage.tsx`: drive the Dashakam dropdown from `dashakamList` (published only). If a URL points to an unpublished Dashakam, redirect to the first published one or show a message.
-- `src/pages/PodcastPage.tsx`: filter the `podcastData` entries so only Dashakams that are also published can be selected or auto-advanced to.
-- `src/pages/CreateParayanamPage.tsx`: drive the custom 1–100 selector from published `dashakamList` instead of the hardcoded `ALL` array.
-- `src/pages/ChallengeCreationPage.tsx`: check for any custom Dashakam selector and apply the same filter.
+**4. Routing cleanup in `App.tsx`**
+- Remove the three per-post routes and imports.
+- Add `<Route path="/blog/:slug" element={<BlogPostPage />} />` after `/blog`.
+- Delete `HowChantingGavePeace.tsx`, `HundredDayParayanam.tsx`, `LearnNarayaneeyamBeginners.tsx`.
 
-### 4. Edge cases
-- Preserved playlists/parayanams that contain unpublished Dashakams will still play them (do not break existing user data). The filter applies only to **selection lists**.
-- If no Dashakams are published, show a clear empty state with a message like "No Dashakams are available yet."
-- The `is_published` flag should be language-agnostic: a Dashakam is either published or not; filtering on the English row is sufficient.
-
-## Files to modify
-- `src/hooks/useDashakam.ts`
-- `src/hooks/useDashakamSets.ts`
-- `src/components/PlaylistBuilder.tsx`
-- `src/pages/ChantPage.tsx`
-- `src/pages/PodcastPage.tsx`
-- `src/pages/CreateParayanamPage.tsx`
-- `src/pages/ChallengeCreationPage.tsx` (audit only; modify if it has a selector)
-
-## No new files
-All work is done in existing components/hooks.
+## Technical notes
+- Both pages use TanStack Query (already configured) with the existing `supabase` client.
+- `LandingBlog.tsx` (the inline "What is Narayaneeyam?" section on the landing page) is untouched.
+- `public/sitemap.xml` currently lists the three post URLs — they keep working under the dynamic route, so no change needed unless you add new posts later.
+- SEO tradeoff: hardcoded posts were in the JS bundle at first paint; fetched posts render after a network round-trip. Googlebot executes JS and will still index them, but non-JS social preview crawlers will only see the static `index.html` head. Say the word if you want per-post previews to stay crawler-perfect — that needs SSR.
