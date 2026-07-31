@@ -67,27 +67,43 @@ export default function BlogIndexPage() {
           </p>
         </header>
 
-        <ul className="space-y-5">
-          {posts.map((p) => (
-            <li
-              key={p.slug}
-              className="rounded-xl border border-gold bg-card p-6 hover:shadow-gold transition-shadow"
-            >
-              <h2 className="font-display text-xl text-primary mb-2">
-                <Link to={`/blog/${p.slug}`} className="hover:text-secondary transition-colors">
-                  {p.title}
-                </Link>
-              </h2>
-              <p className="font-sans text-sm text-foreground/75 leading-relaxed mb-3">{p.excerpt}</p>
-              <Link
-                to={`/blog/${p.slug}`}
-                className="inline-flex items-center text-sm font-sans font-semibold text-secondary hover:text-secondary/80"
+        {isLoading ? (
+          <ul className="space-y-5">
+            {Array.from({ length: 3 }).map((_, i) => (
+              <li key={i} className="rounded-xl border border-gold bg-card p-6 animate-pulse">
+                <div className="h-5 w-2/3 rounded bg-muted mb-3" />
+                <div className="h-4 w-full rounded bg-muted mb-2" />
+                <div className="h-4 w-4/5 rounded bg-muted" />
+              </li>
+            ))}
+          </ul>
+        ) : posts.length === 0 ? (
+          <p className="text-center font-sans text-foreground/60 py-10">
+            No articles published yet. Please check back soon.
+          </p>
+        ) : (
+          <ul className="space-y-5">
+            {posts.map((p) => (
+              <li
+                key={p.slug}
+                className="rounded-xl border border-gold bg-card p-6 hover:shadow-gold transition-shadow"
               >
-                Read article →
-              </Link>
-            </li>
-          ))}
-        </ul>
+                <h2 className="font-display text-xl text-primary mb-2">
+                  <Link to={`/blog/${p.slug}`} className="hover:text-secondary transition-colors">
+                    {p.title}
+                  </Link>
+                </h2>
+                <p className="font-sans text-sm text-foreground/75 leading-relaxed mb-3">{p.excerpt}</p>
+                <Link
+                  to={`/blog/${p.slug}`}
+                  className="inline-flex items-center text-sm font-sans font-semibold text-secondary hover:text-secondary/80"
+                >
+                  Read article →
+                </Link>
+              </li>
+            ))}
+          </ul>
+        )}
       </article>
     </BlogShell>
   );
