@@ -1,31 +1,30 @@
 import { Helmet } from "react-helmet-async";
 import { Link } from "react-router-dom";
+import { useQuery } from "@tanstack/react-query";
 import BlogShell from "@/components/BlogShell";
 import InstagramFollow from "@/components/InstagramFollow";
+import { supabase } from "@/integrations/supabase/client";
 
+interface BlogListItem {
+  slug: string;
+  title: string;
+  excerpt: string | null;
+}
 
-const posts = [
-  {
-    slug: "how-chanting-narayaneeyam-gave-me-peace",
-    title: "How Chanting Narayaneeyam Gave Me Peace",
-    excerpt:
-      "Sri Ramesh from Chennai shares how chanting Narayaneeyam daily transformed his mental peace, reduced anxiety and brought divine calm into his life.",
-  },
-  {
-    slug: "how-to-do-100-day-narayaneeyam-parayanam",
-    title: "How to Do 100 Day Narayaneeyam Parayanam",
-    excerpt:
-      "Complete guide to 100 Day Narayaneeyam Parayanam — chant one dasakam daily for 100 days, invoke Lord Guruvayurappan's blessings, and transform your spiritual life.",
-  },
-  {
-    slug: "how-to-learn-narayaneeyam-for-beginners",
-    title: "How to Learn Narayaneeyam for Beginners",
-    excerpt:
-      "Step-by-step guide to learning Narayaneeyam for beginners — pronunciation tips, daily routine, meaning study, and how to use the Narayaneeyam App to start chanting.",
-  },
-];
+async function fetchPosts(): Promise<BlogListItem[]> {
+  const { data, error } = await supabase
+    .from("blog_posts")
+    .select("slug, title, excerpt")
+    .eq("is_published", true)
+    .order("published_at", { ascending: false });
+  if (error) throw error;
+  return (data as BlogListItem[]) ?? [];
+}
 
 export default function BlogIndexPage() {
+  const { data, isLoading } = useQuery({ queryKey: ["blog-posts"], queryFn: fetchPosts });
+  const posts = data ?? [];
+
   return (
     <BlogShell>
       <Helmet>
@@ -68,27 +67,43 @@ export default function BlogIndexPage() {
           </p>
         </header>
 
-        <ul className="space-y-5">
-          {posts.map((p) => (
-            <li
-              key={p.slug}
-              className="rounded-xl border border-gold bg-card p-6 hover:shadow-gold transition-shadow"
-            >
-              <h2 className="font-display text-xl text-primary mb-2">
-                <Link to={`/blog/${p.slug}`} className="hover:text-secondary transition-colors">
-                  {p.title}
-                </Link>
-              </h2>
-              <p className="font-sans text-sm text-foreground/75 leading-relaxed mb-3">{p.excerpt}</p>
-              <Link
-                to={`/blog/${p.slug}`}
-                className="inline-flex items-center text-sm font-sans font-semibold text-secondary hover:text-secondary/80"
+        {isLoading ? (
+          <ul className="space-y-5">
+            {Array.from({ length: 3 }).map((_, i) => (
+              <li key={i} className="rounded-xl border border-gold bg-card p-6 animate-pulse">
+                <div className="h-5 w-2/3 rounded bg-muted mb-3" />
+                <div className="h-4 w-full rounded bg-muted mb-2" />
+                <div className="h-4 w-4/5 rounded bg-muted" />
+              </li>
+            ))}
+          </ul>
+        ) : posts.length === 0 ? (
+          <p className="text-center font-sans text-foreground/60 py-10">
+            No articles published yet. Please check back soon.
+          </p>
+        ) : (
+          <ul className="space-y-5">
+            {posts.map((p) => (
+              <li
+                key={p.slug}
+                className="rounded-xl border border-gold bg-card p-6 hover:shadow-gold transition-shadow"
               >
-                Read article →
-              </Link>
-            </li>
-          ))}
-        </ul>
+                <h2 className="font-display text-xl text-primary mb-2">
+                  <Link to={`/blog/${p.slug}`} className="hover:text-secondary transition-colors">
+                    {p.title}
+                  </Link>
+                </h2>
+                <p className="font-sans text-sm text-foreground/75 leading-relaxed mb-3">{p.excerpt}</p>
+                <Link
+                  to={`/blog/${p.slug}`}
+                  className="inline-flex items-center text-sm font-sans font-semibold text-secondary hover:text-secondary/80"
+                >
+                  Read article →
+                </Link>
+              </li>
+            ))}
+          </ul>
+        )}
       </article>
     </BlogShell>
   );
