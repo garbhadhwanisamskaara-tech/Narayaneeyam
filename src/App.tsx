@@ -47,12 +47,10 @@ import VerifyEmailPage from "./pages/VerifyEmailPage";
 import TrialExpiredPage from "./pages/TrialExpiredPage";
 import NotFound from "./pages/NotFound";
 import BlogIndexPage from "./pages/blog/BlogIndexPage";
+import BlogPostPage from "./pages/blog/BlogPostPage";
 import SankalpaMomentPage from "./pages/SankalpaMomentPage";
 import ChallengeCreationPage from "./pages/ChallengeCreationPage";
 import CreateParayanamPage from "./pages/CreateParayanamPage";
-import HowChantingGavePeace from "./pages/blog/HowChantingGavePeace";
-import HundredDayParayanam from "./pages/blog/HundredDayParayanam";
-import LearnNarayaneeyamBeginners from "./pages/blog/LearnNarayaneeyamBeginners";
 
 const App = () => {
   useEffect(() => {
