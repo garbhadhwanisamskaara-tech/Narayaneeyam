@@ -1,31 +1,30 @@
 import { Helmet } from "react-helmet-async";
 import { Link } from "react-router-dom";
+import { useQuery } from "@tanstack/react-query";
 import BlogShell from "@/components/BlogShell";
 import InstagramFollow from "@/components/InstagramFollow";
+import { supabase } from "@/integrations/supabase/client";
 
+interface BlogListItem {
+  slug: string;
+  title: string;
+  excerpt: string | null;
+}
 
-const posts = [
-  {
-    slug: "how-chanting-narayaneeyam-gave-me-peace",
-    title: "How Chanting Narayaneeyam Gave Me Peace",
-    excerpt:
-      "Sri Ramesh from Chennai shares how chanting Narayaneeyam daily transformed his mental peace, reduced anxiety and brought divine calm into his life.",
-  },
-  {
-    slug: "how-to-do-100-day-narayaneeyam-parayanam",
-    title: "How to Do 100 Day Narayaneeyam Parayanam",
-    excerpt:
-      "Complete guide to 100 Day Narayaneeyam Parayanam — chant one dasakam daily for 100 days, invoke Lord Guruvayurappan's blessings, and transform your spiritual life.",
-  },
-  {
-    slug: "how-to-learn-narayaneeyam-for-beginners",
-    title: "How to Learn Narayaneeyam for Beginners",
-    excerpt:
-      "Step-by-step guide to learning Narayaneeyam for beginners — pronunciation tips, daily routine, meaning study, and how to use the Narayaneeyam App to start chanting.",
-  },
-];
+async function fetchPosts(): Promise<BlogListItem[]> {
+  const { data, error } = await supabase
+    .from("blog_posts")
+    .select("slug, title, excerpt")
+    .eq("is_published", true)
+    .order("published_at", { ascending: false });
+  if (error) throw error;
+  return (data as BlogListItem[]) ?? [];
+}
 
 export default function BlogIndexPage() {
+  const { data, isLoading } = useQuery({ queryKey: ["blog-posts"], queryFn: fetchPosts });
+  const posts = data ?? [];
+
   return (
     <BlogShell>
       <Helmet>
