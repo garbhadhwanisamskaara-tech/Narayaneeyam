@@ -93,7 +93,7 @@ export default function ChantPage() {
   const scrollTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const manualScrollTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const { isBookmarked, addBookmark, removeBookmark, undoRemoveBookmark } = useBookmarks();
-  const { isFavourited, addFavourite, removeFavourite, undoRemoveFavourite } = useFavourites();
+  const { isFavourited, addFavourite, removeFavourite, undoRemoveFavourite } = useFavourites(translitLang || "en");
   const [ritualPhase, setRitualPhase] = useState<RitualPhase>("idle");
 
   // Sloka playback
@@ -1001,6 +1001,7 @@ export default function ChantPage() {
                               dashakam: verse.dashakam,
                               verse: verse.paragraph,
                               sanskrit: verse.sanskrit || verse.english,
+                              language: translitLang || "en",
                             });
                           }
                         }}

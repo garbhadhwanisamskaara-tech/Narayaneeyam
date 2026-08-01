@@ -14,6 +14,8 @@ export interface FavouriteEntry {
   verse: number;
   sanskrit: string;
   savedAt: string;
+  /** Language code the verse was saved in (e.g. "en", "sa"). Legacy entries default to "en". */
+  language?: string;
 }
 
 export interface UserProgress {
