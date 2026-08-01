@@ -431,8 +431,11 @@ export default function LandingPage() {
           <button onClick={() => scrollTo("what")}>About Narayaneeyam</button>
           <button onClick={() => scrollTo("faq")}>FAQ</button>
           <button onClick={() => scrollTo("benefits")}>Stories</button>
+          <button onClick={() => navigate("/blog")}>Blog</button>
+          <button onClick={() => navigate("/privacy")}>Privacy Policy</button>
           <button onClick={goAuth}>Sign In</button>
         </div>
+
         <div style={{ marginTop: 12, display: "flex", justifyContent: "center" }}>
           <InstagramFollow variant="inline" />
         </div>

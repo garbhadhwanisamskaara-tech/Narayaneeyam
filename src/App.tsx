@@ -48,9 +48,11 @@ import TrialExpiredPage from "./pages/TrialExpiredPage";
 import NotFound from "./pages/NotFound";
 import BlogIndexPage from "./pages/blog/BlogIndexPage";
 import BlogPostPage from "./pages/blog/BlogPostPage";
+import PrivacyPage from "./pages/PrivacyPage";
 import SankalpaMomentPage from "./pages/SankalpaMomentPage";
 import ChallengeCreationPage from "./pages/ChallengeCreationPage";
 import CreateParayanamPage from "./pages/CreateParayanamPage";
+
 
 const App = () => {
   useEffect(() => {
@@ -75,6 +77,8 @@ const App = () => {
             <Route path="/join/:token" element={<JoinGroupPage />} />
             <Route path="/blog" element={<BlogIndexPage />} />
             <Route path="/blog/:slug" element={<BlogPostPage />} />
+            <Route path="/privacy" element={<PrivacyPage />} />
+
             <Route path="/challenges/sankalpa" element={<SankalpaMomentPage />} />
             <Route path="/*" element={
               <Layout>

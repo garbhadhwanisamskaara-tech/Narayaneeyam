@@ -16,7 +16,9 @@ import {
   CreditCard,
   SlidersHorizontal,
   ChevronDown,
+  Shield,
 } from "lucide-react";
+
 import { useState, useEffect } from "react";
 import logoImg from "@/assets/logo.png";
 import { useAuth } from "@/contexts/AuthContext";
@@ -194,10 +196,17 @@ export default function Layout({ children }: { children: React.ReactNode }) {
                       Help & Support
                     </Link>
                   </DropdownMenuItem>
+                  <DropdownMenuItem asChild className="cursor-pointer">
+                    <Link to="/privacy">
+                      <Shield className="mr-2 h-4 w-4" />
+                      Privacy Policy
+                    </Link>
+                  </DropdownMenuItem>
                   <DropdownMenuItem onClick={() => signOut()} className="cursor-pointer">
                     <LogOut className="mr-2 h-4 w-4" />
                     Sign Out
                   </DropdownMenuItem>
+
                 </DropdownMenuContent>
               </DropdownMenu>
             ) : !loading ? (
@@ -283,6 +292,14 @@ export default function Layout({ children }: { children: React.ReactNode }) {
                   >
                     <LifeBuoy className="h-4 w-4" /> Help & Support
                   </Link>
+                  <Link
+                    to="/privacy"
+                    onClick={() => setMobileOpen(false)}
+                    className="flex items-center gap-3 rounded-lg px-3 py-3 text-sm font-sans text-primary-foreground/70"
+                  >
+                    <Shield className="h-4 w-4" /> Privacy Policy
+                  </Link>
+
                   <div className="flex items-center justify-between px-3 py-3">
                     <div className="flex items-center gap-2">
                       <User className="h-4 w-4 text-secondary" />
