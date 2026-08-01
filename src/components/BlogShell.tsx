@@ -1,7 +1,12 @@
 import { Link } from "react-router-dom";
 import logoImg from "@/assets/logo.png";
 
-export default function BlogShell({ children }: { children: React.ReactNode }) {
+interface BlogShellProps {
+  children: React.ReactNode;
+  subtitle?: string;
+}
+
+export default function BlogShell({ children, subtitle = "From Our Blog" }: BlogShellProps) {
   return (
     <div className="min-h-screen bg-background flex flex-col">
       <header className="sticky top-0 z-50 bg-gradient-peacock shadow-peacock">
@@ -10,9 +15,10 @@ export default function BlogShell({ children }: { children: React.ReactNode }) {
             <img src={logoImg} alt="Narayaneeyam Logo" className="h-9 w-9 rounded-full object-cover bg-transparent" />
             <div className="min-w-0">
               <h1 className="font-display text-base lg:text-lg font-semibold text-primary-foreground leading-tight truncate">Sriman Narayaneeyam</h1>
-              <p className="text-[10px] lg:text-xs text-gold-light font-sans hidden sm:block">From Our Blog</p>
+              <p className="text-[10px] lg:text-xs text-gold-light font-sans hidden sm:block">{subtitle}</p>
             </div>
           </Link>
+
           <nav className="flex items-center gap-2 sm:gap-4 text-sm font-sans">
             <Link to="/blog" className="text-primary-foreground/80 hover:text-secondary transition-colors">Blog</Link>
             <Link to="/" className="text-primary-foreground/80 hover:text-secondary transition-colors">Home</Link>
