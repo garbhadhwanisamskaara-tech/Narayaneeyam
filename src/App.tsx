@@ -75,6 +75,8 @@ const App = () => {
             <Route path="/join/:token" element={<JoinGroupPage />} />
             <Route path="/blog" element={<BlogIndexPage />} />
             <Route path="/blog/:slug" element={<BlogPostPage />} />
+            <Route path="/privacy" element={<PrivacyPage />} />
+
             <Route path="/challenges/sankalpa" element={<SankalpaMomentPage />} />
             <Route path="/*" element={
               <Layout>

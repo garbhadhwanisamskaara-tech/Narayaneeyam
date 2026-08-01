@@ -16,7 +16,9 @@ import {
   CreditCard,
   SlidersHorizontal,
   ChevronDown,
+  Shield,
 } from "lucide-react";
+
 import { useState, useEffect } from "react";
 import logoImg from "@/assets/logo.png";
 import { useAuth } from "@/contexts/AuthContext";
