@@ -27,8 +27,9 @@ const jsonLd = {
 
 export default function PrivacyPage() {
   return (
-    <BlogShell>
+    <BlogShell subtitle="Privacy & Trust">
       <Helmet>
+
         <title>Privacy Policy — Sriman Narayaneeyam</title>
         <meta
           name="description"
