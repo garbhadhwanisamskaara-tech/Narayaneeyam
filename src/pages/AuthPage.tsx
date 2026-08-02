@@ -190,6 +190,13 @@ export default function AuthPage() {
             </Button>
           </form>
 
+          <p className="mt-4 text-center text-xs text-muted-foreground font-sans">
+            By continuing, you agree to our{" "}
+            <Link to="/privacy" className="text-primary hover:underline">
+              Privacy Policy
+            </Link>
+          </p>
+
           {showResend && mode === "signin" && (
             <div className="mt-4 rounded-lg bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 p-3 text-center">
               <p className="text-xs text-foreground font-sans mb-2">
