@@ -30,19 +30,44 @@ export default function VerseIcons({ bell, prasadam, slokaAudioId }: VerseIconsP
 
   if (!bell && !prasadam && !slokaAudioId) return null;
 
+  const canHover =
+    typeof window !== "undefined" &&
+    typeof window.matchMedia === "function" &&
+    window.matchMedia("(hover: hover)").matches;
+
   return (
     <div className="flex items-center gap-2">
       {(bell || prasadam) && (
         <button
-          onMouseEnter={() => playBellAudio()}
-          onClick={() => playBellAudio()}
-          className="flex items-center justify-center text-gold hover:text-gold-light transition-transform hover:scale-110"
+          type="button"
+          onPointerUp={(e) => {
+            // Touch/pen: ring immediately on tap (primary trigger on mobile)
+            if (e.pointerType !== "mouse") {
+              e.preventDefault();
+              handledByPointerRef.current = true;
+              void playBellAudio();
+            }
+          }}
+          onMouseEnter={() => {
+            // Desktop nice-to-have only
+            if (canHover) void playBellAudio();
+          }}
+          onClick={() => {
+            if (handledByPointerRef.current) {
+              handledByPointerRef.current = false;
+              return;
+            }
+            void playBellAudio();
+          }}
+          style={{ touchAction: "manipulation" }}
+          className="flex items-center justify-center p-1.5 -m-1.5 text-gold hover:text-gold-light transition-transform hover:scale-110"
           title="Ring bell here"
           aria-label="Ring bell"
         >
           <Bell className="h-5 w-5" fill="currentColor" strokeWidth={1.5} />
         </button>
       )}
+
 
       {prasadam && (
         <>
