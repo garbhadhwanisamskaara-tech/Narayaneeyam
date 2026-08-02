@@ -20,6 +20,8 @@ export interface MergedVerse {
   transliteration_text: string;
   translation_text: string;
   prasadam_text: string;
+  /** Language the translation_text is actually in (may be "en" fallback). */
+  translation_language: string;
 }
 
 interface UseDashakamResult {
@@ -50,14 +52,15 @@ const verseCache = new Map<string, MergedVerse[]>();
 
 const getKey = (d: number, l: string, t: string) => `${d}_${l}_${t}`;
 
-async function fetchDashakamListForLang(lang: string): Promise<DashakamListItem[]> {
-  const { data, error } = await supabase
+async function fetchDashakamRows(lang: string, publishedOnly: boolean): Promise<DashakamListItem[]> {
+  let query = supabase
     .from("dashakams")
     .select("dashakam_no, dashakam_name, num_verses, remarks, gist, benefits, is_published")
-    .eq("language_code", lang)
-    .eq("is_published", true)
-    .order("dashakam_no");
+    .eq("language_code", lang);
 
+  if (publishedOnly) query = query.eq("is_published", true);
+
+  const { data, error } = await query.order("dashakam_no");
   if (error) throw error;
 
   const seen = new Set<number>();
@@ -68,7 +71,12 @@ async function fetchDashakamListForLang(lang: string): Promise<DashakamListItem[
   }) as DashakamListItem[];
 }
 
-/** Fetch dashakam list in given language; fall back to English if empty. Cached per language. */
+/**
+ * Fetch dashakam list in the given language.
+ * Publication status lives only on the canonical English rows, so the English
+ * published set decides WHICH dashakams show, while the requested language
+ * supplies the names (falling back to English per-dashakam when missing).
+ */
 async function fetchDashakamList(lang: string = "en"): Promise<DashakamListItem[]> {
   const cached = dashakamListCacheByLang.get(lang);
   // Treat the seeded English as "not really fetched" so we still hit DB once
@@ -79,12 +87,24 @@ async function fetchDashakamList(lang: string = "en"): Promise<DashakamListItem[
 
   const promise = (async () => {
     try {
-      let list = await fetchDashakamListForLang(lang);
+      const published = await fetchDashakamRows("en", true);
 
-      // Fallback to English names if requested language has no rows
-      if (list.length === 0 && lang !== "en") {
-        console.log(`[useDashakam] no dashakams for '${lang}', falling back to 'en'`);
-        list = await fetchDashakamListForLang("en");
+      let list = published;
+      if (lang !== "en") {
+        const localized = await fetchDashakamRows(lang, false);
+        const locMap = new Map(localized.map((d) => [d.dashakam_no, d]));
+        list = published.map((d) => {
+          const t = locMap.get(d.dashakam_no);
+          return t
+            ? {
+                ...d,
+                dashakam_name: t.dashakam_name || d.dashakam_name,
+                gist: t.gist ?? d.gist,
+                benefits: t.benefits ?? d.benefits,
+                remarks: t.remarks ?? d.remarks,
+              }
+            : d;
+        });
       }
 
       if (list.length > 0) {
@@ -103,6 +123,7 @@ async function fetchDashakamList(lang: string = "en"): Promise<DashakamListItem[
   dashakamListInflight.set(lang, promise);
   return promise;
 }
+
 
 export function useDashakam(
   selectedDashakam: number,
@@ -261,10 +282,10 @@ export function useDashakam(
 
           merged = [];
           for (let i = 1; i <= max; i++) {
+            const hasNative =
+              !!tr[i]?.translation_text && tr[i].translation_text.trim() !== "";
             const translation =
-              (tr[i]?.translation_text && tr[i].translation_text.trim() !== ""
-                ? tr[i].translation_text
-                : lEn[i]?.translation_text) ?? "";
+              (hasNative ? tr[i].translation_text : lEn[i]?.translation_text) ?? "";
             merged.push({
               verse_no: i,
               chant_audio_file: a[i]?.chant_audio_file ?? "",
@@ -273,9 +294,11 @@ export function useDashakam(
               meter: a[i]?.meter ?? "",
               transliteration_text: l[i]?.transliteration_text ?? "",
               translation_text: translation,
+              translation_language: hasNative ? translationLang : "en",
               prasadam_text: p[i]?.prasadam_text ?? "",
             });
           }
+
 
           verseCache.set(key, merged);
         }

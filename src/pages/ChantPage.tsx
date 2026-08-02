@@ -164,6 +164,11 @@ export default function ChantPage() {
     loading: dbLoading,
     audioReady,
   } = useDashakam(selectedDashakam, selectedLanguage, translationLang);
+
+  // Language the translations are actually rendered in (falls back to English
+  // when the preferred translation language has no content for this dashakam)
+  const effectiveTranslationLang =
+    dbVerses.find((v) => v.translation_text)?.translation_language || translationLang;
   const { openingChants, dashakamClosingChant, sessionClosingChant } = useRitualChants("en");
 
   // Build the dashakam dropdown list from DB
@@ -1047,7 +1052,7 @@ export default function ChantPage() {
                       className="mt-4 border-t border-border pt-3"
                     >
                       <p className="text-xs text-muted-foreground font-sans uppercase tracking-wide mb-1">
-                        Translation ({activeLanguages.find((l) => l.value === translationLang)?.label || "English"})
+                        Translation ({activeLanguages.find((l) => l.value === effectiveTranslationLang)?.label || "English"})
                       </p>
                       <p className="text-sm text-muted-foreground font-sans leading-relaxed">{getMeaning(verse)}</p>
                     </motion.div>
