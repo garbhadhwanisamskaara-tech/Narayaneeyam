@@ -5,6 +5,7 @@ import { useDashakam, type MergedVerse } from "@/hooks/useDashakam";
 import { supabase } from "@/integrations/supabase/client";
 import VerseIcons from "@/components/VerseIcons";
 import SEO from "@/components/SEO";
+import { useLanguagePrefs } from "@/hooks/useLanguagePrefs";
 
 const LANGUAGE_OPTIONS = [
   { code: "sa", label: "Sanskrit" },
@@ -20,14 +21,15 @@ const LANGUAGE_OPTIONS = [
 export default function ScriptPage() {
   const [selectedDashakam, setSelectedDashakam] = useState(1);
   const [viewMode, setViewMode] = useState<"full" | "para">("full");
-  const [selectedLangCode, setSelectedLangCode] = useState("en");
+  const { scriptLang: selectedLangCode, translationLang } = useLanguagePrefs();
   const [selectedPara, setSelectedPara] = useState<number | null>(null);
   const [showGist, setShowGist] = useState(false);
   const [showBenefit, setShowBenefit] = useState(false);
 
   const { dashakamList, verses, loading } = useDashakam(
     selectedDashakam,
-    selectedLangCode === "sa" ? "en" : selectedLangCode
+    selectedLangCode === "sa" ? "en" : selectedLangCode,
+    translationLang
   );
 
   // Determine which verses to display
@@ -73,7 +75,7 @@ export default function ScriptPage() {
         <div className="mb-8">
           <h1 className="font-display text-3xl font-bold text-foreground mb-2">Script Library</h1>
           <p className="text-muted-foreground font-sans">
-            View slokas with separate transliteration and translation language choices
+            Shown in your preferred languages — change them any time in My Preferences
           </p>
         </div>
 
@@ -94,19 +96,6 @@ export default function ScriptPage() {
                 <option key={d.dashakam_no} value={d.dashakam_no}>
                   {d.dashakam_no}. {d.dashakam_name}
                 </option>
-              ))}
-            </select>
-          </div>
-
-          <div className="flex flex-col gap-1">
-            <label className="text-xs text-muted-foreground font-sans">Language</label>
-            <select
-              value={selectedLangCode}
-              onChange={(e) => setSelectedLangCode(e.target.value)}
-              className="rounded-lg border border-border bg-background px-3 py-2 text-sm font-sans text-foreground"
-            >
-              {LANGUAGE_OPTIONS.map((l) => (
-                <option key={l.code} value={l.code}>{l.label}</option>
               ))}
             </select>
           </div>
@@ -280,7 +269,7 @@ export default function ScriptPage() {
                   {verse.translation_text && (
                     <div className="border-t border-border pt-3">
                       <p className="text-xs text-muted-foreground font-sans uppercase tracking-wide mb-1">
-                        Translation ({LANGUAGE_OPTIONS.find((l) => l.code === selectedLangCode)?.label})
+                        Translation ({LANGUAGE_OPTIONS.find((l) => l.code === translationLang)?.label ?? "English"})
                       </p>
                       <p className="text-sm text-muted-foreground font-sans leading-relaxed">
                         {verse.translation_text}
