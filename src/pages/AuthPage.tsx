@@ -213,6 +213,12 @@ export default function AuthPage() {
           )}
 
           <div className="mt-6 text-center space-y-2">
+            <Link
+              to="/"
+              className="inline-flex items-center justify-center gap-1.5 text-sm text-muted-foreground hover:text-primary hover:underline font-sans"
+            >
+              <Home className="h-4 w-4" /> Go to landing page
+            </Link>
             {mode === "signin" && (
               <button onClick={() => setMode("forgot")} className="block w-full text-sm text-muted-foreground hover:text-primary hover:underline font-sans">
                 Forgot your password?
