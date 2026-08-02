@@ -11,6 +11,8 @@ interface VerseIconsProps {
 export default function VerseIcons({ bell, prasadam, slokaAudioId }: VerseIconsProps) {
   const [showPrasadam, setShowPrasadam] = useState(false);
   const prasadamRef = useRef<HTMLDivElement>(null);
+  const handledByPointerRef = useRef(false);
+
 
   // Dismiss prasadam tooltip on outside tap (mobile)
   useEffect(() => {
