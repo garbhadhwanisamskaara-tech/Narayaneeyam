@@ -280,10 +280,10 @@ export function useDashakam(
 
           merged = [];
           for (let i = 1; i <= max; i++) {
+            const hasNative =
+              !!tr[i]?.translation_text && tr[i].translation_text.trim() !== "";
             const translation =
-              (tr[i]?.translation_text && tr[i].translation_text.trim() !== ""
-                ? tr[i].translation_text
-                : lEn[i]?.translation_text) ?? "";
+              (hasNative ? tr[i].translation_text : lEn[i]?.translation_text) ?? "";
             merged.push({
               verse_no: i,
               chant_audio_file: a[i]?.chant_audio_file ?? "",
@@ -292,9 +292,11 @@ export function useDashakam(
               meter: a[i]?.meter ?? "",
               transliteration_text: l[i]?.transliteration_text ?? "",
               translation_text: translation,
+              translation_language: hasNative ? translationLang : "en",
               prasadam_text: p[i]?.prasadam_text ?? "",
             });
           }
+
 
           verseCache.set(key, merged);
         }
