@@ -1,12 +1,16 @@
 /**
  * Bell audio utility
  * Plays the real bell audio for 3 seconds with a 1-second fade-out (every 10ms).
+ * Only one bell can ring at a time — while a bell is active, new triggers
+ * simply await the current one instead of creating a competing audio element.
  */
 import { getStorageUrl } from "@/lib/storageUrl";
 import { isMuted } from "@/lib/globalMute";
 
 let bellAudioInstance: HTMLAudioElement | null = null;
 let fadeInterval: ReturnType<typeof setInterval> | null = null;
+/** Promise for the bell that is currently ringing (null when idle). */
+let activeBell: Promise<void> | null = null;
 
 function cleanup() {
   if (fadeInterval) {
@@ -23,11 +27,24 @@ function cleanup() {
 /**
  * Play the bell sound for 3 seconds.
  * Last 1 second fades out with volume decrements every 10ms.
- * Returns a promise that resolves when done.
+ * If a bell is already ringing, this resolves when that bell finishes
+ * (no second instance is created).
  */
 export function playBellAudio(): Promise<void> {
-  return new Promise((resolve) => {
+  if (activeBell) return activeBell;
+
+  const bell = new Promise<void>((resolve) => {
     cleanup();
+
+    let settled = false;
+    const done = () => {
+      if (settled) return;
+      settled = true;
+      clearTimeout(fadeStartTimer);
+      clearTimeout(safetyTimer);
+      cleanup();
+      resolve();
+    };
 
     const bellUrl = getStorageUrl("Common/BellFinal.mp3");
     const audio = new Audio(bellUrl);
@@ -37,7 +54,7 @@ export function playBellAudio(): Promise<void> {
 
     audio.play().catch(() => {
       // Silently handle play interruptions
-      resolve();
+      done();
     });
 
     // After 2 seconds, start 1-second fade (100 steps over 1000ms)
@@ -51,25 +68,23 @@ export function playBellAudio(): Promise<void> {
         const newVolume = startVolume * (1 - step / steps);
         audio.volume = Math.max(0, newVolume);
 
-        if (step >= steps) {
-          cleanup();
-          resolve();
-        }
+        if (step >= steps) done();
       }, 10);
     }, 2000);
 
     // Safety: stop after 3.5 seconds no matter what
-    setTimeout(() => {
-      cleanup();
-      resolve();
-    }, 3500);
+    const safetyTimer = setTimeout(done, 3500);
 
-    audio.onended = () => {
-      clearTimeout(fadeStartTimer);
-      cleanup();
-      resolve();
-    };
+    audio.onended = done;
+    audio.onerror = done;
   });
+
+  activeBell = bell;
+  void bell.finally(() => {
+    if (activeBell === bell) activeBell = null;
+  });
+
+  return bell;
 }
 
 /**
@@ -77,4 +92,5 @@ export function playBellAudio(): Promise<void> {
  */
 export function stopBellAudio() {
   cleanup();
+  activeBell = null;
 }
