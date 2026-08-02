@@ -1,7 +1,7 @@
 import { useState } from "react";
-import { useNavigate, useSearchParams } from "react-router-dom";
+import { useNavigate, useSearchParams, Link } from "react-router-dom";
 import { motion } from "framer-motion";
-import { Mail, Lock, User, LogIn, UserPlus, KeyRound, RefreshCw } from "lucide-react";
+import { Mail, Lock, User, LogIn, UserPlus, KeyRound, RefreshCw, Home } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
