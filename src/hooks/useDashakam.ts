@@ -20,6 +20,8 @@ export interface MergedVerse {
   transliteration_text: string;
   translation_text: string;
   prasadam_text: string;
+  /** Language the translation_text is actually in (may be "en" fallback). */
+  translation_language: string;
 }
 
 interface UseDashakamResult {
