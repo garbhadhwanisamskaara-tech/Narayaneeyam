@@ -39,6 +39,7 @@ import { useGlobalMute } from "@/lib/globalMute";
 
 import VerseIcons from "@/components/VerseIcons";
 import SEO from "@/components/SEO";
+import { useLanguagePrefs } from "@/hooks/useLanguagePrefs";
 import { Slider } from "@/components/ui/slider";
 import { useMemberProgress } from "@/hooks/useMemberProgress";
 import ContinueBanner from "@/components/ContinueBanner";
@@ -57,7 +58,6 @@ export default function ChantPage() {
   const [searchParams] = useSearchParams();
   const [selectedDashakam, setSelectedDashakam] = useState(DEFAULT_DASHAKAM);
   const [selectedPara, setSelectedPara] = useState<number | null>(null);
-  const [translitLang, setTranslitLang] = useState<string>("en");
   const [showMeaning, setShowMeaning] = useState(false);
   const [showGist, setShowGist] = useState(false);
   const [showBenefit, setShowBenefit] = useState(false);
@@ -82,6 +82,7 @@ export default function ChantPage() {
   // Global audio engine (singleton, survives navigation)
   const engine = useAudioEngine();
   const [muted, toggleMuted] = useGlobalMute();
+  const { scriptLang: translitLang, translationLang } = useLanguagePrefs();
   const activeLanguages = useActiveLanguages();
 
   const pausedRef = useRef(false);
@@ -162,7 +163,7 @@ export default function ChantPage() {
     verses: dbVerses,
     loading: dbLoading,
     audioReady,
-  } = useDashakam(selectedDashakam, selectedLanguage);
+  } = useDashakam(selectedDashakam, selectedLanguage, translationLang);
   const { openingChants, dashakamClosingChant, sessionClosingChant } = useRitualChants("en");
 
   // Build the dashakam dropdown list from DB
@@ -775,21 +776,6 @@ export default function ChantPage() {
           </div>
 
           <div className="flex flex-col gap-1">
-            <label className="text-xs text-muted-foreground font-sans">Transliteration</label>
-            <select
-              value={translitLang}
-              onChange={(e) => setTranslitLang(e.target.value)}
-              className="rounded-lg border border-border bg-background px-3 py-2 text-sm font-sans text-foreground"
-            >
-              {activeLanguages.map((l) => (
-                <option key={l.value} value={l.value}>
-                  {l.label}
-                </option>
-              ))}
-            </select>
-          </div>
-
-          <div className="flex flex-col gap-1">
             <label className="text-xs text-muted-foreground font-sans">Speed</label>
             <select
               value={speed}
@@ -1061,7 +1047,7 @@ export default function ChantPage() {
                       className="mt-4 border-t border-border pt-3"
                     >
                       <p className="text-xs text-muted-foreground font-sans uppercase tracking-wide mb-1">
-                        Translation ({activeLanguages.find((l) => l.value === translitLang)?.label || "English"})
+                        Translation ({activeLanguages.find((l) => l.value === translationLang)?.label || "English"})
                       </p>
                       <p className="text-sm text-muted-foreground font-sans leading-relaxed">{getMeaning(verse)}</p>
                     </motion.div>
