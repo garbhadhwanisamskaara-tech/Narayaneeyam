@@ -128,8 +128,28 @@ export function useDashakam(
       setError(null);
 
       try {
-        // 1. DASHAKAM LIST
-        const list = await fetchDashakamList(selectedLanguage);
+        // 1. DASHAKAM LIST (names in script language, gist/benefits/remarks in translation language)
+        let list = await fetchDashakamList(selectedLanguage);
+
+        if (translationLang !== selectedLanguage) {
+          try {
+            const trList = await fetchDashakamList(translationLang);
+            const trMap = new Map(trList.map((d) => [d.dashakam_no, d]));
+            list = list.map((d) => {
+              const t = trMap.get(d.dashakam_no);
+              return t
+                ? {
+                    ...d,
+                    gist: t.gist ?? d.gist,
+                    benefits: t.benefits ?? d.benefits,
+                    remarks: t.remarks ?? d.remarks,
+                  }
+                : d;
+            });
+          } catch {
+            // keep script-language metadata on failure
+          }
+        }
 
         if (!isMounted || requestId !== requestRef.current) return;
         setDashakamList(list);
