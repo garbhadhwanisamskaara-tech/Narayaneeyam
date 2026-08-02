@@ -14,11 +14,18 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useActiveLanguages } from "@/hooks/useActiveLanguages";
 
 export default function LanguagePreferences() {
-  const { user } = useAuth();
+  const { user, profile, refreshProfile } = useAuth();
   const languages = useActiveLanguages();
   const [scriptLang, setScriptLang] = useState<string | null>(null);
   const [translationLang, setTranslationLang] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
+
+  // Seed from the already-loaded auth profile so the UI and content never diverge
+  useEffect(() => {
+    if (profile?.preferred_script_language) setScriptLang(profile.preferred_script_language);
+    if (profile?.preferred_translation_language)
+      setTranslationLang(profile.preferred_translation_language);
+  }, [profile?.preferred_script_language, profile?.preferred_translation_language]);
 
   useEffect(() => {
     let active = true;
@@ -56,6 +63,7 @@ export default function LanguagePreferences() {
       .from("profiles")
       .update({ [field]: value })
       .eq("id", user.id);
+    if (!error) await refreshProfile();
     setSaving(false);
     if (error) toast.error("Could not save your language preference.");
     else toast.success("Language preference saved");
