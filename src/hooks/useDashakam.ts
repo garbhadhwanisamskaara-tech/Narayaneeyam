@@ -48,7 +48,7 @@ dashakamListCacheByLang.set("en", DASHAKAM_SEED);
 
 const verseCache = new Map<string, MergedVerse[]>();
 
-const getKey = (d: number, l: string) => `${d}_${l}`;
+const getKey = (d: number, l: string, t: string) => `${d}_${l}_${t}`;
 
 async function fetchDashakamListForLang(lang: string): Promise<DashakamListItem[]> {
   const { data, error } = await supabase
@@ -106,8 +106,10 @@ async function fetchDashakamList(lang: string = "en"): Promise<DashakamListItem[
 
 export function useDashakam(
   selectedDashakam: number,
-  selectedLanguage: string = "en"
+  selectedLanguage: string = "en",
+  translationLanguage?: string
 ): UseDashakamResult {
+  const translationLang = translationLanguage || selectedLanguage;
   const [dashakamList, setDashakamList] = useState<DashakamListItem[]>(
     () => dashakamListCacheByLang.get(selectedLanguage) || dashakamListCacheByLang.get("en") || DASHAKAM_SEED
   );
@@ -133,7 +135,7 @@ export function useDashakam(
         setDashakamList(list);
 
         // 2. VERSES (with cache)
-        const key = getKey(selectedDashakam, selectedLanguage);
+        const key = getKey(selectedDashakam, selectedLanguage, translationLang);
         let merged = verseCache.get(key);
 
         if (!merged) {
@@ -162,12 +164,12 @@ export function useDashakam(
               .eq("language_code", selectedLanguage)
               .order("verse_no"),
 
-            // Prasadam in target language
+            // Prasadam in translation language
             supabase
               .from("prasadam")
               .select("verse_no, prasadam_text")
               .eq("dashakam_no", selectedDashakam)
-              .eq("language_code", selectedLanguage)
+              .eq("language_code", translationLang)
               .order("verse_no"),
           ]);
 
@@ -176,15 +178,28 @@ export function useDashakam(
 
           const a = toMap(audio.data);
           const s = toMap(scriptSa.data);   // Sanskrit
-          let l = toMap(langTarget.data);   // Target language (en/ta/mr/etc)
+          let l = toMap(langTarget.data);   // Script/transliteration language
           let p = toMap(prasTarget.data);
+
+          // Translation may come from a different language than the script
+          let tr = l;
+          if (translationLang !== selectedLanguage) {
+            const trRes = await supabase
+              .from("language_script")
+              .select("verse_no, translation_text")
+              .eq("dashakam_no", selectedDashakam)
+              .eq("language_code", translationLang)
+              .order("verse_no");
+            tr = toMap(trRes.data);
+          }
 
           // Fallback to English if target language has no script rows OR
           // any verse is missing translation_text (per-verse fallback)
           const needsEnglishFallback =
-            selectedLanguage !== "en" &&
+            (selectedLanguage !== "en" || translationLang !== "en") &&
             (Object.keys(l).length === 0 ||
-              Object.values(l).some(
+              Object.keys(tr).length === 0 ||
+              Object.values(tr).some(
                 (r: any) => !r?.translation_text || r.translation_text.trim() === ""
               ));
 
@@ -201,9 +216,12 @@ export function useDashakam(
             if (Object.keys(l).length === 0) {
               l = lEn;
             }
+            if (Object.keys(tr).length === 0) {
+              tr = lEn;
+            }
           }
           // Fallback prasadam to English if missing
-          if (selectedLanguage !== "en" && Object.keys(p).length === 0) {
+          if (translationLang !== "en" && Object.keys(p).length === 0) {
             const prasEn = await supabase
               .from("prasadam")
               .select("verse_no, prasadam_text")
@@ -224,8 +242,8 @@ export function useDashakam(
           merged = [];
           for (let i = 1; i <= max; i++) {
             const translation =
-              (l[i]?.translation_text && l[i].translation_text.trim() !== ""
-                ? l[i].translation_text
+              (tr[i]?.translation_text && tr[i].translation_text.trim() !== ""
+                ? tr[i].translation_text
                 : lEn[i]?.translation_text) ?? "";
             merged.push({
               verse_no: i,
@@ -259,7 +277,7 @@ export function useDashakam(
     return () => {
       isMounted = false;
     };
-  }, [selectedDashakam, selectedLanguage]);
+  }, [selectedDashakam, selectedLanguage, translationLang]);
 
   const audioReady =
     !loading &&
