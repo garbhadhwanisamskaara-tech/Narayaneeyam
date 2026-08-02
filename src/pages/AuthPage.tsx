@@ -1,7 +1,7 @@
 import { useState } from "react";
-import { useNavigate, useSearchParams } from "react-router-dom";
+import { useNavigate, useSearchParams, Link } from "react-router-dom";
 import { motion } from "framer-motion";
-import { Mail, Lock, User, LogIn, UserPlus, KeyRound, RefreshCw } from "lucide-react";
+import { Mail, Lock, User, LogIn, UserPlus, KeyRound, RefreshCw, Home } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -190,6 +190,13 @@ export default function AuthPage() {
             </Button>
           </form>
 
+          <p className="mt-4 text-center text-xs text-muted-foreground font-sans">
+            By continuing, you agree to our{" "}
+            <Link to="/privacy" className="text-primary hover:underline">
+              Privacy Policy
+            </Link>
+          </p>
+
           {showResend && mode === "signin" && (
             <div className="mt-4 rounded-lg bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 p-3 text-center">
               <p className="text-xs text-foreground font-sans mb-2">
@@ -206,6 +213,12 @@ export default function AuthPage() {
           )}
 
           <div className="mt-6 text-center space-y-2">
+            <Link
+              to="/"
+              className="inline-flex items-center justify-center gap-1.5 text-sm text-muted-foreground hover:text-primary hover:underline font-sans"
+            >
+              <Home className="h-4 w-4" /> Go to landing page
+            </Link>
             {mode === "signin" && (
               <button onClick={() => setMode("forgot")} className="block w-full text-sm text-muted-foreground hover:text-primary hover:underline font-sans">
                 Forgot your password?
