@@ -27,6 +27,8 @@
   width: 40px; height: 40px; object-fit: contain; border-radius: 50%; background: transparent;
 }
 .landing-nav-links { display: flex; gap: 2rem; align-items: center; }
+.landing-nav-actions { display: flex; align-items: center; gap: 0.75rem; margin-left: auto; margin-right: 1rem; }
+
 .landing-nav-links a, .landing-nav-links button {
   color: rgba(255,255,255,0.8);
   text-decoration: none; background: none; border: none;
@@ -527,6 +529,8 @@
   .landing-what-grid, .landing-auth-container { grid-template-columns: 1fr; }
   .landing-what-visual { display: none; }
   .landing-nav .landing-nav-links { display: none; }
+  .landing-nav .landing-nav-links--cta { display: flex; gap: 0.75rem; }
+
   .landing-benefits-grid { grid-template-columns: 1fr; }
   .landing-festival-flash--desktop { display: none; }
   .landing-festival-flash--mobile-top { display: block; }
