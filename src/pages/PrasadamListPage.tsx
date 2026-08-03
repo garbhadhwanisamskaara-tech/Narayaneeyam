@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import SEO from "@/components/SEO";
+import { useLanguagePrefs } from "@/hooks/useLanguagePrefs";
 
 interface PrasadamEntry {
   dashakam_no: number;
@@ -12,19 +13,34 @@ interface PrasadamEntry {
 export default function PrasadamListPage() {
   const [entries, setEntries] = useState<PrasadamEntry[]>([]);
   const [loading, setLoading] = useState(true);
+  const { translationLang } = useLanguagePrefs();
 
   useEffect(() => {
+    let cancelled = false;
     (async () => {
-      const { data } = await supabase
-        .from("prasadam")
-        .select("dashakam_no, verse_no, prasadam_text")
-        .eq("language_code", "en")
-        .order("dashakam_no")
-        .order("verse_no");
-      if (data) setEntries(data as PrasadamEntry[]);
+      setLoading(true);
+      const fetchLang = async (lang: string) => {
+        const { data } = await supabase
+          .from("prasadam")
+          .select("dashakam_no, verse_no, prasadam_text")
+          .eq("language_code", lang)
+          .order("dashakam_no")
+          .order("verse_no");
+        return (data || []) as PrasadamEntry[];
+      };
+
+      let rows = await fetchLang(translationLang);
+      if (rows.length === 0 && translationLang !== "en") {
+        rows = await fetchLang("en");
+      }
+      if (cancelled) return;
+      setEntries(rows);
       setLoading(false);
     })();
-  }, []);
+    return () => {
+      cancelled = true;
+    };
+  }, [translationLang]);
 
   if (loading) {
     return (
