@@ -234,6 +234,8 @@ export default function ChantPage() {
 
   // Pending verse (paragraph number) requested via ?verse= query param
   const pendingVerseRef = useRef<number | null>(null);
+  // Whether that jump should also start playing the verse from its beginning
+  const pendingAutoPlayRef = useRef(false);
 
   // Restore last position or use query param
   useEffect(() => {
@@ -241,7 +243,10 @@ export default function ChantPage() {
     const qv = searchParams.get("verse");
     if (qv) {
       const vnum = parseInt(qv, 10);
-      if (vnum >= 1) pendingVerseRef.current = vnum;
+      if (vnum >= 1) {
+        pendingVerseRef.current = vnum;
+        pendingAutoPlayRef.current = searchParams.get("play") === "1";
+      }
     }
     if (qd) {
       const num = normalizeDashakam(parseInt(qd, 10));
@@ -266,11 +271,24 @@ export default function ChantPage() {
     const target = pendingVerseRef.current;
     const idx = displayVerses.findIndex((v) => v.paragraph === target);
     pendingVerseRef.current = null;
+    const shouldPlay = pendingAutoPlayRef.current;
+    pendingAutoPlayRef.current = false;
     if (idx >= 0) {
       setHighlightedVerse(idx);
       setTimeout(() => scrollToVerse(idx), 200);
+      if (shouldPlay) {
+        // Start cleanly at the top of the bookmarked verse
+        stopAudio();
+        stopSloka();
+        setVerseProgress(0);
+        setCurrentLoopIteration(0);
+        setIsPaused(false);
+        setHasPlayedOpening(true);
+        setIsPlaying(true);
+      }
     }
   }, [displayVerses]);
+
 
 
   // Save position on changes

@@ -22,7 +22,7 @@ export default function DashboardCollectionCards() {
             </p>
             <p className="text-[10px] text-muted-foreground font-sans mb-3 capitalize">{mostRecent.mode} mode</p>
             <Link
-              to={`/${mostRecent.mode === "dashboard" ? "chant" : mostRecent.mode}?dashakam=${mostRecent.dashakam}`}
+              to={`/${mostRecent.mode === "dashboard" ? "chant" : mostRecent.mode}?dashakam=${mostRecent.dashakam}&verse=${mostRecent.verse}&play=1`}
               className="mt-auto rounded-lg bg-gradient-gold px-3 py-2 text-xs font-sans font-semibold text-primary text-center shadow-gold transition-transform hover:scale-105"
             >
               Continue

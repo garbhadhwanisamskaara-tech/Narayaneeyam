@@ -34,7 +34,7 @@ export default function SavedPlacesPage() {
 
   const getResumePath = (b: BookmarkEntry) => {
     const mode = b.mode === "dashboard" ? "chant" : b.mode;
-    return `/${mode}?dashakam=${b.dashakam}&verse=${b.verse}`;
+    return `/${mode}?dashakam=${b.dashakam}&verse=${b.verse}&play=1`;
   };
 
 
