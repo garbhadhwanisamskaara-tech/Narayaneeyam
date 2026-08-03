@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
 import { Heart, ArrowLeft } from "lucide-react";
 import { useFavourites } from "@/hooks/useFavourites";
+import { useLanguagePrefs } from "@/hooks/useLanguagePrefs";
 import FavouriteButton from "@/components/FavouriteButton";
 import RemoveBottomSheet from "@/components/RemoveBottomSheet";
 import { toast } from "@/hooks/use-toast";
@@ -10,7 +11,8 @@ import type { FavouriteEntry } from "@/lib/progress";
 import SEO from "@/components/SEO";
 
 export default function HeartShelfPage() {
-  const { favourites, removeFavourite, undoRemoveFavourite } = useFavourites();
+  const { scriptLang } = useLanguagePrefs();
+  const { favourites, removeFavourite, undoRemoveFavourite } = useFavourites(scriptLang);
   const [removeTarget, setRemoveTarget] = useState<FavouriteEntry | null>(null);
   const [swipeMode, setSwipeMode] = useState(false);
 

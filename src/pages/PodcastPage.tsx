@@ -13,6 +13,7 @@ import SEO from "@/components/SEO";
 import { awardFeather } from "@/hooks/useFeathers";
 import { useAuth } from "@/contexts/AuthContext";
 import { registerAudioElement, useGlobalMute } from "@/lib/globalMute";
+import { useLanguagePrefs } from "@/hooks/useLanguagePrefs";
 import { VolumeX } from "lucide-react";
 
 type PlayMode = "single" | "playlist" | "all";
@@ -37,6 +38,7 @@ export default function PodcastPage() {
   const [duration, setDuration] = useState(0);
   const [podcastData, setPodcastData] = useState<PodcastEntry[]>([]);
   const [completed, setCompleted] = useState(false);
+  const { scriptLang } = useLanguagePrefs();
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const pausedRef = useRef(false);
   const advanceRef = useRef<() => void>(() => {});
@@ -57,13 +59,13 @@ export default function PodcastPage() {
   const [namesReady, setNamesReady] = useState(false);
   const [publishedList, setPublishedList] = useState<{ dashakam_no: number; dashakam_name: string }[]>([]);
   useEffect(() => {
-    prefetchDashakamList()
+    prefetchDashakamList(scriptLang)
       .then((list) => {
         setPublishedList(list.map((d) => ({ dashakam_no: d.dashakam_no, dashakam_name: d.dashakam_name })));
         setNamesReady(true);
       })
       .catch(() => {});
-  }, []);
+  }, [scriptLang]);
   const publishedNos = useMemo(() => new Set(publishedList.map((d) => d.dashakam_no)), [publishedList]);
   const publishedPodcastData = useMemo(() => podcastData.filter((p) => publishedNos.has(p.dashakam)), [podcastData, publishedNos]);
 
@@ -140,13 +142,13 @@ export default function PodcastPage() {
     return null;
   }, [publishedPodcastData]);
 
-  const dashakamName = getDashakamName(currentDashakam);
+  const dashakamName = getDashakamName(currentDashakam, scriptLang);
   const audioUrl = getAudioUrl(currentDashakam);
   const nextDashakamNo = useMemo(() => {
     const idx = publishedList.findIndex((d) => d.dashakam_no === currentDashakam);
     return idx >= 0 && idx < publishedList.length - 1 ? publishedList[idx + 1].dashakam_no : null;
   }, [publishedList, currentDashakam]);
-  const nextDashakamName = nextDashakamNo ? getDashakamName(nextDashakamNo) : "";
+  const nextDashakamName = nextDashakamNo ? getDashakamName(nextDashakamNo, scriptLang) : "";
 
   // Advance to next dashakam
   const advanceToNext = useCallback(() => {
