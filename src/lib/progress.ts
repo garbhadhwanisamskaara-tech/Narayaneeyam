@@ -34,6 +34,10 @@ export interface UserProgress {
   bookmarks: string[];
   bookmarkEntries: BookmarkEntry[];
   favouriteEntries: FavouriteEntry[];
+  /** Set once local bookmarks have been uploaded to the signed-in account. */
+  bookmarksSyncedAt?: string;
+  /** Set once local favourites have been uploaded to the signed-in account. */
+  favouritesSyncedAt?: string;
   preferredLanguage: string;
   chantSpeed: number;
   loopCount: number;
