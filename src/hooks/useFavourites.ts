@@ -11,16 +11,28 @@ const keyOf = (dashakam: number, verse: number) => `${dashakam}-${verse}`;
 const sortDesc = (list: FavouriteEntry[]) =>
   [...list].sort((a, b) => (b.savedAt || "").localeCompare(a.savedAt || ""));
 
+/** Look up meter numbers for a set of dashakams. */
+async function fetchMeters(entries: { dashakam: number; verse: number }[]) {
+  const map = new Map<string, string>();
+  const dashakams = [...new Set(entries.map((e) => e.dashakam))];
+  if (dashakams.length === 0) return map;
+  const { data } = await (supabase as any)
+    .from("verses_audio")
+    .select("dashakam_no, verse_no, meter")
+    .in("dashakam_no", dashakams);
+  (data || []).forEach((r: any) => {
+    if (r.meter) map.set(keyOf(r.dashakam_no, r.verse_no), String(r.meter));
+  });
+  return map;
+}
+
 /**
  * Favourites are language-scoped: only entries saved in the currently active
  * language are shown. Others stay stored and reappear when the user switches back.
  *
- * Signed in  → Supabase `favourites` table (source of truth) + localStorage mirror.
+ * Signed in  → Supabase `favourites` table is the ONLY store (local copies are
+ *              cleared once migrated, so nothing is duplicated).
  * Signed out → localStorage only, exactly as before.
- *
- * The cloud table stores only dashakam + verse; the verse text and language of an
- * entry created on another device are resolved in the user's current script
- * language and cached in the local mirror.
  */
 export function useFavourites(languageOverride?: string) {
   const { user, profile } = useAuth();
@@ -32,10 +44,14 @@ export function useFavourites(languageOverride?: string) {
   );
   const syncedForUser = useRef<string | null>(null);
 
-  const persistLocal = useCallback((list: FavouriteEntry[]) => {
-    saveProgress({ favouriteEntries: list });
-    setAllFavourites(list);
-  }, []);
+  /** Signed in → memory only (cloud is source of truth). Signed out → localStorage. */
+  const persist = useCallback(
+    (list: FavouriteEntry[]) => {
+      if (!user) saveProgress({ favouriteEntries: list });
+      setAllFavourites(list);
+    },
+    [user]
+  );
 
   // ── Load from Cloud (+ one-time migration of local entries) ────────────────
   useEffect(() => {
@@ -60,9 +76,14 @@ export function useFavourites(languageOverride?: string) {
           const { error } = await (supabase as any)
             .from("favourites")
             .upsert(rows, { onConflict: "user_id,dashakam,verse", ignoreDuplicates: true });
-          if (!error) saveProgress({ favouritesSyncedAt: new Date().toISOString() });
+          if (!error) {
+            // Migrated → drop the local duplicates entirely
+            saveProgress({ favouritesSyncedAt: new Date().toISOString(), favouriteEntries: [] });
+          }
         } else if (!local.favouritesSyncedAt) {
-          saveProgress({ favouritesSyncedAt: new Date().toISOString() });
+          saveProgress({ favouritesSyncedAt: new Date().toISOString(), favouriteEntries: [] });
+        } else if ((local.favouriteEntries || []).length > 0) {
+          saveProgress({ favouriteEntries: [] });
         }
 
         const { data, error } = await (supabase as any)
@@ -72,16 +93,20 @@ export function useFavourites(languageOverride?: string) {
         if (error || cancelled || !data) return;
 
         const localByKey = new Map(
-          (getProgress().favouriteEntries || []).map((f) => [keyOf(f.dashakam, f.verse), f])
+          localEntries.map((f) => [keyOf(f.dashakam, f.verse), f])
         );
+        const meters = await fetchMeters(data as any[]);
+        if (cancelled) return;
 
         let merged: FavouriteEntry[] = data.map((r: any) => {
-          const match = localByKey.get(keyOf(r.dashakam, r.verse));
+          const k = keyOf(r.dashakam, r.verse);
+          const match = localByKey.get(k);
           return {
-            verseId: keyOf(r.dashakam, r.verse),
+            verseId: k,
             dashakam: r.dashakam,
             verse: r.verse,
             sanskrit: match?.sanskrit || "",
+            meter: meters.get(k) || match?.meter,
             language: match?.language || activeLanguage,
             savedAt: r.saved_at || match?.savedAt || new Date().toISOString(),
           };
@@ -107,16 +132,16 @@ export function useFavourites(languageOverride?: string) {
         }
 
         if (cancelled) return;
-        persistLocal(sortDesc(merged));
+        setAllFavourites(sortDesc(merged));
       } catch {
-        // Offline / failure — keep the local mirror as-is
+        // Offline / failure — keep whatever is in memory
       }
     })();
 
     return () => {
       cancelled = true;
     };
-  }, [user, activeLanguage, persistLocal]);
+  }, [user, activeLanguage]);
 
   const favourites = useMemo(
     () =>
@@ -133,7 +158,7 @@ export function useFavourites(languageOverride?: string) {
 
   const addFavourite = useCallback(
     (entry: Omit<FavouriteEntry, "savedAt">) => {
-      const existing = getProgress().favouriteEntries || [];
+      const existing = allFavourites;
       const language = entry.language || activeLanguage;
       if (
         existing.some(
@@ -152,7 +177,7 @@ export function useFavourites(languageOverride?: string) {
         language,
         savedAt: new Date().toISOString(),
       };
-      persistLocal([newEntry, ...existing]);
+      persist([newEntry, ...existing]);
 
       if (user) {
         void (supabase as any)
@@ -173,22 +198,22 @@ export function useFavourites(languageOverride?: string) {
 
       toast({
         title: isFirst
-          ? "Your first favourite — every Parayanam has one sloka that speaks to the soul first. 🌸"
-          : "❤️ Added to your heart. This sloka is yours forever.",
+          ? "Your first favourite — every Parayanam has one verse that speaks to the soul first. 🌸"
+          : "❤️ Added to your heart. This verse is yours forever.",
       });
     },
-    [activeLanguage, user, persistLocal]
+    [activeLanguage, user, persist, allFavourites]
   );
 
   const removeFavourite = useCallback(
     (verseId: string) => {
-      const existing = getProgress().favouriteEntries || [];
+      const existing = allFavourites;
       const target = existing.find(
         (f) =>
           f.verseId === verseId &&
           (f.language || DEFAULT_FAVOURITE_LANGUAGE) === activeLanguage
       );
-      persistLocal(
+      persist(
         existing.filter(
           (f) =>
             !(
@@ -210,14 +235,14 @@ export function useFavourites(languageOverride?: string) {
           });
       }
     },
-    [activeLanguage, user, persistLocal]
+    [activeLanguage, user, persist, allFavourites]
   );
 
   const undoRemoveFavourite = useCallback(
     (entry: FavouriteEntry) => {
-      const existing = getProgress().favouriteEntries || [];
+      const existing = allFavourites;
       if (!existing.some((f) => f.verseId === entry.verseId && f.language === entry.language)) {
-        persistLocal([entry, ...existing]);
+        persist([entry, ...existing]);
       }
 
       if (user) {
@@ -237,7 +262,7 @@ export function useFavourites(languageOverride?: string) {
           });
       }
     },
-    [user, persistLocal]
+    [user, persist, allFavourites]
   );
 
   const randomFavourite =
