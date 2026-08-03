@@ -18,7 +18,7 @@ export default function DashboardCollectionCards() {
         {mostRecent ? (
           <>
             <p className="font-display text-sm font-semibold text-foreground mb-1">
-              Dasakam {mostRecent.dashakam} · Verse {mostRecent.verse}
+              Dashakam {mostRecent.dashakam} · Verse {mostRecent.verse}{mostRecent.meter ? ` · Meter ${mostRecent.meter}` : ""}
             </p>
             <p className="text-[10px] text-muted-foreground font-sans mb-3 capitalize">{mostRecent.mode} mode</p>
             <Link
@@ -37,7 +37,7 @@ export default function DashboardCollectionCards() {
               to="/chant?dashakam=1"
               className="mt-auto rounded-lg border border-border px-3 py-2 text-xs font-sans font-medium text-foreground text-center hover:bg-muted transition-colors"
             >
-              Start with Dasakam 1 →
+              Start with Dashakam 1 →
             </Link>
           </>
         )}

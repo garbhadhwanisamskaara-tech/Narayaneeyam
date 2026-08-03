@@ -6,6 +6,8 @@ export interface BookmarkEntry {
   verse: number;
   mode: "chant" | "learn" | "podcast" | "script" | "dashboard";
   savedAt: string;
+  /** Metrical form (chandas) of the verse, when known. */
+  meter?: string;
 }
 
 export interface FavouriteEntry {
@@ -14,6 +16,8 @@ export interface FavouriteEntry {
   verse: number;
   sanskrit: string;
   savedAt: string;
+  /** Metrical form (chandas) of the verse, when known. */
+  meter?: string;
   /** Language code the verse was saved in (e.g. "en", "sa"). Legacy entries default to "en". */
   language?: string;
 }

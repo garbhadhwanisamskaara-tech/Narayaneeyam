@@ -80,7 +80,7 @@ export default function HeartShelfPage() {
               >
                 <div className="flex items-start justify-between mb-2">
                   <span className="text-xs text-muted-foreground font-sans">
-                    Dasakam {fav.dashakam} · Verse {fav.verse}
+                    Dashakam {fav.dashakam} · Verse {fav.verse}{fav.meter ? ` · Meter ${fav.meter}` : ""}
                   </span>
                   <FavouriteButton
                     active

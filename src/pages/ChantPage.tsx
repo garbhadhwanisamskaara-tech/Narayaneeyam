@@ -1010,6 +1010,7 @@ export default function ChantPage() {
                               verseId: verse.id,
                               dashakam: verse.dashakam,
                               verse: verse.paragraph,
+                              meter: verse.meter || undefined,
                               mode: "chant",
                             });
                           }
@@ -1031,6 +1032,7 @@ export default function ChantPage() {
                               dashakam: verse.dashakam,
                               verse: verse.paragraph,
                               sanskrit: getVerseText(verse),
+                              meter: verse.meter || undefined,
                               language: translitLang || "en",
                             });
                           }
