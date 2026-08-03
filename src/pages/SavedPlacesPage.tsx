@@ -68,7 +68,7 @@ export default function SavedPlacesPage() {
               to="/chant?dashakam=1"
               className="inline-block rounded-lg bg-gradient-gold px-6 py-3 font-sans text-sm font-semibold text-primary shadow-gold transition-transform hover:scale-105"
             >
-              Start with Dasakam 1 →
+              Start with Dashakam 1 →
             </Link>
           </div>
         ) : (
@@ -83,7 +83,7 @@ export default function SavedPlacesPage() {
               >
                 <div className="flex-1 min-w-0">
                   <p className="font-display text-sm font-semibold text-foreground">
-                    Dasakam {bm.dashakam} · Verse {bm.verse}
+                    Dashakam {bm.dashakam} · Verse {bm.verse}{bm.meter ? ` · Meter ${bm.meter}` : ""}
                   </p>
                   <p className="text-[10px] text-muted-foreground font-sans capitalize">
                     {bm.mode} mode · {new Date(bm.savedAt).toLocaleDateString()}
