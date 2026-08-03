@@ -9,9 +9,25 @@ const keyOf = (dashakam: number, verse: number) => `${dashakam}-${verse}`;
 const sortDesc = (list: BookmarkEntry[]) =>
   [...list].sort((a, b) => (b.savedAt || "").localeCompare(a.savedAt || ""));
 
+/** Look up meter numbers for a set of dashakams. */
+async function fetchMeters(entries: { dashakam: number; verse: number }[]) {
+  const map = new Map<string, string>();
+  const dashakams = [...new Set(entries.map((e) => e.dashakam))];
+  if (dashakams.length === 0) return map;
+  const { data } = await (supabase as any)
+    .from("verses_audio")
+    .select("dashakam_no, verse_no, meter")
+    .in("dashakam_no", dashakams);
+  (data || []).forEach((r: any) => {
+    if (r.meter) map.set(keyOf(r.dashakam_no, r.verse_no), String(r.meter));
+  });
+  return map;
+}
+
 /**
  * Bookmarks ("saved places").
- * Signed in  → Supabase `bookmarks` table (source of truth) + localStorage mirror.
+ * Signed in  → Supabase `bookmarks` table is the ONLY store (local copies are
+ *              cleared once migrated, so nothing is duplicated).
  * Signed out → localStorage only, exactly as before.
  */
 export function useBookmarks() {
@@ -21,10 +37,14 @@ export function useBookmarks() {
   );
   const syncedForUser = useRef<string | null>(null);
 
-  const persistLocal = useCallback((list: BookmarkEntry[]) => {
-    saveProgress({ bookmarkEntries: list });
-    setBookmarks(list);
-  }, []);
+  /** Signed in → memory only (cloud is source of truth). Signed out → localStorage. */
+  const persist = useCallback(
+    (list: BookmarkEntry[]) => {
+      if (!user) saveProgress({ bookmarkEntries: list });
+      setBookmarks(list);
+    },
+    [user]
+  );
 
   // ── Load from Cloud (+ one-time migration of local entries) ────────────────
   useEffect(() => {
@@ -50,9 +70,15 @@ export function useBookmarks() {
           const { error } = await (supabase as any)
             .from("bookmarks")
             .upsert(rows, { onConflict: "user_id,dashakam,verse", ignoreDuplicates: true });
-          if (!error) saveProgress({ bookmarksSyncedAt: new Date().toISOString() });
+          if (!error) {
+            // Migrated → drop the local duplicates entirely
+            saveProgress({ bookmarksSyncedAt: new Date().toISOString(), bookmarkEntries: [] });
+          }
         } else if (!local.bookmarksSyncedAt) {
-          saveProgress({ bookmarksSyncedAt: new Date().toISOString() });
+          saveProgress({ bookmarksSyncedAt: new Date().toISOString(), bookmarkEntries: [] });
+        } else if ((local.bookmarkEntries || []).length > 0) {
+          // Already migrated on a previous session — clear leftovers
+          saveProgress({ bookmarkEntries: [] });
         }
 
         const { data, error } = await (supabase as any)
@@ -61,33 +87,37 @@ export function useBookmarks() {
           .order("saved_at", { ascending: false });
         if (error || cancelled || !data) return;
 
-        // Merge: cloud is the set of entries, local supplies extra metadata (mode)
         const localByKey = new Map(
-          (getProgress().bookmarkEntries || []).map((b) => [keyOf(b.dashakam, b.verse), b])
+          localEntries.map((b) => [keyOf(b.dashakam, b.verse), b])
         );
+        const meters = await fetchMeters(data as any[]);
+        if (cancelled) return;
+
         const merged: BookmarkEntry[] = data.map((r: any) => {
-          const match = localByKey.get(keyOf(r.dashakam, r.verse));
+          const k = keyOf(r.dashakam, r.verse);
+          const match = localByKey.get(k);
           return {
-            verseId: keyOf(r.dashakam, r.verse),
+            verseId: k,
             dashakam: r.dashakam,
             verse: r.verse,
+            meter: meters.get(k) || match?.meter,
             mode: match?.mode || "chant",
             savedAt: r.saved_at || match?.savedAt || new Date().toISOString(),
           };
         });
-        persistLocal(sortDesc(merged));
+        setBookmarks(sortDesc(merged));
       } catch {
-        // Offline / failure — keep the local mirror as-is
+        // Offline / failure — keep whatever is in memory
       }
     })();
 
     return () => {
       cancelled = true;
     };
-  }, [user, persistLocal]);
+  }, [user]);
 
   const refresh = () => {
-    setBookmarks(sortDesc(getProgress().bookmarkEntries || []));
+    if (!user) setBookmarks(sortDesc(getProgress().bookmarkEntries || []));
   };
 
   const isBookmarked = useCallback(
@@ -97,12 +127,12 @@ export function useBookmarks() {
 
   const addBookmark = useCallback(
     (entry: Omit<BookmarkEntry, "savedAt">, isPodcast = false) => {
-      const existing = getProgress().bookmarkEntries || [];
+      const existing = bookmarks;
       if (existing.some((b) => b.verseId === entry.verseId)) return;
 
       const isFirst = existing.length === 0;
       const newEntry: BookmarkEntry = { ...entry, savedAt: new Date().toISOString() };
-      persistLocal([newEntry, ...existing]);
+      persist([newEntry, ...existing]);
 
       if (user) {
         void (supabase as any)
@@ -129,14 +159,14 @@ export function useBookmarks() {
           : "🔖 Your place is saved. Come back whenever you're ready.",
       });
     },
-    [user, persistLocal]
+    [user, persist, bookmarks]
   );
 
   const removeBookmark = useCallback(
     (verseId: string) => {
-      const existing = getProgress().bookmarkEntries || [];
+      const existing = bookmarks;
       const target = existing.find((b) => b.verseId === verseId);
-      persistLocal(existing.filter((b) => b.verseId !== verseId));
+      persist(existing.filter((b) => b.verseId !== verseId));
 
       if (user && target) {
         void (supabase as any)
@@ -150,14 +180,14 @@ export function useBookmarks() {
           });
       }
     },
-    [user, persistLocal]
+    [user, persist, bookmarks]
   );
 
   const undoRemoveBookmark = useCallback(
     (entry: BookmarkEntry) => {
-      const existing = getProgress().bookmarkEntries || [];
+      const existing = bookmarks;
       if (!existing.some((b) => b.verseId === entry.verseId)) {
-        persistLocal([entry, ...existing]);
+        persist([entry, ...existing]);
       }
 
       if (user) {
@@ -177,7 +207,7 @@ export function useBookmarks() {
           });
       }
     },
-    [user, persistLocal]
+    [user, persist, bookmarks]
   );
 
   const mostRecent = bookmarks.length > 0 ? bookmarks[0] : null;
