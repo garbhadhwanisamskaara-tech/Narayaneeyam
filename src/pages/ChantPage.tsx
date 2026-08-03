@@ -1012,7 +1012,7 @@ export default function ChantPage() {
                               verseId: verse.id,
                               dashakam: verse.dashakam,
                               verse: verse.paragraph,
-                              sanskrit: verse.sanskrit || verse.english,
+                              sanskrit: getVerseText(verse),
                               language: translitLang || "en",
                             });
                           }

@@ -34,8 +34,9 @@ export default function SavedPlacesPage() {
 
   const getResumePath = (b: BookmarkEntry) => {
     const mode = b.mode === "dashboard" ? "chant" : b.mode;
-    return `/${mode}?dashakam=${b.dashakam}`;
+    return `/${mode}?dashakam=${b.dashakam}&verse=${b.verse}`;
   };
+
 
   return (
     <div className="container mx-auto px-4 py-8 pb-24">
@@ -82,7 +83,7 @@ export default function SavedPlacesPage() {
               >
                 <div className="flex-1 min-w-0">
                   <p className="font-display text-sm font-semibold text-foreground">
-                    Dasakam {bm.dashakam} · Sloka {bm.verse}
+                    Dasakam {bm.dashakam} · Verse {bm.verse}
                   </p>
                   <p className="text-[10px] text-muted-foreground font-sans capitalize">
                     {bm.mode} mode · {new Date(bm.savedAt).toLocaleDateString()}
