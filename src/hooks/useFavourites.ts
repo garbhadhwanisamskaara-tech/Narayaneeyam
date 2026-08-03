@@ -1,5 +1,5 @@
 import { useState, useCallback, useMemo, useEffect, useRef } from "react";
-import { getProgress, saveProgress, type FavouriteEntry } from "@/lib/progress";
+import { getProgress, saveProgress, clearLocalSavedEntries, type FavouriteEntry } from "@/lib/progress";
 import { toast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
@@ -47,7 +47,12 @@ export function useFavourites(languageOverride?: string) {
   /** Signed in → memory only (cloud is source of truth). Signed out → localStorage. */
   const persist = useCallback(
     (list: FavouriteEntry[]) => {
-      if (!user) saveProgress({ favouriteEntries: list });
+      if (user) {
+        // Never let a signed-in session write a second copy locally
+        clearLocalSavedEntries("favourites");
+      } else {
+        saveProgress({ favouriteEntries: list });
+      }
       setAllFavourites(list);
     },
     [user]
@@ -61,12 +66,16 @@ export function useFavourites(languageOverride?: string) {
 
     let cancelled = false;
 
+    // Snapshot + clear synchronously, before any await, so no other write can
+    // race us and leave a duplicate copy behind. Restored only if upload fails.
+    const local = getProgress();
+    const localEntries = local.favouriteEntries || [];
+    const needsUpload = !local.favouritesSyncedAt && localEntries.length > 0;
+    clearLocalSavedEntries("favourites");
+
     (async () => {
       try {
-        const local = getProgress();
-        const localEntries = local.favouriteEntries || [];
-
-        if (!local.favouritesSyncedAt && localEntries.length > 0) {
+        if (needsUpload) {
           const rows = localEntries.map((f) => ({
             user_id: user.id,
             dashakam: f.dashakam,
@@ -76,14 +85,14 @@ export function useFavourites(languageOverride?: string) {
           const { error } = await (supabase as any)
             .from("favourites")
             .upsert(rows, { onConflict: "user_id,dashakam,verse", ignoreDuplicates: true });
-          if (!error) {
-            // Migrated → drop the local duplicates entirely
-            saveProgress({ favouritesSyncedAt: new Date().toISOString(), favouriteEntries: [] });
+          if (error) {
+            console.warn("[favourites] migration failed", error.message);
+            saveProgress({ favouriteEntries: localEntries });
+            return;
           }
+          saveProgress({ favouritesSyncedAt: new Date().toISOString(), favouriteEntries: [] });
         } else if (!local.favouritesSyncedAt) {
           saveProgress({ favouritesSyncedAt: new Date().toISOString(), favouriteEntries: [] });
-        } else if ((local.favouriteEntries || []).length > 0) {
-          saveProgress({ favouriteEntries: [] });
         }
 
         const { data, error } = await (supabase as any)

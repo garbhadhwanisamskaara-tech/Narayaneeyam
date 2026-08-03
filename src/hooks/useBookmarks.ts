@@ -1,5 +1,5 @@
 import { useState, useCallback, useEffect, useRef } from "react";
-import { getProgress, saveProgress, type BookmarkEntry } from "@/lib/progress";
+import { getProgress, saveProgress, clearLocalSavedEntries, type BookmarkEntry } from "@/lib/progress";
 import { toast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
@@ -40,7 +40,12 @@ export function useBookmarks() {
   /** Signed in → memory only (cloud is source of truth). Signed out → localStorage. */
   const persist = useCallback(
     (list: BookmarkEntry[]) => {
-      if (!user) saveProgress({ bookmarkEntries: list });
+      if (user) {
+        // Never let a signed-in session write a second copy locally
+        clearLocalSavedEntries("bookmarks");
+      } else {
+        saveProgress({ bookmarkEntries: list });
+      }
       setBookmarks(list);
     },
     [user]
@@ -54,13 +59,16 @@ export function useBookmarks() {
 
     let cancelled = false;
 
+    // Snapshot + clear synchronously, before any await, so no other write can
+    // race us and leave a duplicate copy behind. Restored only if upload fails.
+    const local = getProgress();
+    const localEntries = local.bookmarkEntries || [];
+    const needsUpload = !local.bookmarksSyncedAt && localEntries.length > 0;
+    clearLocalSavedEntries("bookmarks");
+
     (async () => {
       try {
-        const local = getProgress();
-        const localEntries = local.bookmarkEntries || [];
-
-        // One-time upload of anything saved before this device had an account
-        if (!local.bookmarksSyncedAt && localEntries.length > 0) {
+        if (needsUpload) {
           const rows = localEntries.map((b) => ({
             user_id: user.id,
             dashakam: b.dashakam,
@@ -70,15 +78,15 @@ export function useBookmarks() {
           const { error } = await (supabase as any)
             .from("bookmarks")
             .upsert(rows, { onConflict: "user_id,dashakam,verse", ignoreDuplicates: true });
-          if (!error) {
-            // Migrated → drop the local duplicates entirely
-            saveProgress({ bookmarksSyncedAt: new Date().toISOString(), bookmarkEntries: [] });
+          if (error) {
+            // Upload failed — put the local entries back so nothing is lost
+            console.warn("[bookmarks] migration failed", error.message);
+            saveProgress({ bookmarkEntries: localEntries });
+            return;
           }
+          saveProgress({ bookmarksSyncedAt: new Date().toISOString(), bookmarkEntries: [] });
         } else if (!local.bookmarksSyncedAt) {
           saveProgress({ bookmarksSyncedAt: new Date().toISOString(), bookmarkEntries: [] });
-        } else if ((local.bookmarkEntries || []).length > 0) {
-          // Already migrated on a previous session — clear leftovers
-          saveProgress({ bookmarkEntries: [] });
         }
 
         const { data, error } = await (supabase as any)

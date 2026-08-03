@@ -88,6 +88,22 @@ export function saveProgress(progress: Partial<UserProgress>) {
 }
 
 /**
+ * Remove the locally-mirrored bookmark/favourite arrays.
+ * Used once a signed-in user's entries live in Supabase, so the same rows are
+ * never kept in two places. Safe to call repeatedly (no-op when already empty).
+ */
+export function clearLocalSavedEntries(which: "bookmarks" | "favourites"): void {
+  const current = getProgress();
+  if (which === "bookmarks") {
+    if ((current.bookmarkEntries || []).length === 0) return;
+    saveProgress({ bookmarkEntries: [] });
+  } else {
+    if ((current.favouriteEntries || []).length === 0) return;
+    saveProgress({ favouriteEntries: [] });
+  }
+}
+
+/**
  * Add real listening time (in seconds) to the user's total chanting time.
  * Keeps sub-minute leftovers so short bursts eventually add up.
  */
