@@ -1,5 +1,5 @@
 import { useState, useCallback, useEffect, useRef } from "react";
-import { getProgress, saveProgress, type BookmarkEntry } from "@/lib/progress";
+import { getProgress, saveProgress, clearLocalSavedEntries, type BookmarkEntry } from "@/lib/progress";
 import { toast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
