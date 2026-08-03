@@ -18,7 +18,7 @@ export default function DashboardCollectionCards() {
         {mostRecent ? (
           <>
             <p className="font-display text-sm font-semibold text-foreground mb-1">
-              Dasakam {mostRecent.dashakam} · Sloka {mostRecent.verse}
+              Dasakam {mostRecent.dashakam} · Verse {mostRecent.verse}
             </p>
             <p className="text-[10px] text-muted-foreground font-sans mb-3 capitalize">{mostRecent.mode} mode</p>
             <Link

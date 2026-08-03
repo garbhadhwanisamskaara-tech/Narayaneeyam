@@ -21,10 +21,11 @@ export default function RemoveBottomSheet({ open, onClose, onConfirm, type, dash
     : "Remove from your heart?";
 
   const body = isBookmark
-    ? `Dasakam ${dashakam} · Sloka ${verse} will be removed from your saved places.`
+    ? `Dasakam ${dashakam} · Verse ${verse} will be removed from your saved places.`
     : isSwipe
     ? "You can always favourite it again — it's not going anywhere."
-    : `Dasakam ${dashakam} · Sloka ${verse} will be removed from your favourites. The sloka remains in the text — only your personal tag is removed.`;
+    : `Dasakam ${dashakam} · Verse ${verse} will be removed from your favourites. The verse remains in the text — only your personal tag is removed.`;
+
 
   const confirmText = isBookmark
     ? "Yes, remove it"

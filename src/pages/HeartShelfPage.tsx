@@ -80,7 +80,7 @@ export default function HeartShelfPage() {
               >
                 <div className="flex items-start justify-between mb-2">
                   <span className="text-xs text-muted-foreground font-sans">
-                    Dasakam {fav.dashakam} · Sloka {fav.verse}
+                    Dasakam {fav.dashakam} · Verse {fav.verse}
                   </span>
                   <FavouriteButton
                     active
@@ -95,18 +95,19 @@ export default function HeartShelfPage() {
                 </p>
                 <div className="mt-3 flex gap-2">
                   <Link
-                    to={`/chant?dashakam=${fav.dashakam}`}
+                    to={`/chant?dashakam=${fav.dashakam}&verse=${fav.verse}`}
                     className="text-xs font-sans text-primary hover:underline"
                   >
                     Chant →
                   </Link>
                   <Link
-                    to={`/script?dashakam=${fav.dashakam}`}
+                    to={`/script?dashakam=${fav.dashakam}&verse=${fav.verse}`}
                     className="text-xs font-sans text-primary hover:underline"
                   >
                     Read →
                   </Link>
                 </div>
+
               </motion.div>
             ))}
           </div>

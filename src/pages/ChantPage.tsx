@@ -232,9 +232,17 @@ export default function ChantPage() {
   const hasVerses = displayVerses.length > 0;
   const visibleVerses = showAll ? displayVerses : displayVerses.slice(0, 3);
 
+  // Pending verse (paragraph number) requested via ?verse= query param
+  const pendingVerseRef = useRef<number | null>(null);
+
   // Restore last position or use query param
   useEffect(() => {
     const qd = searchParams.get("dashakam");
+    const qv = searchParams.get("verse");
+    if (qv) {
+      const vnum = parseInt(qv, 10);
+      if (vnum >= 1) pendingVerseRef.current = vnum;
+    }
     if (qd) {
       const num = normalizeDashakam(parseInt(qd, 10));
       if (num >= 1 && num <= 100) {
@@ -251,6 +259,19 @@ export default function ChantPage() {
       setSelectedDashakam(normalizeDashakam(progress.lastDashakam));
     }
   }, []);
+
+  // Once verses are loaded, jump to the verse requested via ?verse=
+  useEffect(() => {
+    if (pendingVerseRef.current == null || displayVerses.length === 0) return;
+    const target = pendingVerseRef.current;
+    const idx = displayVerses.findIndex((v) => v.paragraph === target);
+    pendingVerseRef.current = null;
+    if (idx >= 0) {
+      setHighlightedVerse(idx);
+      setTimeout(() => scrollToVerse(idx), 200);
+    }
+  }, [displayVerses]);
+
 
   // Save position on changes
   useEffect(() => {
@@ -991,7 +1012,7 @@ export default function ChantPage() {
                               verseId: verse.id,
                               dashakam: verse.dashakam,
                               verse: verse.paragraph,
-                              sanskrit: verse.sanskrit || verse.english,
+                              sanskrit: getVerseText(verse),
                               language: translitLang || "en",
                             });
                           }
