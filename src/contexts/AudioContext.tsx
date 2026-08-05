@@ -69,12 +69,27 @@ export function AudioProvider({ children }: { children: ReactNode }) {
   const rateRef = useRef(1);
 
   // --- Playback lifecycle bookkeeping (refs, never state) ---
-  /** Reason the audio last stopped: distinguishes user intent from system interruption. */
-  const pauseReasonRef = useRef<"user" | "system" | "ended" | "source-change" | "teardown" | null>(null);
+  /**
+   * Reason the audio last stopped. Only "system" (or an unattributed pause that
+   * gets classified as "system") is ever eligible for auto-resume after the app
+   * returns to the foreground. Every deliberate/cleanup pause must be one of
+   * "user" | "ended" | "source-change" | "teardown" | "cancelled" |
+   * "controlled-transition".
+   */
+  type PauseReason =
+    | "user"
+    | "system"
+    | "ended"
+    | "source-change"
+    | "teardown"
+    | "cancelled"
+    | "controlled-transition";
+  const pauseReasonRef = useRef<PauseReason | null>(null);
   /** True while an audio.play() promise is pending — guards duplicate play calls. */
   const playInProgressRef = useRef(false);
   /** Snapshot taken when the document is hidden. */
   const hiddenSnapshotRef = useRef<{ wasPlaying: boolean; src: string } | null>(null);
+
 
   const devLog = (...args: unknown[]) => {
     if (import.meta.env.DEV) console.warn("[AudioEngine]", ...args);
