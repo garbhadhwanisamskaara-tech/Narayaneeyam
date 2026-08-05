@@ -89,13 +89,22 @@ export function useNextVerseAudioPreload(): NextAudioPreloader {
   }, []);
 
   const preload = useCallback(
-    (url: string | null | undefined) => {
+    (url: string | null | undefined, activeSrc?: string | null) => {
       if (!url) {
         if (requestedRef.current) devLog("preload skipped — no next source");
         cancel();
         return;
       }
+      if (activeSrc && activeSrc === url) {
+        // The repeating source is already loaded by the engine — keep it warm
+        // there instead of issuing a duplicate request.
+        if (requestedRef.current !== url) {
+          devLog("preload skipped — next source is the currently playing one", url);
+        }
+        return;
+      }
       if (requestedRef.current === url) return; // already warming/warmed — no duplicate traffic
+
 
       const skipReason = shouldSkipForNetwork();
       if (skipReason) {
