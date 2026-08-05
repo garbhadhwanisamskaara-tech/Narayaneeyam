@@ -637,6 +637,15 @@ export default function ChantPage() {
       engine.setSpeed(speedRef.current);
       pausedRef.current = false;
 
+      if (import.meta.env.DEV) {
+        console.warn(
+          "[Preload]",
+          wasPreloaded(currentVerse.audio) ? "playing preloaded source" : "playing non-preloaded source",
+          currentVerse.audio,
+        );
+      }
+
+
       void (async () => {
         const ok = await engine.play(currentVerse.audio!);
         if (cancelled) return;
