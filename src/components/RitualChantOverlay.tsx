@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { SkipForward, Volume2 } from "lucide-react";
 import type { RitualChant } from "@/hooks/useRitualChants";
 import { getStorageUrl } from "@/lib/storageUrl";
+import { registerAudioElement } from "@/lib/globalMute";
 import heroBg from "@/assets/hero-bg.jpg";
 
 interface Props {
