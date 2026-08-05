@@ -561,24 +561,17 @@ export default function ChantPage() {
       })();
       logAudioEvent("audio_play", selectedDashakam, currentVerse?.paragraph || 0, "resume");
 
-      // Wire up onEnded and progress sync
+      // Wire up onEnded — progress comes from the engine's media events
       engine.onEnded.current = () => {
         if (!cancelled) handleVerseEndedRef.current();
       };
 
-      const progressInterval = setInterval(() => {
-        const a = engine.audioElement.current;
-        if (a && a.duration) {
-          setVerseProgress((a.currentTime / a.duration) * 100);
-        }
-      }, 100);
-
       return () => {
         cancelled = true;
-        clearInterval(progressInterval);
         engine.onEnded.current = null;
       };
     }
+
 
     if (currentVerse?.audio) {
       const loadStart = performance.now();
