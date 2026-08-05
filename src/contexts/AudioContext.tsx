@@ -127,18 +127,34 @@ export function AudioProvider({ children }: { children: ReactNode }) {
   // Cleanup on unmount
   useEffect(() => stopTracking, [stopTracking]);
 
-  // --- timeupdate handler ---
+  // --- Native media event wiring (single source of truth, no polling) ---
   useEffect(() => {
     const a = audio;
-    const onTimeUpdate = () => {
-      if (!a.duration) return;
-      setState((s) => ({
-        ...s,
-        progress: (a.currentTime / a.duration) * 100,
-        currentTime: a.currentTime,
-        duration: a.duration,
-      }));
+    // Throttle progress commits to ~5/sec so React renders stay cheap
+    let lastCommit = 0;
+
+    const commitTime = (force = false) => {
+      const now = performance.now();
+      if (!force && now - lastCommit < 200) return;
+      lastCommit = now;
+      const dur = Number.isFinite(a.duration) ? a.duration : 0;
+      setState((s) => {
+        const progress = dur > 0 ? (a.currentTime / dur) * 100 : s.progress;
+        if (
+          Math.abs(s.currentTime - a.currentTime) < 0.01 &&
+          s.duration === dur &&
+          Math.abs(s.progress - progress) < 0.01
+        ) {
+          return s;
+        }
+        return { ...s, progress, currentTime: a.currentTime, duration: dur };
+      });
     };
+
+    const onTimeUpdate = () => commitTime();
+    const onSeeked = () => commitTime(true);
+    const onDurationChange = () => commitTime(true);
+
     const onEnded = () => {
       stopTracking();
       pauseReasonRef.current = "ended";
@@ -152,30 +168,52 @@ export function AudioProvider({ children }: { children: ReactNode }) {
       // Only mark paused if we didn't explicitly stop (src cleared)
       setState((s) => ({ ...s, isPlaying: false, isPaused: !!s.src }));
     };
-    const onPlay = () => {
+    const onPlaying = () => {
       startTracking();
       pauseReasonRef.current = null;
-      setState((s) => ({ ...s, isPlaying: true, isPaused: false }));
+      setState((s) => (s.isPlaying && !s.isPaused ? s : { ...s, isPlaying: true, isPaused: false }));
+    };
+    const onPlay = () => {
+      pauseReasonRef.current = null;
+      setState((s) => (s.isPlaying && !s.isPaused ? s : { ...s, isPlaying: true, isPaused: false }));
     };
 
     const onLoadedMetadata = () => {
       // Some browsers reset the rate when new media loads
       if (a.playbackRate !== rateRef.current) a.playbackRate = rateRef.current;
+      commitTime(true);
     };
 
+    const onStalled = () => devLog("audio stalled");
+    const onWaiting = () => devLog("audio waiting (buffering)");
+    const onError = () => devLog("audio element error", a.error?.message);
+
     a.addEventListener("timeupdate", onTimeUpdate);
+    a.addEventListener("seeked", onSeeked);
+    a.addEventListener("durationchange", onDurationChange);
     a.addEventListener("ended", onEnded);
     a.addEventListener("pause", onPause);
     a.addEventListener("play", onPlay);
+    a.addEventListener("playing", onPlaying);
     a.addEventListener("loadedmetadata", onLoadedMetadata);
+    a.addEventListener("stalled", onStalled);
+    a.addEventListener("waiting", onWaiting);
+    a.addEventListener("error", onError);
     return () => {
       a.removeEventListener("timeupdate", onTimeUpdate);
+      a.removeEventListener("seeked", onSeeked);
+      a.removeEventListener("durationchange", onDurationChange);
       a.removeEventListener("ended", onEnded);
       a.removeEventListener("pause", onPause);
       a.removeEventListener("play", onPlay);
+      a.removeEventListener("playing", onPlaying);
       a.removeEventListener("loadedmetadata", onLoadedMetadata);
+      a.removeEventListener("stalled", onStalled);
+      a.removeEventListener("waiting", onWaiting);
+      a.removeEventListener("error", onError);
     };
   }, [audio, startTracking, stopTracking]);
+
 
   // --- Page lifecycle: restore ONLY playback the system interrupted ---
   useEffect(() => {

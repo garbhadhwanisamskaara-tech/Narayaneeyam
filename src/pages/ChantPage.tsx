@@ -336,6 +336,14 @@ export default function ChantPage() {
     }
   }, [highlightedVerse]);
 
+  // Progress bar is driven purely by the engine's media events (no polling)
+  const enginePlaybackProgress = engine.state.progress;
+  useEffect(() => {
+    if (!isPlaying || isSlokaPlaying) return;
+    setVerseProgress(enginePlaybackProgress);
+  }, [enginePlaybackProgress, isPlaying, isSlokaPlaying]);
+
+
   // Sync verse progress from global engine
   useEffect(() => {
     if (!isPlaying) {
@@ -561,24 +569,17 @@ export default function ChantPage() {
       })();
       logAudioEvent("audio_play", selectedDashakam, currentVerse?.paragraph || 0, "resume");
 
-      // Wire up onEnded and progress sync
+      // Wire up onEnded — progress comes from the engine's media events
       engine.onEnded.current = () => {
         if (!cancelled) handleVerseEndedRef.current();
       };
 
-      const progressInterval = setInterval(() => {
-        const a = engine.audioElement.current;
-        if (a && a.duration) {
-          setVerseProgress((a.currentTime / a.duration) * 100);
-        }
-      }, 100);
-
       return () => {
         cancelled = true;
-        clearInterval(progressInterval);
         engine.onEnded.current = null;
       };
     }
+
 
     if (currentVerse?.audio) {
       const loadStart = performance.now();
@@ -603,28 +604,27 @@ export default function ChantPage() {
         if (!cancelled) handleVerseEndedRef.current();
       };
 
-      // Sync progress from engine state
-      const progressInterval = setInterval(() => {
-        const a = engine.audioElement.current;
-        if (a && a.duration) {
-          setVerseProgress((a.currentTime / a.duration) * 100);
-        }
-      }, 100);
-
-      // Log load time
-      const onCanPlay = () => {
+      // Load-time logging: fire on the first readiness signal we actually get.
+      // canplaythrough is unreliable on mobile, so we rely on loadedmetadata/canplay/playing.
+      const audioNode = engine.audioElement.current;
+      let loadLogged = false;
+      const onReady = () => {
+        if (loadLogged) return;
+        loadLogged = true;
         const loadTime = Math.round(performance.now() - loadStart);
         const eventType = loadTime > 1500 ? "audio_load_slow" : "audio_load";
         logAudioEvent(eventType, selectedDashakam, currentVerse.paragraph, currentVerse.audio!, {
           load_time_ms: loadTime,
         });
       };
-      engine.audioElement.current.addEventListener("canplaythrough", onCanPlay, { once: true });
+      audioNode.addEventListener("loadedmetadata", onReady);
+      audioNode.addEventListener("canplay", onReady);
+      audioNode.addEventListener("playing", onReady);
 
       // Error handling — never stall on a broken file, move to the next verse
       const onError = () => {
         if (cancelled) return;
-        const errMsg = engine.audioElement.current.error?.message || "Unknown audio error";
+        const errMsg = audioNode.error?.message || "Unknown audio error";
         logAudioEvent("audio_error", selectedDashakam, currentVerse.paragraph, currentVerse.audio!, {
           error_message: errMsg,
         });
@@ -635,17 +635,19 @@ export default function ChantPage() {
         });
         handleVerseEndedRef.current();
       };
-      engine.audioElement.current.addEventListener("error", onError, { once: true });
+      audioNode.addEventListener("error", onError);
 
       return () => {
         cancelled = true;
-        clearInterval(progressInterval);
         engine.onEnded.current = null;
-        engine.audioElement.current.removeEventListener("canplaythrough", onCanPlay);
-        engine.audioElement.current.removeEventListener("error", onError);
+        audioNode.removeEventListener("loadedmetadata", onReady);
+        audioNode.removeEventListener("canplay", onReady);
+        audioNode.removeEventListener("playing", onReady);
+        audioNode.removeEventListener("error", onError);
         // Audio is never paused here — pausing/stopping happens only on deliberate
         // user actions (play/pause, end session, manual scroll, navigation handlers)
       };
+
     } else {
       console.warn("No valid audio URL for verse", currentVerse?.paragraph, "— skipping");
       // No audio for this verse — proceed immediately, don't sit on it
