@@ -536,15 +536,34 @@ export default function ChantPage() {
     const currentVerse = displayVerses[highlightedVerse];
     const audioEl = engine.audioElement.current;
 
+    // Guards against stale async play requests (verse/dashakam/language change, unmount)
+    let cancelled = false;
+
+    const handlePlayFailure = () => {
+      if (cancelled) return;
+      // Don't leave the UI claiming playback is running; keep the verse selected
+      setIsPlaying(false);
+      setIsPaused(true);
+      pausedRef.current = true;
+      setVerseProgress(0);
+      toast.error("Couldn't start audio. Tap Play to try again.");
+    };
+
     // Resume from pause — read paused state directly from audio element to avoid stale closure
     if (pausedRef.current && audioEl && audioEl.paused && audioEl.src) {
       engine.setSpeed(speedRef.current);
-      engine.resume();
       pausedRef.current = false;
+      void (async () => {
+        const ok = await engine.resume();
+        if (cancelled) return;
+        if (!ok) handlePlayFailure();
+      })();
       logAudioEvent("audio_play", selectedDashakam, currentVerse?.paragraph || 0, "resume");
 
       // Wire up onEnded and progress sync
-      engine.onEnded.current = () => handleVerseEndedRef.current();
+      engine.onEnded.current = () => {
+        if (!cancelled) handleVerseEndedRef.current();
+      };
 
       const progressInterval = setInterval(() => {
         const a = engine.audioElement.current;
@@ -554,6 +573,7 @@ export default function ChantPage() {
       }, 100);
 
       return () => {
+        cancelled = true;
         clearInterval(progressInterval);
         engine.onEnded.current = null;
       };
@@ -561,20 +581,26 @@ export default function ChantPage() {
 
     if (currentVerse?.audio) {
       const loadStart = performance.now();
-      console.log("Playing audio URL:", currentVerse.audio);
 
       // Set Media Session metadata for lock screen controls
       const dashakamName = dashakamMeta?.dashakam_name || `Dashakam ${selectedDashakam}`;
       engine.setMediaMetadata(`${dashakamName} - Verse ${currentVerse.paragraph}`, "Sriman Narayaneeyam");
 
       engine.setSpeed(speedRef.current);
-      engine.play(currentVerse.audio);
       pausedRef.current = false;
+
+      void (async () => {
+        const ok = await engine.play(currentVerse.audio!);
+        if (cancelled) return;
+        if (!ok) handlePlayFailure();
+      })();
 
       logAudioEvent("audio_play", selectedDashakam, currentVerse.paragraph, currentVerse.audio!);
 
       // Wire up onEnded
-      engine.onEnded.current = () => handleVerseEndedRef.current();
+      engine.onEnded.current = () => {
+        if (!cancelled) handleVerseEndedRef.current();
+      };
 
       // Sync progress from engine state
       const progressInterval = setInterval(() => {
@@ -596,6 +622,7 @@ export default function ChantPage() {
 
       // Error handling — never stall on a broken file, move to the next verse
       const onError = () => {
+        if (cancelled) return;
         const errMsg = engine.audioElement.current.error?.message || "Unknown audio error";
         logAudioEvent("audio_error", selectedDashakam, currentVerse.paragraph, currentVerse.audio!, {
           error_message: errMsg,
@@ -610,19 +637,22 @@ export default function ChantPage() {
       engine.audioElement.current.addEventListener("error", onError, { once: true });
 
       return () => {
+        cancelled = true;
         clearInterval(progressInterval);
         engine.onEnded.current = null;
         engine.audioElement.current.removeEventListener("canplaythrough", onCanPlay);
         engine.audioElement.current.removeEventListener("error", onError);
-        // Do NOT stop audio here — let it persist across navigation
-        // Only pause if we're switching verses within the same page
-        engine.pause();
+        // Audio is never paused here — pausing/stopping happens only on deliberate
+        // user actions (play/pause, end session, manual scroll, navigation handlers)
       };
     } else {
       console.warn("No valid audio URL for verse", currentVerse?.paragraph, "— skipping");
       // No audio for this verse — proceed immediately, don't sit on it
-      gapTimerRef.current = setTimeout(() => handleVerseEndedRef.current(), 0);
+      gapTimerRef.current = setTimeout(() => {
+        if (!cancelled) handleVerseEndedRef.current();
+      }, 0);
       return () => {
+        cancelled = true;
         if (gapTimerRef.current) clearTimeout(gapTimerRef.current);
       };
     }
