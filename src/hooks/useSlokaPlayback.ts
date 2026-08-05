@@ -1,4 +1,4 @@
-import { useState, useRef, useCallback } from "react";
+import { useState, useRef, useCallback, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { playBellAudio } from "@/lib/bellAudio";
 import { getStorageUrl } from "@/lib/storageUrl";
@@ -40,18 +40,47 @@ export function useSlokaPlayback(): UseSlokaPlaybackReturn {
   const [activeSlokaTranslation, setActiveSlokaTranslation] = useState<string | null>(null);
   const [isSlokaPlaying, setIsSlokaPlaying] = useState(false);
   const audioRef = useRef<HTMLAudioElement | null>(null);
+  const unregisterRef = useRef<(() => void) | null>(null);
   const cancelledRef = useRef(false);
+  /** Monotonic id of the current sloka playback session. */
+  const sessionRef = useRef(0);
+
+  /** Detach handlers, unregister from the global mute set and drop the element. */
+  const releaseAudio = useCallback(() => {
+    const audio = audioRef.current;
+    if (audio) {
+      audio.onended = null;
+      audio.onerror = null;
+      audio.onpause = null;
+      try {
+        audio.pause();
+      } catch {
+        /* ignore */
+      }
+    }
+    audioRef.current = null;
+    unregisterRef.current?.();
+    unregisterRef.current = null;
+  }, []);
 
   const stopSloka = useCallback(() => {
     cancelledRef.current = true;
-    if (audioRef.current) {
-      audioRef.current.pause();
-      audioRef.current = null;
-    }
+    sessionRef.current += 1;
+    releaseAudio();
     setActiveSlokaScript(null);
     setActiveSlokaTranslation(null);
     setIsSlokaPlaying(false);
-  }, []);
+  }, [releaseAudio]);
+
+  // Never leave a temporary element registered when the hook goes away
+  useEffect(() => {
+    return () => {
+      cancelledRef.current = true;
+      sessionRef.current += 1;
+      releaseAudio();
+    };
+  }, [releaseAudio]);
+
 
   const handlePostVerse = useCallback(
     async (
@@ -62,11 +91,17 @@ export function useSlokaPlayback(): UseSlokaPlaybackReturn {
       onComplete: () => void,
       playBell = false
     ) => {
+      // Each invocation owns a session id; stale events can never touch the UI
+      sessionRef.current += 1;
+      const session = sessionRef.current;
+      const isStale = () => cancelledRef.current || sessionRef.current !== session;
+
       if (!slokaAudioId) {
+        cancelledRef.current = false;
         if (playBell) {
-          cancelledRef.current = false;
           await playBellAudio();
         }
+        if (sessionRef.current !== session) return;
         onComplete();
         return;
       }
@@ -92,7 +127,7 @@ export function useSlokaPlayback(): UseSlokaPlaybackReturn {
             .single(),
         ]);
 
-        if (cancelledRef.current) return;
+        if (isStale()) return;
 
         // Display script on screen
         const script = scriptRes.data;
@@ -110,12 +145,18 @@ export function useSlokaPlayback(): UseSlokaPlaybackReturn {
 
         const resolvedAudioFile = getStorageUrl(audioFile);
 
-        const finish = async (withBell: boolean) => {
-          if (cancelledRef.current) return;
+        // Guarded completion: only ever runs once per session, no matter how many
+        // completion paths (ended / error / rejected play / stop) fire.
+        let finished = false;
+        const finishOnce = async (withBell: boolean) => {
+          if (finished) return;
+          finished = true;
+          releaseAudio();
+          if (isStale()) return;
           // Bell only for verses that have a Prasadam entry
           if (withBell) {
             await playBellAudio();
-            if (cancelledRef.current) return;
+            if (isStale()) return;
           }
           setActiveSlokaScript(null);
           setActiveSlokaTranslation(null);
@@ -123,34 +164,47 @@ export function useSlokaPlayback(): UseSlokaPlaybackReturn {
           onComplete();
         };
 
-        if (resolvedAudioFile && !cancelledRef.current) {
+        if (resolvedAudioFile && !isStale()) {
           const audio = new Audio(resolvedAudioFile);
+          releaseAudio(); // drop any previous temporary element first
           audioRef.current = audio;
-          registerAudioElement(audio);
+          unregisterRef.current = registerAudioElement(audio);
           audio.defaultPlaybackRate = speed;
           audio.playbackRate = speed;
-          audio.addEventListener("loadedmetadata", () => { audio.playbackRate = speed; });
+          const onLoadedMetadata = () => { audio.playbackRate = speed; };
+          audio.addEventListener("loadedmetadata", onLoadedMetadata);
 
-          audio.onended = () => void finish(playBell);
+          audio.onended = () => {
+            audio.removeEventListener("loadedmetadata", onLoadedMetadata);
+            void finishOnce(playBell);
+          };
 
           // Missing/broken audio — don't stall, move on immediately
-          audio.onerror = () => void finish(false);
+          audio.onerror = () => {
+            audio.removeEventListener("loadedmetadata", onLoadedMetadata);
+            void finishOnce(false);
+          };
 
-          audio.play().catch(() => void finish(false));
+          audio.play().catch(() => {
+            audio.removeEventListener("loadedmetadata", onLoadedMetadata);
+            void finishOnce(false);
+          });
         } else {
           // No sloka audio file — continue immediately, no waiting
-          void finish(playBell);
+          void finishOnce(playBell);
         }
       } catch {
-        if (!cancelledRef.current) {
+        releaseAudio();
+        if (!isStale()) {
           setActiveSlokaScript(null);
           setActiveSlokaTranslation(null);
           setIsSlokaPlaying(false);
           onComplete();
         }
       }
+
     },
-    []
+    [releaseAudio]
   );
 
   return {

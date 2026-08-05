@@ -40,10 +40,34 @@ export default function PodcastPage() {
   const [completed, setCompleted] = useState(false);
   const { scriptLang } = useLanguagePrefs();
   const audioRef = useRef<HTMLAudioElement | null>(null);
+  const audioSrcRef = useRef<string | null>(null);
+  const unregisterMuteRef = useRef<(() => void) | null>(null);
+  /** Monotonic id of the active playback session — stale events are ignored. */
+  const playSessionRef = useRef(0);
   const pausedRef = useRef(false);
   const advanceRef = useRef<() => void>(() => {});
   const speedRef = useRef(1);
   speedRef.current = speed;
+
+  /** Detach handlers, unregister from the global mute set and drop the element. */
+  const releaseAudio = useCallback(() => {
+    const audio = audioRef.current;
+    if (audio) {
+      audio.onended = null;
+      audio.onerror = null;
+      audio.onpause = null;
+      try {
+        audio.pause();
+      } catch {
+        /* ignore */
+      }
+    }
+    audioRef.current = null;
+    audioSrcRef.current = null;
+    unregisterMuteRef.current?.();
+    unregisterMuteRef.current = null;
+  }, []);
+
 
   // ── Playlist state ──
   const [playlistBuilderOpen, setPlaylistBuilderOpen] = useState(false);
@@ -101,7 +125,7 @@ export default function PodcastPage() {
     setCurrentLoop(0);
     setProgress(0);
     setCompleted(false);
-    if (audioRef.current) { audioRef.current.pause(); audioRef.current = null; }
+    playSessionRef.current += 1; releaseAudio();
     pausedRef.current = false;
     setPlayMode("playlist");
   };
@@ -204,27 +228,20 @@ export default function PodcastPage() {
   // Keep ref in sync
   useEffect(() => { advanceRef.current = advanceToNext; }, [advanceToNext]);
 
-  // Audio playback
+  // Audio playback — one element per podcast source, reused across loops
   useEffect(() => {
     if (!isPlaying) return;
 
-    if (pausedRef.current && audioRef.current && !audioRef.current.ended) {
-      audioRef.current.defaultPlaybackRate = speedRef.current;
-      audioRef.current.playbackRate = speedRef.current;
-      audioRef.current.play().catch((err) => console.error("Audio play error:", err));
-      pausedRef.current = false;
-      const audio = audioRef.current;
-      const updateProgress = () => {
-        if (audio.duration) {
-          setElapsed(audio.currentTime);
-          setDuration(audio.duration);
-          setProgress((audio.currentTime / audio.duration) * 100);
-        }
-      };
-      audio.addEventListener("timeupdate", updateProgress);
-      audio.onended = () => advanceRef.current();
-      return () => { audio.removeEventListener("timeupdate", updateProgress); audio.onended = null; };
-    }
+    // Session guard: an event from an older dashakam/loop can never advance
+    // the newly selected one.
+    playSessionRef.current += 1;
+    const session = playSessionRef.current;
+    let finished = false;
+    const finishOnce = () => {
+      if (finished || playSessionRef.current !== session) return;
+      finished = true;
+      advanceRef.current();
+    };
 
     const url = getAudioUrl(currentDashakam);
     if (!url) {
@@ -232,12 +249,27 @@ export default function PodcastPage() {
       return;
     }
 
-    const audio = new Audio(url);
-    audioRef.current = audio;
-    const unregisterMute = registerAudioElement(audio);
+    const existing = audioRef.current;
+    const canReuse = !!existing && audioSrcRef.current === url;
+
+    // Reuse the element for another repetition of the same source; only build a
+    // new one when the podcast source actually changes.
+    let audio: HTMLAudioElement;
+    if (canReuse) {
+      audio = existing!;
+      if (!pausedRef.current) audio.currentTime = 0;
+    } else {
+      releaseAudio();
+      audio = new Audio(url);
+      audioRef.current = audio;
+      audioSrcRef.current = url;
+      unregisterMuteRef.current = registerAudioElement(audio);
+    }
+
     audio.defaultPlaybackRate = speedRef.current;
     audio.playbackRate = speedRef.current;
-    audio.addEventListener("loadedmetadata", () => { audio.playbackRate = speedRef.current; });
+    const onLoadedMetadata = () => { audio.playbackRate = speedRef.current; };
+    audio.addEventListener("loadedmetadata", onLoadedMetadata);
     pausedRef.current = false;
     audio.play().catch((err) => console.error("Audio play error:", err));
 
@@ -249,10 +281,21 @@ export default function PodcastPage() {
       }
     };
     audio.addEventListener("timeupdate", updateProgress);
-    audio.onended = () => advanceRef.current();
-    return () => { unregisterMute(); audio.pause(); audio.removeEventListener("timeupdate", updateProgress); audio.onended = null; };
+    audio.onended = finishOnce;
+
+    return () => {
+      finished = true; // cleanup itself never advances a loop
+      audio.onended = null;
+      audio.onerror = null;
+      audio.removeEventListener("timeupdate", updateProgress);
+      audio.removeEventListener("loadedmetadata", onLoadedMetadata);
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isPlaying, currentDashakam, currentLoop, playlistLoop, getAudioUrl]);
+
+  // Release the podcast element (and its mute registration) on unmount
+  useEffect(() => releaseAudio, [releaseAudio]);
+
 
   const handlePlayPause = () => {
     if (isPlaying) {
@@ -266,7 +309,7 @@ export default function PodcastPage() {
   };
 
   const handleNext = useCallback(() => {
-    if (audioRef.current) { audioRef.current.pause(); audioRef.current = null; }
+    playSessionRef.current += 1; releaseAudio();
     pausedRef.current = false;
     setProgress(0);
     setElapsed(0);
@@ -288,7 +331,7 @@ export default function PodcastPage() {
   }, [currentDashakam, inPlaylistMode, playlistItems, playlistIndex, publishedList]);
 
   const handlePrev = () => {
-    if (audioRef.current) { audioRef.current.pause(); audioRef.current = null; }
+    playSessionRef.current += 1; releaseAudio();
     pausedRef.current = false;
     setProgress(0);
     setElapsed(0);
@@ -367,7 +410,7 @@ export default function PodcastPage() {
                 setPlaylistIndex(newIdx); setPlaylistLoop(0);
                 setCurrentDashakam(playlistItems![newIdx].dashakam_no);
                 setProgress(0); setElapsed(0); setCurrentLoop(0);
-                if (audioRef.current) { audioRef.current.pause(); audioRef.current = null; }
+                playSessionRef.current += 1; releaseAudio();
                 pausedRef.current = false;
               }
             }}
@@ -377,7 +420,7 @@ export default function PodcastPage() {
                 setPlaylistIndex(newIdx); setPlaylistLoop(0);
                 setCurrentDashakam(playlistItems![newIdx].dashakam_no);
                 setProgress(0); setElapsed(0); setCurrentLoop(0);
-                if (audioRef.current) { audioRef.current.pause(); audioRef.current = null; }
+                playSessionRef.current += 1; releaseAudio();
                 pausedRef.current = false;
               }
             }}
@@ -388,7 +431,7 @@ export default function PodcastPage() {
                 setPlaylistIndex(nextIdx);
                 setCurrentDashakam(playlistItems![nextIdx].dashakam_no);
                 setProgress(0); setElapsed(0); setCurrentLoop(0);
-                if (audioRef.current) { audioRef.current.pause(); audioRef.current = null; }
+                playSessionRef.current += 1; releaseAudio();
                 pausedRef.current = false;
               }
             }}
@@ -406,7 +449,7 @@ export default function PodcastPage() {
                   setPlaylistBuilderOpen(true);
                 } else {
                   setPlayMode(mode.value);
-                  if (audioRef.current) { audioRef.current.pause(); audioRef.current = null; }
+                  playSessionRef.current += 1; releaseAudio();
                   pausedRef.current = false;
                   setIsPlaying(false);
                   setProgress(0);
@@ -437,7 +480,7 @@ export default function PodcastPage() {
               <select
                 value={currentDashakam}
                 onChange={(e) => {
-                  if (audioRef.current) { audioRef.current.pause(); audioRef.current = null; }
+                  playSessionRef.current += 1; releaseAudio();
                   pausedRef.current = false;
                   setCurrentDashakam(Number(e.target.value));
                   setProgress(0); setElapsed(0); setCurrentLoop(0); setCompleted(false);
@@ -615,7 +658,7 @@ export default function PodcastPage() {
               <button
                 key={d.id}
                 onClick={() => {
-                  if (audioRef.current) { audioRef.current.pause(); audioRef.current = null; }
+                  playSessionRef.current += 1; releaseAudio();
                   pausedRef.current = false;
                   setCurrentDashakam(d.id);
                   setProgress(0); setElapsed(0); setCurrentLoop(0); setCompleted(false);

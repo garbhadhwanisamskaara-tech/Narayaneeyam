@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { SkipForward, Volume2 } from "lucide-react";
 import type { RitualChant } from "@/hooks/useRitualChants";
 import { getStorageUrl } from "@/lib/storageUrl";
+import { registerAudioElement } from "@/lib/globalMute";
 import heroBg from "@/assets/hero-bg.jpg";
 
 interface Props {
@@ -44,22 +45,50 @@ export default function RitualChantOverlay({ chants, useLearnAudio = false, titl
   useEffect(() => {
     if (!current) { onComplete(); return; }
 
+    // One guarded completion per ritual step — ended / error / rejected play /
+    // cleanup can all fire, but only the first one advances the sequence.
+    let done = false;
+    const finishOnce = () => {
+      if (done) return;
+      done = true;
+      advance();
+    };
+
     const rawFile = useLearnAudio ? current.learn_audio_file : current.chant_audio_file;
     const audioFile = getStorageUrl(rawFile);
     if (audioFile) {
       const audio = new Audio(audioFile);
       audioRef.current = audio;
+      const unregisterMute = registerAudioElement(audio);
       audio.defaultPlaybackRate = speedRef.current;
       audio.playbackRate = speedRef.current;
-      audio.addEventListener("loadedmetadata", () => { audio.playbackRate = speedRef.current; });
-      audio.play().catch(() => {});
-      audio.onended = () => advance();
-      return () => { audio.pause(); audio.onended = null; };
+      const onLoadedMetadata = () => { audio.playbackRate = speedRef.current; };
+      audio.addEventListener("loadedmetadata", onLoadedMetadata);
+      audio.onended = finishOnce;
+      audio.onerror = finishOnce;
+      audio.play().catch(() => finishOnce());
+
+      const release = () => {
+        audio.onended = null;
+        audio.onerror = null;
+        audio.onpause = null;
+        audio.removeEventListener("loadedmetadata", onLoadedMetadata);
+        audio.pause();
+        unregisterMute();
+        if (audioRef.current === audio) audioRef.current = null;
+      };
+
+      return () => {
+        // Cleanup must never advance the sequence itself
+        done = true;
+        release();
+      };
     } else {
-      const t = setTimeout(advance, 4000);
-      return () => clearTimeout(t);
+      const t = setTimeout(finishOnce, 4000);
+      return () => { done = true; clearTimeout(t); };
     }
-  }, [currentIdx, current, useLearnAudio, advance]);
+  }, [currentIdx, current, useLearnAudio, advance, onComplete]);
+
 
   if (!current) return null;
 

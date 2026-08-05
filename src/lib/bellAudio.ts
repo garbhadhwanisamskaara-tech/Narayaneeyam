@@ -5,12 +5,14 @@
  * simply await the current one instead of creating a competing audio element.
  */
 import { getStorageUrl } from "@/lib/storageUrl";
-import { isMuted } from "@/lib/globalMute";
+import { isMuted, registerAudioElement } from "@/lib/globalMute";
 
 let bellAudioInstance: HTMLAudioElement | null = null;
 let fadeInterval: ReturnType<typeof setInterval> | null = null;
 /** Promise for the bell that is currently ringing (null when idle). */
 let activeBell: Promise<void> | null = null;
+/** Unregister fn for the bell element currently in the global mute set. */
+let unregisterBell: (() => void) | null = null;
 
 function cleanup() {
   if (fadeInterval) {
@@ -18,9 +20,15 @@ function cleanup() {
     fadeInterval = null;
   }
   if (bellAudioInstance) {
+    bellAudioInstance.onended = null;
+    bellAudioInstance.onerror = null;
     bellAudioInstance.pause();
     bellAudioInstance.currentTime = 0;
     bellAudioInstance = null;
+  }
+  if (unregisterBell) {
+    unregisterBell();
+    unregisterBell = null;
   }
 }
 
@@ -51,6 +59,7 @@ export function playBellAudio(): Promise<void> {
     bellAudioInstance = audio;
     audio.volume = 1.0;
     audio.muted = isMuted();
+    unregisterBell = registerAudioElement(audio);
 
     audio.play().catch(() => {
       // Silently handle play interruptions
