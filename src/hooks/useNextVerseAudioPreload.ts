@@ -34,13 +34,19 @@ function shouldSkipForNetwork(): string | null {
 }
 
 export interface NextAudioPreloader {
-  /** Warm the cache for `url`. Passing null/undefined cancels any pending preload. */
-  preload: (url: string | null | undefined) => void;
+  /**
+   * Warm the cache for `url`. Passing null/undefined cancels any pending preload.
+   * When `activeSrc` equals `url` the request is skipped: that source is already
+   * loaded by the playing engine (e.g. a single verse repeating), so re-fetching
+   * it would only duplicate network traffic.
+   */
+  preload: (url: string | null | undefined, activeSrc?: string | null) => void;
   /** Cancel and release the current preload (does not destroy the element). */
   cancel: () => void;
   /** True when `url` is the source that was successfully preloaded. */
   wasPreloaded: (url: string | null | undefined) => boolean;
 }
+
 
 export function useNextVerseAudioPreload(): NextAudioPreloader {
   const elRef = useRef<HTMLAudioElement | null>(null);
