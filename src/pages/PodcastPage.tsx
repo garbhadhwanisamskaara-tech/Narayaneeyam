@@ -125,7 +125,7 @@ export default function PodcastPage() {
     setCurrentLoop(0);
     setProgress(0);
     setCompleted(false);
-    if (audioRef.current) { audioRef.current.pause(); audioRef.current = null; }
+    playSessionRef.current += 1; releaseAudio();
     pausedRef.current = false;
     setPlayMode("playlist");
   };
@@ -309,7 +309,7 @@ export default function PodcastPage() {
   };
 
   const handleNext = useCallback(() => {
-    if (audioRef.current) { audioRef.current.pause(); audioRef.current = null; }
+    playSessionRef.current += 1; releaseAudio();
     pausedRef.current = false;
     setProgress(0);
     setElapsed(0);
@@ -331,7 +331,7 @@ export default function PodcastPage() {
   }, [currentDashakam, inPlaylistMode, playlistItems, playlistIndex, publishedList]);
 
   const handlePrev = () => {
-    if (audioRef.current) { audioRef.current.pause(); audioRef.current = null; }
+    playSessionRef.current += 1; releaseAudio();
     pausedRef.current = false;
     setProgress(0);
     setElapsed(0);
@@ -410,7 +410,7 @@ export default function PodcastPage() {
                 setPlaylistIndex(newIdx); setPlaylistLoop(0);
                 setCurrentDashakam(playlistItems![newIdx].dashakam_no);
                 setProgress(0); setElapsed(0); setCurrentLoop(0);
-                if (audioRef.current) { audioRef.current.pause(); audioRef.current = null; }
+                playSessionRef.current += 1; releaseAudio();
                 pausedRef.current = false;
               }
             }}
@@ -420,7 +420,7 @@ export default function PodcastPage() {
                 setPlaylistIndex(newIdx); setPlaylistLoop(0);
                 setCurrentDashakam(playlistItems![newIdx].dashakam_no);
                 setProgress(0); setElapsed(0); setCurrentLoop(0);
-                if (audioRef.current) { audioRef.current.pause(); audioRef.current = null; }
+                playSessionRef.current += 1; releaseAudio();
                 pausedRef.current = false;
               }
             }}
@@ -431,7 +431,7 @@ export default function PodcastPage() {
                 setPlaylistIndex(nextIdx);
                 setCurrentDashakam(playlistItems![nextIdx].dashakam_no);
                 setProgress(0); setElapsed(0); setCurrentLoop(0);
-                if (audioRef.current) { audioRef.current.pause(); audioRef.current = null; }
+                playSessionRef.current += 1; releaseAudio();
                 pausedRef.current = false;
               }
             }}
@@ -449,7 +449,7 @@ export default function PodcastPage() {
                   setPlaylistBuilderOpen(true);
                 } else {
                   setPlayMode(mode.value);
-                  if (audioRef.current) { audioRef.current.pause(); audioRef.current = null; }
+                  playSessionRef.current += 1; releaseAudio();
                   pausedRef.current = false;
                   setIsPlaying(false);
                   setProgress(0);
@@ -480,7 +480,7 @@ export default function PodcastPage() {
               <select
                 value={currentDashakam}
                 onChange={(e) => {
-                  if (audioRef.current) { audioRef.current.pause(); audioRef.current = null; }
+                  playSessionRef.current += 1; releaseAudio();
                   pausedRef.current = false;
                   setCurrentDashakam(Number(e.target.value));
                   setProgress(0); setElapsed(0); setCurrentLoop(0); setCompleted(false);
@@ -658,7 +658,7 @@ export default function PodcastPage() {
               <button
                 key={d.id}
                 onClick={() => {
-                  if (audioRef.current) { audioRef.current.pause(); audioRef.current = null; }
+                  playSessionRef.current += 1; releaseAudio();
                   pausedRef.current = false;
                   setCurrentDashakam(d.id);
                   setProgress(0); setElapsed(0); setCurrentLoop(0); setCompleted(false);
