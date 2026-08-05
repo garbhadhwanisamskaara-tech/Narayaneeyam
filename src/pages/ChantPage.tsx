@@ -31,6 +31,8 @@ import { useDashakam } from "@/hooks/useDashakam";
 import { getStorageUrl } from "@/lib/storageUrl";
 import { useRitualChants } from "@/hooks/useRitualChants";
 import { useSlokaPlayback } from "@/hooks/useSlokaPlayback";
+import { useNextVerseAudioPreload } from "@/hooks/useNextVerseAudioPreload";
+
 import RitualChantOverlay from "@/components/RitualChantOverlay";
 import VerseSkeleton from "@/components/VerseSkeleton";
 import { getProgress, saveProgress } from "@/lib/progress";
