@@ -204,7 +204,7 @@ export function useSlokaPlayback(): UseSlokaPlaybackReturn {
       }
 
     },
-    []
+    [releaseAudio]
   );
 
   return {
