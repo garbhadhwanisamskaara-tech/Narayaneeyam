@@ -69,12 +69,27 @@ export function AudioProvider({ children }: { children: ReactNode }) {
   const rateRef = useRef(1);
 
   // --- Playback lifecycle bookkeeping (refs, never state) ---
-  /** Reason the audio last stopped: distinguishes user intent from system interruption. */
-  const pauseReasonRef = useRef<"user" | "system" | "ended" | "source-change" | "teardown" | null>(null);
+  /**
+   * Reason the audio last stopped. Only "system" (or an unattributed pause that
+   * gets classified as "system") is ever eligible for auto-resume after the app
+   * returns to the foreground. Every deliberate/cleanup pause must be one of
+   * "user" | "ended" | "source-change" | "teardown" | "cancelled" |
+   * "controlled-transition".
+   */
+  type PauseReason =
+    | "user"
+    | "system"
+    | "ended"
+    | "source-change"
+    | "teardown"
+    | "cancelled"
+    | "controlled-transition";
+  const pauseReasonRef = useRef<PauseReason | null>(null);
   /** True while an audio.play() promise is pending — guards duplicate play calls. */
   const playInProgressRef = useRef(false);
   /** Snapshot taken when the document is hidden. */
   const hiddenSnapshotRef = useRef<{ wasPlaying: boolean; src: string } | null>(null);
+
 
   const devLog = (...args: unknown[]) => {
     if (import.meta.env.DEV) console.warn("[AudioEngine]", ...args);
@@ -217,10 +232,15 @@ export function AudioProvider({ children }: { children: ReactNode }) {
 
   // --- Page lifecycle: restore ONLY playback the system interrupted ---
   useEffect(() => {
+    /** Only an unattributed/system stop may ever be auto-resumed. */
+    const isResumable = () =>
+      pauseReasonRef.current === null || pauseReasonRef.current === "system";
+
     const snapshot = () => {
       hiddenSnapshotRef.current = {
-        // Genuinely playing: not paused, not ended, and not paused by the user
-        wasPlaying: !audio.paused && !audio.ended && pauseReasonRef.current !== "user",
+        // Genuinely playing: not paused, not ended, and not stopped deliberately
+        // (user pause, teardown, cancellation, source change, controlled transition)
+        wasPlaying: !audio.paused && !audio.ended && isResumable(),
         src: audio.currentSrc || audio.src || "",
       };
     };
@@ -233,9 +253,11 @@ export function AudioProvider({ children }: { children: ReactNode }) {
       const currentSrc = audio.currentSrc || audio.src || "";
       if (!currentSrc || currentSrc !== snap.src) return;
       if (audio.ended) return;
-      // The user pressed pause (e.g. via lock-screen controls) — respect it
-      if (pauseReasonRef.current === "user") return;
+      // Any deliberate stop (user pause via lock screen, teardown, cleanup,
+      // cancellation, source change) must never be auto-resumed
+      if (!isResumable()) return;
       if (!audio.paused) return; // already playing, nothing to do
+
       if (playInProgressRef.current) return; // guard duplicate play calls
 
       playInProgressRef.current = true;
