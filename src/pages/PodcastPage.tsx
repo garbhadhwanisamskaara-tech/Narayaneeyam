@@ -40,10 +40,34 @@ export default function PodcastPage() {
   const [completed, setCompleted] = useState(false);
   const { scriptLang } = useLanguagePrefs();
   const audioRef = useRef<HTMLAudioElement | null>(null);
+  const audioSrcRef = useRef<string | null>(null);
+  const unregisterMuteRef = useRef<(() => void) | null>(null);
+  /** Monotonic id of the active playback session — stale events are ignored. */
+  const playSessionRef = useRef(0);
   const pausedRef = useRef(false);
   const advanceRef = useRef<() => void>(() => {});
   const speedRef = useRef(1);
   speedRef.current = speed;
+
+  /** Detach handlers, unregister from the global mute set and drop the element. */
+  const releaseAudio = useCallback(() => {
+    const audio = audioRef.current;
+    if (audio) {
+      audio.onended = null;
+      audio.onerror = null;
+      audio.onpause = null;
+      try {
+        audio.pause();
+      } catch {
+        /* ignore */
+      }
+    }
+    audioRef.current = null;
+    audioSrcRef.current = null;
+    unregisterMuteRef.current?.();
+    unregisterMuteRef.current = null;
+  }, []);
+
 
   // ── Playlist state ──
   const [playlistBuilderOpen, setPlaylistBuilderOpen] = useState(false);
