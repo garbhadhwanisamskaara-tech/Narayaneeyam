@@ -319,8 +319,17 @@ export function AudioProvider({ children }: { children: ReactNode }) {
   const setMediaMetadata = useCallback((title: string, artist = "Garbha Dhwani") => {
     if ("mediaSession" in navigator) {
       navigator.mediaSession.metadata = new MediaMetadata({ title, artist });
-      navigator.mediaSession.setActionHandler("play", () => audio.play());
-      navigator.mediaSession.setActionHandler("pause", () => audio.pause());
+      navigator.mediaSession.setActionHandler("play", () => {
+        if (playInProgressRef.current) return;
+        playInProgressRef.current = true;
+        audio.play().catch((e) => devLog("mediaSession play blocked:", e)).finally(() => {
+          playInProgressRef.current = false;
+        });
+      });
+      navigator.mediaSession.setActionHandler("pause", () => {
+        pauseReasonRef.current = "user";
+        audio.pause();
+      });
       navigator.mediaSession.setActionHandler("seekbackward", () => {
         audio.currentTime = Math.max(0, audio.currentTime - 10);
       });
