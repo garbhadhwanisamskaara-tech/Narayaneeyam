@@ -23,9 +23,9 @@ interface AudioState {
 
 interface AudioEngine {
   state: AudioState;
-  play: (url: string) => Promise<void>;
+  play: (url: string) => Promise<boolean>;
   pause: () => void;
-  resume: () => Promise<void>;
+  resume: () => Promise<boolean>;
   stop: () => void;
   seek: (pct: number) => void;
   setSpeed: (rate: number) => void;
