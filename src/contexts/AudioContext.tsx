@@ -23,9 +23,9 @@ interface AudioState {
 
 interface AudioEngine {
   state: AudioState;
-  play: (url: string) => Promise<void>;
+  play: (url: string) => Promise<boolean>;
   pause: () => void;
-  resume: () => Promise<void>;
+  resume: () => Promise<boolean>;
   stop: () => void;
   seek: (pct: number) => void;
   setSpeed: (rate: number) => void;
@@ -172,18 +172,22 @@ export function AudioProvider({ children }: { children: ReactNode }) {
   }, [audio]);
 
   const play = useCallback(
-    async (url: string) => {
+    async (url: string): Promise<boolean> => {
       audio.src = url;
       audio.load();
       // load() resets playbackRate to defaultPlaybackRate — re-apply the chosen speed
       audio.defaultPlaybackRate = rateRef.current;
       audio.playbackRate = rateRef.current;
-      setState((s) => ({ ...s, src: url, progress: 0, isPlaying: true, isPaused: false }));
+      // Do NOT optimistically mark as playing — the native "play" event does that
+      setState((s) => ({ ...s, src: url, progress: 0, currentTime: 0 }));
       try {
         await audio.play();
         audio.playbackRate = rateRef.current;
+        return true;
       } catch (e) {
         console.error("AudioEngine play error:", e);
+        setState((s) => ({ ...s, isPlaying: false, isPaused: false }));
+        return false;
       }
     },
     [audio],
@@ -193,11 +197,14 @@ export function AudioProvider({ children }: { children: ReactNode }) {
     audio.pause();
   }, [audio]);
 
-  const resume = useCallback(async () => {
+  const resume = useCallback(async (): Promise<boolean> => {
     try {
       await audio.play();
+      return true;
     } catch (e) {
       console.error("AudioEngine resume error:", e);
+      setState((s) => ({ ...s, isPlaying: false, isPaused: false }));
+      return false;
     }
   }, [audio]);
 
