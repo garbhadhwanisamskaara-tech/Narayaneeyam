@@ -204,27 +204,20 @@ export default function PodcastPage() {
   // Keep ref in sync
   useEffect(() => { advanceRef.current = advanceToNext; }, [advanceToNext]);
 
-  // Audio playback
+  // Audio playback — one element per podcast source, reused across loops
   useEffect(() => {
     if (!isPlaying) return;
 
-    if (pausedRef.current && audioRef.current && !audioRef.current.ended) {
-      audioRef.current.defaultPlaybackRate = speedRef.current;
-      audioRef.current.playbackRate = speedRef.current;
-      audioRef.current.play().catch((err) => console.error("Audio play error:", err));
-      pausedRef.current = false;
-      const audio = audioRef.current;
-      const updateProgress = () => {
-        if (audio.duration) {
-          setElapsed(audio.currentTime);
-          setDuration(audio.duration);
-          setProgress((audio.currentTime / audio.duration) * 100);
-        }
-      };
-      audio.addEventListener("timeupdate", updateProgress);
-      audio.onended = () => advanceRef.current();
-      return () => { audio.removeEventListener("timeupdate", updateProgress); audio.onended = null; };
-    }
+    // Session guard: an event from an older dashakam/loop can never advance
+    // the newly selected one.
+    playSessionRef.current += 1;
+    const session = playSessionRef.current;
+    let finished = false;
+    const finishOnce = () => {
+      if (finished || playSessionRef.current !== session) return;
+      finished = true;
+      advanceRef.current();
+    };
 
     const url = getAudioUrl(currentDashakam);
     if (!url) {
@@ -232,12 +225,27 @@ export default function PodcastPage() {
       return;
     }
 
-    const audio = new Audio(url);
-    audioRef.current = audio;
-    const unregisterMute = registerAudioElement(audio);
+    const existing = audioRef.current;
+    const canReuse = !!existing && audioSrcRef.current === url;
+
+    // Reuse the element for another repetition of the same source; only build a
+    // new one when the podcast source actually changes.
+    let audio: HTMLAudioElement;
+    if (canReuse) {
+      audio = existing!;
+      if (!pausedRef.current) audio.currentTime = 0;
+    } else {
+      releaseAudio();
+      audio = new Audio(url);
+      audioRef.current = audio;
+      audioSrcRef.current = url;
+      unregisterMuteRef.current = registerAudioElement(audio);
+    }
+
     audio.defaultPlaybackRate = speedRef.current;
     audio.playbackRate = speedRef.current;
-    audio.addEventListener("loadedmetadata", () => { audio.playbackRate = speedRef.current; });
+    const onLoadedMetadata = () => { audio.playbackRate = speedRef.current; };
+    audio.addEventListener("loadedmetadata", onLoadedMetadata);
     pausedRef.current = false;
     audio.play().catch((err) => console.error("Audio play error:", err));
 
@@ -249,10 +257,21 @@ export default function PodcastPage() {
       }
     };
     audio.addEventListener("timeupdate", updateProgress);
-    audio.onended = () => advanceRef.current();
-    return () => { unregisterMute(); audio.pause(); audio.removeEventListener("timeupdate", updateProgress); audio.onended = null; };
+    audio.onended = finishOnce;
+
+    return () => {
+      finished = true; // cleanup itself never advances a loop
+      audio.onended = null;
+      audio.onerror = null;
+      audio.removeEventListener("timeupdate", updateProgress);
+      audio.removeEventListener("loadedmetadata", onLoadedMetadata);
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isPlaying, currentDashakam, currentLoop, playlistLoop, getAudioUrl]);
+
+  // Release the podcast element (and its mute registration) on unmount
+  useEffect(() => releaseAudio, [releaseAudio]);
+
 
   const handlePlayPause = () => {
     if (isPlaying) {
