@@ -336,6 +336,14 @@ export default function ChantPage() {
     }
   }, [highlightedVerse]);
 
+  // Progress bar is driven purely by the engine's media events (no polling)
+  const enginePlaybackProgress = engine.state.progress;
+  useEffect(() => {
+    if (!isPlaying || isSlokaPlaying) return;
+    setVerseProgress(enginePlaybackProgress);
+  }, [enginePlaybackProgress, isPlaying, isSlokaPlaying]);
+
+
   // Sync verse progress from global engine
   useEffect(() => {
     if (!isPlaying) {
