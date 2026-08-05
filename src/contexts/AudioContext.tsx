@@ -68,6 +68,19 @@ export function AudioProvider({ children }: { children: ReactNode }) {
   const onEndedRef = useRef<(() => void) | null>(null);
   const rateRef = useRef(1);
 
+  // --- Playback lifecycle bookkeeping (refs, never state) ---
+  /** Reason the audio last stopped: distinguishes user intent from system interruption. */
+  const pauseReasonRef = useRef<"user" | "system" | "ended" | "source-change" | "teardown" | null>(null);
+  /** True while an audio.play() promise is pending — guards duplicate play calls. */
+  const playInProgressRef = useRef(false);
+  /** Snapshot taken when the document is hidden. */
+  const hiddenSnapshotRef = useRef<{ wasPlaying: boolean; src: string } | null>(null);
+
+  const devLog = (...args: unknown[]) => {
+    if (import.meta.env.DEV) console.warn("[AudioEngine]", ...args);
+  };
+
+
   // --- Real listening-time tracking (wall clock, seek-proof) ---
   const listenStartRef = useRef<number | null>(null);
   const flushTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
