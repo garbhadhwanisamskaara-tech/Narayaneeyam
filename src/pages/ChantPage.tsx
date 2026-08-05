@@ -540,6 +540,50 @@ export default function ChantPage() {
     handleVerseEndedRef.current = handleVerseEnded;
   }, [handleVerseEnded]);
 
+  // ── Next-verse audio preloading (cache warm-up only, never played) ──
+  const { preload: preloadNextAudio, wasPreloaded } = useNextVerseAudioPreload();
+
+  /**
+   * The single next audio source implied by the existing sequence + repeat rules.
+   * Null whenever preloading would be wasteful (not playing, no current source,
+   * last verse of the last loop, or a Dashakam handoff we can't predict here).
+   */
+  const nextAudioUrl = useMemo(() => {
+    if (!isPlaying || displayVerses.length === 0) return null;
+    const current = displayVerses[highlightedVerse];
+    if (!current?.audio) return null; // current source missing — nothing to chain from
+
+    if (highlightedVerse < displayVerses.length - 1) {
+      return displayVerses[highlightedVerse + 1]?.audio ?? null;
+    }
+
+    // Last verse: the sequence repeats from verse 1 only if a loop remains
+    const effectiveLoopCount = inPlaylistMode ? (playlistItems![playlistIndex]?.loops ?? 1) : loopCount;
+    const effectiveLoop = inPlaylistMode ? playlistLoop : currentLoopIteration;
+    if (effectiveLoop + 1 < effectiveLoopCount) {
+      return displayVerses[0]?.audio ?? null;
+    }
+    return null;
+  }, [
+    isPlaying,
+    displayVerses,
+    highlightedVerse,
+    inPlaylistMode,
+    playlistItems,
+    playlistIndex,
+    playlistLoop,
+    loopCount,
+    currentLoopIteration,
+  ]);
+
+  // Replaces/cancels automatically when Dashakam, verse, language, playlist,
+  // repeat count or playback state changes (all feed nextAudioUrl).
+  useEffect(() => {
+    preloadNextAudio(nextAudioUrl);
+  }, [nextAudioUrl, preloadNextAudio]);
+
+
+
   // Real audio playback via global engine
   useEffect(() => {
     if (!isPlaying || displayVerses.length === 0 || isSlokaPlaying) return;
