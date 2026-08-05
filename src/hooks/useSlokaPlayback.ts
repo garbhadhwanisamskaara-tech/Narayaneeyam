@@ -40,18 +40,47 @@ export function useSlokaPlayback(): UseSlokaPlaybackReturn {
   const [activeSlokaTranslation, setActiveSlokaTranslation] = useState<string | null>(null);
   const [isSlokaPlaying, setIsSlokaPlaying] = useState(false);
   const audioRef = useRef<HTMLAudioElement | null>(null);
+  const unregisterRef = useRef<(() => void) | null>(null);
   const cancelledRef = useRef(false);
+  /** Monotonic id of the current sloka playback session. */
+  const sessionRef = useRef(0);
+
+  /** Detach handlers, unregister from the global mute set and drop the element. */
+  const releaseAudio = useCallback(() => {
+    const audio = audioRef.current;
+    if (audio) {
+      audio.onended = null;
+      audio.onerror = null;
+      audio.onpause = null;
+      try {
+        audio.pause();
+      } catch {
+        /* ignore */
+      }
+    }
+    audioRef.current = null;
+    unregisterRef.current?.();
+    unregisterRef.current = null;
+  }, []);
 
   const stopSloka = useCallback(() => {
     cancelledRef.current = true;
-    if (audioRef.current) {
-      audioRef.current.pause();
-      audioRef.current = null;
-    }
+    sessionRef.current += 1;
+    releaseAudio();
     setActiveSlokaScript(null);
     setActiveSlokaTranslation(null);
     setIsSlokaPlaying(false);
-  }, []);
+  }, [releaseAudio]);
+
+  // Never leave a temporary element registered when the hook goes away
+  useEffect(() => {
+    return () => {
+      cancelledRef.current = true;
+      sessionRef.current += 1;
+      releaseAudio();
+    };
+  }, [releaseAudio]);
+
 
   const handlePostVerse = useCallback(
     async (
