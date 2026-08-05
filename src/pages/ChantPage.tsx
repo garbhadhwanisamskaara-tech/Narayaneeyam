@@ -578,9 +578,11 @@ export default function ChantPage() {
 
   // Replaces/cancels automatically when Dashakam, verse, language, playlist,
   // repeat count or playback state changes (all feed nextAudioUrl).
+  // The currently playing source is passed so a repeating source is never re-fetched.
   useEffect(() => {
-    preloadNextAudio(nextAudioUrl);
-  }, [nextAudioUrl, preloadNextAudio]);
+    preloadNextAudio(nextAudioUrl, displayVerses[highlightedVerse]?.audio ?? null);
+  }, [nextAudioUrl, preloadNextAudio, displayVerses, highlightedVerse]);
+
 
 
 
