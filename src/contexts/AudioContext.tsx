@@ -289,6 +289,8 @@ export function AudioProvider({ children }: { children: ReactNode }) {
 
 
   const stop = useCallback(() => {
+    pauseReasonRef.current = "teardown";
+    hiddenSnapshotRef.current = null;
     audio.pause();
     audio.removeAttribute("src");
     audio.load(); // reset
