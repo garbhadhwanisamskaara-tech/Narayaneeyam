@@ -68,6 +68,19 @@ export function AudioProvider({ children }: { children: ReactNode }) {
   const onEndedRef = useRef<(() => void) | null>(null);
   const rateRef = useRef(1);
 
+  // --- Playback lifecycle bookkeeping (refs, never state) ---
+  /** Reason the audio last stopped: distinguishes user intent from system interruption. */
+  const pauseReasonRef = useRef<"user" | "system" | "ended" | "source-change" | "teardown" | null>(null);
+  /** True while an audio.play() promise is pending — guards duplicate play calls. */
+  const playInProgressRef = useRef(false);
+  /** Snapshot taken when the document is hidden. */
+  const hiddenSnapshotRef = useRef<{ wasPlaying: boolean; src: string } | null>(null);
+
+  const devLog = (...args: unknown[]) => {
+    if (import.meta.env.DEV) console.warn("[AudioEngine]", ...args);
+  };
+
+
   // --- Real listening-time tracking (wall clock, seek-proof) ---
   const listenStartRef = useRef<number | null>(null);
   const flushTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
@@ -128,16 +141,20 @@ export function AudioProvider({ children }: { children: ReactNode }) {
     };
     const onEnded = () => {
       stopTracking();
+      pauseReasonRef.current = "ended";
       setState((s) => ({ ...s, isPlaying: false, isPaused: false, progress: 100 }));
       onEndedRef.current?.();
     };
     const onPause = () => {
       stopTracking();
+      // Any pause not explicitly attributed is a browser/system interruption
+      if (pauseReasonRef.current === null) pauseReasonRef.current = "system";
       // Only mark paused if we didn't explicitly stop (src cleared)
       setState((s) => ({ ...s, isPlaying: false, isPaused: !!s.src }));
     };
     const onPlay = () => {
       startTracking();
+      pauseReasonRef.current = null;
       setState((s) => ({ ...s, isPlaying: true, isPaused: false }));
     };
 
@@ -160,19 +177,69 @@ export function AudioProvider({ children }: { children: ReactNode }) {
     };
   }, [audio, startTracking, stopTracking]);
 
-  // --- Visibility change: resume if was playing ---
+  // --- Page lifecycle: restore ONLY playback the system interrupted ---
   useEffect(() => {
-    const handler = () => {
-      if (!document.hidden && !audio.paused) {
-        audio.play().catch(() => {});
-      }
+    const snapshot = () => {
+      hiddenSnapshotRef.current = {
+        // Genuinely playing: not paused, not ended, and not paused by the user
+        wasPlaying: !audio.paused && !audio.ended && pauseReasonRef.current !== "user",
+        src: audio.currentSrc || audio.src || "",
+      };
     };
-    document.addEventListener("visibilitychange", handler);
-    return () => document.removeEventListener("visibilitychange", handler);
+
+    const restore = () => {
+      const snap = hiddenSnapshotRef.current;
+      hiddenSnapshotRef.current = null;
+      if (!snap || !snap.wasPlaying) return;
+      // Source changed, another channel took over, or playback finished/was stopped
+      const currentSrc = audio.currentSrc || audio.src || "";
+      if (!currentSrc || currentSrc !== snap.src) return;
+      if (audio.ended) return;
+      // The user pressed pause (e.g. via lock-screen controls) — respect it
+      if (pauseReasonRef.current === "user") return;
+      if (!audio.paused) return; // already playing, nothing to do
+      if (playInProgressRef.current) return; // guard duplicate play calls
+
+      playInProgressRef.current = true;
+      audio
+        .play()
+        .catch((e) => {
+          // No retry loop: surface a resume-required state and keep the position
+          devLog("resume after background blocked:", e);
+          setState((s) => ({ ...s, isPlaying: false, isPaused: !!s.src }));
+        })
+        .finally(() => {
+          playInProgressRef.current = false;
+        });
+    };
+
+    const onVisibility = () => {
+      if (document.hidden) snapshot();
+      else restore();
+    };
+    // pagehide/pageshow never stop or reset playback — they only bookkeep
+    const onPageHide = () => snapshot();
+    const onPageShow = () => restore();
+
+    document.addEventListener("visibilitychange", onVisibility);
+    window.addEventListener("pagehide", onPageHide);
+    window.addEventListener("pageshow", onPageShow);
+    return () => {
+      document.removeEventListener("visibilitychange", onVisibility);
+      window.removeEventListener("pagehide", onPageHide);
+      window.removeEventListener("pageshow", onPageShow);
+    };
   }, [audio]);
 
   const play = useCallback(
     async (url: string): Promise<boolean> => {
+      if (playInProgressRef.current) {
+        devLog("play() ignored — a play request is already in flight");
+        return false;
+      }
+      playInProgressRef.current = true;
+      pauseReasonRef.current = "source-change";
+      hiddenSnapshotRef.current = null;
       audio.src = url;
       audio.load();
       // load() resets playbackRate to defaultPlaybackRate — re-apply the chosen speed
@@ -183,32 +250,47 @@ export function AudioProvider({ children }: { children: ReactNode }) {
       try {
         await audio.play();
         audio.playbackRate = rateRef.current;
+        pauseReasonRef.current = null;
         return true;
       } catch (e) {
         console.error("AudioEngine play error:", e);
         setState((s) => ({ ...s, isPlaying: false, isPaused: false }));
         return false;
+      } finally {
+        playInProgressRef.current = false;
       }
     },
     [audio],
   );
 
   const pause = useCallback(() => {
+    pauseReasonRef.current = "user";
     audio.pause();
   }, [audio]);
 
   const resume = useCallback(async (): Promise<boolean> => {
+    if (playInProgressRef.current) {
+      devLog("resume() ignored — a play request is already in flight");
+      return false;
+    }
+    playInProgressRef.current = true;
     try {
       await audio.play();
+      pauseReasonRef.current = null;
       return true;
     } catch (e) {
       console.error("AudioEngine resume error:", e);
-      setState((s) => ({ ...s, isPlaying: false, isPaused: false }));
+      setState((s) => ({ ...s, isPlaying: false, isPaused: !!s.src }));
       return false;
+    } finally {
+      playInProgressRef.current = false;
     }
   }, [audio]);
 
+
   const stop = useCallback(() => {
+    pauseReasonRef.current = "teardown";
+    hiddenSnapshotRef.current = null;
     audio.pause();
     audio.removeAttribute("src");
     audio.load(); // reset
@@ -237,8 +319,17 @@ export function AudioProvider({ children }: { children: ReactNode }) {
   const setMediaMetadata = useCallback((title: string, artist = "Garbha Dhwani") => {
     if ("mediaSession" in navigator) {
       navigator.mediaSession.metadata = new MediaMetadata({ title, artist });
-      navigator.mediaSession.setActionHandler("play", () => audio.play());
-      navigator.mediaSession.setActionHandler("pause", () => audio.pause());
+      navigator.mediaSession.setActionHandler("play", () => {
+        if (playInProgressRef.current) return;
+        playInProgressRef.current = true;
+        audio.play().catch((e) => devLog("mediaSession play blocked:", e)).finally(() => {
+          playInProgressRef.current = false;
+        });
+      });
+      navigator.mediaSession.setActionHandler("pause", () => {
+        pauseReasonRef.current = "user";
+        audio.pause();
+      });
       navigator.mediaSession.setActionHandler("seekbackward", () => {
         audio.currentTime = Math.max(0, audio.currentTime - 10);
       });
