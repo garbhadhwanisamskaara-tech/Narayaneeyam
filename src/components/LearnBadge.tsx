@@ -40,9 +40,9 @@ export function LearnBadge({ children }: LearnBadgeProps) {
         onClick={() => setOpen((v) => !v)}
         aria-expanded={open}
         aria-label="Learning tip"
-        className="inline-flex items-center gap-1.5 rounded-full border border-gold/40 bg-gold/10 px-2.5 py-1.5 text-xs font-sans font-medium text-gold transition-colors hover:bg-gold/20 focus:outline-none focus-visible:ring-2 focus-visible:ring-gold/50"
+        className="inline-flex items-center gap-1.5 rounded-full border border-gold-dark bg-gold-dark px-2.5 py-1.5 text-xs font-sans font-medium text-gold-light transition-colors hover:bg-gold-dark/90 focus:outline-none focus-visible:ring-2 focus-visible:ring-gold-dark/50"
         style={{
-          boxShadow: "0 0 10px -2px hsl(42 65% 55% / 0.35), 0 0 18px -6px hsl(42 65% 55% / 0.2)",
+          boxShadow: "0 0 10px -2px hsl(42 70% 40% / 0.45), 0 0 18px -6px hsl(42 70% 40% / 0.25)",
         }}
       >
         <Lightbulb className="h-3.5 w-3.5" />
