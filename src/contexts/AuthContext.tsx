@@ -265,6 +265,22 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     ? new Date(trialExpiresAt).getTime() <= Date.now()
     : false;
 
+  // Access end date: trial expiry for trial users, subscription end for paid users.
+  const accessEndsAt = profile?.subscription_end ?? null;
+  const accessEndsMs = accessEndsAt ? new Date(accessEndsAt).getTime() : null;
+  const graceEndsMs = accessEndsMs !== null ? accessEndsMs + GRACE_PERIOD_DAYS * 86400000 : null;
+  // Paused subscriptions are handled elsewhere; grace applies to trial + active/expired paid.
+  const graceApplies =
+    !!profile && accessEndsMs !== null && profile.subscription_status !== "paused";
+  const isInGracePeriod =
+    graceApplies && accessEndsMs! <= Date.now() && Date.now() < graceEndsMs!;
+  const graceDaysRemaining = isInGracePeriod
+    ? Math.max(0, Math.ceil((graceEndsMs! - Date.now()) / 86400000))
+    : 0;
+  const isAccessLocked = graceApplies && Date.now() >= graceEndsMs!;
+
+
+
 
   const signUp = async (
     email: string,
