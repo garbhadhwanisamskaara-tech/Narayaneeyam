@@ -866,7 +866,7 @@ export default function ChantPage() {
 
         {/* Controls */}
         <div className="flex flex-wrap gap-3 mb-6 rounded-xl bg-card border border-border p-4">
-          <div className="flex flex-col gap-1">
+          <div className="flex flex-col gap-1 justify-end">
             <label className="text-xs text-muted-foreground font-sans">Dashakam</label>
             <select
               key={dropdownList.length === 0 ? "loading" : "ready"}
@@ -894,7 +894,7 @@ export default function ChantPage() {
             </select>
           </div>
 
-          <div className="flex flex-col gap-1">
+          <div className="flex flex-col gap-1 justify-end">
             <label className="text-xs text-muted-foreground font-sans">Verse</label>
             <select
               value={selectedPara || "all"}
@@ -910,7 +910,7 @@ export default function ChantPage() {
             </select>
           </div>
 
-          <div className="flex flex-col gap-1">
+          <div className="flex flex-col gap-1 justify-end">
             <label className="text-xs text-muted-foreground font-sans">Speed</label>
             <select
               value={speed}
@@ -928,7 +928,7 @@ export default function ChantPage() {
             </select>
           </div>
 
-          <div className="flex flex-col gap-1">
+          <div className="flex flex-col gap-1 justify-end">
             <label className="text-xs text-muted-foreground font-sans">Loop</label>
             <select
               value={loopCount}
