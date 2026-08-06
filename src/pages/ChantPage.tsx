@@ -34,6 +34,7 @@ import { useSlokaPlayback } from "@/hooks/useSlokaPlayback";
 import { useNextVerseAudioPreload } from "@/hooks/useNextVerseAudioPreload";
 
 import RitualChantOverlay from "@/components/RitualChantOverlay";
+import { LearnBadge } from "@/components/LearnBadge";
 import VerseSkeleton from "@/components/VerseSkeleton";
 import { getProgress, saveProgress } from "@/lib/progress";
 import { updateStreakSupabase, markVerseCompleted } from "@/lib/supabaseProgress";
@@ -941,6 +942,10 @@ export default function ChantPage() {
               ))}
             </select>
           </div>
+
+          <LearnBadge>
+            Use Speed, Loop, and Pause/Play to learn at your own pace — slow the chant, repeat a verse, or pause anytime to follow along.
+          </LearnBadge>
 
           <div className="flex flex-col gap-1 justify-end">
             <button
