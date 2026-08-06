@@ -150,9 +150,10 @@ const sections = [
         a: "If you are new to Narayaneeyam, begin with the first Dashakam. Each one builds upon the previous, like a beautiful garland of devotion.",
       },
       {
-        q: "📖  Learn first, then Chant",
-        a: "Switch to Learn Mode on the Chant page to understand the phrases at a slower speed, then switch back to Chant Mode to experience the full flow. This combination deepens both understanding and devotion.",
+        q: "📖  Slow down, then flow",
+        a: "Chant a verse at a slower speed until the words feel familiar, then return to normal speed to experience the full flow. This deepens both understanding and devotion.",
       },
+
     ],
   },
 ];
