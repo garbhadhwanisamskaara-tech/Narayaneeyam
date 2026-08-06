@@ -943,6 +943,10 @@ export default function ChantPage() {
             </select>
           </div>
 
+          <LearnBadge>
+            Use Speed, Loop, and Pause/Play to learn at your own pace — slow the chant, repeat a verse, or pause anytime to follow along.
+          </LearnBadge>
+
           <div className="flex flex-col gap-1 justify-end">
             <button
               onClick={() => setShowMeaning(!showMeaning)}
