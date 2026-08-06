@@ -42,6 +42,7 @@ import SavedPlacesPage from "./pages/SavedPlacesPage";
 import AdminUploadPage from "./pages/AdminUploadPage";
 import SupportPage from "./pages/SupportPage";
 import SubscribePage from "./pages/SubscribePage";
+import PaymentHistoryPage from "./pages/PaymentHistoryPage";
 import UserGuidePage from "./pages/UserGuidePage";
 import VerifyEmailPage from "./pages/VerifyEmailPage";
 import TrialExpiredPage from "./pages/TrialExpiredPage";
@@ -106,6 +107,7 @@ const App = () => {
                   <Route path="/saved-places" element={<SavedPlacesPage />} />
                   <Route path="/support" element={<SupportPage />} />
                   <Route path="/subscribe" element={<SubscribePage />} />
+                  <Route path="/payment-history" element={<PaymentHistoryPage />} />length
                   <Route path="/user-guide" element={<UserGuidePage />} />
                   <Route path="/preferences" element={<PreferencesPage />} />
                   <Route path="/verify-email" element={<VerifyEmailPage />} />
