@@ -27,6 +27,8 @@ interface UserProfile {
 }
 
 const TRIAL_DAYS = 30;
+/** Hardcoded grace period after trial expiry / subscription end. */
+export const GRACE_PERIOD_DAYS = 7;
 
 /** A user is on the free trial when their subscription state says so. */
 function isTrialStatus(status: string | null | undefined) {
