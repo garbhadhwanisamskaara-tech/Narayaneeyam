@@ -46,6 +46,14 @@ interface AuthContextType {
   isTrialActive: boolean;
   isTrialExpired: boolean;
   trialExpiresAt: string | null;
+  /** End date that governs access: trial expiry or subscription end. */
+  accessEndsAt: string | null;
+  /** True while past the end date but within the 7-day grace period. */
+  isInGracePeriod: boolean;
+  /** Whole days of grace left (0 when not in grace). */
+  graceDaysRemaining: number;
+  /** True once the end date + grace period has fully passed. */
+  isAccessLocked: boolean;
   profile: UserProfile | null;
   subscriptionPlan: SubscriptionPlanSummary | null;
   signUp: (
