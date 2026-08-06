@@ -107,7 +107,7 @@ const App = () => {
                   <Route path="/saved-places" element={<SavedPlacesPage />} />
                   <Route path="/support" element={<SupportPage />} />
                   <Route path="/subscribe" element={<SubscribePage />} />
-                  <Route path="/payment-history" element={<PaymentHistoryPage />} />length
+                  <Route path="/payment-history" element={<PaymentHistoryPage />} />
                   <Route path="/user-guide" element={<UserGuidePage />} />
                   <Route path="/preferences" element={<PreferencesPage />} />
                   <Route path="/verify-email" element={<VerifyEmailPage />} />
