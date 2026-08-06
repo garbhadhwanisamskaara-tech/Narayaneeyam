@@ -928,7 +928,7 @@ export default function ChantPage() {
             </select>
           </div>
 
-          <div className="flex flex-col gap-1">
+          <div className="flex flex-col gap-1 justify-end">
             <label className="text-xs text-muted-foreground font-sans">Loop</label>
             <select
               value={loopCount}
