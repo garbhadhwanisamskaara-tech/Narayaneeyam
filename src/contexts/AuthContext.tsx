@@ -27,6 +27,8 @@ interface UserProfile {
 }
 
 const TRIAL_DAYS = 30;
+/** Hardcoded grace period after trial expiry / subscription end. */
+export const GRACE_PERIOD_DAYS = 7;
 
 /** A user is on the free trial when their subscription state says so. */
 function isTrialStatus(status: string | null | undefined) {
@@ -44,6 +46,14 @@ interface AuthContextType {
   isTrialActive: boolean;
   isTrialExpired: boolean;
   trialExpiresAt: string | null;
+  /** End date that governs access: trial expiry or subscription end. */
+  accessEndsAt: string | null;
+  /** True while past the end date but within the 7-day grace period. */
+  isInGracePeriod: boolean;
+  /** Whole days of grace left (0 when not in grace). */
+  graceDaysRemaining: number;
+  /** True once the end date + grace period has fully passed. */
+  isAccessLocked: boolean;
   profile: UserProfile | null;
   subscriptionPlan: SubscriptionPlanSummary | null;
   signUp: (
@@ -255,6 +265,22 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     ? new Date(trialExpiresAt).getTime() <= Date.now()
     : false;
 
+  // Access end date: trial expiry for trial users, subscription end for paid users.
+  const accessEndsAt = profile?.subscription_end ?? null;
+  const accessEndsMs = accessEndsAt ? new Date(accessEndsAt).getTime() : null;
+  const graceEndsMs = accessEndsMs !== null ? accessEndsMs + GRACE_PERIOD_DAYS * 86400000 : null;
+  // Paused subscriptions are handled elsewhere; grace applies to trial + active/expired paid.
+  const graceApplies =
+    !!profile && accessEndsMs !== null && profile.subscription_status !== "paused";
+  const isInGracePeriod =
+    graceApplies && accessEndsMs! <= Date.now() && Date.now() < graceEndsMs!;
+  const graceDaysRemaining = isInGracePeriod
+    ? Math.max(0, Math.ceil((graceEndsMs! - Date.now()) / 86400000))
+    : 0;
+  const isAccessLocked = graceApplies && Date.now() >= graceEndsMs!;
+
+
+
 
   const signUp = async (
     email: string,
@@ -338,7 +364,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   return (
     <AuthContext.Provider value={{
       user, session, loading, displayName, isAdmin, isFounder,
-      isEmailVerified, isTrialActive, isTrialExpired, trialExpiresAt, profile, subscriptionPlan,
+      isEmailVerified, isTrialActive, isTrialExpired, trialExpiresAt,
+      accessEndsAt, isInGracePeriod, graceDaysRemaining, isAccessLocked,
+      profile, subscriptionPlan,
       signUp, signIn, signInWithPhone, verifyPhoneOtp, signOut, refreshProfile,
     }}>
 

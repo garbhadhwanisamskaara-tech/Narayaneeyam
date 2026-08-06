@@ -50,7 +50,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
     }
     return false;
   });
-  const { user, displayName, signOut, loading, isEmailVerified, isTrialExpired } = useAuth();
+  const { user, displayName, signOut, loading, isEmailVerified, isAccessLocked } = useAuth();
 
   const toggleTheme = () => {
     const next = !isDark;
@@ -71,14 +71,14 @@ export default function Layout({ children }: { children: React.ReactNode }) {
       navigate("/verify-email", { replace: true });
       return;
     }
-    if (isEmailVerified && isTrialExpired && path !== "/trial-expired") {
+    if (isEmailVerified && isAccessLocked && path !== "/trial-expired") {
       navigate("/trial-expired", { replace: true });
       return;
     }
-    if (isEmailVerified && !isTrialExpired) {
+    if (isEmailVerified && !isAccessLocked) {
       if (path === "/verify-email" || path === "/trial-expired") navigate("/", { replace: true });
     }
-  }, [loading, user, isEmailVerified, isTrialExpired, location.pathname, navigate]);
+  }, [loading, user, isEmailVerified, isAccessLocked, location.pathname, navigate]);
 
   useEffect(() => {
     const saved = localStorage.getItem("theme");
