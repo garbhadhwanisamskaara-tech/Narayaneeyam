@@ -34,6 +34,7 @@ import { useSlokaPlayback } from "@/hooks/useSlokaPlayback";
 import { useNextVerseAudioPreload } from "@/hooks/useNextVerseAudioPreload";
 
 import RitualChantOverlay from "@/components/RitualChantOverlay";
+import { LearnBadge } from "@/components/LearnBadge";
 import VerseSkeleton from "@/components/VerseSkeleton";
 import { getProgress, saveProgress } from "@/lib/progress";
 import { updateStreakSupabase, markVerseCompleted } from "@/lib/supabaseProgress";
