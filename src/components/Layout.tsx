@@ -17,6 +17,7 @@ import {
   SlidersHorizontal,
   ChevronDown,
   Shield,
+  Receipt,
 } from "lucide-react";
 
 import { useState, useEffect } from "react";
@@ -189,6 +190,12 @@ export default function Layout({ children }: { children: React.ReactNode }) {
                       Subscription
                     </Link>
                   </DropdownMenuItem>
+                  <DropdownMenuItem asChild className="cursor-pointer">
+                    <Link to="/payment-history">
+                      <Receipt className="mr-2 h-4 w-4" />
+                      Payment History
+                    </Link>
+                  </DropdownMenuItem>
                   <DropdownMenuSeparator />
                   <DropdownMenuItem asChild className="cursor-pointer">
                     <Link to="/support">
@@ -283,6 +290,13 @@ export default function Layout({ children }: { children: React.ReactNode }) {
                     className="flex items-center gap-3 rounded-lg px-3 py-3 text-sm font-sans text-primary-foreground/70"
                   >
                     <CreditCard className="h-4 w-4" /> Subscription
+                  </Link>
+                  <Link
+                    to="/payment-history"
+                    onClick={() => setMobileOpen(false)}
+                    className="flex items-center gap-3 rounded-lg px-3 py-3 text-sm font-sans text-primary-foreground/70"
+                  >
+                    <Receipt className="h-4 w-4" /> Payment History
                   </Link>
                   <div className="my-1 border-t border-primary-foreground/10" />
                   <Link
