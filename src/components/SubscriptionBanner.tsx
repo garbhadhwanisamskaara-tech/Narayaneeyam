@@ -9,9 +9,29 @@ function daysUntil(dateStr: string) {
 }
 
 export default function SubscriptionBanner() {
-  const { user, loading, isTrialActive, isTrialExpired, trialExpiresAt, profile } = useAuth();
+  const { user, loading, isTrialActive, isTrialExpired, trialExpiresAt, profile, isInGracePeriod, graceDaysRemaining } =
+    useAuth();
 
   if (!user || loading) return null;
+
+  // Grace period — end date has passed but access continues for a short while.
+  if (isInGracePeriod) {
+    const wasTrial = !profile?.subscription_status || profile.subscription_status === "trial";
+    return (
+      <div className="bg-destructive/10 border-b border-destructive/20 px-4 py-2 flex items-center justify-center gap-3 text-xs font-sans text-foreground">
+        <span>
+          🙏 Your {wasTrial ? "free trial" : "subscription"} has ended. You have {graceDaysRemaining}{" "}
+          {graceDaysRemaining === 1 ? "day" : "days"} of grace remaining — please subscribe to avoid losing access.
+        </span>
+        <Link
+          to="/subscribe"
+          className="rounded-md bg-primary px-3 py-1 text-primary-foreground font-semibold hover:opacity-90 transition-opacity"
+        >
+          Subscribe
+        </Link>
+      </div>
+    );
+  }
 
   // Paid subscription — remind to renew 10 days before it ends.
   if (profile && profile.subscription_status && profile.subscription_status !== "trial") {
