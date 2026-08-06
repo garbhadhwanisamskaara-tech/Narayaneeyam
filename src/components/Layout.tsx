@@ -50,7 +50,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
     }
     return false;
   });
-  const { user, displayName, signOut, loading, isEmailVerified, isTrialExpired } = useAuth();
+  const { user, displayName, signOut, loading, isEmailVerified, isAccessLocked } = useAuth();
 
   const toggleTheme = () => {
     const next = !isDark;
