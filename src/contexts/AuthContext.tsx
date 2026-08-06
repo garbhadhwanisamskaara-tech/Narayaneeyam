@@ -364,7 +364,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   return (
     <AuthContext.Provider value={{
       user, session, loading, displayName, isAdmin, isFounder,
-      isEmailVerified, isTrialActive, isTrialExpired, trialExpiresAt, profile, subscriptionPlan,
+      isEmailVerified, isTrialActive, isTrialExpired, trialExpiresAt,
+      accessEndsAt, isInGracePeriod, graceDaysRemaining, isAccessLocked,
+      profile, subscriptionPlan,
       signUp, signIn, signInWithPhone, verifyPhoneOtp, signOut, refreshProfile,
     }}>
 
