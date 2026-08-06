@@ -57,28 +57,21 @@ const sections = [
     ],
   },
   {
-    id: "learn",
+    id: "meaning",
     icon: <BookOpen className="h-5 w-5 text-primary" />,
-    title: "Learn Mode (inside Chant)",
+    title: "Understanding the Verses",
     items: [
       {
-        q: "How do I switch to Learn Mode?",
-        a: "On the Chant page, you'll see a toggle at the top — 'Chant Mode' and 'Learn Mode'. Tap 'Learn Mode' to switch. The same dashakam and verse will be shown, but with learning-specific audio.",
-      },
-      {
-        q: "How is Learn Mode different from Chant Mode?",
-        a: "In Chant Mode, you listen to and chant along with the full verse. In Learn Mode, each verse is broken into smaller phrases so you can learn step by step, at your own pace.",
+        q: "How do I see the meaning of a shloka?",
+        a: "Tap the 'Show Meaning' button on the Chant page. The meaning (translation) will appear below each verse in your preferred translation language.",
       },
       {
         q: "How do I learn at my own pace?",
-        a: "Use the speed control to slow down to 0.5× or 0.75× for easier learning. You can pause at any time and rewind to listen again. Use the loop feature to repeat a verse as many times as you need — there's no rush in devotion.",
-      },
-      {
-        q: "How do I see the meaning of a shloka?",
-        a: "Tap the 'Show Meaning' button on the Chant page. The meaning (translation) will appear below each verse in English.",
+        a: "Use the speed control to slow down the chanting for easier learning. You can pause at any time and rewind to listen again. Use the loop feature to repeat a verse as many times as you need — there's no rush in devotion.",
       },
     ],
   },
+
   {
     id: "podcast",
     icon: <Headphones className="h-5 w-5 text-primary" />,
@@ -157,9 +150,10 @@ const sections = [
         a: "If you are new to Narayaneeyam, begin with the first Dashakam. Each one builds upon the previous, like a beautiful garland of devotion.",
       },
       {
-        q: "📖  Learn first, then Chant",
-        a: "Switch to Learn Mode on the Chant page to understand the phrases at a slower speed, then switch back to Chant Mode to experience the full flow. This combination deepens both understanding and devotion.",
+        q: "📖  Slow down, then flow",
+        a: "Chant a verse at a slower speed until the words feel familiar, then return to normal speed to experience the full flow. This deepens both understanding and devotion.",
       },
+
     ],
   },
 ];
