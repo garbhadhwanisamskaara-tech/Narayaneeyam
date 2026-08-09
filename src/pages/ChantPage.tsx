@@ -507,17 +507,13 @@ export default function ChantPage() {
       checkDashakamCompletion(selectedDashakam, allVerses.length);
     });
 
-    // Bell rings only after a verse that has a Prasadam entry
-    const shouldRingBell = !!currentVerse.prasadam;
-
-    if (currentVerse.sloka_audio_id || shouldRingBell) {
+    if (currentVerse.sloka_audio_id) {
       handlePostVerse(
         currentVerse.sloka_audio_id,
         selectedLanguage,
         "chant",
         speed,
         () => advanceToNextVerse(),
-        shouldRingBell,
       );
     } else {
       advanceToNextVerse();
