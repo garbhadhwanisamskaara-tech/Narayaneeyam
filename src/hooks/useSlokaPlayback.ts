@@ -87,8 +87,7 @@ export function useSlokaPlayback(): UseSlokaPlaybackReturn {
       languageCode: string,
       mode: "chant" | "learn",
       speed: number,
-      onComplete: () => void,
-      playBell = false
+      onComplete: () => void
     ) => {
       // Each invocation owns a session id; stale events can never touch the UI
       sessionRef.current += 1;
