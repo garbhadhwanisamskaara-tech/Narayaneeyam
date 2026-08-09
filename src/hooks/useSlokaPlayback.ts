@@ -97,9 +97,6 @@ export function useSlokaPlayback(): UseSlokaPlaybackReturn {
 
       if (!slokaAudioId) {
         cancelledRef.current = false;
-        if (playBell) {
-          await playBellAudio();
-        }
         if (sessionRef.current !== session) return;
         onComplete();
         return;
