@@ -206,7 +206,7 @@ export default function ChantPage() {
       meaning_english: mv.translation_text,
       meter: mv.meter,
       audio: validAudio,
-      bell: false,
+      
       prasadam: mv.prasadam_text || undefined,
       sloka_audio_id: mv.sloka_audio_id,
       tamil: "",
