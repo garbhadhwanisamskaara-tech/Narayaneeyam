@@ -19,7 +19,7 @@ interface UseSlokaPlaybackReturn {
   isSlokaPlaying: boolean;
   /**
    * Called after verse audio ends. Checks sloka_audio_id,
-   * fetches sloka data, plays sloka audio + bell, then calls onComplete.
+   * fetches sloka data, plays sloka audio, then calls onComplete.
    * If no sloka, calls onComplete immediately.
    */
   handlePostVerse: (
@@ -27,8 +27,7 @@ interface UseSlokaPlaybackReturn {
     languageCode: string,
     mode: "chant" | "learn",
     speed: number,
-    onComplete: () => void,
-    playBell?: boolean
+    onComplete: () => void
   ) => void;
   /** Stop any in-progress sloka playback */
   stopSloka: () => void;
