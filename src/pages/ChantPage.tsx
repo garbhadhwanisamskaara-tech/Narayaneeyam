@@ -206,7 +206,7 @@ export default function ChantPage() {
       meaning_english: mv.translation_text,
       meter: mv.meter,
       audio: validAudio,
-      bell: false,
+      
       prasadam: mv.prasadam_text || undefined,
       sloka_audio_id: mv.sloka_audio_id,
       tamil: "",
@@ -507,17 +507,13 @@ export default function ChantPage() {
       checkDashakamCompletion(selectedDashakam, allVerses.length);
     });
 
-    // Bell rings only after a verse that has a Prasadam entry
-    const shouldRingBell = !!currentVerse.prasadam;
-
-    if (currentVerse.sloka_audio_id || shouldRingBell) {
+    if (currentVerse.sloka_audio_id) {
       handlePostVerse(
         currentVerse.sloka_audio_id,
         selectedLanguage,
         "chant",
         speed,
         () => advanceToNextVerse(),
-        shouldRingBell,
       );
     } else {
       advanceToNextVerse();
@@ -1089,7 +1085,7 @@ export default function ChantPage() {
                       {verse.meter ? ` · Meter ${verse.meter}` : ""}
                     </span>
                     <div className="flex items-center gap-1">
-                      <VerseIcons bell={verse.bell} prasadam={verse.prasadam} slokaAudioId={verse.sloka_audio_id} />
+                      <VerseIcons prasadam={verse.prasadam} slokaAudioId={verse.sloka_audio_id} />
                       <BookmarkButton
                         active={isBookmarked(verse.id)}
                         onClick={() => {

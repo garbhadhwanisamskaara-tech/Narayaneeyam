@@ -1,6 +1,5 @@
 import { useState, useRef, useCallback, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { playBellAudio } from "@/lib/bellAudio";
 import { getStorageUrl } from "@/lib/storageUrl";
 import { registerAudioElement } from "@/lib/globalMute";
 
@@ -20,7 +19,7 @@ interface UseSlokaPlaybackReturn {
   isSlokaPlaying: boolean;
   /**
    * Called after verse audio ends. Checks sloka_audio_id,
-   * fetches sloka data, plays sloka audio + bell, then calls onComplete.
+   * fetches sloka data, plays sloka audio, then calls onComplete.
    * If no sloka, calls onComplete immediately.
    */
   handlePostVerse: (
@@ -28,8 +27,7 @@ interface UseSlokaPlaybackReturn {
     languageCode: string,
     mode: "chant" | "learn",
     speed: number,
-    onComplete: () => void,
-    playBell?: boolean
+    onComplete: () => void
   ) => void;
   /** Stop any in-progress sloka playback */
   stopSloka: () => void;
@@ -88,8 +86,7 @@ export function useSlokaPlayback(): UseSlokaPlaybackReturn {
       languageCode: string,
       mode: "chant" | "learn",
       speed: number,
-      onComplete: () => void,
-      playBell = false
+      onComplete: () => void
     ) => {
       // Each invocation owns a session id; stale events can never touch the UI
       sessionRef.current += 1;
@@ -98,9 +95,6 @@ export function useSlokaPlayback(): UseSlokaPlaybackReturn {
 
       if (!slokaAudioId) {
         cancelledRef.current = false;
-        if (playBell) {
-          await playBellAudio();
-        }
         if (sessionRef.current !== session) return;
         onComplete();
         return;
@@ -148,16 +142,11 @@ export function useSlokaPlayback(): UseSlokaPlaybackReturn {
         // Guarded completion: only ever runs once per session, no matter how many
         // completion paths (ended / error / rejected play / stop) fire.
         let finished = false;
-        const finishOnce = async (withBell: boolean) => {
+        const finishOnce = () => {
           if (finished) return;
           finished = true;
           releaseAudio();
           if (isStale()) return;
-          // Bell only for verses that have a Prasadam entry
-          if (withBell) {
-            await playBellAudio();
-            if (isStale()) return;
-          }
           setActiveSlokaScript(null);
           setActiveSlokaTranslation(null);
           setIsSlokaPlaying(false);
@@ -176,22 +165,22 @@ export function useSlokaPlayback(): UseSlokaPlaybackReturn {
 
           audio.onended = () => {
             audio.removeEventListener("loadedmetadata", onLoadedMetadata);
-            void finishOnce(playBell);
+            finishOnce();
           };
 
           // Missing/broken audio — don't stall, move on immediately
           audio.onerror = () => {
             audio.removeEventListener("loadedmetadata", onLoadedMetadata);
-            void finishOnce(false);
+            finishOnce();
           };
 
           audio.play().catch(() => {
             audio.removeEventListener("loadedmetadata", onLoadedMetadata);
-            void finishOnce(false);
+            finishOnce();
           });
         } else {
           // No sloka audio file — continue immediately, no waiting
-          void finishOnce(playBell);
+          finishOnce();
         }
       } catch {
         releaseAudio();
