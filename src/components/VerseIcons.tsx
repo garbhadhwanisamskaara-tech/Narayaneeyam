@@ -1,18 +1,14 @@
 import { useState, useRef, useEffect } from "react";
-import { Bell, Flame } from "lucide-react";
-import { playBellAudio } from "@/lib/bellAudio";
+import { Flame } from "lucide-react";
 
 interface VerseIconsProps {
-  bell?: boolean;
   prasadam?: string;
   slokaAudioId?: string | null;
 }
 
-export default function VerseIcons({ bell, prasadam, slokaAudioId }: VerseIconsProps) {
+export default function VerseIcons({ prasadam, slokaAudioId }: VerseIconsProps) {
   const [showPrasadam, setShowPrasadam] = useState(false);
   const prasadamRef = useRef<HTMLDivElement>(null);
-  const handledByPointerRef = useRef(false);
-
 
   // Dismiss prasadam tooltip on outside tap (mobile)
   useEffect(() => {
@@ -30,69 +26,30 @@ export default function VerseIcons({ bell, prasadam, slokaAudioId }: VerseIconsP
     };
   }, [showPrasadam]);
 
-  if (!bell && !prasadam && !slokaAudioId) return null;
-
-  const canHover =
-    typeof window !== "undefined" &&
-    typeof window.matchMedia === "function" &&
-    window.matchMedia("(hover: hover)").matches;
+  if (!prasadam && !slokaAudioId) return null;
 
   return (
     <div className="flex items-center gap-2">
-      {(bell || prasadam) && (
-        <button
-          type="button"
-          onPointerUp={(e) => {
-            // Touch/pen: ring immediately on tap (primary trigger on mobile)
-            if (e.pointerType !== "mouse") {
-              e.preventDefault();
-              handledByPointerRef.current = true;
-              void playBellAudio();
-            }
-          }}
-          onMouseEnter={() => {
-            // Desktop nice-to-have only
-            if (canHover) void playBellAudio();
-          }}
-          onClick={() => {
-            if (handledByPointerRef.current) {
-              handledByPointerRef.current = false;
-              return;
-            }
-            void playBellAudio();
-          }}
-          style={{ touchAction: "manipulation" }}
-          className="flex items-center justify-center p-1.5 -m-1.5 text-gold hover:text-gold-light transition-transform hover:scale-110"
-          title="Ring bell here"
-          aria-label="Ring bell"
-        >
-          <Bell className="h-5 w-5" fill="currentColor" strokeWidth={1.5} />
-        </button>
-      )}
-
-
       {prasadam && (
-        <>
-          <div ref={prasadamRef} className="relative">
-            <button
-              onMouseEnter={() => setShowPrasadam(true)}
-              onMouseLeave={() => setShowPrasadam(false)}
-              onClick={() => setShowPrasadam((prev) => !prev)}
-              className="flex items-center justify-center text-gold hover:text-gold-light transition-transform hover:scale-110"
-              aria-label="View prasadam"
-            >
-              <Flame className="h-5 w-5" fill="currentColor" strokeWidth={1.5} />
-            </button>
+        <div ref={prasadamRef} className="relative">
+          <button
+            onMouseEnter={() => setShowPrasadam(true)}
+            onMouseLeave={() => setShowPrasadam(false)}
+            onClick={() => setShowPrasadam((prev) => !prev)}
+            className="flex items-center justify-center text-gold hover:text-gold-light transition-transform hover:scale-110"
+            aria-label="View prasadam"
+          >
+            <Flame className="h-5 w-5" fill="currentColor" strokeWidth={1.5} />
+          </button>
 
-            {showPrasadam && (
-              <div className="absolute bottom-full right-0 mb-2 z-50 min-w-[180px] max-w-[260px] rounded-lg bg-gold px-3 py-2 shadow-lg">
-                <p className="text-xs font-semibold text-primary mb-0.5">🪔 Prasadam</p>
-                <p className="text-xs text-primary leading-relaxed">{prasadam}</p>
-                <div className="absolute bottom-0 right-3 translate-y-1/2 rotate-45 h-2 w-2 bg-gold" />
-              </div>
-            )}
-          </div>
-        </>
+          {showPrasadam && (
+            <div className="absolute bottom-full right-0 mb-2 z-50 min-w-[180px] max-w-[260px] rounded-lg bg-gold px-3 py-2 shadow-lg">
+              <p className="text-xs font-semibold text-primary mb-0.5">🪔 Prasadam</p>
+              <p className="text-xs text-primary leading-relaxed">{prasadam}</p>
+              <div className="absolute bottom-0 right-3 translate-y-1/2 rotate-45 h-2 w-2 bg-gold" />
+            </div>
+          )}
+        </div>
       )}
 
       {slokaAudioId && (
