@@ -147,16 +147,11 @@ export function useSlokaPlayback(): UseSlokaPlaybackReturn {
         // Guarded completion: only ever runs once per session, no matter how many
         // completion paths (ended / error / rejected play / stop) fire.
         let finished = false;
-        const finishOnce = async (withBell: boolean) => {
+        const finishOnce = () => {
           if (finished) return;
           finished = true;
           releaseAudio();
           if (isStale()) return;
-          // Bell only for verses that have a Prasadam entry
-          if (withBell) {
-            await playBellAudio();
-            if (isStale()) return;
-          }
           setActiveSlokaScript(null);
           setActiveSlokaTranslation(null);
           setIsSlokaPlaying(false);
@@ -175,22 +170,22 @@ export function useSlokaPlayback(): UseSlokaPlaybackReturn {
 
           audio.onended = () => {
             audio.removeEventListener("loadedmetadata", onLoadedMetadata);
-            void finishOnce(playBell);
+            finishOnce();
           };
 
           // Missing/broken audio — don't stall, move on immediately
           audio.onerror = () => {
             audio.removeEventListener("loadedmetadata", onLoadedMetadata);
-            void finishOnce(false);
+            finishOnce();
           };
 
           audio.play().catch(() => {
             audio.removeEventListener("loadedmetadata", onLoadedMetadata);
-            void finishOnce(false);
+            finishOnce();
           });
         } else {
           // No sloka audio file — continue immediately, no waiting
-          void finishOnce(playBell);
+          finishOnce();
         }
       } catch {
         releaseAudio();
