@@ -1089,7 +1089,7 @@ export default function ChantPage() {
                       {verse.meter ? ` · Meter ${verse.meter}` : ""}
                     </span>
                     <div className="flex items-center gap-1">
-                      <VerseIcons bell={verse.bell} prasadam={verse.prasadam} slokaAudioId={verse.sloka_audio_id} />
+                      <VerseIcons prasadam={verse.prasadam} slokaAudioId={verse.sloka_audio_id} />
                       <BookmarkButton
                         active={isBookmarked(verse.id)}
                         onClick={() => {
