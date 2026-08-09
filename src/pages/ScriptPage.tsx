@@ -233,7 +233,7 @@ export default function ScriptPage() {
                     <span className="text-xs text-muted-foreground font-sans">
                       Verse {verse.verse_no}{verse.meter ? ` · Meter ${verse.meter}` : ""}
                     </span>
-                    <VerseIcons bell={false} prasadam={verse.prasadam_text} />
+                    <VerseIcons prasadam={verse.prasadam_text} />
                   </div>
 
                   {/* Script in selected language only.
