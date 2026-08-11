@@ -1008,18 +1008,6 @@ export default function ChantPage() {
                   </div>
                 </motion.div>
               )}
-              {showRemarks && dashakamMeta.remarks && (
-                <motion.div
-                  initial={{ height: 0, opacity: 0 }}
-                  animate={{ height: "auto", opacity: 1 }}
-                  exit={{ height: 0, opacity: 0 }}
-                  className="overflow-hidden"
-                >
-                  <div className="rounded-b-xl border border-t-0 border-border bg-card p-4">
-                    <p className="text-sm text-foreground font-sans leading-relaxed">{dashakamMeta.remarks}</p>
-                  </div>
-                </motion.div>
-              )}
             </AnimatePresence>
           </div>
         )}
