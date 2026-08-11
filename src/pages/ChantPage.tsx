@@ -65,7 +65,6 @@ export default function ChantPage() {
   const [showMeaning, setShowMeaning] = useState(false);
   const [showGist, setShowGist] = useState(false);
   const [showBenefit, setShowBenefit] = useState(false);
-  const [showRemarks, setShowRemarks] = useState(false);
   const [isPlaying, setIsPlaying] = useState(false);
   const [isPaused, setIsPaused] = useState(false);
   const [highlightedVerse, setHighlightedVerse] = useState(0);
@@ -979,16 +978,10 @@ export default function ChantPage() {
                     {showBenefit ? "Hide Benefit" : "View Benefit"}
                   </button>
                 )}
-                {dashakamMeta.remarks && (
-                  <button
-                    onClick={() => setShowRemarks(!showRemarks)}
-                    className="inline-flex items-center gap-1 rounded-lg bg-primary-foreground/10 px-3 py-1.5 text-xs text-gold-light font-sans hover:bg-primary-foreground/20 transition-colors"
-                  >
-                    {showRemarks ? <ChevronUp className="h-3 w-3" /> : <ChevronDown className="h-3 w-3" />}
-                    {showRemarks ? "Hide Remarks" : "View Remarks"}
-                  </button>
-                )}
               </div>
+              {dashakamMeta.remarks && (
+                <p className="mt-3 text-sm text-gold-light font-sans leading-relaxed">{dashakamMeta.remarks}</p>
+              )}
             </div>
             <AnimatePresence>
               {showGist && dashakamMeta.gist && (
@@ -1012,18 +1005,6 @@ export default function ChantPage() {
                 >
                   <div className="rounded-b-xl border border-t-0 border-border bg-card p-4">
                     <p className="text-sm text-foreground font-sans leading-relaxed">✨ {dashakamMeta.benefits}</p>
-                  </div>
-                </motion.div>
-              )}
-              {showRemarks && dashakamMeta.remarks && (
-                <motion.div
-                  initial={{ height: 0, opacity: 0 }}
-                  animate={{ height: "auto", opacity: 1 }}
-                  exit={{ height: 0, opacity: 0 }}
-                  className="overflow-hidden"
-                >
-                  <div className="rounded-b-xl border border-t-0 border-border bg-card p-4">
-                    <p className="text-sm text-foreground font-sans leading-relaxed">{dashakamMeta.remarks}</p>
                   </div>
                 </motion.div>
               )}
