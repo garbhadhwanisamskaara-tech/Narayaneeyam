@@ -38,7 +38,7 @@ export default function PodcastPage() {
   const [duration, setDuration] = useState(0);
   const [podcastData, setPodcastData] = useState<PodcastEntry[]>([]);
   const [completed, setCompleted] = useState(false);
-  const { scriptLang } = useLanguagePrefs();
+  const { scriptLang, translationLang } = useLanguagePrefs();
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const audioSrcRef = useRef<string | null>(null);
   const unregisterMuteRef = useRef<(() => void) | null>(null);
@@ -90,6 +90,20 @@ export default function PodcastPage() {
       })
       .catch(() => {});
   }, [scriptLang]);
+
+  // Remarks follow the user's preferred translation language
+  const [remarksMap, setRemarksMap] = useState<Record<number, string>>({});
+  useEffect(() => {
+    prefetchDashakamList(translationLang)
+      .then((list) => {
+        const map: Record<number, string> = {};
+        list.forEach((d) => {
+          if (d.remarks) map[d.dashakam_no] = d.remarks;
+        });
+        setRemarksMap(map);
+      })
+      .catch(() => {});
+  }, [translationLang]);
   const publishedNos = useMemo(() => new Set(publishedList.map((d) => d.dashakam_no)), [publishedList]);
   const publishedPodcastData = useMemo(() => podcastData.filter((p) => publishedNos.has(p.dashakam)), [podcastData, publishedNos]);
 
