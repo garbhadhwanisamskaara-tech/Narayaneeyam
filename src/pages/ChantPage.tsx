@@ -1097,7 +1097,7 @@ export default function ChantPage() {
 
         {/* Verses */}
         {!dbLoading && (
-          <div className="space-y-4 pb-48" ref={versesContainerRef}>
+          <div className="space-y-3 pb-28 md:pb-24" ref={versesContainerRef}>
             {!hasVerses ? (
               <div className="rounded-xl bg-card border border-border p-8 text-center">
                 <p className="text-muted-foreground font-sans mt-2">
