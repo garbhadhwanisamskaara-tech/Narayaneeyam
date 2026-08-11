@@ -775,11 +775,34 @@ export default function ChantPage() {
 
   const getMeaning = (verse: (typeof allVerses)[0]) => verse.meaning_english;
 
+  // --- Compact sticky control bar: measure the real app header height ---
+  const [headerH, setHeaderH] = useState(56);
+  useEffect(() => {
+    const el = document.querySelector("header");
+    if (!el) return;
+    const measure = () => setHeaderH(el.getBoundingClientRect().height);
+    measure();
+    const ro = new ResizeObserver(measure);
+    ro.observe(el);
+    window.addEventListener("resize", measure);
+    window.addEventListener("orientationchange", measure);
+    return () => {
+      ro.disconnect();
+      window.removeEventListener("resize", measure);
+      window.removeEventListener("orientationchange", measure);
+    };
+  }, []);
+  const [moreOpen, setMoreOpen] = useState(false);
+
+  const selectCls =
+    "h-9 rounded-lg border border-border bg-background px-2 text-sm font-sans text-foreground min-w-0";
+
   return (
-    <div className="container mx-auto px-4 py-8 select-none" onContextMenu={(e) => e.preventDefault()}>
+    <div className="container mx-auto px-4 py-4 select-none" onContextMenu={(e) => e.preventDefault()}>
+
       <SEO path="/chant" title="Chant Narayaneeyam — All 100 Dashakams" description="Chant all 100 Dashakams of Sriman Narayaneeyam with audio, transliteration and meaning." />
       <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
-        <div className="mb-8 flex items-center justify-between flex-wrap gap-2">
+        <div className="mb-4 flex items-center justify-between flex-wrap gap-2">
           <div>
             <h1 className="font-display text-3xl font-bold text-foreground mb-2">Chant with Me</h1>
             <p className="text-muted-foreground font-sans">Follow along with synchronized text highlighting</p>
@@ -860,12 +883,15 @@ export default function ChantPage() {
           />
         )}
 
-        {/* Controls */}
-        <div className="flex flex-wrap gap-3 mb-6 rounded-xl bg-card border border-border p-4">
-          <div className="flex flex-col gap-1 justify-end">
-            <label className="text-xs text-muted-foreground font-sans">Dashakam</label>
+        {/* Compact sticky Chant control bar */}
+        <div
+          className="sticky z-40 -mx-4 mb-3 border-b border-border bg-background/95 px-3 py-2 backdrop-blur supports-[backdrop-filter]:bg-background/80"
+          style={{ top: headerH }}
+        >
+          <div className="flex flex-wrap items-center gap-1.5 md:flex-nowrap">
             <select
               key={dropdownList.length === 0 ? "loading" : "ready"}
+              aria-label="Dashakam"
               value={selectedDashakam}
               onChange={(e) => {
                 setSelectedDashakam(Number(e.target.value));
@@ -876,7 +902,7 @@ export default function ChantPage() {
                 stopAudio();
                 stopSloka();
               }}
-              className="rounded-lg border border-border bg-background px-3 py-2 text-sm font-sans text-foreground"
+              className={`${selectCls} basis-full truncate md:basis-auto md:flex-1 md:max-w-[22rem]`}
             >
               {dropdownList.length === 0 ? (
                 <option value={selectedDashakam}>Loading...</option>
@@ -888,129 +914,154 @@ export default function ChantPage() {
                 ))
               )}
             </select>
-          </div>
 
-          <div className="flex flex-col gap-1 justify-end">
-            <label className="text-xs text-muted-foreground font-sans">Verse</label>
             <select
+              aria-label="Verse"
               value={selectedPara || "all"}
               onChange={(e) => setSelectedPara(e.target.value === "all" ? null : Number(e.target.value))}
-              className="rounded-lg border border-border bg-background px-3 py-2 text-sm font-sans text-foreground"
+              className={`${selectCls} flex-1 basis-0 md:flex-none md:w-28`}
             >
-              <option value="all">All</option>
+              <option value="all">All verses</option>
               {Array.from({ length: allVerses.length || 0 }, (_, i) => i + 1).map((n) => (
                 <option key={n} value={n}>
                   Verse {n}
                 </option>
               ))}
             </select>
-          </div>
 
-          <div className="flex flex-col gap-1 justify-end">
-            <label className="text-xs text-muted-foreground font-sans">Speed</label>
             <select
+              aria-label="Speed"
               value={speed}
               onChange={(e) => {
                 const newSpeed = Number(e.target.value);
                 setSpeed(newSpeed);
                 engine.setSpeed(newSpeed);
               }}
-              className="rounded-lg border border-border bg-background px-3 py-2 text-sm font-sans text-foreground"
+              className={`${selectCls} flex-1 basis-0 md:flex-none md:w-24`}
             >
-              <option value={0.75}>0.75×</option>
-              <option value={1}>1×</option>
-              <option value={1.25}>1.25×</option>
-              <option value={2}>2×</option>
-            </select>
-          </div>
-
-          <div className="flex flex-col gap-1 justify-end">
-            <label className="text-xs text-muted-foreground font-sans">Loop</label>
-            <select
-              value={loopCount}
-              onChange={(e) => setLoopCount(Number(e.target.value))}
-              className="rounded-lg border border-border bg-background px-3 py-2 text-sm font-sans text-foreground"
-            >
-              {[1, 2, 3, 5, 10].map((n) => (
-                <option key={n} value={n}>
-                  {n}×
+              {[0.75, 1, 1.25, 1.5, 2].map((s) => (
+                <option key={s} value={s}>
+                  {s}×
                 </option>
               ))}
             </select>
-          </div>
 
-          <LearnBadge>
-            Use Speed, Loop, and Pause/Play to learn at your own pace — slow the chant, repeat a verse, or pause anytime to follow along.
-          </LearnBadge>
-
-          <div className="flex flex-col gap-1 justify-end">
-            <button
-              onClick={() => setShowMeaning(!showMeaning)}
-              className={`rounded-lg px-3 py-2 text-sm font-sans transition-colors ${showMeaning ? "bg-primary text-primary-foreground" : "border border-border bg-background text-foreground hover:bg-muted"}`}
+            <select
+              aria-label="Loop"
+              value={loopCount}
+              onChange={(e) => setLoopCount(Number(e.target.value))}
+              className={`${selectCls} flex-1 basis-0 md:flex-none md:w-24`}
             >
-              {showMeaning ? "Hide Meaning" : "Show Meaning"}
-            </button>
+              {[1, 2, 3, 5, 10].map((n) => (
+                <option key={n} value={n}>
+                  Loop {n}×
+                </option>
+              ))}
+            </select>
+
+            <div className="flex basis-full items-center gap-1.5 md:basis-auto">
+              <LearnBadge>
+                Use Speed, Loop, and Pause/Play to learn at your own pace — slow the chant, repeat a verse, or pause anytime to follow along.
+              </LearnBadge>
+
+              <button
+                onClick={() => setShowMeaning(!showMeaning)}
+                className={`h-9 flex-1 rounded-lg px-3 text-sm font-sans transition-colors md:flex-none ${showMeaning ? "bg-primary text-primary-foreground" : "border border-border bg-background text-foreground hover:bg-muted"}`}
+              >
+                Meaning
+              </button>
+
+              {dashakamMeta && (
+                <button
+                  onClick={() => setShowGist(!showGist)}
+                  className={`hidden h-9 rounded-lg px-3 text-sm font-sans transition-colors md:inline-flex md:items-center ${showGist ? "bg-primary text-primary-foreground" : "border border-border bg-background text-foreground hover:bg-muted"}`}
+                >
+                  Gist
+                </button>
+              )}
+              {dashakamMeta?.benefits && (
+                <button
+                  onClick={() => setShowBenefit(!showBenefit)}
+                  className={`hidden h-9 rounded-lg px-3 text-sm font-sans transition-colors md:inline-flex md:items-center ${showBenefit ? "bg-primary text-primary-foreground" : "border border-border bg-background text-foreground hover:bg-muted"}`}
+                >
+                  Benefit
+                </button>
+              )}
+
+              {dashakamMeta && (
+                <div className="relative flex-1 md:hidden">
+                  <button
+                    onClick={() => setMoreOpen((v) => !v)}
+                    aria-expanded={moreOpen}
+                    className="inline-flex h-9 w-full items-center justify-center gap-1 rounded-lg border border-border bg-background px-3 text-sm font-sans text-foreground"
+                  >
+                    More {moreOpen ? <ChevronUp className="h-3.5 w-3.5" /> : <ChevronDown className="h-3.5 w-3.5" />}
+                  </button>
+                  {moreOpen && (
+                    <div className="absolute right-0 top-full z-50 mt-1 w-36 overflow-hidden rounded-lg border border-border bg-card shadow-gold">
+                      <button
+                        onClick={() => {
+                          setShowGist(!showGist);
+                          setMoreOpen(false);
+                        }}
+                        className="block w-full px-3 py-2 text-left text-sm font-sans text-foreground hover:bg-muted"
+                      >
+                        {showGist ? "Hide Gist" : "Gist"}
+                      </button>
+                      {dashakamMeta.benefits && (
+                        <button
+                          onClick={() => {
+                            setShowBenefit(!showBenefit);
+                            setMoreOpen(false);
+                          }}
+                          className="block w-full px-3 py-2 text-left text-sm font-sans text-foreground hover:bg-muted"
+                        >
+                          {showBenefit ? "Hide Benefit" : "Benefit"}
+                        </button>
+                      )}
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
           </div>
         </div>
 
-        {/* Dashakam Info + Gist */}
+        {/* Gist / Benefit / Remarks panels */}
         {dashakamMeta && (
-          <div className="mb-6">
-            <div className="rounded-xl bg-gradient-peacock p-5">
-              <h2 className="font-display text-xl font-semibold text-primary-foreground mb-1">
-                {dashakamMeta.dashakam_name}
-              </h2>
-              <p className="text-gold-light font-sans text-sm mb-1">{dashakamMeta.dashakam_name}</p>
-              <div className="mt-3 flex items-center gap-2">
-                <button
-                  onClick={() => setShowGist(!showGist)}
-                  className="inline-flex items-center gap-1 rounded-lg bg-primary-foreground/10 px-3 py-1.5 text-xs text-gold-light font-sans hover:bg-primary-foreground/20 transition-colors"
-                >
-                  {showGist ? <ChevronUp className="h-3 w-3" /> : <ChevronDown className="h-3 w-3" />}
-                  {showGist ? "Hide Gist" : "View Gist"}
-                </button>
-                {dashakamMeta.benefits && (
-                  <button
-                    onClick={() => setShowBenefit(!showBenefit)}
-                    className="inline-flex items-center gap-1 rounded-lg bg-primary-foreground/10 px-3 py-1.5 text-xs text-gold-light font-sans hover:bg-primary-foreground/20 transition-colors"
-                  >
-                    {showBenefit ? <ChevronUp className="h-3 w-3" /> : <ChevronDown className="h-3 w-3" />}
-                    {showBenefit ? "Hide Benefit" : "View Benefit"}
-                  </button>
-                )}
-              </div>
-              {dashakamMeta.remarks && (
-                <p className="mt-3 text-sm text-gold-light font-sans leading-relaxed">{dashakamMeta.remarks}</p>
-              )}
-            </div>
-            <AnimatePresence>
-              {showGist && dashakamMeta.gist && (
-                <motion.div
-                  initial={{ height: 0, opacity: 0 }}
-                  animate={{ height: "auto", opacity: 1 }}
-                  exit={{ height: 0, opacity: 0 }}
-                  className="overflow-hidden"
-                >
-                  <div className="rounded-b-xl border border-t-0 border-border bg-card p-4">
-                    <p className="text-sm text-foreground font-sans leading-relaxed">{dashakamMeta.gist}</p>
-                  </div>
-                </motion.div>
-              )}
-              {showBenefit && dashakamMeta.benefits && (
-                <motion.div
-                  initial={{ height: 0, opacity: 0 }}
-                  animate={{ height: "auto", opacity: 1 }}
-                  exit={{ height: 0, opacity: 0 }}
-                  className="overflow-hidden"
-                >
-                  <div className="rounded-b-xl border border-t-0 border-border bg-card p-4">
-                    <p className="text-sm text-foreground font-sans leading-relaxed">✨ {dashakamMeta.benefits}</p>
-                  </div>
-                </motion.div>
-              )}
-            </AnimatePresence>
-          </div>
+          <AnimatePresence>
+            {showGist && dashakamMeta.gist && (
+              <motion.div
+                key="gist"
+                initial={{ height: 0, opacity: 0 }}
+                animate={{ height: "auto", opacity: 1 }}
+                exit={{ height: 0, opacity: 0 }}
+                className="overflow-hidden"
+              >
+                <div className="mb-3 rounded-xl border border-border bg-card p-3">
+                  <p className="text-sm text-foreground font-sans leading-relaxed">{dashakamMeta.gist}</p>
+                </div>
+              </motion.div>
+            )}
+            {showBenefit && dashakamMeta.benefits && (
+              <motion.div
+                key="benefit"
+                initial={{ height: 0, opacity: 0 }}
+                animate={{ height: "auto", opacity: 1 }}
+                exit={{ height: 0, opacity: 0 }}
+                className="overflow-hidden"
+              >
+                <div className="mb-3 rounded-xl border border-border bg-card p-3">
+                  <p className="text-sm text-foreground font-sans leading-relaxed">✨ {dashakamMeta.benefits}</p>
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
         )}
+        {dashakamMeta?.remarks && (
+          <p className="mb-3 text-xs text-muted-foreground font-sans leading-relaxed">{dashakamMeta.remarks}</p>
+        )}
+
 
         {/* Loading state */}
         {dbLoading && (
@@ -1046,7 +1097,7 @@ export default function ChantPage() {
 
         {/* Verses */}
         {!dbLoading && (
-          <div className="space-y-4 pb-48" ref={versesContainerRef}>
+          <div className="space-y-3 pb-28 md:pb-24" ref={versesContainerRef}>
             {!hasVerses ? (
               <div className="rounded-xl bg-card border border-border p-8 text-center">
                 <p className="text-muted-foreground font-sans mt-2">
@@ -1064,9 +1115,9 @@ export default function ChantPage() {
                   initial={{ opacity: 0, x: -10 }}
                   animate={{ opacity: 1, x: 0 }}
                   transition={{ delay: idx * 0.05 }}
-                  className={`rounded-xl border p-5 transition-all duration-500 ${idx === highlightedVerse && (isPlaying || isPaused) ? "border-secondary bg-secondary/10 shadow-gold" : "border-border bg-card"}`}
+                  className={`rounded-xl border p-3.5 sm:p-4 transition-all duration-500 ${idx === highlightedVerse && (isPlaying || isPaused) ? "border-secondary bg-secondary/10 shadow-gold" : "border-border bg-card"}`}
                 >
-                  <div className="flex items-start justify-between mb-3">
+                  <div className="flex items-start justify-between mb-2">
                     <span className="text-xs text-muted-foreground font-sans flex items-center gap-1.5">
                       {(() => {
                         const status = getVerseStatus(selectedDashakam, verse.paragraph);
@@ -1198,105 +1249,114 @@ export default function ChantPage() {
           </div>
         )}
 
-        {/* Audio Player Bar */}
-        <div className="sticky bottom-0 bg-gradient-peacock rounded-t-xl p-4 shadow-peacock">
-          {/* Active module indicator */}
-          {isPlaying && (
-            <div className="flex items-center justify-center gap-2 mb-2">
-              <span className="relative flex h-2.5 w-2.5">
-                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-secondary opacity-75"></span>
-                <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-secondary"></span>
-              </span>
-              <span className="text-xs font-sans font-semibold text-secondary uppercase tracking-wider">
-                Chant Module Active
-              </span>
-            </div>
-          )}
-          <div className="flex items-center justify-center gap-4">
-            <button
-              onClick={() => {
-                stopAudio();
-                stopSloka();
-                setVerseProgress(0);
-                setHighlightedVerse(Math.max(0, highlightedVerse - 1));
-              }}
-              className="text-primary-foreground/70 hover:text-primary-foreground p-2"
-            >
-              <SkipBack className="h-5 w-5" />
-            </button>
-            <button
-              onClick={() => {
-                stopAudio();
-                stopSloka();
-                setVerseProgress(0);
-                setHighlightedVerse(0);
-                setCurrentLoopIteration(0);
-              }}
-              className="text-primary-foreground/70 hover:text-primary-foreground p-2"
-              title="Restart"
-            >
-              <RotateCcw className="h-5 w-5" />
-            </button>
-            <button
-              onClick={handlePlayPause}
-              disabled={!isPlaying && !audioReady}
-              className={`flex h-12 w-12 items-center justify-center rounded-full bg-gradient-gold text-primary shadow-gold transition-transform hover:scale-110 ${!isPlaying && !audioReady ? "opacity-50 cursor-not-allowed" : ""}`}
-            >
-              {isPlaying ? <Pause className="h-6 w-6" /> : <Play className="h-6 w-6 ml-0.5" />}
-            </button>
-            <button
-              onClick={() => {
-                stopAudio();
-                stopSloka();
-                setVerseProgress(0);
-                setHighlightedVerse(Math.min(displayVerses.length - 1, highlightedVerse + 1));
-              }}
-              className="text-primary-foreground/70 hover:text-primary-foreground p-2"
-            >
-              <SkipForward className="h-5 w-5" />
-            </button>
-            <button
-              onClick={handleEndSession}
-              className="text-primary-foreground/70 hover:text-primary-foreground p-2"
-              title="End Session"
-            >
-              <Square className="h-5 w-5" />
-            </button>
-          </div>
-          {/* Speed control buttons */}
-          <div className="flex items-center justify-center gap-1.5 mt-3">
-            <button
-              onClick={toggleMuted}
-              aria-label={muted ? "Unmute audio" : "Mute audio"}
-              title={muted ? "Unmute audio (script keeps scrolling while muted)" : "Mute audio (script keeps scrolling)"}
-              className={`mr-2 rounded-full p-1.5 transition-colors ${muted ? "bg-secondary text-secondary-foreground" : "bg-primary-foreground/10 text-primary-foreground/70 hover:bg-primary-foreground/20"}`}
-            >
-              {muted ? <VolumeX className="h-3.5 w-3.5" /> : <Volume2 className="h-3.5 w-3.5" />}
-            </button>
-            <span className="text-[10px] text-primary-foreground/50 font-sans mr-1">Speed</span>
-            {[0.75, 1, 1.25, 1.5, 2].map((s) => (
+        {/* Compact Audio Player Bar */}
+        <div className="sticky bottom-0 -mx-4 bg-gradient-peacock px-3 py-1.5 shadow-peacock md:mx-0 md:rounded-t-xl">
+          <div className="flex flex-col items-center gap-1 md:flex-row md:justify-center md:gap-4">
+            <div className="flex items-center justify-center gap-3 md:gap-4">
               <button
-                key={s}
                 onClick={() => {
-                  setSpeed(s);
-                  engine.setSpeed(s);
+                  stopAudio();
+                  stopSloka();
+                  setVerseProgress(0);
+                  setHighlightedVerse(Math.max(0, highlightedVerse - 1));
                 }}
-                className={`rounded-full px-2 py-0.5 text-[11px] font-sans transition-colors ${
-                  speed === s
-                    ? "bg-secondary text-secondary-foreground font-semibold"
-                    : "bg-primary-foreground/10 text-primary-foreground/70 hover:bg-primary-foreground/20"
-                }`}
+                title="Previous verse"
+                className="text-primary-foreground/70 hover:text-primary-foreground p-1.5"
               >
-                {s}×
+                <SkipBack className="h-5 w-5" />
               </button>
-            ))}
-          </div>
-          <div className="text-center text-xs text-primary-foreground/60 mt-2 font-sans">
-            Dashakam {selectedDashakam} · Verse {highlightedVerse + 1} of {displayVerses.length}
-            {loopCount > 1 && ` · Loop ${currentLoopIteration + 1}/${loopCount}`}
-            {isSlokaPlaying && " · 📿 Sloka playing"}
+              <button
+                onClick={() => {
+                  stopAudio();
+                  stopSloka();
+                  setVerseProgress(0);
+                  setHighlightedVerse(0);
+                  setCurrentLoopIteration(0);
+                }}
+                className="text-primary-foreground/70 hover:text-primary-foreground p-1.5"
+                title="Restart"
+              >
+                <RotateCcw className="h-5 w-5" />
+              </button>
+              <button
+                onClick={handlePlayPause}
+                disabled={!isPlaying && !audioReady}
+                className={`flex h-10 w-10 items-center justify-center rounded-full bg-gradient-gold text-primary shadow-gold transition-transform hover:scale-110 ${!isPlaying && !audioReady ? "opacity-50 cursor-not-allowed" : ""}`}
+              >
+                {isPlaying ? <Pause className="h-5 w-5" /> : <Play className="h-5 w-5 ml-0.5" />}
+              </button>
+              <button
+                onClick={() => {
+                  stopAudio();
+                  stopSloka();
+                  setVerseProgress(0);
+                  setHighlightedVerse(Math.min(displayVerses.length - 1, highlightedVerse + 1));
+                }}
+                title="Next verse"
+                className="text-primary-foreground/70 hover:text-primary-foreground p-1.5"
+              >
+                <SkipForward className="h-5 w-5" />
+              </button>
+              <button
+                onClick={handleEndSession}
+                className="text-primary-foreground/70 hover:text-primary-foreground p-1.5"
+                title="End Session"
+              >
+                <Square className="h-5 w-5" />
+              </button>
+            </div>
+
+            <div className="flex items-center justify-center gap-1.5">
+              <button
+                onClick={toggleMuted}
+                aria-label={muted ? "Unmute audio" : "Mute audio"}
+                title={muted ? "Unmute audio (script keeps scrolling while muted)" : "Mute audio (script keeps scrolling)"}
+                className={`rounded-full p-1.5 transition-colors ${muted ? "bg-secondary text-secondary-foreground" : "bg-primary-foreground/10 text-primary-foreground/70 hover:bg-primary-foreground/20"}`}
+              >
+                {muted ? <VolumeX className="h-3.5 w-3.5" /> : <Volume2 className="h-3.5 w-3.5" />}
+              </button>
+
+              {/* Desktop: speed pills */}
+              <div className="hidden items-center gap-1.5 md:flex">
+                {[0.75, 1, 1.25, 1.5, 2].map((s) => (
+                  <button
+                    key={s}
+                    onClick={() => {
+                      setSpeed(s);
+                      engine.setSpeed(s);
+                    }}
+                    className={`rounded-full px-2 py-0.5 text-[11px] font-sans transition-colors ${
+                      speed === s
+                        ? "bg-secondary text-secondary-foreground font-semibold"
+                        : "bg-primary-foreground/10 text-primary-foreground/70 hover:bg-primary-foreground/20"
+                    }`}
+                  >
+                    {s}×
+                  </button>
+                ))}
+              </div>
+
+              {/* Mobile: single compact speed selector */}
+              <select
+                aria-label="Playback speed"
+                value={speed}
+                onChange={(e) => {
+                  const newSpeed = Number(e.target.value);
+                  setSpeed(newSpeed);
+                  engine.setSpeed(newSpeed);
+                }}
+                className="md:hidden h-7 rounded-full border border-primary-foreground/20 bg-primary-foreground/10 px-2 text-[11px] font-sans text-primary-foreground"
+              >
+                {[0.75, 1, 1.25, 1.5, 2].map((s) => (
+                  <option key={s} value={s} className="text-foreground">
+                    {s}×
+                  </option>
+                ))}
+              </select>
+            </div>
           </div>
         </div>
+
 
         {/* Ritual Chant Overlays */}
         <AnimatePresence>
