@@ -1249,105 +1249,114 @@ export default function ChantPage() {
           </div>
         )}
 
-        {/* Audio Player Bar */}
-        <div className="sticky bottom-0 bg-gradient-peacock rounded-t-xl p-4 shadow-peacock">
-          {/* Active module indicator */}
-          {isPlaying && (
-            <div className="flex items-center justify-center gap-2 mb-2">
-              <span className="relative flex h-2.5 w-2.5">
-                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-secondary opacity-75"></span>
-                <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-secondary"></span>
-              </span>
-              <span className="text-xs font-sans font-semibold text-secondary uppercase tracking-wider">
-                Chant Module Active
-              </span>
-            </div>
-          )}
-          <div className="flex items-center justify-center gap-4">
-            <button
-              onClick={() => {
-                stopAudio();
-                stopSloka();
-                setVerseProgress(0);
-                setHighlightedVerse(Math.max(0, highlightedVerse - 1));
-              }}
-              className="text-primary-foreground/70 hover:text-primary-foreground p-2"
-            >
-              <SkipBack className="h-5 w-5" />
-            </button>
-            <button
-              onClick={() => {
-                stopAudio();
-                stopSloka();
-                setVerseProgress(0);
-                setHighlightedVerse(0);
-                setCurrentLoopIteration(0);
-              }}
-              className="text-primary-foreground/70 hover:text-primary-foreground p-2"
-              title="Restart"
-            >
-              <RotateCcw className="h-5 w-5" />
-            </button>
-            <button
-              onClick={handlePlayPause}
-              disabled={!isPlaying && !audioReady}
-              className={`flex h-12 w-12 items-center justify-center rounded-full bg-gradient-gold text-primary shadow-gold transition-transform hover:scale-110 ${!isPlaying && !audioReady ? "opacity-50 cursor-not-allowed" : ""}`}
-            >
-              {isPlaying ? <Pause className="h-6 w-6" /> : <Play className="h-6 w-6 ml-0.5" />}
-            </button>
-            <button
-              onClick={() => {
-                stopAudio();
-                stopSloka();
-                setVerseProgress(0);
-                setHighlightedVerse(Math.min(displayVerses.length - 1, highlightedVerse + 1));
-              }}
-              className="text-primary-foreground/70 hover:text-primary-foreground p-2"
-            >
-              <SkipForward className="h-5 w-5" />
-            </button>
-            <button
-              onClick={handleEndSession}
-              className="text-primary-foreground/70 hover:text-primary-foreground p-2"
-              title="End Session"
-            >
-              <Square className="h-5 w-5" />
-            </button>
-          </div>
-          {/* Speed control buttons */}
-          <div className="flex items-center justify-center gap-1.5 mt-3">
-            <button
-              onClick={toggleMuted}
-              aria-label={muted ? "Unmute audio" : "Mute audio"}
-              title={muted ? "Unmute audio (script keeps scrolling while muted)" : "Mute audio (script keeps scrolling)"}
-              className={`mr-2 rounded-full p-1.5 transition-colors ${muted ? "bg-secondary text-secondary-foreground" : "bg-primary-foreground/10 text-primary-foreground/70 hover:bg-primary-foreground/20"}`}
-            >
-              {muted ? <VolumeX className="h-3.5 w-3.5" /> : <Volume2 className="h-3.5 w-3.5" />}
-            </button>
-            <span className="text-[10px] text-primary-foreground/50 font-sans mr-1">Speed</span>
-            {[0.75, 1, 1.25, 1.5, 2].map((s) => (
+        {/* Compact Audio Player Bar */}
+        <div className="sticky bottom-0 -mx-4 bg-gradient-peacock px-3 py-1.5 shadow-peacock md:mx-0 md:rounded-t-xl">
+          <div className="flex flex-col items-center gap-1 md:flex-row md:justify-center md:gap-4">
+            <div className="flex items-center justify-center gap-3 md:gap-4">
               <button
-                key={s}
                 onClick={() => {
-                  setSpeed(s);
-                  engine.setSpeed(s);
+                  stopAudio();
+                  stopSloka();
+                  setVerseProgress(0);
+                  setHighlightedVerse(Math.max(0, highlightedVerse - 1));
                 }}
-                className={`rounded-full px-2 py-0.5 text-[11px] font-sans transition-colors ${
-                  speed === s
-                    ? "bg-secondary text-secondary-foreground font-semibold"
-                    : "bg-primary-foreground/10 text-primary-foreground/70 hover:bg-primary-foreground/20"
-                }`}
+                title="Previous verse"
+                className="text-primary-foreground/70 hover:text-primary-foreground p-1.5"
               >
-                {s}×
+                <SkipBack className="h-5 w-5" />
               </button>
-            ))}
-          </div>
-          <div className="text-center text-xs text-primary-foreground/60 mt-2 font-sans">
-            Dashakam {selectedDashakam} · Verse {highlightedVerse + 1} of {displayVerses.length}
-            {loopCount > 1 && ` · Loop ${currentLoopIteration + 1}/${loopCount}`}
-            {isSlokaPlaying && " · 📿 Sloka playing"}
+              <button
+                onClick={() => {
+                  stopAudio();
+                  stopSloka();
+                  setVerseProgress(0);
+                  setHighlightedVerse(0);
+                  setCurrentLoopIteration(0);
+                }}
+                className="text-primary-foreground/70 hover:text-primary-foreground p-1.5"
+                title="Restart"
+              >
+                <RotateCcw className="h-5 w-5" />
+              </button>
+              <button
+                onClick={handlePlayPause}
+                disabled={!isPlaying && !audioReady}
+                className={`flex h-10 w-10 items-center justify-center rounded-full bg-gradient-gold text-primary shadow-gold transition-transform hover:scale-110 ${!isPlaying && !audioReady ? "opacity-50 cursor-not-allowed" : ""}`}
+              >
+                {isPlaying ? <Pause className="h-5 w-5" /> : <Play className="h-5 w-5 ml-0.5" />}
+              </button>
+              <button
+                onClick={() => {
+                  stopAudio();
+                  stopSloka();
+                  setVerseProgress(0);
+                  setHighlightedVerse(Math.min(displayVerses.length - 1, highlightedVerse + 1));
+                }}
+                title="Next verse"
+                className="text-primary-foreground/70 hover:text-primary-foreground p-1.5"
+              >
+                <SkipForward className="h-5 w-5" />
+              </button>
+              <button
+                onClick={handleEndSession}
+                className="text-primary-foreground/70 hover:text-primary-foreground p-1.5"
+                title="End Session"
+              >
+                <Square className="h-5 w-5" />
+              </button>
+            </div>
+
+            <div className="flex items-center justify-center gap-1.5">
+              <button
+                onClick={toggleMuted}
+                aria-label={muted ? "Unmute audio" : "Mute audio"}
+                title={muted ? "Unmute audio (script keeps scrolling while muted)" : "Mute audio (script keeps scrolling)"}
+                className={`rounded-full p-1.5 transition-colors ${muted ? "bg-secondary text-secondary-foreground" : "bg-primary-foreground/10 text-primary-foreground/70 hover:bg-primary-foreground/20"}`}
+              >
+                {muted ? <VolumeX className="h-3.5 w-3.5" /> : <Volume2 className="h-3.5 w-3.5" />}
+              </button>
+
+              {/* Desktop: speed pills */}
+              <div className="hidden items-center gap-1.5 md:flex">
+                {[0.75, 1, 1.25, 1.5, 2].map((s) => (
+                  <button
+                    key={s}
+                    onClick={() => {
+                      setSpeed(s);
+                      engine.setSpeed(s);
+                    }}
+                    className={`rounded-full px-2 py-0.5 text-[11px] font-sans transition-colors ${
+                      speed === s
+                        ? "bg-secondary text-secondary-foreground font-semibold"
+                        : "bg-primary-foreground/10 text-primary-foreground/70 hover:bg-primary-foreground/20"
+                    }`}
+                  >
+                    {s}×
+                  </button>
+                ))}
+              </div>
+
+              {/* Mobile: single compact speed selector */}
+              <select
+                aria-label="Playback speed"
+                value={speed}
+                onChange={(e) => {
+                  const newSpeed = Number(e.target.value);
+                  setSpeed(newSpeed);
+                  engine.setSpeed(newSpeed);
+                }}
+                className="md:hidden h-7 rounded-full border border-primary-foreground/20 bg-primary-foreground/10 px-2 text-[11px] font-sans text-primary-foreground"
+              >
+                {[0.75, 1, 1.25, 1.5, 2].map((s) => (
+                  <option key={s} value={s} className="text-foreground">
+                    {s}×
+                  </option>
+                ))}
+              </select>
+            </div>
           </div>
         </div>
+
 
         {/* Ritual Chant Overlays */}
         <AnimatePresence>
