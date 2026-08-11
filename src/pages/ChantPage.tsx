@@ -775,8 +775,31 @@ export default function ChantPage() {
 
   const getMeaning = (verse: (typeof allVerses)[0]) => verse.meaning_english;
 
+  // --- Compact sticky control bar: measure the real app header height ---
+  const [headerH, setHeaderH] = useState(56);
+  useEffect(() => {
+    const el = document.querySelector("header");
+    if (!el) return;
+    const measure = () => setHeaderH(el.getBoundingClientRect().height);
+    measure();
+    const ro = new ResizeObserver(measure);
+    ro.observe(el);
+    window.addEventListener("resize", measure);
+    window.addEventListener("orientationchange", measure);
+    return () => {
+      ro.disconnect();
+      window.removeEventListener("resize", measure);
+      window.removeEventListener("orientationchange", measure);
+    };
+  }, []);
+  const [moreOpen, setMoreOpen] = useState(false);
+
+  const selectCls =
+    "h-9 rounded-lg border border-border bg-background px-2 text-sm font-sans text-foreground min-w-0";
+
   return (
-    <div className="container mx-auto px-4 py-8 select-none" onContextMenu={(e) => e.preventDefault()}>
+    <div className="container mx-auto px-4 py-4 select-none" onContextMenu={(e) => e.preventDefault()}>
+
       <SEO path="/chant" title="Chant Narayaneeyam — All 100 Dashakams" description="Chant all 100 Dashakams of Sriman Narayaneeyam with audio, transliteration and meaning." />
       <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
         <div className="mb-8 flex items-center justify-between flex-wrap gap-2">
