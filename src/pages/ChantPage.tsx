@@ -883,12 +883,15 @@ export default function ChantPage() {
           />
         )}
 
-        {/* Controls */}
-        <div className="flex flex-wrap gap-3 mb-6 rounded-xl bg-card border border-border p-4">
-          <div className="flex flex-col gap-1 justify-end">
-            <label className="text-xs text-muted-foreground font-sans">Dashakam</label>
+        {/* Compact sticky Chant control bar */}
+        <div
+          className="sticky z-40 -mx-4 mb-3 border-b border-border bg-background/95 px-3 py-2 backdrop-blur supports-[backdrop-filter]:bg-background/80"
+          style={{ top: headerH }}
+        >
+          <div className="flex flex-wrap items-center gap-1.5 md:flex-nowrap">
             <select
               key={dropdownList.length === 0 ? "loading" : "ready"}
+              aria-label="Dashakam"
               value={selectedDashakam}
               onChange={(e) => {
                 setSelectedDashakam(Number(e.target.value));
@@ -899,7 +902,7 @@ export default function ChantPage() {
                 stopAudio();
                 stopSloka();
               }}
-              className="rounded-lg border border-border bg-background px-3 py-2 text-sm font-sans text-foreground"
+              className={`${selectCls} basis-full truncate md:basis-auto md:flex-1 md:max-w-[22rem]`}
             >
               {dropdownList.length === 0 ? (
                 <option value={selectedDashakam}>Loading...</option>
@@ -911,129 +914,154 @@ export default function ChantPage() {
                 ))
               )}
             </select>
-          </div>
 
-          <div className="flex flex-col gap-1 justify-end">
-            <label className="text-xs text-muted-foreground font-sans">Verse</label>
             <select
+              aria-label="Verse"
               value={selectedPara || "all"}
               onChange={(e) => setSelectedPara(e.target.value === "all" ? null : Number(e.target.value))}
-              className="rounded-lg border border-border bg-background px-3 py-2 text-sm font-sans text-foreground"
+              className={`${selectCls} flex-1 basis-0 md:flex-none md:w-28`}
             >
-              <option value="all">All</option>
+              <option value="all">All verses</option>
               {Array.from({ length: allVerses.length || 0 }, (_, i) => i + 1).map((n) => (
                 <option key={n} value={n}>
                   Verse {n}
                 </option>
               ))}
             </select>
-          </div>
 
-          <div className="flex flex-col gap-1 justify-end">
-            <label className="text-xs text-muted-foreground font-sans">Speed</label>
             <select
+              aria-label="Speed"
               value={speed}
               onChange={(e) => {
                 const newSpeed = Number(e.target.value);
                 setSpeed(newSpeed);
                 engine.setSpeed(newSpeed);
               }}
-              className="rounded-lg border border-border bg-background px-3 py-2 text-sm font-sans text-foreground"
+              className={`${selectCls} flex-1 basis-0 md:flex-none md:w-24`}
             >
-              <option value={0.75}>0.75×</option>
-              <option value={1}>1×</option>
-              <option value={1.25}>1.25×</option>
-              <option value={2}>2×</option>
-            </select>
-          </div>
-
-          <div className="flex flex-col gap-1 justify-end">
-            <label className="text-xs text-muted-foreground font-sans">Loop</label>
-            <select
-              value={loopCount}
-              onChange={(e) => setLoopCount(Number(e.target.value))}
-              className="rounded-lg border border-border bg-background px-3 py-2 text-sm font-sans text-foreground"
-            >
-              {[1, 2, 3, 5, 10].map((n) => (
-                <option key={n} value={n}>
-                  {n}×
+              {[0.75, 1, 1.25, 1.5, 2].map((s) => (
+                <option key={s} value={s}>
+                  {s}×
                 </option>
               ))}
             </select>
-          </div>
 
-          <LearnBadge>
-            Use Speed, Loop, and Pause/Play to learn at your own pace — slow the chant, repeat a verse, or pause anytime to follow along.
-          </LearnBadge>
-
-          <div className="flex flex-col gap-1 justify-end">
-            <button
-              onClick={() => setShowMeaning(!showMeaning)}
-              className={`rounded-lg px-3 py-2 text-sm font-sans transition-colors ${showMeaning ? "bg-primary text-primary-foreground" : "border border-border bg-background text-foreground hover:bg-muted"}`}
+            <select
+              aria-label="Loop"
+              value={loopCount}
+              onChange={(e) => setLoopCount(Number(e.target.value))}
+              className={`${selectCls} flex-1 basis-0 md:flex-none md:w-24`}
             >
-              {showMeaning ? "Hide Meaning" : "Show Meaning"}
-            </button>
+              {[1, 2, 3, 5, 10].map((n) => (
+                <option key={n} value={n}>
+                  Loop {n}×
+                </option>
+              ))}
+            </select>
+
+            <div className="flex basis-full items-center gap-1.5 md:basis-auto">
+              <LearnBadge>
+                Use Speed, Loop, and Pause/Play to learn at your own pace — slow the chant, repeat a verse, or pause anytime to follow along.
+              </LearnBadge>
+
+              <button
+                onClick={() => setShowMeaning(!showMeaning)}
+                className={`h-9 flex-1 rounded-lg px-3 text-sm font-sans transition-colors md:flex-none ${showMeaning ? "bg-primary text-primary-foreground" : "border border-border bg-background text-foreground hover:bg-muted"}`}
+              >
+                Meaning
+              </button>
+
+              {dashakamMeta && (
+                <button
+                  onClick={() => setShowGist(!showGist)}
+                  className={`hidden h-9 rounded-lg px-3 text-sm font-sans transition-colors md:inline-flex md:items-center ${showGist ? "bg-primary text-primary-foreground" : "border border-border bg-background text-foreground hover:bg-muted"}`}
+                >
+                  Gist
+                </button>
+              )}
+              {dashakamMeta?.benefits && (
+                <button
+                  onClick={() => setShowBenefit(!showBenefit)}
+                  className={`hidden h-9 rounded-lg px-3 text-sm font-sans transition-colors md:inline-flex md:items-center ${showBenefit ? "bg-primary text-primary-foreground" : "border border-border bg-background text-foreground hover:bg-muted"}`}
+                >
+                  Benefit
+                </button>
+              )}
+
+              {dashakamMeta && (
+                <div className="relative flex-1 md:hidden">
+                  <button
+                    onClick={() => setMoreOpen((v) => !v)}
+                    aria-expanded={moreOpen}
+                    className="inline-flex h-9 w-full items-center justify-center gap-1 rounded-lg border border-border bg-background px-3 text-sm font-sans text-foreground"
+                  >
+                    More {moreOpen ? <ChevronUp className="h-3.5 w-3.5" /> : <ChevronDown className="h-3.5 w-3.5" />}
+                  </button>
+                  {moreOpen && (
+                    <div className="absolute right-0 top-full z-50 mt-1 w-36 overflow-hidden rounded-lg border border-border bg-card shadow-gold">
+                      <button
+                        onClick={() => {
+                          setShowGist(!showGist);
+                          setMoreOpen(false);
+                        }}
+                        className="block w-full px-3 py-2 text-left text-sm font-sans text-foreground hover:bg-muted"
+                      >
+                        {showGist ? "Hide Gist" : "Gist"}
+                      </button>
+                      {dashakamMeta.benefits && (
+                        <button
+                          onClick={() => {
+                            setShowBenefit(!showBenefit);
+                            setMoreOpen(false);
+                          }}
+                          className="block w-full px-3 py-2 text-left text-sm font-sans text-foreground hover:bg-muted"
+                        >
+                          {showBenefit ? "Hide Benefit" : "Benefit"}
+                        </button>
+                      )}
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
           </div>
         </div>
 
-        {/* Dashakam Info + Gist */}
+        {/* Gist / Benefit / Remarks panels */}
         {dashakamMeta && (
-          <div className="mb-6">
-            <div className="rounded-xl bg-gradient-peacock p-5">
-              <h2 className="font-display text-xl font-semibold text-primary-foreground mb-1">
-                {dashakamMeta.dashakam_name}
-              </h2>
-              <p className="text-gold-light font-sans text-sm mb-1">{dashakamMeta.dashakam_name}</p>
-              <div className="mt-3 flex items-center gap-2">
-                <button
-                  onClick={() => setShowGist(!showGist)}
-                  className="inline-flex items-center gap-1 rounded-lg bg-primary-foreground/10 px-3 py-1.5 text-xs text-gold-light font-sans hover:bg-primary-foreground/20 transition-colors"
-                >
-                  {showGist ? <ChevronUp className="h-3 w-3" /> : <ChevronDown className="h-3 w-3" />}
-                  {showGist ? "Hide Gist" : "View Gist"}
-                </button>
-                {dashakamMeta.benefits && (
-                  <button
-                    onClick={() => setShowBenefit(!showBenefit)}
-                    className="inline-flex items-center gap-1 rounded-lg bg-primary-foreground/10 px-3 py-1.5 text-xs text-gold-light font-sans hover:bg-primary-foreground/20 transition-colors"
-                  >
-                    {showBenefit ? <ChevronUp className="h-3 w-3" /> : <ChevronDown className="h-3 w-3" />}
-                    {showBenefit ? "Hide Benefit" : "View Benefit"}
-                  </button>
-                )}
-              </div>
-              {dashakamMeta.remarks && (
-                <p className="mt-3 text-sm text-gold-light font-sans leading-relaxed">{dashakamMeta.remarks}</p>
-              )}
-            </div>
-            <AnimatePresence>
-              {showGist && dashakamMeta.gist && (
-                <motion.div
-                  initial={{ height: 0, opacity: 0 }}
-                  animate={{ height: "auto", opacity: 1 }}
-                  exit={{ height: 0, opacity: 0 }}
-                  className="overflow-hidden"
-                >
-                  <div className="rounded-b-xl border border-t-0 border-border bg-card p-4">
-                    <p className="text-sm text-foreground font-sans leading-relaxed">{dashakamMeta.gist}</p>
-                  </div>
-                </motion.div>
-              )}
-              {showBenefit && dashakamMeta.benefits && (
-                <motion.div
-                  initial={{ height: 0, opacity: 0 }}
-                  animate={{ height: "auto", opacity: 1 }}
-                  exit={{ height: 0, opacity: 0 }}
-                  className="overflow-hidden"
-                >
-                  <div className="rounded-b-xl border border-t-0 border-border bg-card p-4">
-                    <p className="text-sm text-foreground font-sans leading-relaxed">✨ {dashakamMeta.benefits}</p>
-                  </div>
-                </motion.div>
-              )}
-            </AnimatePresence>
-          </div>
+          <AnimatePresence>
+            {showGist && dashakamMeta.gist && (
+              <motion.div
+                key="gist"
+                initial={{ height: 0, opacity: 0 }}
+                animate={{ height: "auto", opacity: 1 }}
+                exit={{ height: 0, opacity: 0 }}
+                className="overflow-hidden"
+              >
+                <div className="mb-3 rounded-xl border border-border bg-card p-3">
+                  <p className="text-sm text-foreground font-sans leading-relaxed">{dashakamMeta.gist}</p>
+                </div>
+              </motion.div>
+            )}
+            {showBenefit && dashakamMeta.benefits && (
+              <motion.div
+                key="benefit"
+                initial={{ height: 0, opacity: 0 }}
+                animate={{ height: "auto", opacity: 1 }}
+                exit={{ height: 0, opacity: 0 }}
+                className="overflow-hidden"
+              >
+                <div className="mb-3 rounded-xl border border-border bg-card p-3">
+                  <p className="text-sm text-foreground font-sans leading-relaxed">✨ {dashakamMeta.benefits}</p>
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
         )}
+        {dashakamMeta?.remarks && (
+          <p className="mb-3 text-xs text-muted-foreground font-sans leading-relaxed">{dashakamMeta.remarks}</p>
+        )}
+
 
         {/* Loading state */}
         {dbLoading && (
