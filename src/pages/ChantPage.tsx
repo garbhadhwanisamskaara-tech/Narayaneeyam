@@ -802,7 +802,7 @@ export default function ChantPage() {
 
       <SEO path="/chant" title="Chant Narayaneeyam — All 100 Dashakams" description="Chant all 100 Dashakams of Sriman Narayaneeyam with audio, transliteration and meaning." />
       <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
-        <div className="mb-8 flex items-center justify-between flex-wrap gap-2">
+        <div className="mb-4 flex items-center justify-between flex-wrap gap-2">
           <div>
             <h1 className="font-display text-3xl font-bold text-foreground mb-2">Chant with Me</h1>
             <p className="text-muted-foreground font-sans">Follow along with synchronized text highlighting</p>
@@ -1117,7 +1117,7 @@ export default function ChantPage() {
                   transition={{ delay: idx * 0.05 }}
                   className={`rounded-xl border p-3.5 sm:p-4 transition-all duration-500 ${idx === highlightedVerse && (isPlaying || isPaused) ? "border-secondary bg-secondary/10 shadow-gold" : "border-border bg-card"}`}
                 >
-                  <div className="flex items-start justify-between mb-3">
+                  <div className="flex items-start justify-between mb-2">
                     <span className="text-xs text-muted-foreground font-sans flex items-center gap-1.5">
                       {(() => {
                         const status = getVerseStatus(selectedDashakam, verse.paragraph);
