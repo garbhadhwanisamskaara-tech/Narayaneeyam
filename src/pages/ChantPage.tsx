@@ -1271,7 +1271,7 @@ export default function ChantPage() {
               {muted ? <VolumeX className="h-3.5 w-3.5" /> : <Volume2 className="h-3.5 w-3.5" />}
             </button>
             <span className="text-[10px] text-primary-foreground/50 font-sans mr-1">Speed</span>
-            {[0.75, 1, 1.25, 2].map((s) => (
+            {[0.75, 1, 1.25, 1.5, 2].map((s) => (
               <button
                 key={s}
                 onClick={() => {
