@@ -528,6 +528,11 @@ export default function PodcastPage() {
               Dashakam {currentDashakam}
             </h2>
             <p className="text-gold-light font-sans text-sm mt-1">{dashakamName}</p>
+            {remarksMap[currentDashakam] && (
+              <p className="text-primary-foreground/70 font-sans text-xs mt-1 max-w-xl mx-auto">
+                {remarksMap[currentDashakam]}
+              </p>
+            )}
             {playMode === "all" && (
               <p className="text-gold-light font-sans text-xs mt-2">
                 📻 Playing all 100 dashakams · {currentDashakam}/100

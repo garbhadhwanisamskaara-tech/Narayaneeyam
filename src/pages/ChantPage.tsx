@@ -978,6 +978,15 @@ export default function ChantPage() {
                     {showBenefit ? "Hide Benefit" : "View Benefit"}
                   </button>
                 )}
+                {dashakamMeta.remarks && (
+                  <button
+                    onClick={() => setShowRemarks(!showRemarks)}
+                    className="inline-flex items-center gap-1 rounded-lg bg-primary-foreground/10 px-3 py-1.5 text-xs text-gold-light font-sans hover:bg-primary-foreground/20 transition-colors"
+                  >
+                    {showRemarks ? <ChevronUp className="h-3 w-3" /> : <ChevronDown className="h-3 w-3" />}
+                    {showRemarks ? "Hide Remarks" : "View Remarks"}
+                  </button>
+                )}
               </div>
             </div>
             <AnimatePresence>
