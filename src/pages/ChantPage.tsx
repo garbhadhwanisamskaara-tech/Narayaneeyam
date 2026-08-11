@@ -65,6 +65,7 @@ export default function ChantPage() {
   const [showMeaning, setShowMeaning] = useState(false);
   const [showGist, setShowGist] = useState(false);
   const [showBenefit, setShowBenefit] = useState(false);
+  const [showRemarks, setShowRemarks] = useState(false);
   const [isPlaying, setIsPlaying] = useState(false);
   const [isPaused, setIsPaused] = useState(false);
   const [highlightedVerse, setHighlightedVerse] = useState(0);
