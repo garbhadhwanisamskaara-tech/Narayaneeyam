@@ -17,11 +17,15 @@ export default function LandingFlute() {
   const audioRef = useRef<HTMLAudioElement | null>(null);
 
   useEffect(() => {
-    const audio = new Audio(getStorageUrl("Common/SN_Flute_landing.mp3"));
+    // Create the element only once — a duplicate instance would keep playing
+    // even after we pause the one we hold a reference to.
+    if (!audioRef.current) {
+      audioRef.current = new Audio(getStorageUrl("Common/SN_Flute_landing.mp3"));
+    }
+    const audio = audioRef.current;
     audio.preload = "auto";
     audio.setAttribute("playsinline", "true");
     audio.volume = 1;
-    audioRef.current = audio;
     const unregister = registerAudioElement(audio);
 
     const onTimeUpdate = () => {
@@ -36,6 +40,7 @@ export default function LandingFlute() {
     };
 
     const restart = () => {
+      if (document.hidden) return;
       audio.currentTime = 0;
       audio.volume = 1;
       audio.play().catch(() => {});
@@ -56,7 +61,24 @@ export default function LandingFlute() {
     window.addEventListener("pointerdown", onFirstGesture);
     window.addEventListener("keydown", onFirstGesture);
 
+    // Mobile lock-screen behaviour is inconsistent: some browsers fire
+    // visibilitychange, some only pagehide, some only blur. Listen to all.
+    const pauseFor = (source: string) => () => {
+      if (source === "visibilitychange" && !document.hidden) return;
+      console.log(`[LandingFlute] pausing via ${source}`);
+      audio.pause();
+    };
+    const onVisibility = pauseFor("visibilitychange");
+    const onPageHide = pauseFor("pagehide");
+    const onBlur = pauseFor("blur");
+    document.addEventListener("visibilitychange", onVisibility);
+    window.addEventListener("pagehide", onPageHide);
+    window.addEventListener("blur", onBlur);
+
     return () => {
+      document.removeEventListener("visibilitychange", onVisibility);
+      window.removeEventListener("pagehide", onPageHide);
+      window.removeEventListener("blur", onBlur);
       window.removeEventListener("pointerdown", onFirstGesture);
       window.removeEventListener("keydown", onFirstGesture);
       audio.removeEventListener("timeupdate", onTimeUpdate);
