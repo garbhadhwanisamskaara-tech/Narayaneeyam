@@ -10,6 +10,7 @@ import {
   Ban,
   CalendarDays,
   UserMinus,
+  HelpCircle,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
@@ -19,6 +20,14 @@ import DashakamGarden from "@/components/DashakamGarden";
 import { useGroupGarden } from "@/hooks/useGarden";
 import GroupBloomsSection from "@/components/GroupBloomsSection";
 import GroupDangerZone from "@/components/GroupDangerZone";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
 
 
 export default function GroupDetailPage() {
