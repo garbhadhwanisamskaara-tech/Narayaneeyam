@@ -247,28 +247,49 @@ export default function GroupSchedulePage() {
           </div>
         </div>
 
-        <div>
-          <p className="font-sans text-sm font-semibold text-foreground">Distribution</p>
-          <div className="mt-2 grid gap-3 sm:grid-cols-2">
-            {(
-              [
-                ["synchronized", "Synchronized", "Everyone chants the same dashakam each day."],
-                ["split", "Split", "Dashakams are shared among the members."],
-              ] as const
-            ).map(([value, label, hint]) => (
-              <button
-                key={value}
-                onClick={() => setMode(value)}
-                className={`rounded-xl border p-4 text-left transition-colors ${
-                  mode === value ? "border-primary bg-secondary/40" : "border-border hover:border-primary"
-                }`}
-              >
-                <span className="font-sans text-sm font-semibold text-foreground">{label}</span>
-                <span className="mt-1 block font-sans text-xs text-muted-foreground">{hint}</span>
-              </button>
-            ))}
+        <TooltipProvider delayDuration={150}>
+          <div>
+            <div className="flex items-center gap-2">
+              <p className="font-sans text-sm font-semibold text-foreground">Distribution</p>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <button
+                    type="button"
+                    aria-label="Distribution modes"
+                    className="text-muted-foreground hover:text-foreground focus:outline-none"
+                  >
+                    <Info className="h-4 w-4" />
+                  </button>
+                </TooltipTrigger>
+                <TooltipContent side="top" className="max-w-[260px]">
+                  <p className="font-sans text-xs text-popover-foreground">
+                    Synchronized: everyone chants the same dashakam on the same day. Split: dashakams are divided up
+                    across members.
+                  </p>
+                </TooltipContent>
+              </Tooltip>
+            </div>
+            <div className="mt-2 grid gap-3 sm:grid-cols-2">
+              {(
+                [
+                  ["synchronized", "Synchronized", "Everyone chants the same dashakam each day."],
+                  ["split", "Split", "Dashakams are shared among the members."],
+                ] as const
+              ).map(([value, label, hint]) => (
+                <button
+                  key={value}
+                  onClick={() => setMode(value)}
+                  className={`rounded-xl border p-4 text-left transition-colors ${
+                    mode === value ? "border-primary bg-secondary/40" : "border-border hover:border-primary"
+                  }`}
+                >
+                  <span className="font-sans text-sm font-semibold text-foreground">{label}</span>
+                  <span className="mt-1 block font-sans text-xs text-muted-foreground">{hint}</span>
+                </button>
+              ))}
+            </div>
           </div>
-        </div>
+        </TooltipProvider>
 
         {soloWarning && (
           <div className="rounded-xl border border-amber-200 bg-amber-50 p-4 dark:border-amber-900 dark:bg-amber-950/30">
