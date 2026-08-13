@@ -78,6 +78,14 @@ export default function CreateParayanamPage() {
         ? !!startDate && !!endDate && endDate >= startDate
         : true;
 
+  const handleBegin = () => {
+    if (isGroup && members.length <= 1 && !soloWarning) {
+      setSoloWarning(true);
+      return;
+    }
+    void handleSubmit();
+  };
+
   const handleSubmit = async () => {
     if (!user || dashakams.length === 0) return;
     setBusy(true);
