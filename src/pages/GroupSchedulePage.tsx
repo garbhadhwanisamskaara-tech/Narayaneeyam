@@ -1,12 +1,13 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link, useParams } from "react-router-dom";
-import { ArrowLeft, CalendarDays, Copy, Loader2, Sparkles } from "lucide-react";
+import { ArrowLeft, CalendarDays, Copy, Info, Loader2, Sparkles } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useGroupMembers, type Group } from "@/hooks/useGroups";
 import { useDashakamSets, type DashakamSet } from "@/hooks/useDashakamSets";
 import { useParayanamSchedule, type DistributionMode } from "@/hooks/useParayanamSchedule";
 import SEO from "@/components/SEO";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 const today = () => new Date().toISOString().slice(0, 10);
 const plusDays = (n: number) => {
