@@ -173,7 +173,7 @@ export function useGroupMembers(groupId: string | undefined, sessionId: string |
 
     const [profRes, progRes] = await Promise.all([
       ids.length
-        ? (supabase as any).from("profiles").select("id, display_name").in("id", ids)
+        ? (supabase as any).from("profiles").select("id, display_name, email").in("id", ids)
         : Promise.resolve({ data: [] }),
       sessionId && ids.length
         ? (supabase as any)
@@ -185,7 +185,7 @@ export function useGroupMembers(groupId: string | undefined, sessionId: string |
     ]);
 
     const nameById = new Map<string, string>(
-      (profRes.data ?? []).map((p: any) => [p.id, p.display_name ?? "Devotee"])
+      (profRes.data ?? []).map((p: any) => [p.id, p.display_name ?? p.email ?? "Member"])
     );
     const counts = new Map<string, number>();
     for (const row of (progRes.data ?? []) as any[]) {
@@ -196,7 +196,7 @@ export function useGroupMembers(groupId: string | undefined, sessionId: string |
     setMembers(
       rows.map((r) => ({
         ...r,
-        display_name: nameById.get(r.user_id) ?? "Devotee",
+        display_name: nameById.get(r.user_id) ?? "Member",
         completed: counts.get(r.user_id) ?? 0,
       }))
     );
