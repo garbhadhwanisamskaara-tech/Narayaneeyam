@@ -30,6 +30,26 @@ import {
 } from "@/components/ui/dialog";
 
 
+// Copy for the "How group parayanam works" help panel. Kept in one place so it is easy to tweak after review.
+const HELP_COPY = {
+  owner: {
+    title: "If you're the owner",
+    steps: [
+      "Plan a parayanam: pick a dashakam set, a date range, and whether the group is Synchronized (everyone does the same dashakam each day) or Split (dashakams are shared out across members).",
+      "Invite members using the Share Invite link.",
+      "Track progress from the member list and the Dashakam Garden below.",
+    ],
+  },
+  member: {
+    title: "If you're a member",
+    steps: [
+      "Your assigned dashakams appear as tiles you can tap.",
+      "Tap a tile once you've completed that dashakam (listening or reading) to mark it done — this can't be undone automatically, so only mark it once you're actually done.",
+      "The Dashakam Garden fills in as the whole group completes each dashakam — it reflects everyone's progress together, not just yours.",
+    ],
+  },
+};
+
 export default function GroupDetailPage() {
   const { groupId } = useParams<{ groupId: string }>();
   const { user } = useAuth();
@@ -39,6 +59,7 @@ export default function GroupDetailPage() {
   const [busy, setBusy] = useState(false);
   const [actionError, setActionError] = useState<string | null>(null);
   const [target, setTarget] = useState<number | null>(null);
+  const [helpOpen, setHelpOpen] = useState(false);
 
   const { invite, loading, generateInvite, revokeInvite, regenerateInvite } = useGroupInvite(groupId);
   const {
