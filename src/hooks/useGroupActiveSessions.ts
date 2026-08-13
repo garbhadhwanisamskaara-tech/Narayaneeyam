@@ -39,7 +39,7 @@ export function useGroupActiveSessions(groupId: string | undefined) {
       .from("challenge_sessions")
       .select("id, start_date, end_date, dashakam_set_id, dashakams_target")
       .eq("group_id", groupId)
-      .eq("challenge_type", "group")
+      .in("challenge_type", ["group_standard", "group_relay"])
       .eq("technical_state", "ACTIVE")
       .order("start_date", { ascending: false });
 

@@ -97,7 +97,9 @@ export default function CreateParayanamPage() {
           user_id: user.id,
           group_id: groupId ?? null,
           mode: "chant",
-          challenge_type: isGroup ? "group" : "personal",
+          // Both "auto" and "manual" distribution assign dashakams across members,
+          // so group parayanams created here are relay-style.
+          challenge_type: isGroup ? "group_relay" : "personal",
           start_date: startDate,
           end_date: endDate,
           technical_state: "ACTIVE",
