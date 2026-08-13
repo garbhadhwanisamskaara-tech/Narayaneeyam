@@ -104,7 +104,7 @@ export default function GroupSchedulePage() {
         user_id: user!.id,
         group_id: group.id,
         mode: "chant",
-        challenge_type: "group",
+        challenge_type: mode === "synchronized" ? "group_standard" : "group_relay",
         start_date: startDate,
         end_date: endDate,
         technical_state: "ACTIVE",
