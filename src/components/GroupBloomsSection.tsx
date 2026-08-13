@@ -9,10 +9,17 @@ interface Props {
   isOwner: boolean;
   /** The group's designated active parayanam, used as the default selection. */
   activeChallengeSessionId?: string | null;
+  /** Owner display name, used when a non-owner sees the empty state. */
+  ownerName?: string | null;
 }
 
 /** Parayanam progress grid for a group, with a switcher when several parayanams run at once. */
-export default function GroupBloomsSection({ groupId, isOwner, activeChallengeSessionId }: Props) {
+export default function GroupBloomsSection({
+  groupId,
+  isOwner,
+  activeChallengeSessionId,
+  ownerName,
+}: Props) {
   const { sessions, loading } = useGroupActiveSessions(groupId);
   const [selectedId, setSelectedId] = useState<string>("");
 
@@ -50,20 +57,30 @@ export default function GroupBloomsSection({ groupId, isOwner, activeChallengeSe
       {loading ? (
         <p className="font-sans text-sm text-muted-foreground">Loading parayanams…</p>
       ) : !active ? (
-        <p className="font-sans text-sm text-muted-foreground">
-          No active parayanam yet.{" "}
-          {groupId && (
-            <Link to={`/groups/${groupId}/schedule`} className="font-semibold text-primary hover:underline">
-              Plan one now
-            </Link>
-          )}
-        </p>
+        isOwner ? (
+          <div className="rounded-xl border border-border bg-muted/30 p-4">
+            <h3 className="font-display text-base font-semibold text-foreground">No parayanam running yet</h3>
+            <p className="mt-1 font-sans text-sm text-muted-foreground">
+              As the group owner, you can plan a parayanam — pick which dashakams to include, a timeline, and how
+              they're shared: everyone chants the same dashakam each day (Synchronized), or dashakams are split across
+              members (Split).
+            </p>
+            {groupId && (
+              <Link
+                to={`/groups/${groupId}/schedule`}
+                className="mt-3 inline-flex items-center gap-2 rounded-lg bg-gradient-peacock px-4 py-2 font-sans text-sm font-semibold text-primary-foreground hover:opacity-90"
+              >
+                Plan a parayanam
+              </Link>
+            )}
+          </div>
+        ) : (
+          <p className="font-sans text-sm text-muted-foreground">
+            No parayanam running yet. Ask {ownerName ?? "the group owner"} to start one.
+          </p>
+        )
       ) : (
-        <BudGrid
-          challengeSessionId={active.id}
-          showOwnerTools={isOwner}
-          parayanamName={active.set_name}
-        />
+        <BudGrid challengeSessionId={active.id} showOwnerTools={isOwner} parayanamName={active.set_name} />
       )}
     </section>
   );
