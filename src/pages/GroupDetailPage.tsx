@@ -303,6 +303,11 @@ export default function GroupDetailPage() {
                 ))}
               </ul>
             )}
+            {members.length === 1 && (
+              <p className="mt-3 font-sans text-xs text-muted-foreground">
+                Invite others to join this group's parayanam.
+              </p>
+            )}
           </section>
 
           {isOwner && (
