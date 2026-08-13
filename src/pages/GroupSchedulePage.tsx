@@ -27,6 +27,7 @@ export default function GroupSchedulePage() {
   const [mode, setMode] = useState<DistributionMode>("synchronized");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [soloWarning, setSoloWarning] = useState(false);
   const [notice, setNotice] = useState<string | null>(null);
 
   const { sets, loading: loadingSets, forkSet } = useDashakamSets();

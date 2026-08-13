@@ -36,6 +36,7 @@ export default function CreateParayanamPage() {
   const [manualAssign, setManualAssign] = useState<Record<string, string>>({});
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [soloWarning, setSoloWarning] = useState(false);
   const [publishedList, setPublishedList] = useState<{ dashakam_no: number; dashakam_name: string }[]>([]);
 
   useEffect(() => {
