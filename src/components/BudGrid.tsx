@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
+import { Info } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useCompleteDashakam } from "@/hooks/useCompleteDashakam";
@@ -207,5 +208,31 @@ export default function BudGrid({ challengeSessionId, showOwnerTools = false, pa
     </div>
   );
 
-  return showOwnerTools ? <TooltipProvider delayDuration={150}>{grid}</TooltipProvider> : grid;
+  const infoTip = (
+    <Tooltip>
+      <TooltipTrigger asChild>
+        <button
+          type="button"
+          aria-label="How to mark dashakams done"
+          className="inline-flex text-muted-foreground hover:text-foreground focus:outline-none"
+        >
+          <Info className="h-4 w-4" />
+        </button>
+      </TooltipTrigger>
+      <TooltipContent side="top" className="max-w-[260px]">
+        <p className="font-sans text-xs text-popover-foreground">
+          Tap a dashakam once you've completed it — listening or reading — to mark it done for the group.
+        </p>
+      </TooltipContent>
+    </Tooltip>
+  );
+
+  return (
+    <TooltipProvider delayDuration={150}>
+      <div className="space-y-2">
+        <div className="flex items-center justify-end gap-2">{infoTip}</div>
+        {grid}
+      </div>
+    </TooltipProvider>
+  );
 }
