@@ -175,7 +175,45 @@ export default function GroupDetailPage() {
         </div>
       ) : (
         <>
-          <h1 className="mt-4 font-display text-2xl font-bold text-foreground">{group.group_name}</h1>
+          <div className="mt-4 flex flex-wrap items-center justify-between gap-3">
+            <h1 className="font-display text-2xl font-bold text-foreground">{group.group_name}</h1>
+            <Dialog open={helpOpen} onOpenChange={setHelpOpen}>
+              <DialogTrigger asChild>
+                <button
+                  type="button"
+                  className="inline-flex items-center gap-1.5 font-sans text-xs font-medium text-muted-foreground hover:text-foreground"
+                >
+                  <HelpCircle className="h-4 w-4" /> How group parayanam works
+                </button>
+              </DialogTrigger>
+              <DialogContent className="max-w-md">
+                <DialogHeader>
+                  <DialogTitle className="font-display text-lg font-semibold">How group parayanam works</DialogTitle>
+                  <DialogDescription className="font-sans text-sm">
+                    A quick guide to chanting together.
+                  </DialogDescription>
+                </DialogHeader>
+                <div className="mt-2 space-y-4">
+                  <div>
+                    <h3 className="font-display text-sm font-semibold text-foreground">{HELP_COPY.owner.title}</h3>
+                    <ul className="mt-2 list-disc space-y-1.5 pl-4 font-sans text-sm text-muted-foreground">
+                      {HELP_COPY.owner.steps.map((s, i) => (
+                        <li key={i}>{s}</li>
+                      ))}
+                    </ul>
+                  </div>
+                  <div>
+                    <h3 className="font-display text-sm font-semibold text-foreground">{HELP_COPY.member.title}</h3>
+                    <ul className="mt-2 list-disc space-y-1.5 pl-4 font-sans text-sm text-muted-foreground">
+                      {HELP_COPY.member.steps.map((s, i) => (
+                        <li key={i}>{s}</li>
+                      ))}
+                    </ul>
+                  </div>
+                </div>
+              </DialogContent>
+            </Dialog>
+          </div>
 
           {isOwner && (
             <section className="mt-6 rounded-2xl border border-border bg-card p-5 shadow-peacock">
