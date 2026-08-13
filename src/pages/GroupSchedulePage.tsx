@@ -90,6 +90,10 @@ export default function GroupSchedulePage() {
       setError("The end date must be on or after the start date.");
       return;
     }
+    if (members.length <= 1 && !soloWarning) {
+      setSoloWarning(true);
+      return;
+    }
     setBusy(true);
     setError(null);
     setNotice(null);
@@ -265,13 +269,27 @@ export default function GroupSchedulePage() {
           </div>
         </div>
 
+        {soloWarning && (
+          <div className="rounded-xl border border-amber-200 bg-amber-50 p-4 dark:border-amber-900 dark:bg-amber-950/30">
+            <p className="font-sans text-sm text-amber-900 dark:text-amber-100">
+              You're the only member in this group right now — this parayanam will run solo until others join. You can invite members from the group page.
+            </p>
+            <Link
+              to={`/groups/${group.id}#invite`}
+              className="mt-2 inline-block font-sans text-sm font-semibold text-primary hover:underline"
+            >
+              Invite members →
+            </Link>
+          </div>
+        )}
+
         <button
           onClick={handleGenerate}
           disabled={busy || !selectedSet}
           className="inline-flex items-center gap-2 rounded-lg bg-gradient-peacock px-4 py-2 font-sans text-sm font-semibold text-primary-foreground hover:opacity-90 disabled:opacity-60"
         >
           {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4" />}
-          {rows.length ? "Regenerate schedule" : "Create schedule"}
+          {soloWarning ? "Continue anyway" : rows.length ? "Regenerate schedule" : "Create schedule"}
         </button>
 
         {error && <p className="font-sans text-sm text-destructive">{error}</p>}

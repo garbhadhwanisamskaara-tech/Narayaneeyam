@@ -331,6 +331,20 @@ export default function CreateParayanamPage() {
           </div>
         )}
 
+        {soloWarning && (
+          <div className="rounded-xl border border-amber-200 bg-amber-50 p-4 dark:border-amber-900 dark:bg-amber-950/30">
+            <p className="font-sans text-sm text-amber-900 dark:text-amber-100">
+              You're the only member in this group right now — this parayanam will run solo until others join. You can invite members from the group page.
+            </p>
+            <Link
+              to={`/groups/${groupId}#invite`}
+              className="mt-2 inline-block font-sans text-sm font-semibold text-primary hover:underline"
+            >
+              Invite members →
+            </Link>
+          </div>
+        )}
+
         {error && <p className="font-sans text-sm text-destructive">{error}</p>}
 
         <div className="flex items-center justify-between pt-2">
@@ -351,12 +365,12 @@ export default function CreateParayanamPage() {
             </button>
           ) : (
             <button
-              onClick={handleSubmit}
+              onClick={soloWarning ? () => void handleSubmit() : handleBegin}
               disabled={busy || !canNext || dashakams.length === 0}
               className="inline-flex items-center gap-2 rounded-lg bg-gradient-gold px-5 py-2 font-sans text-sm font-semibold text-primary shadow-gold disabled:opacity-50"
             >
               {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4" />}
-              Begin Parayanam
+              {soloWarning ? "Continue anyway" : "Begin Parayanam"}
             </button>
           )}
         </div>
