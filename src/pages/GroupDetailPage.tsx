@@ -253,6 +253,7 @@ export default function GroupDetailPage() {
             groupId={groupId}
             isOwner={isOwner}
             activeChallengeSessionId={group.active_challenge_session_id}
+            ownerName={ownerName}
           />
 
 
