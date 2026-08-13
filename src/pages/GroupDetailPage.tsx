@@ -108,6 +108,8 @@ export default function GroupDetailPage() {
   }, [group?.active_challenge_session_id]);
 
   const isOwner = !!user && !!group && group.owner_id === user.id;
+  const ownerMember = members.find((m) => m.user_id === group?.owner_id);
+  const ownerName = ownerMember?.display_name ?? null;
 
   const run = async (fn: () => Promise<unknown>) => {
     setBusy(true);
