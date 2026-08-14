@@ -261,184 +261,259 @@ export default function GroupSchedulePage() {
       </h1>
 
       <section className="mt-6 space-y-5 rounded-2xl border border-border bg-card p-5 shadow-peacock">
-        <div>
-          <label htmlFor="parayanam-name" className="font-sans text-sm font-semibold text-foreground">
-            Parayanam name <span className="font-normal text-muted-foreground">(optional)</span>
-          </label>
-          <input
-            id="parayanam-name"
-            type="text"
-            maxLength={80}
-            value={parayanamName}
-            onChange={(e) => setParayanamName(e.target.value)}
-            placeholder="Diwali 2026 Parayanam"
-            className="mt-2 w-full rounded-lg border border-border bg-background px-3 py-2 font-sans text-sm text-foreground outline-none focus:ring-2 focus:ring-primary"
-          />
-        </div>
-
-        <div>
-          <label htmlFor="set" className="font-sans text-sm font-semibold text-foreground">
-            Dashakam set
-          </label>
-          {loadingSets ? (
-            <Loader2 className="mt-2 h-5 w-5 animate-spin text-primary" />
-          ) : (
-            <select
-              id="set"
-              value={setId}
-              onChange={(e) => setSetId(e.target.value)}
-              className="mt-2 w-full rounded-lg border border-border bg-background px-3 py-2 font-sans text-sm text-foreground outline-none focus:ring-2 focus:ring-primary"
-            >
-              {sets.map((s) => (
-                <option key={s.id} value={s.id}>
-                  {s.set_name} ({s.dashakam_list.length} dashakams)
-                  {s.is_official ? "" : " · yours"}
-                </option>
-              ))}
-            </select>
-          )}
-          {selectedSet?.description && (
-            <p className="mt-2 font-sans text-xs text-muted-foreground">{selectedSet.description}</p>
-          )}
-          {selectedSet?.is_official && (
-            <button
-              onClick={handleFork}
-              disabled={busy}
-              className="mt-3 inline-flex items-center gap-2 rounded-lg border border-border px-3 py-1.5 font-sans text-xs font-semibold text-foreground hover:border-primary disabled:opacity-60"
-            >
-              <Copy className="h-3.5 w-3.5" /> Customize for my group
-            </button>
-          )}
-        </div>
-
-        <div className="grid gap-4 sm:grid-cols-2">
-          <div>
-            <label htmlFor="start" className="font-sans text-sm font-semibold text-foreground">
-              Start date
-            </label>
-            <input
-              id="start"
-              type="date"
-              value={startDate}
-              onChange={(e) => setStartDate(e.target.value)}
-              className="mt-2 w-full rounded-lg border border-border bg-background px-3 py-2 font-sans text-sm text-foreground outline-none focus:ring-2 focus:ring-primary"
-            />
-          </div>
-          <div>
-            <label htmlFor="end" className="font-sans text-sm font-semibold text-foreground">
-              End date
-            </label>
-            <input
-              id="end"
-              type="date"
-              value={endDate}
-              onChange={(e) => setEndDate(e.target.value)}
-              className="mt-2 w-full rounded-lg border border-border bg-background px-3 py-2 font-sans text-sm text-foreground outline-none focus:ring-2 focus:ring-primary"
-            />
-          </div>
-        </div>
-
-        <TooltipProvider delayDuration={150}>
-          <div>
-            <div className="flex items-center gap-2">
-              <p className="font-sans text-sm font-semibold text-foreground">Distribution</p>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <button
-                    type="button"
-                    aria-label="Distribution modes"
-                    className="text-muted-foreground hover:text-foreground focus:outline-none"
-                  >
-                    <Info className="h-4 w-4" />
-                  </button>
-                </TooltipTrigger>
-                <TooltipContent side="top" className="max-w-[260px]">
-                  <p className="font-sans text-xs text-popover-foreground">
-                    Same Dashakam for everyone: all participants chant the same dashakam on the same day. Dashakams
-                    split among participants: each dashakam is assigned to a different participant.
-                  </p>
-                </TooltipContent>
-              </Tooltip>
+        {isFinalized ? (
+          <div className="space-y-4">
+            <div className="rounded-xl border border-primary/20 bg-primary/5 p-4">
+              <p className="font-sans text-xs uppercase tracking-wide text-muted-foreground">Parayanam is live</p>
+              <p className="mt-1 font-display text-lg font-semibold text-foreground">
+                {session?.parayanam_name || "Parayanam"}
+              </p>
             </div>
-            <div className="mt-2 grid gap-3 sm:grid-cols-2">
-              {(
-                [
-                  ["synchronized", "Same Dashakam for everyone", ""],
-                  ["split", "Dashakams split among participants", ""],
-                ] as const
-              ).map(([value, label, hint]) => (
-                <button
-                  key={value}
-                  onClick={() => setMode(value)}
-                  className={`rounded-xl border p-4 text-left transition-colors ${
-                    mode === value ? "border-primary bg-secondary/40" : "border-border hover:border-primary"
-                  }`}
+
+            <div className="grid gap-4 sm:grid-cols-2">
+              <div>
+                <p className="font-sans text-xs uppercase tracking-wide text-muted-foreground">Dashakam set</p>
+                <p className="mt-1 font-sans text-sm text-foreground">
+                  {session?.dashakam_set_id
+                    ? sets.find((s) => s.id === session.dashakam_set_id)?.set_name ?? "Custom set"
+                    : session?.dashakam_list?.length
+                      ? `Custom selection (${session.dashakam_list.length} dashakams)`
+                      : "—"}
+                </p>
+              </div>
+              <div>
+                <p className="font-sans text-xs uppercase tracking-wide text-muted-foreground">Distribution</p>
+                <p className="mt-1 font-sans text-sm text-foreground">
+                  {mode === "synchronized" ? "Same Dashakam for everyone" : "Dashakams split among participants"}
+                </p>
+              </div>
+              <div>
+                <p className="font-sans text-xs uppercase tracking-wide text-muted-foreground">Start date</p>
+                <p className="mt-1 font-sans text-sm text-foreground">
+                  {session?.start_date
+                    ? new Date(`${session.start_date}T00:00:00Z`).toLocaleDateString("en-IN", {
+                        day: "numeric",
+                        month: "short",
+                        year: "numeric",
+                      })
+                    : "—"}
+                </p>
+              </div>
+              <div>
+                <p className="font-sans text-xs uppercase tracking-wide text-muted-foreground">End date</p>
+                <p className="mt-1 font-sans text-sm text-foreground">
+                  {session?.end_date
+                    ? new Date(`${session.end_date}T00:00:00Z`).toLocaleDateString("en-IN", {
+                        day: "numeric",
+                        month: "short",
+                        year: "numeric",
+                      })
+                    : "—"}
+                </p>
+              </div>
+            </div>
+
+            <div>
+              <p className="font-sans text-xs uppercase tracking-wide text-muted-foreground">Confirmed participants</p>
+              <ul className="mt-2 space-y-1">
+                {participants.filter((p) => p.status === "confirmed").length === 0 ? (
+                  <li className="font-sans text-sm text-muted-foreground">No confirmed participants yet.</li>
+                ) : (
+                  participants
+                    .filter((p) => p.status === "confirmed")
+                    .map((p) => (
+                      <li key={p.user_id} className="font-sans text-sm text-foreground">
+                        {members.find((m) => m.user_id === p.user_id)?.display_name ?? "Member"}
+                      </li>
+                    ))
+                )}
+              </ul>
+            </div>
+
+            {notice && <p className="font-sans text-sm text-primary">{notice}</p>}
+          </div>
+        ) : (
+          <>
+            <div>
+              <label htmlFor="parayanam-name" className="font-sans text-sm font-semibold text-foreground">
+                Parayanam name <span className="font-normal text-muted-foreground">(optional)</span>
+              </label>
+              <input
+                id="parayanam-name"
+                type="text"
+                maxLength={80}
+                value={parayanamName}
+                onChange={(e) => setParayanamName(e.target.value)}
+                placeholder="Diwali 2026 Parayanam"
+                className="mt-2 w-full rounded-lg border border-border bg-background px-3 py-2 font-sans text-sm text-foreground outline-none focus:ring-2 focus:ring-primary"
+              />
+            </div>
+
+            <div>
+              <label htmlFor="set" className="font-sans text-sm font-semibold text-foreground">
+                Dashakam set
+              </label>
+              {loadingSets ? (
+                <Loader2 className="mt-2 h-5 w-5 animate-spin text-primary" />
+              ) : (
+                <select
+                  id="set"
+                  value={setId}
+                  onChange={(e) => setSetId(e.target.value)}
+                  className="mt-2 w-full rounded-lg border border-border bg-background px-3 py-2 font-sans text-sm text-foreground outline-none focus:ring-2 focus:ring-primary"
                 >
-                  <span className="font-sans text-sm font-semibold text-foreground">{label}</span>
-                  <span className="mt-1 block font-sans text-xs text-muted-foreground">{hint}</span>
+                  {sets.map((s) => (
+                    <option key={s.id} value={s.id}>
+                      {s.set_name} ({s.dashakam_list.length} dashakams)
+                      {s.is_official ? "" : " · yours"}
+                    </option>
+                  ))}
+                </select>
+              )}
+              {selectedSet?.description && (
+                <p className="mt-2 font-sans text-xs text-muted-foreground">{selectedSet.description}</p>
+              )}
+              {selectedSet?.is_official && (
+                <button
+                  onClick={handleFork}
+                  disabled={busy}
+                  className="mt-3 inline-flex items-center gap-2 rounded-lg border border-border px-3 py-1.5 font-sans text-xs font-semibold text-foreground hover:border-primary disabled:opacity-60"
+                >
+                  <Copy className="h-3.5 w-3.5" /> Customize for my group
                 </button>
-              ))}
+              )}
             </div>
-          </div>
-        </TooltipProvider>
 
-        <ParticipantPicker
-          members={members}
-          ownerId={group.owner_id}
-          selected={selectedParticipants}
-          onToggle={(id) =>
-            setSelectedParticipants((prev) =>
-              prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]
-            )
-          }
-          includeSelf={includeSelf}
-          onIncludeSelfChange={setIncludeSelf}
-        />
+            <div className="grid gap-4 sm:grid-cols-2">
+              <div>
+                <label htmlFor="start" className="font-sans text-sm font-semibold text-foreground">
+                  Start date
+                </label>
+                <input
+                  id="start"
+                  type="date"
+                  value={startDate}
+                  onChange={(e) => setStartDate(e.target.value)}
+                  className="mt-2 w-full rounded-lg border border-border bg-background px-3 py-2 font-sans text-sm text-foreground outline-none focus:ring-2 focus:ring-primary"
+                />
+              </div>
+              <div>
+                <label htmlFor="end" className="font-sans text-sm font-semibold text-foreground">
+                  End date
+                </label>
+                <input
+                  id="end"
+                  type="date"
+                  value={endDate}
+                  onChange={(e) => setEndDate(e.target.value)}
+                  className="mt-2 w-full rounded-lg border border-border bg-background px-3 py-2 font-sans text-sm text-foreground outline-none focus:ring-2 focus:ring-primary"
+                />
+              </div>
+            </div>
 
-        {participants.length > 0 && (
-          <div>
-            <p className="font-sans text-sm font-semibold text-foreground">Invite status</p>
-            <ul className="mt-2 space-y-1">
-              {members.map((m) => {
-                const st = statusFor(m.user_id);
-                return (
-                  <li key={m.user_id} className="flex items-center justify-between gap-3">
-                    <span className="font-sans text-sm text-foreground">{m.display_name}</span>
-                    <span className="rounded-full bg-secondary px-2 py-0.5 font-sans text-[10px] uppercase tracking-wide text-secondary-foreground">
-                      {st ? STATUS_LABEL[st] : "Not invited"}
-                    </span>
-                  </li>
-                );
-              })}
-            </ul>
-          </div>
-        )}
+            <TooltipProvider delayDuration={150}>
+              <div>
+                <div className="flex items-center gap-2">
+                  <p className="font-sans text-sm font-semibold text-foreground">Distribution</p>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <button
+                        type="button"
+                        aria-label="Distribution modes"
+                        className="text-muted-foreground hover:text-foreground focus:outline-none"
+                      >
+                        <Info className="h-4 w-4" />
+                      </button>
+                    </TooltipTrigger>
+                    <TooltipContent side="top" className="max-w-[260px]">
+                      <p className="font-sans text-xs text-popover-foreground">
+                        Same Dashakam for everyone: all participants chant the same dashakam on the same day. Dashakams
+                        split among participants: each dashakam is assigned to a different participant.
+                      </p>
+                    </TooltipContent>
+                  </Tooltip>
+                </div>
+                <div className="mt-2 grid gap-3 sm:grid-cols-2">
+                  {(
+                    [
+                      ["synchronized", "Same Dashakam for everyone", ""],
+                      ["split", "Dashakams split among participants", ""],
+                    ] as const
+                  ).map(([value, label, hint]) => (
+                    <button
+                      key={value}
+                      onClick={() => setMode(value)}
+                      className={`rounded-xl border p-4 text-left transition-colors ${
+                        mode === value ? "border-primary bg-secondary/40" : "border-border hover:border-primary"
+                      }`}
+                    >
+                      <span className="font-sans text-sm font-semibold text-foreground">{label}</span>
+                      <span className="mt-1 block font-sans text-xs text-muted-foreground">{hint}</span>
+                    </button>
+                  ))}
+                </div>
+              </div>
+            </TooltipProvider>
 
-        {soloWarning && (
-          <div className="rounded-xl border border-amber-200 bg-amber-50 p-4 dark:border-amber-900 dark:bg-amber-950/30">
-            <p className="font-sans text-sm text-amber-900 dark:text-amber-100">
-              You're the only member in this group right now — this parayanam will run solo until others join. You can invite members from the group page.
-            </p>
-            <Link
-              to={`/groups/${group.id}#invite`}
-              className="mt-2 inline-block font-sans text-sm font-semibold text-primary hover:underline"
+            <ParticipantPicker
+              members={members}
+              ownerId={group.owner_id}
+              selected={selectedParticipants}
+              onToggle={(id) =>
+                setSelectedParticipants((prev) =>
+                  prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]
+                )
+              }
+              includeSelf={includeSelf}
+              onIncludeSelfChange={setIncludeSelf}
+            />
+
+            {participants.length > 0 && (
+              <div>
+                <p className="font-sans text-sm font-semibold text-foreground">Invite status</p>
+                <ul className="mt-2 space-y-1">
+                  {members.map((m) => {
+                    const st = statusFor(m.user_id);
+                    return (
+                      <li key={m.user_id} className="flex items-center justify-between gap-3">
+                        <span className="font-sans text-sm text-foreground">{m.display_name}</span>
+                        <span className="rounded-full bg-secondary px-2 py-0.5 font-sans text-[10px] uppercase tracking-wide text-secondary-foreground">
+                          {st ? STATUS_LABEL[st] : "Not invited"}
+                        </span>
+                      </li>
+                    );
+                  })}
+                </ul>
+              </div>
+            )}
+
+            {soloWarning && (
+              <div className="rounded-xl border border-amber-200 bg-amber-50 p-4 dark:border-amber-900 dark:bg-amber-950/30">
+                <p className="font-sans text-sm text-amber-900 dark:text-amber-100">
+                  You're the only member in this group right now — this parayanam will run solo until others join. You can invite members from the group page.
+                </p>
+                <Link
+                  to={`/groups/${group.id}#invite`}
+                  className="mt-2 inline-block font-sans text-sm font-semibold text-primary hover:underline"
+                >
+                  Invite members →
+                </Link>
+              </div>
+            )}
+
+            <button
+              onClick={handleGenerate}
+              disabled={busy || !selectedSet}
+              className="inline-flex items-center gap-2 rounded-lg bg-gradient-peacock px-4 py-2 font-sans text-sm font-semibold text-primary-foreground hover:opacity-90 disabled:opacity-60"
             >
-              Invite members →
-            </Link>
-          </div>
+              {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4" />}
+              {soloWarning ? "Continue anyway" : "Save & invite"}
+            </button>
+
+            {error && <p className="font-sans text-sm text-destructive">{error}</p>}
+            {notice && <p className="font-sans text-sm text-primary">{notice}</p>}
+          </>
         )}
-
-        <button
-          onClick={handleGenerate}
-          disabled={busy || !selectedSet}
-          className="inline-flex items-center gap-2 rounded-lg bg-gradient-peacock px-4 py-2 font-sans text-sm font-semibold text-primary-foreground hover:opacity-90 disabled:opacity-60"
-        >
-          {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4" />}
-          {soloWarning ? "Continue anyway" : "Save & invite"}
-        </button>
-
-        {error && <p className="font-sans text-sm text-destructive">{error}</p>}
-        {notice && <p className="font-sans text-sm text-primary">{notice}</p>}
       </section>
 
       <section className="mt-8">
