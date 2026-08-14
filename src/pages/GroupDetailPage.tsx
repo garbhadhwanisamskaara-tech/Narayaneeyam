@@ -20,6 +20,9 @@ import DashakamGarden from "@/components/DashakamGarden";
 import { useGroupGarden } from "@/hooks/useGarden";
 import GroupBloomsSection from "@/components/GroupBloomsSection";
 import GroupDangerZone from "@/components/GroupDangerZone";
+import PendingInvitesSection from "@/components/PendingInvitesSection";
+import PushRemindersPrompt from "@/components/PushRemindersPrompt";
+import { useSessionParticipants, type ParticipantStatus } from "@/hooks/useParayanamParticipants";
 import {
   Dialog,
   DialogContent,
@@ -31,6 +34,12 @@ import {
 
 
 // Copy for the "How group parayanam works" help panel. Kept in one place so it is easy to tweak after review.
+const STATUS_LABEL: Record<ParticipantStatus, string> = {
+  invited: "Invited",
+  confirmed: "Confirmed",
+  declined: "Declined",
+};
+
 const HELP_COPY = {
   owner: {
     title: "If you're the owner",
@@ -68,6 +77,7 @@ export default function GroupDetailPage() {
     removeMember,
   } = useGroupMembers(groupId, group?.active_challenge_session_id);
   const { blooms: gardenBlooms, loading: gardenLoading } = useGroupGarden(groupId);
+  const { statusFor } = useSessionParticipants(group?.active_challenge_session_id);
 
 
 
@@ -215,6 +225,10 @@ export default function GroupDetailPage() {
             </Dialog>
           </div>
 
+          <PendingInvitesSection groupId={groupId} />
+
+          <PushRemindersPrompt />
+
           {isOwner && (
             <section className="mt-6 rounded-2xl border border-border bg-card p-5 shadow-peacock">
               <h2 className="font-display text-lg font-semibold text-foreground">Parayanam Schedule</h2>
@@ -283,10 +297,17 @@ export default function GroupDetailPage() {
                           </span>
                         )}
                       </p>
-                      <p className="font-sans text-xs text-muted-foreground">
-                        {group.active_challenge_session_id
-                          ? `${m.completed}${target ? ` / ${target}` : ""} dashakams completed`
-                          : "No active parayanam yet"}
+                      <p className="flex flex-wrap items-center gap-2 font-sans text-xs text-muted-foreground">
+                        <span>
+                          {group.active_challenge_session_id
+                            ? `${m.completed}${target ? ` / ${target}` : ""} dashakams completed`
+                            : "No active parayanam yet"}
+                        </span>
+                        {group.active_challenge_session_id && (
+                          <span className="rounded-full bg-secondary px-2 py-0.5 text-[10px] uppercase tracking-wide text-secondary-foreground">
+                            {statusFor(m.user_id) ? STATUS_LABEL[statusFor(m.user_id)!] : "Not invited"}
+                          </span>
+                        )}
                       </p>
                     </div>
                     {isOwner && m.user_id !== group.owner_id && (

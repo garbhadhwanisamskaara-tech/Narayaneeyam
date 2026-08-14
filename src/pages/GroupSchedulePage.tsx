@@ -6,7 +6,19 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useGroupMembers, type Group } from "@/hooks/useGroups";
 import { useDashakamSets, type DashakamSet } from "@/hooks/useDashakamSets";
 import { useParayanamSchedule, type DistributionMode } from "@/hooks/useParayanamSchedule";
+import {
+  inviteParticipants,
+  useSessionParticipants,
+  type ParticipantStatus,
+} from "@/hooks/useParayanamParticipants";
+import ParticipantPicker from "@/components/ParticipantPicker";
 import SEO from "@/components/SEO";
+
+const STATUS_LABEL: Record<ParticipantStatus, string> = {
+  invited: "Invited",
+  confirmed: "Confirmed",
+  declined: "Declined",
+};
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 const today = () => new Date().toISOString().slice(0, 10);
@@ -30,10 +42,15 @@ export default function GroupSchedulePage() {
   const [error, setError] = useState<string | null>(null);
   const [soloWarning, setSoloWarning] = useState(false);
   const [notice, setNotice] = useState<string | null>(null);
+  const [selectedParticipants, setSelectedParticipants] = useState<string[]>([]);
+  const [includeSelf, setIncludeSelf] = useState(true);
 
   const { sets, loading: loadingSets, forkSet } = useDashakamSets();
   const { members } = useGroupMembers(groupId, group?.active_challenge_session_id);
-  const { rows, loading: loadingRows, generate, updateRow, refresh } = useParayanamSchedule(
+  const { rows, loading: loadingRows, updateRow, refresh } = useParayanamSchedule(
+    group?.active_challenge_session_id
+  );
+  const { participants, statusFor, refresh: refreshParticipants } = useSessionParticipants(
     group?.active_challenge_session_id
   );
 
@@ -67,6 +84,14 @@ export default function GroupSchedulePage() {
 
   const isOwner = !!user && !!group && group.owner_id === user.id;
   const memberIds = members.map((m) => m.user_id);
+
+  useEffect(() => {
+    if (!user) return;
+    setSelectedParticipants((prev) =>
+      prev.length ? prev : memberIds.filter((id) => id !== user.id)
+    );
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [members.length, user?.id]);
   const nameFor = (id: string | null) =>
     id ? members.find((m) => m.user_id === id)?.display_name ?? "Member" : "Everyone";
 
@@ -137,11 +162,15 @@ export default function GroupSchedulePage() {
         setGroup({ ...group, active_challenge_session_id: sessionId });
       }
 
-      await generate(sessionId!, selectedSet.dashakam_list, startDate, endDate, mode, memberIds);
+      await inviteParticipants(sessionId!, selectedParticipants, includeSelf ? user!.id : null);
       await refresh();
-      setNotice("Schedule created. You can reassign any row below.");
+      await refreshParticipants();
+      setSoloWarning(false);
+      setNotice(
+        "Invites sent. The day-by-day schedule is prepared automatically when the parayanam begins."
+      );
     } catch (e: any) {
-      setError(e?.message ?? "Could not create the schedule.");
+      setError(e?.message ?? "Could not save the parayanam.");
     } finally {
       setBusy(false);
     }
@@ -291,6 +320,38 @@ export default function GroupSchedulePage() {
           </div>
         </TooltipProvider>
 
+        <ParticipantPicker
+          members={members}
+          ownerId={group.owner_id}
+          selected={selectedParticipants}
+          onToggle={(id) =>
+            setSelectedParticipants((prev) =>
+              prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]
+            )
+          }
+          includeSelf={includeSelf}
+          onIncludeSelfChange={setIncludeSelf}
+        />
+
+        {participants.length > 0 && (
+          <div>
+            <p className="font-sans text-sm font-semibold text-foreground">Invite status</p>
+            <ul className="mt-2 space-y-1">
+              {members.map((m) => {
+                const st = statusFor(m.user_id);
+                return (
+                  <li key={m.user_id} className="flex items-center justify-between gap-3">
+                    <span className="font-sans text-sm text-foreground">{m.display_name}</span>
+                    <span className="rounded-full bg-secondary px-2 py-0.5 font-sans text-[10px] uppercase tracking-wide text-secondary-foreground">
+                      {st ? STATUS_LABEL[st] : "Not invited"}
+                    </span>
+                  </li>
+                );
+              })}
+            </ul>
+          </div>
+        )}
+
         {soloWarning && (
           <div className="rounded-xl border border-amber-200 bg-amber-50 p-4 dark:border-amber-900 dark:bg-amber-950/30">
             <p className="font-sans text-sm text-amber-900 dark:text-amber-100">
@@ -311,7 +372,7 @@ export default function GroupSchedulePage() {
           className="inline-flex items-center gap-2 rounded-lg bg-gradient-peacock px-4 py-2 font-sans text-sm font-semibold text-primary-foreground hover:opacity-90 disabled:opacity-60"
         >
           {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4" />}
-          {soloWarning ? "Continue anyway" : rows.length ? "Regenerate schedule" : "Create schedule"}
+          {soloWarning ? "Continue anyway" : "Save & invite"}
         </button>
 
         {error && <p className="font-sans text-sm text-destructive">{error}</p>}
@@ -326,7 +387,7 @@ export default function GroupSchedulePage() {
           <Loader2 className="mt-4 h-5 w-5 animate-spin text-primary" />
         ) : rows.length === 0 ? (
           <p className="mt-3 font-sans text-sm text-muted-foreground">
-            No schedule yet — choose a set and timeline above.
+            The day-by-day schedule is prepared automatically on the start date, once invites are settled.
           </p>
         ) : (
           <div className="mt-3 overflow-x-auto rounded-2xl border border-border bg-card">
