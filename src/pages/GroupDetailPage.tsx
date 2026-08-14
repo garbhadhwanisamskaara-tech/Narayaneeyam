@@ -298,6 +298,16 @@ export default function GroupDetailPage() {
                 >
                   Create a Parayanam
                 </Link>
+                {canStartNow && (
+                  <button
+                    onClick={handleStartNow}
+                    disabled={starting}
+                    className="inline-flex items-center gap-2 rounded-lg border border-primary px-4 py-2 font-sans text-sm font-semibold text-primary hover:bg-primary/10 disabled:opacity-60"
+                  >
+                    {starting ? <Loader2 className="h-4 w-4 animate-spin" /> : <PlayCircle className="h-4 w-4" />}
+                    Start parayanam now
+                  </button>
+                )}
               </div>
             </section>
           )}
@@ -305,6 +315,7 @@ export default function GroupDetailPage() {
           <div className="mt-6">
             <DashakamGarden
               blooms={gardenBlooms}
+              dashakamNumbers={dashakamNumbers}
               title="Group Dashakam Garden"
               loading={gardenLoading}
             />
@@ -315,14 +326,29 @@ export default function GroupDetailPage() {
             isOwner={isOwner}
             activeChallengeSessionId={group.active_challenge_session_id}
             ownerName={ownerName}
+            refreshKey={refreshKey}
           />
 
 
 
 
           <section className="mt-6 rounded-2xl border border-border bg-card p-5 shadow-peacock">
-            <h2 className="font-display text-lg font-semibold text-foreground">Members</h2>
-            {loadingMembers ? (
+            <button
+              type="button"
+              onClick={() => setMembersOpen((v) => !v)}
+              aria-expanded={membersOpen}
+              className="flex w-full items-center justify-between gap-3 text-left"
+            >
+              <h2 className="font-display text-lg font-semibold text-foreground">
+                Members{members.length ? ` (${members.length})` : ""}
+              </h2>
+              {membersOpen ? (
+                <ChevronUp className="h-4 w-4 text-muted-foreground" />
+              ) : (
+                <ChevronDown className="h-4 w-4 text-muted-foreground" />
+              )}
+            </button>
+            {!membersOpen ? null : loadingMembers ? (
               <Loader2 className="mt-4 h-5 w-5 animate-spin text-primary" />
             ) : members.length === 0 ? (
               <p className="mt-3 font-sans text-sm text-muted-foreground">
@@ -350,7 +376,7 @@ export default function GroupDetailPage() {
                             ? `${m.completed}${target ? ` / ${target}` : ""} dashakams completed`
                             : "No active parayanam yet"}
                         </span>
-                        {group.active_challenge_session_id && (
+                        {isOwner && group.active_challenge_session_id && (
                           <span className="rounded-full bg-secondary px-2 py-0.5 text-[10px] uppercase tracking-wide text-secondary-foreground">
                             {statusFor(m.user_id) ? STATUS_LABEL[statusFor(m.user_id)!] : "Not invited"}
                           </span>
@@ -371,7 +397,7 @@ export default function GroupDetailPage() {
                 ))}
               </ul>
             )}
-            {members.length === 1 && (
+            {membersOpen && members.length === 1 && (
               <p className="mt-3 font-sans text-xs text-muted-foreground">
                 Invite others to join this group's parayanam.
               </p>
@@ -429,7 +455,14 @@ export default function GroupDetailPage() {
             </section>
           )}
 
-          <GroupDangerZone groupId={group.id} groupName={group.group_name} isOwner={isOwner} />
+          <div className="mt-6">
+            <Link
+              to={`/groups/${group.id}/settings`}
+              className="inline-flex items-center gap-2 rounded-lg border border-border px-4 py-2 font-sans text-sm font-semibold text-muted-foreground hover:border-primary hover:text-foreground"
+            >
+              <Settings className="h-4 w-4" /> Manage group
+            </Link>
+          </div>
 
         </>
       )}
