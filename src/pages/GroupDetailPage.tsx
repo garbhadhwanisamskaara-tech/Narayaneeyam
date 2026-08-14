@@ -207,24 +207,29 @@ export default function GroupDetailPage() {
                     A quick guide to chanting together.
                   </DialogDescription>
                 </DialogHeader>
-                <div className="mt-2 space-y-4">
-                  <div>
-                    <h3 className="font-display text-sm font-semibold text-foreground">{HELP_COPY.owner.title}</h3>
-                    <ul className="mt-2 list-disc space-y-1.5 pl-4 font-sans text-sm text-muted-foreground">
-                      {HELP_COPY.owner.steps.map((s, i) => (
-                        <li key={i}>{s}</li>
-                      ))}
-                    </ul>
-                  </div>
-                  <div>
-                    <h3 className="font-display text-sm font-semibold text-foreground">{HELP_COPY.member.title}</h3>
-                    <ul className="mt-2 list-disc space-y-1.5 pl-4 font-sans text-sm text-muted-foreground">
-                      {HELP_COPY.member.steps.map((s, i) => (
-                        <li key={i}>{s}</li>
-                      ))}
-                    </ul>
-                  </div>
+                <div className="mt-2 grid grid-cols-1 gap-6 md:grid-cols-2">
+                  {[HELP_COPY.owner, HELP_COPY.member].map((column) => (
+                    <div key={column.title}>
+                      <h3 className="font-display text-sm font-semibold text-foreground">{column.title}</h3>
+                      <div className="mt-3 space-y-3">
+                        {column.rows.map((row, i) => (
+                          <div key={i} className="flex items-start gap-3">
+                            <span className="flex h-5 w-5 shrink-0 items-center justify-center text-base leading-none" aria-hidden="true">
+                              {row.icon}
+                            </span>
+                            <div className="flex min-w-0 flex-col">
+                              <span className="font-sans text-sm font-semibold text-foreground">{row.title}</span>
+                              <span className="font-sans text-xs text-muted-foreground">{row.subtitle}</span>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  ))}
                 </div>
+                <p className="mt-5 text-center font-sans text-xs text-muted-foreground">
+                  {HELP_COPY.closing}
+                </p>
               </DialogContent>
             </Dialog>
           </div>
