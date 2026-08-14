@@ -138,24 +138,7 @@ export default function CreateParayanamPage() {
       }
 
       if (isGroup) {
-          assigned =
-            distribution === "manual"
-              ? manualAssign[keyFor(p.scheduled_date, p.dashakam_no)] ?? null
-              : memberIds.length
-                ? memberIds[i % memberIds.length]
-                : null;
-        }
-        return {
-          challenge_session_id: session.id,
-          dashakam_no: p.dashakam_no,
-          scheduled_date: p.scheduled_date,
-          assigned_user_id: assigned,
-          is_manual_override: isGroup && distribution === "manual",
-        };
-      });
 
-      const { error: schErr } = await (supabase as any).from("parayanam_schedule").insert(rows);
-      if (schErr) throw new Error(schErr.message);
 
       if (isGroup) {
         const { data: g } = await (supabase as any)
