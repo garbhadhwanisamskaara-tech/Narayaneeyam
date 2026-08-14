@@ -50,9 +50,14 @@ export async function inviteParticipants(
   }
   if (!rows.length) return;
 
-  const { error } = await (supabase as any)
+  // Replace any earlier invites for these people on this parayanam.
+  await (supabase as any)
     .from("parayanam_participants")
-    .upsert(rows, { onConflict: "challenge_session_id,user_id" });
+    .delete()
+    .eq("challenge_session_id", sessionId)
+    .in("user_id", rows.map((r) => r.user_id as string));
+
+  const { error } = await (supabase as any).from("parayanam_participants").insert(rows);
   if (error) throw new Error(error.message);
 }
 
