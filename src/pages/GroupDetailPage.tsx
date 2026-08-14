@@ -171,10 +171,11 @@ export default function GroupDetailPage() {
   // Prefer the live schedule the garden loaded; fall back to the session's list.
   const gardenNumbers = gardenDashakams.length ? gardenDashakams : (dashakamNumbers ?? []);
 
-  /** A completion write must refresh the garden, its header count and the schedule views together. */
+  /** A completion write must refresh the garden, its header count, the schedule views and the member counts together. */
   const handleTapDashakam = async (dashakamNo: number) => {
     await toggleDashakam(dashakamNo);
     setRefreshKey((k) => k + 1);
+    await refreshMembers();
   };
 
   const run = async (fn: () => Promise<unknown>) => {
