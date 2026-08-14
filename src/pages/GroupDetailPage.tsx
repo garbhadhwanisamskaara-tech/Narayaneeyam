@@ -318,12 +318,21 @@ export default function GroupDetailPage() {
           )}
 
           <div className="mt-6">
-            <DashakamGarden
-              blooms={gardenBlooms}
-              dashakamNumbers={dashakamNumbers}
-              title="Group Dashakam Garden"
-              loading={gardenLoading}
-            />
+            {!!group.active_challenge_session_id && !!dashakamNumbers && dashakamNumbers.length > 0 ? (
+              <DashakamGarden
+                blooms={gardenBlooms}
+                dashakamNumbers={dashakamNumbers}
+                title="Group Dashakam Garden"
+                loading={gardenLoading}
+              />
+            ) : (
+              <div className="rounded-2xl border border-border bg-card p-5 shadow-peacock">
+                <h2 className="font-display text-xl font-bold text-foreground">Group Dashakam Garden</h2>
+                <p className="mt-1 font-sans text-sm text-muted-foreground">
+                  No parayanam running yet — the garden will appear once one starts.
+                </p>
+              </div>
+            )}
           </div>
 
           <GroupBloomsSection
