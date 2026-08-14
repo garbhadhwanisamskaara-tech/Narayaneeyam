@@ -139,8 +139,6 @@ export default function CreateParayanamPage() {
 
       if (isGroup) {
 
-
-      if (isGroup) {
         const { data: g } = await (supabase as any)
           .from("groups")
           .select("active_challenge_session_id")
