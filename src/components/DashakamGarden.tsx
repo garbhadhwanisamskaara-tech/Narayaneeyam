@@ -93,7 +93,7 @@ export default function DashakamGarden({
         <div>
           <h2 className="font-display text-xl font-bold text-foreground">{title}</h2>
           <p className="font-sans text-sm text-muted-foreground">
-            {loading ? "Tending the garden…" : (subtitle ?? `${bloomed} of 100 lotuses in full bloom`)}
+            {loading ? "Tending the garden…" : (subtitle ?? `${bloomed} of ${total} lotuses in full bloom`)}
           </p>
         </div>
       </div>
