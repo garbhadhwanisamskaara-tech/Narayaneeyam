@@ -7,6 +7,7 @@ export interface ActiveGroupSession {
   end_date: string | null;
   dashakam_set_id: string | null;
   dashakams_target: number;
+  parayanam_name: string | null;
   set_name: string;
 }
 
@@ -20,7 +21,7 @@ const fmt = (d: string | null) =>
     : "open-ended";
 
 export function sessionLabel(s: ActiveGroupSession) {
-  return `${s.set_name} · ${fmt(s.start_date)} – ${fmt(s.end_date)}`;
+  return `${s.parayanam_name || s.set_name} · ${fmt(s.start_date)} – ${fmt(s.end_date)}`;
 }
 
 /** All ACTIVE group parayanams for a group, with their dashakam set name. */
@@ -37,7 +38,7 @@ export function useGroupActiveSessions(groupId: string | undefined) {
     setLoading(true);
     const { data } = await (supabase as any)
       .from("challenge_sessions")
-      .select("id, start_date, end_date, dashakam_set_id, dashakams_target")
+      .select("id, start_date, end_date, dashakam_set_id, dashakams_target, parayanam_name")
       .eq("group_id", groupId)
       .in("challenge_type", ["group_standard", "group_relay"])
       .eq("technical_state", "ACTIVE")
