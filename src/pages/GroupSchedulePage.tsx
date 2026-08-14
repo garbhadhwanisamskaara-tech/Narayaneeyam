@@ -114,8 +114,12 @@ export default function GroupSchedulePage() {
   }, [group?.active_challenge_session_id]);
 
   useEffect(() => {
-    if (!setId && sets.length) setSetId(sets[0].id);
-  }, [sets, setId]);
+    if (session?.dashakam_set_id && sets.some((s) => s.id === session.dashakam_set_id)) {
+      setSetId(session.dashakam_set_id);
+    } else if (!setId && sets.length) {
+      setSetId(sets[0].id);
+    }
+  }, [sets, setId, session?.dashakam_set_id]);
 
   const selectedSet: DashakamSet | undefined = useMemo(
     () => sets.find((s) => s.id === setId),
