@@ -105,14 +105,20 @@ export default function DashakamGarden({
   title = "Dashakam Garden",
   subtitle,
   loading,
+  tiles,
+  onTapDashakam,
+  pendingDashakam,
 }: Props) {
+  const interactive = !!tiles;
   const [expanded, setExpanded] = useState(false);
+  const showGrid = interactive || expanded;
 
   const numbers =
     dashakamNumbers && dashakamNumbers.length > 0
       ? [...dashakamNumbers].sort((a, b) => a - b)
       : Array.from({ length: 100 }, (_, i) => i + 1);
   const total = numbers.length;
+
 
   const bloomed = numbers.filter((n) => (blooms.get(n) ?? 0) >= 100).length;
 
