@@ -40,23 +40,27 @@ const STATUS_LABEL: Record<ParticipantStatus, string> = {
   declined: "Declined",
 };
 
-const HELP_COPY = {
+type HelpRow = { icon: string; title: string; subtitle: string };
+type HelpColumn = { title: string; rows: HelpRow[] };
+
+const HELP_COPY: { owner: HelpColumn; member: HelpColumn; closing: string } = {
   owner: {
     title: "If you're the owner",
-    steps: [
-      "Plan a parayanam: pick a dashakam set, a date range, and whether the group is Synchronized (everyone does the same dashakam each day) or Split (dashakams are shared out across members).",
-      "Invite members using the Share Invite link.",
-      "Track progress from the member list and the Dashakam Garden below.",
+    rows: [
+      { icon: "📋", title: "Plan", subtitle: "Dashakams, dates, Sync or Split" },
+      { icon: "📩", title: "Invite", subtitle: "Pick who's invited" },
+      { icon: "📈", title: "Track", subtitle: "Member list & garden" },
     ],
   },
   member: {
     title: "If you're a member",
-    steps: [
-      "Your assigned dashakams appear as tiles you can tap.",
-      "Tap a tile once you've completed that dashakam (listening or reading) to mark it done — this can't be undone automatically, so only mark it once you're actually done.",
-      "The Dashakam Garden fills in as the whole group completes each dashakam — it reflects everyone's progress together, not just yours.",
+    rows: [
+      { icon: "📅", title: "See your dashakam", subtitle: "Appears as a tile" },
+      { icon: "🙏", title: "Chant or read", subtitle: "At your own pace" },
+      { icon: "✅", title: "Tap when done", subtitle: "Marks it complete" },
     ],
   },
+  closing: "The garden reflects everyone's progress together, not just yours.",
 };
 
 export default function GroupDetailPage() {
@@ -203,24 +207,29 @@ export default function GroupDetailPage() {
                     A quick guide to chanting together.
                   </DialogDescription>
                 </DialogHeader>
-                <div className="mt-2 space-y-4">
-                  <div>
-                    <h3 className="font-display text-sm font-semibold text-foreground">{HELP_COPY.owner.title}</h3>
-                    <ul className="mt-2 list-disc space-y-1.5 pl-4 font-sans text-sm text-muted-foreground">
-                      {HELP_COPY.owner.steps.map((s, i) => (
-                        <li key={i}>{s}</li>
-                      ))}
-                    </ul>
-                  </div>
-                  <div>
-                    <h3 className="font-display text-sm font-semibold text-foreground">{HELP_COPY.member.title}</h3>
-                    <ul className="mt-2 list-disc space-y-1.5 pl-4 font-sans text-sm text-muted-foreground">
-                      {HELP_COPY.member.steps.map((s, i) => (
-                        <li key={i}>{s}</li>
-                      ))}
-                    </ul>
-                  </div>
+                <div className="mt-2 grid grid-cols-1 gap-6 md:grid-cols-2">
+                  {[HELP_COPY.owner, HELP_COPY.member].map((column) => (
+                    <div key={column.title}>
+                      <h3 className="font-display text-sm font-semibold text-foreground">{column.title}</h3>
+                      <div className="mt-3 space-y-3">
+                        {column.rows.map((row, i) => (
+                          <div key={i} className="flex items-start gap-3">
+                            <span className="flex h-5 w-5 shrink-0 items-center justify-center text-base leading-none" aria-hidden="true">
+                              {row.icon}
+                            </span>
+                            <div className="flex min-w-0 flex-col">
+                              <span className="font-sans text-sm font-semibold text-foreground">{row.title}</span>
+                              <span className="font-sans text-xs text-muted-foreground">{row.subtitle}</span>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  ))}
                 </div>
+                <p className="mt-5 text-center font-sans text-xs text-muted-foreground">
+                  {HELP_COPY.closing}
+                </p>
               </DialogContent>
             </Dialog>
           </div>
