@@ -66,7 +66,7 @@ export default function ChallengeCreationPage() {
     try {
       const sessionPayload = {
         user_id: user.id,
-        mode: "chant",
+        mode: "daily",
         challenge_type: "personal",
         start_date: startDate,
         end_date: endDate,
