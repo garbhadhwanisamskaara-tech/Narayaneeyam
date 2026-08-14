@@ -53,19 +53,28 @@ function GardenCell({ num, percent }: { num: number; percent: number }) {
   );
 }
 
-export default function DashakamGarden({ blooms, title = "Dashakam Garden", subtitle, loading }: Props) {
+export default function DashakamGarden({
+  blooms,
+  dashakamNumbers,
+  title = "Dashakam Garden",
+  subtitle,
+  loading,
+}: Props) {
   const [expanded, setExpanded] = useState(false);
 
-  const bloomed = Array.from(blooms.values()).filter((v) => v >= 100).length;
+  const numbers =
+    dashakamNumbers && dashakamNumbers.length > 0
+      ? [...dashakamNumbers].sort((a, b) => a - b)
+      : Array.from({ length: 100 }, (_, i) => i + 1);
+  const total = numbers.length;
+
+  const bloomed = numbers.filter((n) => (blooms.get(n) ?? 0) >= 100).length;
 
   // The next dashakam not yet fully bloomed — what the compact view leads with.
-  let nextNum = 1;
-  for (let i = 1; i <= 100; i++) {
-    if ((blooms.get(i) ?? 0) < 100) {
-      nextNum = i;
-      break;
-    }
-    nextNum = i;
+  let nextNum = numbers[0];
+  for (const n of numbers) {
+    nextNum = n;
+    if ((blooms.get(n) ?? 0) < 100) break;
   }
   const nextPercent = blooms.get(nextNum) ?? 0;
 
