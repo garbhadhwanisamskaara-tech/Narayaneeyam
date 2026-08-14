@@ -34,6 +34,16 @@ export default function GroupSchedulePage() {
 
   const [group, setGroup] = useState<Group | null>(null);
   const [loadingGroup, setLoadingGroup] = useState(true);
+  const [session, setSession] = useState<{
+    id: string;
+    parayanam_name: string | null;
+    finalized_at: string | null;
+    dashakam_set_id: string | null;
+    dashakam_list: number[];
+    start_date: string;
+    end_date: string;
+    challenge_type: string;
+  } | null>(null);
   const [parayanamName, setParayanamName] = useState("");
   const [setId, setSetId] = useState<string>("");
   const [startDate, setStartDate] = useState(today());
@@ -45,6 +55,7 @@ export default function GroupSchedulePage() {
   const [notice, setNotice] = useState<string | null>(null);
   const [selectedParticipants, setSelectedParticipants] = useState<string[]>([]);
   const [includeSelf, setIncludeSelf] = useState(true);
+  const isFinalized = !!session?.finalized_at;
 
   const { sets, loading: loadingSets, forkSet } = useDashakamSets();
   const { members } = useGroupMembers(groupId, group?.active_challenge_session_id);
