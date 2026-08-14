@@ -25,6 +25,7 @@ import { useGroupGarden } from "@/hooks/useGarden";
 import GroupBloomsSection from "@/components/GroupBloomsSection";
 import PendingInvitesSection from "@/components/PendingInvitesSection";
 import PushRemindersPrompt from "@/components/PushRemindersPrompt";
+import ParayanamScheduleViews from "@/components/ParayanamScheduleViews";
 import { toast } from "@/hooks/use-toast";
 import { useSessionParticipants, type ParticipantStatus } from "@/hooks/useParayanamParticipants";
 import {
@@ -79,6 +80,7 @@ export default function GroupDetailPage() {
   const [dashakamNumbers, setDashakamNumbers] = useState<number[] | undefined>(undefined);
   const [sessionStartDate, setSessionStartDate] = useState<string | null>(null);
   const [sessionFinalizedAt, setSessionFinalizedAt] = useState<string | null>(null);
+  const [parayanamName, setParayanamName] = useState<string | null>(null);
   const [starting, setStarting] = useState(false);
   const [refreshKey, setRefreshKey] = useState(0);
   const [membersOpen, setMembersOpen] = useState(true);
@@ -121,7 +123,7 @@ export default function GroupDetailPage() {
     (async () => {
       const { data } = await (supabase as any)
         .from("challenge_sessions")
-        .select("dashakams_target, dashakam_list, start_date, finalized_at")
+        .select("dashakams_target, dashakam_list, start_date, finalized_at, parayanam_name")
         .eq("id", sessionId)
         .maybeSingle();
       if (!cancelled) {
@@ -132,6 +134,7 @@ export default function GroupDetailPage() {
         setDashakamNumbers(list && list.length ? list : undefined);
         setSessionStartDate(data?.start_date ?? null);
         setSessionFinalizedAt(data?.finalized_at ?? null);
+        setParayanamName(data?.parayanam_name ?? null);
       }
     })();
     return () => {
@@ -278,7 +281,9 @@ export default function GroupDetailPage() {
 
           {isOwner && (
             <section className="mt-6 rounded-2xl border border-border bg-card p-5 shadow-peacock">
-              <h2 className="font-display text-lg font-semibold text-foreground">Parayanam Schedule</h2>
+              <h2 className="font-display text-lg font-semibold text-foreground">
+                {group.active_challenge_session_id ? parayanamName || "Parayanam" : "Parayanam"} Schedule
+              </h2>
               <p className="mt-1 font-sans text-sm text-muted-foreground">
                 {group.active_challenge_session_id
                   ? "Review or reassign the dashakams for your group."
@@ -326,6 +331,11 @@ export default function GroupDetailPage() {
             isOwner={isOwner}
             activeChallengeSessionId={group.active_challenge_session_id}
             ownerName={ownerName}
+            refreshKey={refreshKey}
+          />
+
+          <ParayanamScheduleViews
+            challengeSessionId={group.active_challenge_session_id}
             refreshKey={refreshKey}
           />
 

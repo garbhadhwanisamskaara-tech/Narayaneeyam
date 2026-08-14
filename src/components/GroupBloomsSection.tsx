@@ -39,7 +39,7 @@ export default function GroupBloomsSection({
     <section className="mt-6 rounded-2xl border border-border bg-card p-5">
       <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
         <h2 className="flex items-center gap-2 font-display text-lg font-semibold text-foreground">
-          <Sprout className="h-5 w-5 text-secondary" /> Parayanam Progress
+          <Sprout className="h-5 w-5 text-secondary" /> {active?.parayanam_name || "Parayanam"} Progress
         </h2>
         {sessions.length > 1 && (
           <select
@@ -83,7 +83,7 @@ export default function GroupBloomsSection({
           </p>
         )
       ) : (
-        <BudGrid key={`${active.id}-${refreshKey}`} challengeSessionId={active.id} showOwnerTools={isOwner} parayanamName={active.set_name} />
+        <BudGrid key={`${active.id}-${refreshKey}`} challengeSessionId={active.id} showOwnerTools={isOwner} parayanamName={active.parayanam_name || active.set_name} />
       )}
     </section>
   );
