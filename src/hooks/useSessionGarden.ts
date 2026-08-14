@@ -17,6 +17,8 @@ export interface GardenTile {
   scheduleIds: string[];
   /** Rows the current user has completed. */
   mineDone: number;
+  /** Schedule row ids the current user has completed. */
+  mineRowIds: string[];
   /** Completions recorded by anyone. */
   done: number;
   /** Expected completions once everyone confirmed has chanted it. */
@@ -114,6 +116,7 @@ export function useSessionGarden(sessionId: string | null | undefined) {
         dashakam_no: no,
         scheduleIds: list.map((r) => r.id),
         mineDone,
+        mineRowIds: list.filter((r) => mineRows.has(r.id)).map((r) => r.id),
         done,
         total,
         canTap,
@@ -147,9 +150,13 @@ export function useSessionGarden(sessionId: string | null | undefined) {
       if (!eligible.length) return;
       const undo = tile.mineDone >= eligible.length;
       setPending(dashakamNo);
+      const mine = new Set(tile.mineRowIds);
       for (const row of eligible) {
-        if (undo) await unmarkDashakamComplete(row.id);
-        else await markDashakamComplete(row.id);
+        if (undo) {
+          if (mine.has(row.id)) await unmarkDashakamComplete(row.id);
+        } else if (!mine.has(row.id)) {
+          await markDashakamComplete(row.id);
+        }
       }
       setPending(null);
       await refresh();
