@@ -104,7 +104,7 @@ export default function CreateParayanamPage() {
         .insert({
           user_id: user.id,
           group_id: groupId ?? null,
-          mode: "chant",
+          mode: "daily",
           challenge_type: isGroup
             ? distribution === "synchronized"
               ? "group_standard"

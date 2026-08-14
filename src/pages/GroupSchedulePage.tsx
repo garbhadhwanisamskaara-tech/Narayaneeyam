@@ -129,7 +129,7 @@ export default function GroupSchedulePage() {
       const sessionPayload = {
         user_id: user!.id,
         group_id: group.id,
-        mode: "chant",
+        mode: "daily",
         challenge_type: mode === "synchronized" ? "group_standard" : "group_relay",
         start_date: startDate,
         end_date: endDate,
