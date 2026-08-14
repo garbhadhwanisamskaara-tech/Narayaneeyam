@@ -83,7 +83,7 @@ export default function DashakamGarden({
   // this is a reasonable proxy: recently-worked-on numbers tend to cluster
   // near the current position.
   const recent = Array.from(blooms.entries())
-    .filter(([, pct]) => pct >= 100)
+    .filter(([num, pct]) => pct >= 100 && numbers.includes(num))
     .sort((a, b) => b[0] - a[0])
     .slice(0, 5);
 
