@@ -7,6 +7,8 @@ import { useDashakamSets } from "@/hooks/useDashakamSets";
 import { prefetchDashakamList } from "@/hooks/useDashakam";
 import { useGroupMembers } from "@/hooks/useGroups";
 import { buildSchedule } from "@/hooks/useParayanamSchedule";
+import { inviteParticipants } from "@/hooks/useParayanamParticipants";
+import ParticipantPicker from "@/components/ParticipantPicker";
 import SEO from "@/components/SEO";
 
 const today = () => new Date().toISOString().slice(0, 10);
@@ -32,8 +34,9 @@ export default function CreateParayanamPage() {
   const [custom, setCustom] = useState<number[]>([]);
   const [startDate, setStartDate] = useState(today());
   const [endDate, setEndDate] = useState(plusDays(99));
-  const [distribution, setDistribution] = useState<"auto" | "manual">("auto");
-  const [manualAssign, setManualAssign] = useState<Record<string, string>>({});
+  const [distribution, setDistribution] = useState<"synchronized" | "split">("synchronized");
+  const [selectedParticipants, setSelectedParticipants] = useState<string[]>([]);
+  const [includeSelf, setIncludeSelf] = useState(true);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [soloWarning, setSoloWarning] = useState(false);
@@ -49,13 +52,20 @@ export default function CreateParayanamPage() {
     if (!setId && sets.length) setSetId(sets[0].id);
   }, [sets, setId]);
 
+  useEffect(() => {
+    if (!user) return;
+    setSelectedParticipants((prev) =>
+      prev.length ? prev : members.map((m) => m.user_id).filter((id) => id !== user.id)
+    );
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [members.length, user?.id]);
+
   const orderedSets = useMemo(
     () => [...sets].sort((a, b) => Number(b.is_official) - Number(a.is_official)),
     [sets]
   );
   const selectedSet = sets.find((s) => s.id === setId);
   const dashakams = setId === "custom" ? [...custom].sort((a, b) => a - b) : selectedSet?.dashakam_list ?? [];
-  const memberIds = members.map((m) => m.user_id);
 
   // Date-spread preview (assignment resolved at submit time)
   const planned = useMemo(
@@ -65,8 +75,6 @@ export default function CreateParayanamPage() {
         : [],
     [dashakams, startDate, endDate]
   );
-
-  const keyFor = (date: string, no: number) => `${date}#${no}`;
 
   const toggleCustom = (n: number) =>
     setCustom((prev) => (prev.includes(n) ? prev.filter((x) => x !== n) : [...prev, n]));
@@ -97,9 +105,11 @@ export default function CreateParayanamPage() {
           user_id: user.id,
           group_id: groupId ?? null,
           mode: "chant",
-          // Both "auto" and "manual" distribution assign dashakams across members,
-          // so group parayanams created here are relay-style.
-          challenge_type: isGroup ? "group_relay" : "personal",
+          challenge_type: isGroup
+            ? distribution === "synchronized"
+              ? "group_standard"
+              : "group_relay"
+            : "personal",
           start_date: startDate,
           end_date: endDate,
           technical_state: "ACTIVE",
@@ -112,9 +122,22 @@ export default function CreateParayanamPage() {
         .single();
       if (sErr) throw new Error(sErr.message);
 
-      const rows = planned.map((p, i) => {
-        let assigned: string | null = user.id;
-        if (isGroup) {
+      if (isGroup) {
+        // No schedule rows here — finalize_parayanam() builds them on the start date.
+        await inviteParticipants(session.id, selectedParticipants, includeSelf ? user.id : null);
+      } else {
+        const rows = planned.map((p) => ({
+          challenge_session_id: session.id,
+          dashakam_no: p.dashakam_no,
+          scheduled_date: p.scheduled_date,
+          assigned_user_id: user.id,
+          is_manual_override: false,
+        }));
+        const { error: schErr } = await (supabase as any).from("parayanam_schedule").insert(rows);
+        if (schErr) throw new Error(schErr.message);
+      }
+
+      if (isGroup) {
           assigned =
             distribution === "manual"
               ? manualAssign[keyFor(p.scheduled_date, p.dashakam_no)] ?? null
@@ -276,60 +299,42 @@ export default function CreateParayanamPage() {
         )}
 
         {step === 3 && isGroup && (
-          <div>
-            <p className="font-sans text-sm font-semibold text-foreground">How should dashakams be shared?</p>
-            <div className="mt-3 grid gap-3 sm:grid-cols-2">
-              {(
-                [
-                  ["auto", "Auto-distribute evenly", "Round-robin across members and days."],
-                  ["manual", "Assign manually", "Choose a member for each dashakam."],
-                ] as const
-              ).map(([value, label, hint]) => (
-                <button
-                  key={value}
-                  onClick={() => setDistribution(value)}
-                  className={`rounded-xl border p-4 text-left transition-colors ${
-                    distribution === value ? "border-primary bg-secondary/30" : "border-border hover:border-primary"
-                  }`}
-                >
-                  <span className="font-sans text-sm font-semibold text-foreground">{label}</span>
-                  <span className="mt-1 block font-sans text-xs text-muted-foreground">{hint}</span>
-                </button>
-              ))}
-            </div>
-
-            {distribution === "manual" && (
-              <div className="mt-5 max-h-96 space-y-2 overflow-y-auto pr-1">
-                {planned.map((p) => (
-                  <div
-                    key={keyFor(p.scheduled_date, p.dashakam_no)}
-                    className="flex items-center justify-between gap-3 rounded-lg border border-border px-3 py-2"
+          <div className="space-y-5">
+            <div>
+              <p className="font-sans text-sm font-semibold text-foreground">How should dashakams be shared?</p>
+              <div className="mt-3 grid gap-3 sm:grid-cols-2">
+                {(
+                  [
+                    ["synchronized", "Synchronized", "Everyone chants the same dashakam each day."],
+                    ["split", "Split", "Dashakams are shared among the members."],
+                  ] as const
+                ).map(([value, label, hint]) => (
+                  <button
+                    key={value}
+                    onClick={() => setDistribution(value)}
+                    className={`rounded-xl border p-4 text-left transition-colors ${
+                      distribution === value ? "border-primary bg-secondary/30" : "border-border hover:border-primary"
+                    }`}
                   >
-                    <span className="font-sans text-xs text-foreground">
-                      {p.scheduled_date} · Dashakam {p.dashakam_no}
-                    </span>
-                    <select
-                      aria-label={`Assign dashakam ${p.dashakam_no}`}
-                      value={manualAssign[keyFor(p.scheduled_date, p.dashakam_no)] ?? ""}
-                      onChange={(e) =>
-                        setManualAssign((prev) => ({
-                          ...prev,
-                          [keyFor(p.scheduled_date, p.dashakam_no)]: e.target.value,
-                        }))
-                      }
-                      className="rounded-lg border border-border bg-background px-2 py-1 font-sans text-xs text-foreground"
-                    >
-                      <option value="">Everyone</option>
-                      {members.map((m) => (
-                        <option key={m.user_id} value={m.user_id}>
-                          {m.display_name}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
+                    <span className="font-sans text-sm font-semibold text-foreground">{label}</span>
+                    <span className="mt-1 block font-sans text-xs text-muted-foreground">{hint}</span>
+                  </button>
                 ))}
               </div>
-            )}
+            </div>
+
+            <ParticipantPicker
+              members={members}
+              ownerId={user?.id}
+              selected={selectedParticipants}
+              onToggle={(id) =>
+                setSelectedParticipants((prev) =>
+                  prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]
+                )
+              }
+              includeSelf={includeSelf}
+              onIncludeSelfChange={setIncludeSelf}
+            />
           </div>
         )}
 
@@ -372,7 +377,7 @@ export default function CreateParayanamPage() {
               className="inline-flex items-center gap-2 rounded-lg bg-gradient-gold px-5 py-2 font-sans text-sm font-semibold text-primary shadow-gold disabled:opacity-50"
             >
               {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4" />}
-              {soloWarning ? "Continue anyway" : "Begin Parayanam"}
+              {soloWarning ? "Continue anyway" : isGroup ? "Save & invite" : "Begin Parayanam"}
             </button>
           )}
         </div>
