@@ -3,6 +3,7 @@ import { Info } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useCompleteDashakam } from "@/hooks/useCompleteDashakam";
+import { useSessionParticipants } from "@/hooks/useParayanamParticipants";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
 
@@ -11,7 +12,6 @@ interface BudRow {
   dashakam_no: number;
   scheduled_date: string;
   assigned_user_id: string | null;
-  completed: boolean;
 }
 
 interface MemberInfo {
@@ -47,10 +47,24 @@ function BudIcon({ bloomed }: { bloomed: boolean }) {
 
 export default function BudGrid({ challengeSessionId, showOwnerTools = false, parayanamName }: BudGridProps) {
   const { user } = useAuth();
-  const { markDashakamComplete, pendingId } = useCompleteDashakam();
+  const { markDashakamComplete, unmarkDashakamComplete, pendingId } = useCompleteDashakam();
+  const { participants } = useSessionParticipants(challengeSessionId);
   const [rows, setRows] = useState<BudRow[]>([]);
   const [members, setMembers] = useState<Record<string, MemberInfo>>({});
+  /** schedule_id → whether the current user has completed it */
+  const [mine, setMine] = useState<Set<string>>(new Set());
+  /** schedule_id → how many people have completed it */
+  const [counts, setCounts] = useState<Record<string, number>>({});
   const [loading, setLoading] = useState(true);
+
+  const confirmedCount = useMemo(
+    () => participants.filter((p) => p.status === "confirmed").length,
+    [participants]
+  );
+  const isConfirmedParticipant = useMemo(
+    () => !!user && participants.some((p) => p.user_id === user.id && p.status === "confirmed"),
+    [participants, user]
+  );
 
   useEffect(() => {
     let active = true;
@@ -63,18 +77,39 @@ export default function BudGrid({ challengeSessionId, showOwnerTools = false, pa
       setLoading(true);
       const { data } = await (supabase as any)
         .from("parayanam_schedule")
-        .select("id, dashakam_no, scheduled_date, assigned_user_id, completed")
+        .select("id, dashakam_no, scheduled_date, assigned_user_id")
         .eq("challenge_session_id", challengeSessionId)
         .order("scheduled_date", { ascending: true })
         .order("dashakam_no", { ascending: true });
       if (!active) return;
-      setRows(((data ?? []) as BudRow[]).map((r) => ({ ...r, completed: !!r.completed })));
+      const scheduleRows = (data ?? []) as BudRow[];
+      setRows(scheduleRows);
+
+      const ids = scheduleRows.map((r) => r.id);
+      if (ids.length) {
+        const { data: progress } = await (supabase as any)
+          .from("parayanam_member_progress")
+          .select("schedule_id, user_id")
+          .in("schedule_id", ids);
+        if (!active) return;
+        const mineSet = new Set<string>();
+        const countMap: Record<string, number> = {};
+        for (const p of (progress ?? []) as { schedule_id: string; user_id: string }[]) {
+          countMap[p.schedule_id] = (countMap[p.schedule_id] ?? 0) + 1;
+          if (user && p.user_id === user.id) mineSet.add(p.schedule_id);
+        }
+        setMine(mineSet);
+        setCounts(countMap);
+      } else {
+        setMine(new Set());
+        setCounts({});
+      }
       setLoading(false);
     })();
     return () => {
       active = false;
     };
-  }, [challengeSessionId]);
+  }, [challengeSessionId, user?.id]);
 
   const assignedIds = useMemo(
     () => Array.from(new Set(rows.map((r) => r.assigned_user_id).filter(Boolean))) as string[],
@@ -101,15 +136,41 @@ export default function BudGrid({ challengeSessionId, showOwnerTools = false, pa
     };
   }, [showOwnerTools, assignedIds]);
 
+  /** Split mode: only the assigned chanter. Synchronized: any confirmed participant. */
+  const canTap = useCallback(
+    (row: BudRow) => {
+      if (!user) return false;
+      if (row.assigned_user_id) return row.assigned_user_id === user.id;
+      return isConfirmedParticipant;
+    },
+    [user, isConfirmedParticipant]
+  );
+
   const handleClick = useCallback(
     async (row: BudRow) => {
-      if (row.completed || !user || row.assigned_user_id !== user.id) return;
+      if (!canTap(row)) return;
+      const done = mine.has(row.id);
       // optimistic bloom
-      setRows((prev) => prev.map((r) => (r.id === row.id ? { ...r, completed: true } : r)));
-      const ok = await markDashakamComplete(row.id);
-      if (!ok) setRows((prev) => prev.map((r) => (r.id === row.id ? { ...r, completed: false } : r)));
+      setMine((prev) => {
+        const next = new Set(prev);
+        if (done) next.delete(row.id);
+        else next.add(row.id);
+        return next;
+      });
+      setCounts((prev) => ({ ...prev, [row.id]: Math.max(0, (prev[row.id] ?? 0) + (done ? -1 : 1)) }));
+
+      const ok = done ? await unmarkDashakamComplete(row.id) : await markDashakamComplete(row.id);
+      if (!ok) {
+        setMine((prev) => {
+          const next = new Set(prev);
+          if (done) next.add(row.id);
+          else next.delete(row.id);
+          return next;
+        });
+        setCounts((prev) => ({ ...prev, [row.id]: Math.max(0, (prev[row.id] ?? 0) + (done ? 1 : -1)) }));
+      }
     },
-    [user, markDashakamComplete]
+    [canTap, mine, markDashakamComplete, unmarkDashakamComplete]
   );
 
   const mailto = (email: string | null, kind: "reminder" | "thanks", dashakam: number, name: string) => {
@@ -136,37 +197,50 @@ export default function BudGrid({ challengeSessionId, showOwnerTools = false, pa
   }
 
   if (rows.length === 0) {
-    return <p className="text-sm text-muted-foreground font-sans">No dashakams scheduled yet.</p>;
+    return (
+      <p className="text-sm text-muted-foreground font-sans">
+        The day-by-day schedule is prepared automatically when this parayanam begins.
+      </p>
+    );
   }
 
   const renderBud = (row: BudRow) => {
-    const mine = !!user && row.assigned_user_id === user.id;
-    const clickable = mine && !row.completed;
+    const done = mine.has(row.id);
+    const clickable = canTap(row);
+    const total = counts[row.id] ?? 0;
     return (
       <button
         key={row.id}
         type="button"
         disabled={!clickable || pendingId === row.id}
         onClick={() => handleClick(row)}
-        aria-label={`Dashakam ${row.dashakam_no}${row.completed ? " — bloomed" : ""}`}
+        aria-label={`Dashakam ${row.dashakam_no}${done ? " — completed by you" : ""}${
+          total ? ` — ${total}${confirmedCount ? ` of ${confirmedCount}` : ""} done` : ""
+        }`}
         className={cn(
           "relative flex aspect-square flex-col items-center justify-center rounded-xl border transition-all duration-300",
-          row.completed
+          done
             ? "border-secondary/50 bg-secondary/10 text-secondary shadow-gold scale-[1.04]"
             : "border-border bg-muted/40 text-muted-foreground",
           clickable && "cursor-pointer hover:border-secondary/60 hover:scale-105",
           !clickable && "cursor-default"
         )}
       >
-        <BudIcon bloomed={row.completed} />
+        <BudIcon bloomed={done} />
         <span
           className={cn(
             "font-display text-[11px] font-semibold leading-none",
-            row.completed ? "text-secondary" : "text-muted-foreground"
+            done ? "text-secondary" : "text-muted-foreground"
           )}
         >
           {row.dashakam_no}
         </span>
+        {total > 0 && (
+          <span className="mt-0.5 font-sans text-[9px] leading-none text-muted-foreground">
+            {total}
+            {confirmedCount ? `/${confirmedCount}` : ""}
+          </span>
+        )}
       </button>
     );
   };
@@ -176,7 +250,7 @@ export default function BudGrid({ challengeSessionId, showOwnerTools = false, pa
       {rows.map((row) => {
         if (!showOwnerTools) return renderBud(row);
         const member = row.assigned_user_id ? members[row.assigned_user_id] : undefined;
-        const name = member?.display_name || "Unassigned";
+        const name = member?.display_name || "Everyone";
         return (
           <Tooltip key={row.id}>
             <TooltipTrigger asChild>
@@ -185,7 +259,8 @@ export default function BudGrid({ challengeSessionId, showOwnerTools = false, pa
             <TooltipContent side="top" className="max-w-[240px]">
               <p className="font-display text-xs font-semibold text-foreground">{name}</p>
               <p className="text-[11px] text-muted-foreground font-sans mb-2">
-                {member?.email || "email not available"}
+                {(counts[row.id] ?? 0)}
+                {confirmedCount ? ` of ${confirmedCount}` : ""} done
               </p>
               <div className="flex gap-3">
                 <a
@@ -221,7 +296,8 @@ export default function BudGrid({ challengeSessionId, showOwnerTools = false, pa
       </TooltipTrigger>
       <TooltipContent side="top" className="max-w-[260px]">
         <p className="font-sans text-xs text-popover-foreground">
-          Tap a dashakam once you've completed it — listening or reading — to mark it done for the group.
+          Tap a dashakam once you've completed it — listening or reading — to mark it done for yourself. Tap again to
+          undo. The small number shows how many in the group have finished it.
         </p>
       </TooltipContent>
     </Tooltip>
