@@ -52,7 +52,7 @@ const HELP_COPY: { owner: HelpColumn; member: HelpColumn; closing: string } = {
   owner: {
     title: "If you're the owner",
     rows: [
-      { icon: "📋", title: "Plan", subtitle: "Dashakams, dates, Sync or Split" },
+      { icon: "📋", title: "Plan", subtitle: "Dashakams, dates, sharing mode" },
       { icon: "📩", title: "Invite", subtitle: "Pick who's invited" },
       { icon: "📈", title: "Track", subtitle: "Member list & garden" },
     ],

@@ -328,8 +328,8 @@ export default function GroupSchedulePage() {
                 </TooltipTrigger>
                 <TooltipContent side="top" className="max-w-[260px]">
                   <p className="font-sans text-xs text-popover-foreground">
-                    Synchronized: everyone chants the same dashakam on the same day. Split: dashakams are divided up
-                    across members.
+                    Same Dashakam for everyone: all participants chant the same dashakam on the same day. Dashakams
+                    split among participants: each dashakam is assigned to a different participant.
                   </p>
                 </TooltipContent>
               </Tooltip>
@@ -337,8 +337,8 @@ export default function GroupSchedulePage() {
             <div className="mt-2 grid gap-3 sm:grid-cols-2">
               {(
                 [
-                  ["synchronized", "Synchronized", "Everyone chants the same dashakam each day."],
-                  ["split", "Split", "Dashakams are shared among the members."],
+                  ["synchronized", "Same Dashakam for everyone", ""],
+                  ["split", "Dashakams split among participants", ""],
                 ] as const
               ).map(([value, label, hint]) => (
                 <button
