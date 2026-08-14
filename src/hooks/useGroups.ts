@@ -171,25 +171,33 @@ export function useGroupMembers(groupId: string | undefined, sessionId: string |
     const rows = (data ?? []) as Omit<GroupMember, "display_name" | "completed">[];
     const ids = rows.map((r) => r.user_id);
 
-    const [profRes, progRes] = await Promise.all([
+    const [profRes, scheduleRes] = await Promise.all([
       ids.length
         ? (supabase as any).from("profiles").select("id, display_name, email").in("id", ids)
         : Promise.resolve({ data: [] }),
       sessionId && ids.length
         ? (supabase as any)
-            .from("user_progress")
-            .select("user_id, dashakam_no")
+            .from("parayanam_schedule")
+            .select("id")
             .eq("challenge_session_id", sessionId)
-            .in("user_id", ids)
         : Promise.resolve({ data: [] }),
     ]);
 
     const nameById = new Map<string, string>(
       (profRes.data ?? []).map((p: any) => [p.id, p.display_name ?? p.email ?? "Member"])
     );
+
+    const scheduleIds = ((scheduleRes.data ?? []) as any[]).map((r) => r.id as string);
     const counts = new Map<string, number>();
-    for (const row of (progRes.data ?? []) as any[]) {
-      counts.set(row.user_id, (counts.get(row.user_id) ?? 0) + 1);
+    if (scheduleIds.length) {
+      const { data: progRows } = await (supabase as any)
+        .from("parayanam_member_progress")
+        .select("user_id, schedule_id")
+        .in("schedule_id", scheduleIds)
+        .in("user_id", ids);
+      for (const row of (progRows ?? []) as any[]) {
+        counts.set(row.user_id, (counts.get(row.user_id) ?? 0) + 1);
+      }
     }
 
     setError(null);
