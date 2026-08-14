@@ -5,6 +5,8 @@ import { getDashakamName } from "@/hooks/useDashakam";
 interface Props {
   /** Bloom percent (0–100) keyed by dashakam number. Missing = closed bud. */
   blooms: Map<number, number>;
+  /** Dashakams actually in this parayanam. Defaults to all 100. */
+  dashakamNumbers?: number[];
   title?: string;
   subtitle?: string;
   loading?: boolean;
@@ -51,19 +53,28 @@ function GardenCell({ num, percent }: { num: number; percent: number }) {
   );
 }
 
-export default function DashakamGarden({ blooms, title = "Dashakam Garden", subtitle, loading }: Props) {
+export default function DashakamGarden({
+  blooms,
+  dashakamNumbers,
+  title = "Dashakam Garden",
+  subtitle,
+  loading,
+}: Props) {
   const [expanded, setExpanded] = useState(false);
 
-  const bloomed = Array.from(blooms.values()).filter((v) => v >= 100).length;
+  const numbers =
+    dashakamNumbers && dashakamNumbers.length > 0
+      ? [...dashakamNumbers].sort((a, b) => a - b)
+      : Array.from({ length: 100 }, (_, i) => i + 1);
+  const total = numbers.length;
+
+  const bloomed = numbers.filter((n) => (blooms.get(n) ?? 0) >= 100).length;
 
   // The next dashakam not yet fully bloomed — what the compact view leads with.
-  let nextNum = 1;
-  for (let i = 1; i <= 100; i++) {
-    if ((blooms.get(i) ?? 0) < 100) {
-      nextNum = i;
-      break;
-    }
-    nextNum = i;
+  let nextNum = numbers[0];
+  for (const n of numbers) {
+    nextNum = n;
+    if ((blooms.get(n) ?? 0) < 100) break;
   }
   const nextPercent = blooms.get(nextNum) ?? 0;
 
@@ -72,7 +83,7 @@ export default function DashakamGarden({ blooms, title = "Dashakam Garden", subt
   // this is a reasonable proxy: recently-worked-on numbers tend to cluster
   // near the current position.
   const recent = Array.from(blooms.entries())
-    .filter(([, pct]) => pct >= 100)
+    .filter(([num, pct]) => pct >= 100 && numbers.includes(num))
     .sort((a, b) => b[0] - a[0])
     .slice(0, 5);
 
@@ -82,7 +93,7 @@ export default function DashakamGarden({ blooms, title = "Dashakam Garden", subt
         <div>
           <h2 className="font-display text-xl font-bold text-foreground">{title}</h2>
           <p className="font-sans text-sm text-muted-foreground">
-            {loading ? "Tending the garden…" : (subtitle ?? `${bloomed} of 100 lotuses in full bloom`)}
+            {loading ? "Tending the garden…" : (subtitle ?? `${bloomed} of ${total} lotuses in full bloom`)}
           </p>
         </div>
       </div>
@@ -115,7 +126,7 @@ export default function DashakamGarden({ blooms, title = "Dashakam Garden", subt
         </div>
       ) : (
         <div className="grid grid-cols-10 gap-1 sm:gap-2">
-          {Array.from({ length: 100 }, (_, i) => i + 1).map((num) => (
+          {numbers.map((num) => (
             <GardenCell key={num} num={num} percent={blooms.get(num) ?? 0} />
           ))}
         </div>

@@ -11,6 +11,10 @@ import {
   CalendarDays,
   UserMinus,
   HelpCircle,
+  ChevronDown,
+  ChevronUp,
+  Settings,
+  PlayCircle,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
@@ -19,9 +23,9 @@ import SEO from "@/components/SEO";
 import DashakamGarden from "@/components/DashakamGarden";
 import { useGroupGarden } from "@/hooks/useGarden";
 import GroupBloomsSection from "@/components/GroupBloomsSection";
-import GroupDangerZone from "@/components/GroupDangerZone";
 import PendingInvitesSection from "@/components/PendingInvitesSection";
 import PushRemindersPrompt from "@/components/PushRemindersPrompt";
+import { toast } from "@/hooks/use-toast";
 import { useSessionParticipants, type ParticipantStatus } from "@/hooks/useParayanamParticipants";
 import {
   Dialog,
@@ -72,6 +76,12 @@ export default function GroupDetailPage() {
   const [busy, setBusy] = useState(false);
   const [actionError, setActionError] = useState<string | null>(null);
   const [target, setTarget] = useState<number | null>(null);
+  const [dashakamNumbers, setDashakamNumbers] = useState<number[] | undefined>(undefined);
+  const [sessionStartDate, setSessionStartDate] = useState<string | null>(null);
+  const [sessionFinalizedAt, setSessionFinalizedAt] = useState<string | null>(null);
+  const [starting, setStarting] = useState(false);
+  const [refreshKey, setRefreshKey] = useState(0);
+  const [membersOpen, setMembersOpen] = useState(true);
   const [helpOpen, setHelpOpen] = useState(false);
 
   const { invite, loading, generateInvite, revokeInvite, regenerateInvite } = useGroupInvite(groupId);
@@ -80,7 +90,7 @@ export default function GroupDetailPage() {
     loading: loadingMembers,
     removeMember,
   } = useGroupMembers(groupId, group?.active_challenge_session_id);
-  const { blooms: gardenBlooms, loading: gardenLoading } = useGroupGarden(groupId);
+  const { blooms: gardenBlooms, loading: gardenLoading, refresh: refreshGarden } = useGroupGarden(groupId);
   const { statusFor } = useSessionParticipants(group?.active_challenge_session_id);
 
 
@@ -111,15 +121,23 @@ export default function GroupDetailPage() {
     (async () => {
       const { data } = await (supabase as any)
         .from("challenge_sessions")
-        .select("dashakams_target")
+        .select("dashakams_target, dashakam_list, start_date, finalized_at")
         .eq("id", sessionId)
         .maybeSingle();
-      if (!cancelled) setTarget(data?.dashakams_target ?? null);
+      if (!cancelled) {
+        setTarget(data?.dashakams_target ?? null);
+        const list = Array.isArray(data?.dashakam_list)
+          ? (data.dashakam_list as any[]).map(Number).filter((n) => Number.isFinite(n))
+          : undefined;
+        setDashakamNumbers(list && list.length ? list : undefined);
+        setSessionStartDate(data?.start_date ?? null);
+        setSessionFinalizedAt(data?.finalized_at ?? null);
+      }
     })();
     return () => {
       cancelled = true;
     };
-  }, [group?.active_challenge_session_id]);
+  }, [group?.active_challenge_session_id, refreshKey]);
 
   const isOwner = !!user && !!group && group.owner_id === user.id;
   const ownerMember = members.find((m) => m.user_id === group?.owner_id);
@@ -135,6 +153,26 @@ export default function GroupDetailPage() {
     } finally {
       setBusy(false);
     }
+  };
+
+  const todayISO = new Date().toISOString().slice(0, 10);
+  const canStartNow =
+    isOwner && !!group?.active_challenge_session_id && !!sessionStartDate && sessionStartDate <= todayISO && !sessionFinalizedAt;
+
+  const handleStartNow = async () => {
+    if (!group?.active_challenge_session_id) return;
+    setStarting(true);
+    const { error } = await (supabase as any).rpc("finalize_parayanam", {
+      p_session_id: group.active_challenge_session_id,
+    });
+    setStarting(false);
+    if (error) {
+      toast({ title: "Could not start the parayanam", description: error.message, variant: "destructive" });
+      return;
+    }
+    toast({ title: "Parayanam started", description: "The day-by-day schedule is ready." });
+    setRefreshKey((k) => k + 1);
+    await refreshGarden();
   };
 
   const handleCopy = async () => {
@@ -260,6 +298,16 @@ export default function GroupDetailPage() {
                 >
                   Create a Parayanam
                 </Link>
+                {canStartNow && (
+                  <button
+                    onClick={handleStartNow}
+                    disabled={starting}
+                    className="inline-flex items-center gap-2 rounded-lg border border-primary px-4 py-2 font-sans text-sm font-semibold text-primary hover:bg-primary/10 disabled:opacity-60"
+                  >
+                    {starting ? <Loader2 className="h-4 w-4 animate-spin" /> : <PlayCircle className="h-4 w-4" />}
+                    Start parayanam now
+                  </button>
+                )}
               </div>
             </section>
           )}
@@ -267,6 +315,7 @@ export default function GroupDetailPage() {
           <div className="mt-6">
             <DashakamGarden
               blooms={gardenBlooms}
+              dashakamNumbers={dashakamNumbers}
               title="Group Dashakam Garden"
               loading={gardenLoading}
             />
@@ -277,14 +326,29 @@ export default function GroupDetailPage() {
             isOwner={isOwner}
             activeChallengeSessionId={group.active_challenge_session_id}
             ownerName={ownerName}
+            refreshKey={refreshKey}
           />
 
 
 
 
           <section className="mt-6 rounded-2xl border border-border bg-card p-5 shadow-peacock">
-            <h2 className="font-display text-lg font-semibold text-foreground">Members</h2>
-            {loadingMembers ? (
+            <button
+              type="button"
+              onClick={() => setMembersOpen((v) => !v)}
+              aria-expanded={membersOpen}
+              className="flex w-full items-center justify-between gap-3 text-left"
+            >
+              <h2 className="font-display text-lg font-semibold text-foreground">
+                Members{members.length ? ` (${members.length})` : ""}
+              </h2>
+              {membersOpen ? (
+                <ChevronUp className="h-4 w-4 text-muted-foreground" />
+              ) : (
+                <ChevronDown className="h-4 w-4 text-muted-foreground" />
+              )}
+            </button>
+            {!membersOpen ? null : loadingMembers ? (
               <Loader2 className="mt-4 h-5 w-5 animate-spin text-primary" />
             ) : members.length === 0 ? (
               <p className="mt-3 font-sans text-sm text-muted-foreground">
@@ -312,7 +376,7 @@ export default function GroupDetailPage() {
                             ? `${m.completed}${target ? ` / ${target}` : ""} dashakams completed`
                             : "No active parayanam yet"}
                         </span>
-                        {group.active_challenge_session_id && (
+                        {isOwner && group.active_challenge_session_id && (
                           <span className="rounded-full bg-secondary px-2 py-0.5 text-[10px] uppercase tracking-wide text-secondary-foreground">
                             {statusFor(m.user_id) ? STATUS_LABEL[statusFor(m.user_id)!] : "Not invited"}
                           </span>
@@ -333,7 +397,7 @@ export default function GroupDetailPage() {
                 ))}
               </ul>
             )}
-            {members.length === 1 && (
+            {membersOpen && members.length === 1 && (
               <p className="mt-3 font-sans text-xs text-muted-foreground">
                 Invite others to join this group's parayanam.
               </p>
@@ -391,7 +455,14 @@ export default function GroupDetailPage() {
             </section>
           )}
 
-          <GroupDangerZone groupId={group.id} groupName={group.group_name} isOwner={isOwner} />
+          <div className="mt-6">
+            <Link
+              to={`/groups/${group.id}/settings`}
+              className="inline-flex items-center gap-2 rounded-lg border border-border px-4 py-2 font-sans text-sm font-semibold text-muted-foreground hover:border-primary hover:text-foreground"
+            >
+              <Settings className="h-4 w-4" /> Manage group
+            </Link>
+          </div>
 
         </>
       )}

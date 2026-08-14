@@ -29,6 +29,7 @@ import JoinGroupPage from "./pages/JoinGroupPage";
 import GroupsPage from "./pages/GroupsPage";
 import GroupDetailPage from "./pages/GroupDetailPage";
 import GroupSchedulePage from "./pages/GroupSchedulePage";
+import GroupSettingsPage from "./pages/GroupSettingsPage";
 
 
 import DevotionPathwaysPage from "./pages/DevotionPathwaysPage";
@@ -96,6 +97,7 @@ const App = () => {
                   <Route path="/groups" element={<GroupsPage />} />
                   <Route path="/groups/:groupId" element={<GroupDetailPage />} />
                   <Route path="/groups/:groupId/schedule" element={<GroupSchedulePage />} />
+                  <Route path="/groups/:groupId/settings" element={<GroupSettingsPage />} />
 
 
                   <Route path="/devotion-pathways" element={<DevotionPathwaysPage />} />
