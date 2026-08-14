@@ -8,6 +8,8 @@ export interface ActiveGroupSession {
   dashakam_set_id: string | null;
   dashakams_target: number;
   parayanam_name: string | null;
+  completed_at?: string | null;
+  technical_state?: string | null;
   set_name: string;
 }
 
