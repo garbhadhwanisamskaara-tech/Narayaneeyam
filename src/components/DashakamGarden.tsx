@@ -1,6 +1,13 @@
 import { useState } from "react";
 import { ChevronDown, ChevronUp } from "lucide-react";
 import { getDashakamName } from "@/hooks/useDashakam";
+import { cn } from "@/lib/utils";
+
+export interface GardenTileInfo {
+  done: number;
+  total: number;
+  canTap: boolean;
+}
 
 interface Props {
   /** Bloom percent (0–100) keyed by dashakam number. Missing = closed bud. */
@@ -10,6 +17,12 @@ interface Props {
   title?: string;
   subtitle?: string;
   loading?: boolean;
+  /** Per-dashakam completion fractions; enables the "x/y" label. */
+  tiles?: Map<number, GardenTileInfo>;
+  /** Tap-to-complete handler. Tiles are only tappable when tiles[n].canTap. */
+  onTapDashakam?: (dashakamNo: number) => void;
+  /** Dashakam currently being written. */
+  pendingDashakam?: number | null;
 }
 
 /**
@@ -42,16 +55,49 @@ function Lotus({ percent }: { percent: number }) {
   );
 }
 
-function GardenCell({ num, percent }: { num: number; percent: number }) {
+function GardenCell({
+  num,
+  percent,
+  tile,
+  onTap,
+  pending,
+}: {
+  num: number;
+  percent: number;
+  tile?: GardenTileInfo;
+  onTap?: (n: number) => void;
+  pending?: boolean;
+}) {
+  const clickable = !!tile?.canTap && !!onTap;
+  const label = tile && tile.total > 0 ? `${tile.done}/${tile.total}` : null;
   return (
-    <div
-      title={`${num}. ${getDashakamName(num)} — ${Math.round(percent)}% bloomed`}
-      className="relative aspect-square rounded-lg border border-border/60 bg-muted/40 p-0.5 transition-transform hover:scale-110"
+    <button
+      type="button"
+      disabled={!clickable || pending}
+      onClick={clickable ? () => onTap?.(num) : undefined}
+      title={`${num}. ${getDashakamName(num)} — ${Math.round(percent)}% bloomed${
+        label ? ` (${label} done)` : ""
+      }${clickable ? " — tap to mark done" : ""}`}
+      aria-label={`Dashakam ${num}${label ? `, ${label} done` : ""}${
+        clickable ? ", tap to mark complete" : ""
+      }`}
+      className={cn(
+        "relative flex aspect-square flex-col items-center justify-center rounded-lg border border-border/60 bg-muted/40 p-0.5 transition-transform",
+        clickable ? "cursor-pointer hover:scale-110 hover:border-primary/50" : "cursor-default hover:scale-110",
+        pending && "opacity-60"
+      )}
     >
-      <Lotus percent={percent} />
-    </div>
+      <span className="block w-full flex-1">
+        <Lotus percent={percent} />
+      </span>
+      <span className="font-display text-[9px] font-semibold leading-none text-muted-foreground">{num}</span>
+      {label && (
+        <span className="mt-0.5 font-sans text-[8px] leading-none text-muted-foreground">{label}</span>
+      )}
+    </button>
   );
 }
+
 
 export default function DashakamGarden({
   blooms,
@@ -59,14 +105,20 @@ export default function DashakamGarden({
   title = "Dashakam Garden",
   subtitle,
   loading,
+  tiles,
+  onTapDashakam,
+  pendingDashakam,
 }: Props) {
+  const interactive = !!tiles;
   const [expanded, setExpanded] = useState(false);
+  const showGrid = interactive || expanded;
 
   const numbers =
     dashakamNumbers && dashakamNumbers.length > 0
       ? [...dashakamNumbers].sort((a, b) => a - b)
       : Array.from({ length: 100 }, (_, i) => i + 1);
   const total = numbers.length;
+
 
   const bloomed = numbers.filter((n) => (blooms.get(n) ?? 0) >= 100).length;
 
@@ -98,7 +150,7 @@ export default function DashakamGarden({
         </div>
       </div>
 
-      {!expanded ? (
+      {!showGrid ? (
         <div className="flex flex-col items-center gap-4 py-2 sm:flex-row sm:items-center sm:justify-center sm:gap-8">
           {/* The lotus you're working toward, shown large */}
           <div className="flex flex-col items-center gap-2">
@@ -125,28 +177,43 @@ export default function DashakamGarden({
           )}
         </div>
       ) : (
-        <div className="grid grid-cols-10 gap-1 sm:gap-2">
+        <div className="grid grid-cols-5 gap-1 sm:grid-cols-10 sm:gap-2">
           {numbers.map((num) => (
-            <GardenCell key={num} num={num} percent={blooms.get(num) ?? 0} />
+            <GardenCell
+              key={num}
+              num={num}
+              percent={blooms.get(num) ?? 0}
+              tile={tiles?.get(num)}
+              onTap={onTapDashakam}
+              pending={pendingDashakam === num}
+            />
           ))}
         </div>
       )}
 
-      <button
-        type="button"
-        onClick={() => setExpanded((v) => !v)}
-        className="mt-4 flex w-full items-center justify-center gap-1.5 rounded-lg border border-border py-2 font-sans text-sm text-muted-foreground transition-colors hover:bg-muted"
-      >
-        {expanded ? (
-          <>
-            <ChevronUp className="h-4 w-4" /> Show less
-          </>
-        ) : (
-          <>
-            <ChevronDown className="h-4 w-4" /> View full Garden
-          </>
-        )}
-      </button>
+      {interactive ? (
+        <p className="mt-3 text-center font-sans text-xs text-muted-foreground">
+          Tap your lotus once you've chanted that dashakam — tap again to undo. The number shows how many in the
+          group have finished it.
+        </p>
+      ) : (
+        <button
+          type="button"
+          onClick={() => setExpanded((v) => !v)}
+          className="mt-4 flex w-full items-center justify-center gap-1.5 rounded-lg border border-border py-2 font-sans text-sm text-muted-foreground transition-colors hover:bg-muted"
+        >
+          {expanded ? (
+            <>
+              <ChevronUp className="h-4 w-4" /> Show less
+            </>
+          ) : (
+            <>
+              <ChevronDown className="h-4 w-4" /> View full Garden
+            </>
+          )}
+        </button>
+      )}
     </div>
   );
 }
+
