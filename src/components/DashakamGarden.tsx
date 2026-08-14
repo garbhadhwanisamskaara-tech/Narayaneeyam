@@ -5,6 +5,8 @@ import { getDashakamName } from "@/hooks/useDashakam";
 interface Props {
   /** Bloom percent (0–100) keyed by dashakam number. Missing = closed bud. */
   blooms: Map<number, number>;
+  /** Dashakams actually in this parayanam. Defaults to all 100. */
+  dashakamNumbers?: number[];
   title?: string;
   subtitle?: string;
   loading?: boolean;
