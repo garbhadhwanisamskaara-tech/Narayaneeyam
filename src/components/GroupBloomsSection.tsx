@@ -11,6 +11,8 @@ interface Props {
   activeChallengeSessionId?: string | null;
   /** Owner display name, used when a non-owner sees the empty state. */
   ownerName?: string | null;
+  /** Bump to force the schedule grid to refetch (e.g. after a manual start). */
+  refreshKey?: number;
 }
 
 /** Parayanam progress grid for a group, with a switcher when several parayanams run at once. */
@@ -19,6 +21,7 @@ export default function GroupBloomsSection({
   isOwner,
   activeChallengeSessionId,
   ownerName,
+  refreshKey = 0,
 }: Props) {
   const { sessions, loading } = useGroupActiveSessions(groupId);
   const [selectedId, setSelectedId] = useState<string>("");
@@ -80,7 +83,7 @@ export default function GroupBloomsSection({
           </p>
         )
       ) : (
-        <BudGrid challengeSessionId={active.id} showOwnerTools={isOwner} parayanamName={active.set_name} />
+        <BudGrid key={`${active.id}-${refreshKey}`} challengeSessionId={active.id} showOwnerTools={isOwner} parayanamName={active.set_name} />
       )}
     </section>
   );
