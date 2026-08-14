@@ -11,6 +11,10 @@ import {
   CalendarDays,
   UserMinus,
   HelpCircle,
+  ChevronDown,
+  ChevronUp,
+  Settings,
+  PlayCircle,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
@@ -19,9 +23,9 @@ import SEO from "@/components/SEO";
 import DashakamGarden from "@/components/DashakamGarden";
 import { useGroupGarden } from "@/hooks/useGarden";
 import GroupBloomsSection from "@/components/GroupBloomsSection";
-import GroupDangerZone from "@/components/GroupDangerZone";
 import PendingInvitesSection from "@/components/PendingInvitesSection";
 import PushRemindersPrompt from "@/components/PushRemindersPrompt";
+import { toast } from "@/hooks/use-toast";
 import { useSessionParticipants, type ParticipantStatus } from "@/hooks/useParayanamParticipants";
 import {
   Dialog,
@@ -72,6 +76,12 @@ export default function GroupDetailPage() {
   const [busy, setBusy] = useState(false);
   const [actionError, setActionError] = useState<string | null>(null);
   const [target, setTarget] = useState<number | null>(null);
+  const [dashakamNumbers, setDashakamNumbers] = useState<number[] | undefined>(undefined);
+  const [sessionStartDate, setSessionStartDate] = useState<string | null>(null);
+  const [sessionFinalizedAt, setSessionFinalizedAt] = useState<string | null>(null);
+  const [starting, setStarting] = useState(false);
+  const [refreshKey, setRefreshKey] = useState(0);
+  const [membersOpen, setMembersOpen] = useState(true);
   const [helpOpen, setHelpOpen] = useState(false);
 
   const { invite, loading, generateInvite, revokeInvite, regenerateInvite } = useGroupInvite(groupId);
@@ -80,7 +90,7 @@ export default function GroupDetailPage() {
     loading: loadingMembers,
     removeMember,
   } = useGroupMembers(groupId, group?.active_challenge_session_id);
-  const { blooms: gardenBlooms, loading: gardenLoading } = useGroupGarden(groupId);
+  const { blooms: gardenBlooms, loading: gardenLoading, refresh: refreshGarden } = useGroupGarden(groupId);
   const { statusFor } = useSessionParticipants(group?.active_challenge_session_id);
 
 
@@ -111,15 +121,23 @@ export default function GroupDetailPage() {
     (async () => {
       const { data } = await (supabase as any)
         .from("challenge_sessions")
-        .select("dashakams_target")
+        .select("dashakams_target, dashakam_list, start_date, finalized_at")
         .eq("id", sessionId)
         .maybeSingle();
-      if (!cancelled) setTarget(data?.dashakams_target ?? null);
+      if (!cancelled) {
+        setTarget(data?.dashakams_target ?? null);
+        const list = Array.isArray(data?.dashakam_list)
+          ? (data.dashakam_list as any[]).map(Number).filter((n) => Number.isFinite(n))
+          : undefined;
+        setDashakamNumbers(list && list.length ? list : undefined);
+        setSessionStartDate(data?.start_date ?? null);
+        setSessionFinalizedAt(data?.finalized_at ?? null);
+      }
     })();
     return () => {
       cancelled = true;
     };
-  }, [group?.active_challenge_session_id]);
+  }, [group?.active_challenge_session_id, refreshKey]);
 
   const isOwner = !!user && !!group && group.owner_id === user.id;
   const ownerMember = members.find((m) => m.user_id === group?.owner_id);
@@ -135,6 +153,26 @@ export default function GroupDetailPage() {
     } finally {
       setBusy(false);
     }
+  };
+
+  const todayISO = new Date().toISOString().slice(0, 10);
+  const canStartNow =
+    isOwner && !!group?.active_challenge_session_id && !!sessionStartDate && sessionStartDate <= todayISO && !sessionFinalizedAt;
+
+  const handleStartNow = async () => {
+    if (!group?.active_challenge_session_id) return;
+    setStarting(true);
+    const { error } = await (supabase as any).rpc("finalize_parayanam", {
+      p_session_id: group.active_challenge_session_id,
+    });
+    setStarting(false);
+    if (error) {
+      toast({ title: "Could not start the parayanam", description: error.message, variant: "destructive" });
+      return;
+    }
+    toast({ title: "Parayanam started", description: "The day-by-day schedule is ready." });
+    setRefreshKey((k) => k + 1);
+    await refreshGarden();
   };
 
   const handleCopy = async () => {
