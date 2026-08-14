@@ -126,7 +126,7 @@ export default function DashakamGarden({
         </div>
       ) : (
         <div className="grid grid-cols-10 gap-1 sm:gap-2">
-          {Array.from({ length: 100 }, (_, i) => i + 1).map((num) => (
+          {numbers.map((num) => (
             <GardenCell key={num} num={num} percent={blooms.get(num) ?? 0} />
           ))}
         </div>
