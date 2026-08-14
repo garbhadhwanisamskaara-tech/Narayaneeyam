@@ -92,10 +92,21 @@ export default function GroupSchedulePage() {
     (async () => {
       const { data } = await (supabase as any)
         .from("challenge_sessions")
-        .select("parayanam_name")
+        .select(
+          "id, parayanam_name, finalized_at, dashakam_set_id, dashakam_list, start_date, end_date, challenge_type"
+        )
         .eq("id", sessionId)
         .maybeSingle();
-      if (!cancelled && data?.parayanam_name) setParayanamName(data.parayanam_name as string);
+      if (cancelled) return;
+      if (data) {
+        const s = data as typeof session extends infer T ? NonNullable<T> : never;
+        setSession(s);
+        if (s.parayanam_name) setParayanamName(s.parayanam_name);
+        if (s.start_date) setStartDate(s.start_date);
+        if (s.end_date) setEndDate(s.end_date);
+        if (s.challenge_type === "group_relay") setMode("split");
+        if (s.challenge_type === "group_standard") setMode("synchronized");
+      }
     })();
     return () => {
       cancelled = true;
