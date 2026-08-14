@@ -30,6 +30,7 @@ export default function CreateParayanamPage() {
   const { members } = useGroupMembers(groupId, null);
 
   const [step, setStep] = useState(1);
+  const [parayanamName, setParayanamName] = useState("");
   const [setId, setSetId] = useState<string>("");
   const [custom, setCustom] = useState<number[]>([]);
   const [startDate, setStartDate] = useState(today());
@@ -104,6 +105,7 @@ export default function CreateParayanamPage() {
         .insert({
           user_id: user.id,
           group_id: groupId ?? null,
+          parayanam_name: isGroup ? parayanamName.trim() || null : null,
           mode: "daily",
           challenge_type: isGroup
             ? distribution === "synchronized"
@@ -183,6 +185,23 @@ export default function CreateParayanamPage() {
       </p>
 
       <section className="mt-6 space-y-5 rounded-2xl border border-border bg-card p-5">
+        {isGroup && step === 1 && (
+          <div>
+            <label htmlFor="parayanam-name" className="font-sans text-sm font-semibold text-foreground">
+              Parayanam name <span className="font-normal text-muted-foreground">(optional)</span>
+            </label>
+            <input
+              id="parayanam-name"
+              type="text"
+              maxLength={80}
+              value={parayanamName}
+              onChange={(e) => setParayanamName(e.target.value)}
+              placeholder="Diwali 2026 Parayanam"
+              className="mt-2 w-full rounded-lg border border-border bg-background px-3 py-2 font-sans text-sm text-foreground outline-none focus:ring-2 focus:ring-primary"
+            />
+          </div>
+        )}
+
         {step === 1 && (
           <div>
             <p className="font-sans text-sm font-semibold text-foreground">Choose a dashakam set</p>

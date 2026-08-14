@@ -34,6 +34,7 @@ export default function GroupSchedulePage() {
 
   const [group, setGroup] = useState<Group | null>(null);
   const [loadingGroup, setLoadingGroup] = useState(true);
+  const [parayanamName, setParayanamName] = useState("");
   const [setId, setSetId] = useState<string>("");
   const [startDate, setStartDate] = useState(today());
   const [endDate, setEndDate] = useState(plusDays(99));
@@ -72,6 +73,23 @@ export default function GroupSchedulePage() {
       cancelled = true;
     };
   }, [groupId]);
+
+  useEffect(() => {
+    const sessionId = group?.active_challenge_session_id;
+    if (!sessionId) return;
+    let cancelled = false;
+    (async () => {
+      const { data } = await (supabase as any)
+        .from("challenge_sessions")
+        .select("parayanam_name")
+        .eq("id", sessionId)
+        .maybeSingle();
+      if (!cancelled && data?.parayanam_name) setParayanamName(data.parayanam_name as string);
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [group?.active_challenge_session_id]);
 
   useEffect(() => {
     if (!setId && sets.length) setSetId(sets[0].id);
@@ -129,6 +147,7 @@ export default function GroupSchedulePage() {
       const sessionPayload = {
         user_id: user!.id,
         group_id: group.id,
+        parayanam_name: parayanamName.trim() || null,
         mode: "daily",
         challenge_type: mode === "synchronized" ? "group_standard" : "group_relay",
         start_date: startDate,
@@ -211,9 +230,26 @@ export default function GroupSchedulePage() {
         <ArrowLeft className="h-4 w-4" /> {group.group_name}
       </Link>
 
-      <h1 className="mt-4 font-display text-2xl font-bold text-foreground">Plan the Parayanam</h1>
+      <h1 className="mt-4 font-display text-2xl font-bold text-foreground">
+        Plan {parayanamName.trim() || "the Parayanam"}
+      </h1>
 
       <section className="mt-6 space-y-5 rounded-2xl border border-border bg-card p-5 shadow-peacock">
+        <div>
+          <label htmlFor="parayanam-name" className="font-sans text-sm font-semibold text-foreground">
+            Parayanam name <span className="font-normal text-muted-foreground">(optional)</span>
+          </label>
+          <input
+            id="parayanam-name"
+            type="text"
+            maxLength={80}
+            value={parayanamName}
+            onChange={(e) => setParayanamName(e.target.value)}
+            placeholder="Diwali 2026 Parayanam"
+            className="mt-2 w-full rounded-lg border border-border bg-background px-3 py-2 font-sans text-sm text-foreground outline-none focus:ring-2 focus:ring-primary"
+          />
+        </div>
+
         <div>
           <label htmlFor="set" className="font-sans text-sm font-semibold text-foreground">
             Dashakam set
