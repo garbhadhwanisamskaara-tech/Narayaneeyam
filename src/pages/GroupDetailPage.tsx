@@ -90,6 +90,7 @@ export default function GroupDetailPage() {
     members,
     loading: loadingMembers,
     removeMember,
+    refresh: refreshMembers,
   } = useGroupMembers(groupId, group?.active_challenge_session_id);
   const {
     blooms: gardenBlooms,
