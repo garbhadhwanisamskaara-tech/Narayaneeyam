@@ -1,6 +1,6 @@
 export const VAPID_PUBLIC_KEY =
   import.meta.env.VITE_VAPID_PUBLIC_KEY ||
-  "BLLsLx-D1uJaj27pt_dHsmmOZR7qaAXZx_oG8SjvlIYAHPTBXIf194XMIjImhZN4fRj1lirN-aD-BKeEWWIGTas";
+  "BPZV6TyFKVzZdRjxso31TFNkdUN9rSYlU4bZyXr6F0vLVVVpcpuiHN8B1r3o48WXwfDsnBwvh3nW_25IDuwaqDM";
 
 export function isPushSupported(): boolean {
   return (
