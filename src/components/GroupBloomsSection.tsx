@@ -65,8 +65,8 @@ export default function GroupBloomsSection({
             <h3 className="font-display text-base font-semibold text-foreground">No parayanam running yet</h3>
             <p className="mt-1 font-sans text-sm text-muted-foreground">
               As the group owner, you can plan a parayanam — pick which dashakams to include, a timeline, and how
-              they're shared: everyone chants the same dashakam each day (Synchronized), or dashakams are split across
-              members (Split).
+              they're shared: everyone chants the same dashakam each day (Same Dashakam for everyone), or dashakams
+              are split across members (Dashakams split among participants).
             </p>
             {groupId && (
               <Link

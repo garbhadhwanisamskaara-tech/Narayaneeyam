@@ -305,8 +305,8 @@ export default function CreateParayanamPage() {
               <div className="mt-3 grid gap-3 sm:grid-cols-2">
                 {(
                   [
-                    ["synchronized", "Synchronized", "Everyone chants the same dashakam each day."],
-                    ["split", "Split", "Dashakams are shared among the members."],
+                    ["synchronized", "Same Dashakam for everyone", ""],
+                    ["split", "Dashakams split among participants", ""],
                   ] as const
                 ).map(([value, label, hint]) => (
                   <button
