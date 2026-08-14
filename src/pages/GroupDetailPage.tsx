@@ -21,8 +21,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useGroupInvite, useGroupMembers, inviteLink, type Group } from "@/hooks/useGroups";
 import SEO from "@/components/SEO";
 import DashakamGarden from "@/components/DashakamGarden";
-import { useGroupGarden } from "@/hooks/useGarden";
-import GroupBloomsSection from "@/components/GroupBloomsSection";
+import { useSessionGarden } from "@/hooks/useSessionGarden";
 import PendingInvitesSection from "@/components/PendingInvitesSection";
 import PushRemindersPrompt from "@/components/PushRemindersPrompt";
 import ParayanamScheduleViews from "@/components/ParayanamScheduleViews";
@@ -92,7 +91,15 @@ export default function GroupDetailPage() {
     loading: loadingMembers,
     removeMember,
   } = useGroupMembers(groupId, group?.active_challenge_session_id);
-  const { blooms: gardenBlooms, loading: gardenLoading, refresh: refreshGarden } = useGroupGarden(groupId);
+  const {
+    blooms: gardenBlooms,
+    tiles: gardenTiles,
+    dashakamNumbers: gardenDashakams,
+    loading: gardenLoading,
+    pending: gardenPending,
+    refresh: refreshGarden,
+    toggleDashakam,
+  } = useSessionGarden(group?.active_challenge_session_id);
   const { statusFor } = useSessionParticipants(group?.active_challenge_session_id);
 
 
@@ -159,6 +166,15 @@ export default function GroupDetailPage() {
   const isOwner = !!user && !!group && group.owner_id === user.id;
   const ownerMember = members.find((m) => m.user_id === group?.owner_id);
   const ownerName = ownerMember?.display_name ?? null;
+
+  // Prefer the live schedule the garden loaded; fall back to the session's list.
+  const gardenNumbers = gardenDashakams.length ? gardenDashakams : (dashakamNumbers ?? []);
+
+  /** A completion write must refresh the garden, its header count and the schedule views together. */
+  const handleTapDashakam = async (dashakamNo: number) => {
+    await toggleDashakam(dashakamNo);
+    setRefreshKey((k) => k + 1);
+  };
 
   const run = async (fn: () => Promise<unknown>) => {
     setBusy(true);
@@ -245,7 +261,12 @@ export default function GroupDetailPage() {
       ) : (
         <>
           <div className="mt-4 flex flex-wrap items-center justify-between gap-3">
-            <h1 className="font-display text-2xl font-bold text-foreground">{group.group_name}</h1>
+            <div className="min-w-0">
+              <h1 className="font-display text-2xl font-bold text-foreground">{group.group_name}</h1>
+              {group.active_challenge_session_id && (
+                <p className="font-sans text-sm text-muted-foreground">{parayanamName || "Parayanam"}</p>
+              )}
+            </div>
             <Dialog open={helpOpen} onOpenChange={setHelpOpen}>
               <DialogTrigger asChild>
                 <button
@@ -332,30 +353,27 @@ export default function GroupDetailPage() {
           )}
 
           <div className="mt-6">
-            {!!group.active_challenge_session_id && !!dashakamNumbers && dashakamNumbers.length > 0 ? (
+            {!!group.active_challenge_session_id && gardenNumbers.length > 0 ? (
               <DashakamGarden
                 blooms={gardenBlooms}
-                dashakamNumbers={dashakamNumbers}
-                title="Group Dashakam Garden"
+                dashakamNumbers={gardenNumbers}
+                tiles={gardenTiles}
+                onTapDashakam={handleTapDashakam}
+                pendingDashakam={gardenPending}
+                title={`${parayanamName || "Parayanam"} — Dashakam Garden`}
                 loading={gardenLoading}
               />
             ) : (
               <div className="rounded-2xl border border-border bg-card p-5 shadow-peacock">
                 <h2 className="font-display text-xl font-bold text-foreground">Group Dashakam Garden</h2>
                 <p className="mt-1 font-sans text-sm text-muted-foreground">
-                  No parayanam running yet — the garden will appear once one starts.
+                  {group.active_challenge_session_id
+                    ? "The day-by-day schedule is prepared automatically when this parayanam begins."
+                    : "No parayanam running yet — the garden will appear once one starts."}
                 </p>
               </div>
             )}
           </div>
-
-          <GroupBloomsSection
-            groupId={groupId}
-            isOwner={isOwner}
-            activeChallengeSessionId={group.active_challenge_session_id}
-            ownerName={ownerName}
-            refreshKey={refreshKey}
-          />
 
           <ParayanamScheduleViews
             challengeSessionId={group.active_challenge_session_id}
