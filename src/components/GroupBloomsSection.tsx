@@ -23,8 +23,12 @@ export default function GroupBloomsSection({
   ownerName,
   refreshKey = 0,
 }: Props) {
-  const { sessions, loading } = useGroupActiveSessions(groupId);
+  const { sessions, loading, refresh } = useGroupActiveSessions(groupId);
   const [selectedId, setSelectedId] = useState<string>("");
+
+  useEffect(() => {
+    if (refreshKey) void refresh();
+  }, [refreshKey, refresh]);
 
   useEffect(() => {
     if (sessions.length && !sessions.some((s) => s.id === selectedId)) {

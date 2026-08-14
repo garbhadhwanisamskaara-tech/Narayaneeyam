@@ -126,16 +126,30 @@ export default function GroupDetailPage() {
         .select("dashakams_target, dashakam_list, start_date, finalized_at, parayanam_name")
         .eq("id", sessionId)
         .maybeSingle();
-      if (!cancelled) {
-        setTarget(data?.dashakams_target ?? null);
-        const list = Array.isArray(data?.dashakam_list)
-          ? (data.dashakam_list as any[]).map(Number).filter((n) => Number.isFinite(n))
-          : undefined;
-        setDashakamNumbers(list && list.length ? list : undefined);
-        setSessionStartDate(data?.start_date ?? null);
-        setSessionFinalizedAt(data?.finalized_at ?? null);
-        setParayanamName(data?.parayanam_name ?? null);
+      if (cancelled) return;
+      setTarget(data?.dashakams_target ?? null);
+      setSessionStartDate(data?.start_date ?? null);
+      setSessionFinalizedAt(data?.finalized_at ?? null);
+      setParayanamName(data?.parayanam_name ?? null);
+
+      let list = Array.isArray(data?.dashakam_list)
+        ? (data.dashakam_list as any[]).map(Number).filter((n) => Number.isFinite(n))
+        : [];
+
+      // A finalized parayanam may store its dashakams only in the generated
+      // schedule (dashakam_list can be null when a saved set was used).
+      if (!list.length) {
+        const { data: rows } = await (supabase as any)
+          .from("parayanam_schedule")
+          .select("dashakam_no")
+          .eq("challenge_session_id", sessionId);
+        if (cancelled) return;
+        list = Array.from(
+          new Set(((rows ?? []) as any[]).map((r) => Number(r.dashakam_no)).filter((n) => Number.isFinite(n)))
+        ).sort((a, b) => a - b);
       }
+
+      setDashakamNumbers(list.length ? list : undefined);
     })();
     return () => {
       cancelled = true;

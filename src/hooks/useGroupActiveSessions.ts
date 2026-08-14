@@ -8,6 +8,8 @@ export interface ActiveGroupSession {
   dashakam_set_id: string | null;
   dashakams_target: number;
   parayanam_name: string | null;
+  completed_at?: string | null;
+  technical_state?: string | null;
   set_name: string;
 }
 
@@ -36,12 +38,13 @@ export function useGroupActiveSessions(groupId: string | undefined) {
       return;
     }
     setLoading(true);
+    // A parayanam counts as running while it isn't completed/cancelled —
+    // finalizing it may move technical_state on, so don't filter on that.
     const { data } = await (supabase as any)
       .from("challenge_sessions")
-      .select("id, start_date, end_date, dashakam_set_id, dashakams_target, parayanam_name")
+      .select("id, start_date, end_date, dashakam_set_id, dashakams_target, parayanam_name, completed_at, technical_state")
       .eq("group_id", groupId)
-      .in("challenge_type", ["group_standard", "group_relay"])
-      .eq("technical_state", "ACTIVE")
+      .is("completed_at", null)
       .order("start_date", { ascending: false });
 
     const rows = (data ?? []) as Omit<ActiveGroupSession, "set_name">[];
