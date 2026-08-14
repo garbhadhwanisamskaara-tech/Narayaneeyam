@@ -150,7 +150,7 @@ export default function DashakamGarden({
         </div>
       </div>
 
-      {!expanded ? (
+      {!showGrid ? (
         <div className="flex flex-col items-center gap-4 py-2 sm:flex-row sm:items-center sm:justify-center sm:gap-8">
           {/* The lotus you're working toward, shown large */}
           <div className="flex flex-col items-center gap-2">
@@ -177,28 +177,43 @@ export default function DashakamGarden({
           )}
         </div>
       ) : (
-        <div className="grid grid-cols-10 gap-1 sm:gap-2">
+        <div className="grid grid-cols-5 gap-1 sm:grid-cols-10 sm:gap-2">
           {numbers.map((num) => (
-            <GardenCell key={num} num={num} percent={blooms.get(num) ?? 0} />
+            <GardenCell
+              key={num}
+              num={num}
+              percent={blooms.get(num) ?? 0}
+              tile={tiles?.get(num)}
+              onTap={onTapDashakam}
+              pending={pendingDashakam === num}
+            />
           ))}
         </div>
       )}
 
-      <button
-        type="button"
-        onClick={() => setExpanded((v) => !v)}
-        className="mt-4 flex w-full items-center justify-center gap-1.5 rounded-lg border border-border py-2 font-sans text-sm text-muted-foreground transition-colors hover:bg-muted"
-      >
-        {expanded ? (
-          <>
-            <ChevronUp className="h-4 w-4" /> Show less
-          </>
-        ) : (
-          <>
-            <ChevronDown className="h-4 w-4" /> View full Garden
-          </>
-        )}
-      </button>
+      {interactive ? (
+        <p className="mt-3 text-center font-sans text-xs text-muted-foreground">
+          Tap your lotus once you've chanted that dashakam — tap again to undo. The number shows how many in the
+          group have finished it.
+        </p>
+      ) : (
+        <button
+          type="button"
+          onClick={() => setExpanded((v) => !v)}
+          className="mt-4 flex w-full items-center justify-center gap-1.5 rounded-lg border border-border py-2 font-sans text-sm text-muted-foreground transition-colors hover:bg-muted"
+        >
+          {expanded ? (
+            <>
+              <ChevronUp className="h-4 w-4" /> Show less
+            </>
+          ) : (
+            <>
+              <ChevronDown className="h-4 w-4" /> View full Garden
+            </>
+          )}
+        </button>
+      )}
     </div>
   );
 }
+
