@@ -202,6 +202,32 @@ export default function GroupDetailPage() {
     await refreshMembers();
   };
 
+  /** Owner-only: revokes one person's place in the current parayanam (they stay in the group). */
+  const handleRemoveFromParayanam = async () => {
+    const sessionId = group?.active_challenge_session_id;
+    if (!removeTarget || !sessionId) return;
+    setBusy(true);
+    try {
+      await removeParticipant(sessionId, removeTarget.userId);
+      toast({
+        title: "Removed from this parayanam",
+        description: `${removeTarget.name} is still a member of the group.`,
+      });
+      setRemoveTarget(null);
+      setRefreshKey((k) => k + 1);
+      await Promise.all([refreshParticipants(), refreshMembers(), refreshGarden()]);
+    } catch (e: any) {
+      toast({
+        title: "Could not remove them",
+        description: e?.message ?? "Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setBusy(false);
+    }
+  };
+
+
   const run = async (fn: () => Promise<unknown>) => {
     setBusy(true);
     setActionError(null);
