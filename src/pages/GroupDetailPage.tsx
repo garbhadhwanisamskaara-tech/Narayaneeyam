@@ -89,6 +89,12 @@ const HELP_COPY: { owner: HelpColumn; member: HelpColumn; closing: string } = {
   closing: "The garden reflects everyone's progress together, not just yours.",
 };
 
+function formatDate(d: string | null) {
+  return d
+    ? new Date(`${d}T00:00:00Z`).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" })
+    : "—";
+}
+
 export default function GroupDetailPage() {
   const { groupId } = useParams<{ groupId: string }>();
   const { user } = useAuth();
@@ -108,7 +114,6 @@ export default function GroupDetailPage() {
   const [refreshKey, setRefreshKey] = useState(0);
   const [membersOpen, setMembersOpen] = useState(true);
   const [helpOpen, setHelpOpen] = useState(false);
-  const [removeTarget, setRemoveTarget] = useState<{ userId: string; name: string } | null>(null);
 
   const [selectedSessionId, setSelectedSessionId] = useState<string | null>(null);
   const [pickerTouched, setPickerTouched] = useState(false);
@@ -242,31 +247,13 @@ export default function GroupDetailPage() {
     await refreshMembers();
   };
 
-  /** Owner-only: revokes one person's place in the selected parayanam (they stay in the group). */
-  const handleRemoveFromParayanam = async () => {
-    const sessionId = selectedSessionId;
-    if (!removeTarget || !sessionId) return;
-    setBusy(true);
-    try {
-      await removeParticipant(sessionId, removeTarget.userId);
-      toast({
-        title: "Removed from this parayanam",
-        description: `${removeTarget.name} is still a member of the group.`,
-      });
-      setRemoveTarget(null);
-      setRefreshKey((k) => k + 1);
-      await Promise.all([refreshParticipants(), refreshMembers(), refreshGarden()]);
-    } catch (e: any) {
-      toast({
-        title: "Could not remove them",
-        description: e?.message ?? "Please try again.",
-        variant: "destructive",
-      });
-    } finally {
-      setBusy(false);
-    }
-  };
+  const selectedParayanam = parayanams.find((p) => p.session_id === selectedSessionId) ?? null;
 
+  /** Any parayanam-level change should refetch the whole panel together. */
+  const handleParayanamChanged = async () => {
+    setRefreshKey((k) => k + 1);
+    await Promise.all([refreshParticipants(), refreshMembers(), refreshGarden(), refreshParayanams()]);
+  };
 
   const run = async (fn: () => Promise<unknown>) => {
     setBusy(true);
@@ -524,7 +511,7 @@ export default function GroupDetailPage() {
                   className="mt-4 inline-flex items-center gap-2 rounded-lg bg-gradient-peacock px-4 py-2 font-sans text-sm font-semibold text-primary-foreground hover:opacity-90 disabled:opacity-60"
                 >
                   {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <Share2 className="h-4 w-4" />}
-                  Share Invite
+                  Create invite link
                 </button>
               )}
 
@@ -602,32 +589,94 @@ export default function GroupDetailPage() {
             </div>
           </section>
 
-          {isOwner && selectedSessionId && (
+          {selectedSessionId && (
             <section className="mt-6 rounded-2xl border border-border bg-card p-5 shadow-peacock">
-              <h2 className="font-display text-lg font-semibold text-foreground">
-                {parayanamName || "Parayanam"} Schedule
+              <h2 className="font-display text-xl font-bold text-foreground">
+                Parayanam: {parayanamName || "Parayanam"}
               </h2>
               <p className="mt-1 font-sans text-sm text-muted-foreground">
-                Review or reassign the dashakams for this parayanam.
+                {selectedParayanam
+                  ? `${formatDate(selectedParayanam.start_date)} – ${formatDate(selectedParayanam.end_date)}`
+                  : "Dates will appear once this parayanam is planned."}
               </p>
-              <div className="mt-4 flex flex-wrap gap-3">
-                <Link
-                  to={`/groups/${group.id}/schedule?session=${selectedSessionId}`}
-                  className="inline-flex items-center gap-2 rounded-lg bg-gradient-peacock px-4 py-2 font-sans text-sm font-semibold text-primary-foreground hover:opacity-90"
-                >
-                  <CalendarDays className="h-4 w-4" /> Manage schedule
-                </Link>
-                {canStartNow && (
-                  <button
-                    onClick={handleStartNow}
-                    disabled={starting}
-                    className="inline-flex items-center gap-2 rounded-lg border border-primary px-4 py-2 font-sans text-sm font-semibold text-primary hover:bg-primary/10 disabled:opacity-60"
-                  >
-                    {starting ? <Loader2 className="h-4 w-4 animate-spin" /> : <PlayCircle className="h-4 w-4" />}
-                    Start parayanam now
-                  </button>
-                )}
-              </div>
+
+              {isOwner && (
+                <>
+                  {loadingMembers || loadingParticipants ? (
+                    <Loader2 className="mt-4 h-5 w-5 animate-spin text-primary" />
+                  ) : (
+                    <ul className="mt-4 space-y-3">
+                      {members.map((m) => (
+                        <li key={m.id} className="flex items-center gap-3">
+                          <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-gradient-peacock font-sans text-xs font-bold text-primary-foreground">
+                            {initials(m.display_name)}
+                          </span>
+                          <div className="min-w-0 flex-1">
+                            <p className="truncate font-sans text-sm font-semibold text-foreground">
+                              {m.display_name}
+                            </p>
+                            <p className="flex flex-wrap items-center gap-2 font-sans text-xs text-muted-foreground">
+                              <span>
+                                {m.completed}
+                                {target ? ` / ${target}` : ""} dashakams completed
+                              </span>
+                              <span
+                                className={
+                                  statusFor(m.user_id) === "confirmed"
+                                    ? "rounded-full bg-secondary px-2 py-0.5 text-[10px] uppercase tracking-wide text-secondary-foreground"
+                                    : "rounded-full border border-primary/50 px-2 py-0.5 text-[10px] uppercase tracking-wide text-primary"
+                                }
+                              >
+                                {statusFor(m.user_id) ? STATUS_LABEL[statusFor(m.user_id)!] : "Not invited"}
+                              </span>
+                            </p>
+                          </div>
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+
+                  <div className="mt-5 flex flex-wrap gap-3">
+                    <ManageParayanamDialog
+                      groupId={group.id}
+                      sessionId={selectedSessionId}
+                      parayanamName={parayanamName}
+                      finalized={!!sessionFinalizedAt}
+                      members={members}
+                      ownerId={group.owner_id}
+                      participants={participants}
+                      onChanged={handleParayanamChanged}
+                    />
+                    <Link
+                      to={`/groups/${group.id}/schedule?session=${selectedSessionId}`}
+                      className="inline-flex items-center gap-2 rounded-lg border border-border px-4 py-2 font-sans text-sm font-semibold text-foreground hover:border-primary"
+                    >
+                      <CalendarDays className="h-4 w-4" /> Manage schedule
+                    </Link>
+                    {canStartNow && (
+                      <button
+                        onClick={handleStartNow}
+                        disabled={starting}
+                        className="inline-flex items-center gap-2 rounded-lg border border-primary px-4 py-2 font-sans text-sm font-semibold text-primary hover:bg-primary/10 disabled:opacity-60"
+                      >
+                        {starting ? <Loader2 className="h-4 w-4 animate-spin" /> : <PlayCircle className="h-4 w-4" />}
+                        Start parayanam now
+                      </button>
+                    )}
+                  </div>
+                </>
+              )}
+            </section>
+          )}
+
+          {!selectedSessionId && !loadingParayanams && (
+            <section className="mt-6 rounded-2xl border border-border bg-card p-5 shadow-peacock">
+              <h2 className="font-display text-lg font-semibold text-foreground">No parayanam yet</h2>
+              <p className="mt-1 font-sans text-sm text-muted-foreground">
+                {isOwner
+                  ? "Add a parayanam to plan the dashakams, invite members and watch the garden bloom."
+                  : "You're not confirmed in any parayanam in this group yet. Once you accept an invite, its garden and schedule will appear here."}
+              </p>
             </section>
           )}
 
