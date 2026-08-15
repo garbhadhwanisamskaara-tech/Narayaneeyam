@@ -101,7 +101,11 @@ export default function GroupDetailPage() {
     refresh: refreshGarden,
     toggleDashakam,
   } = useSessionGarden(group?.active_challenge_session_id);
-  const { statusFor } = useSessionParticipants(group?.active_challenge_session_id);
+  const {
+    participants,
+    loading: loadingParticipants,
+    statusFor,
+  } = useSessionParticipants(group?.active_challenge_session_id);
 
 
 
