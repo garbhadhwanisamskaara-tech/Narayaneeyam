@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useParams, Link } from "react-router-dom";
+import { useParams, Link, useNavigate } from "react-router-dom";
 import {
   ArrowLeft,
   Copy,
@@ -19,13 +19,13 @@ import {
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
-import { useGroupInvite, useGroupMembers, inviteLink, type Group } from "@/hooks/useGroups";
+import { useGroupInvite, useGroupMembers, useGroups, inviteLink, type Group } from "@/hooks/useGroups";
 import { useGroupParayanams, parayanamLabel } from "@/hooks/useGroupParayanams";
 import SEO from "@/components/SEO";
 import DashakamGarden from "@/components/DashakamGarden";
 import { useSessionGarden } from "@/hooks/useSessionGarden";
 import PendingInvitesSection from "@/components/PendingInvitesSection";
-import PushRemindersPrompt from "@/components/PushRemindersPrompt";
+import ManageParayanamDialog from "@/components/ManageParayanamDialog";
 import ParayanamScheduleViews from "@/components/ParayanamScheduleViews";
 import { toast } from "@/hooks/use-toast";
 import {
@@ -403,8 +403,6 @@ export default function GroupDetailPage() {
           </div>
 
           <PendingInvitesSection groupId={groupId} />
-
-          <PushRemindersPrompt />
 
           {/* Parayanam-specific panels live below the divider further down. */}
 
