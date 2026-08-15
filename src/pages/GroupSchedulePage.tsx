@@ -267,7 +267,7 @@ export default function GroupSchedulePage() {
       </Link>
 
       <h1 className="mt-4 font-display text-2xl font-bold text-foreground">
-        Plan {parayanamName.trim() || "the Parayanam"}
+        {editingSessionId ? `Plan ${parayanamName.trim() || "the Parayanam"}` : "Add a Parayanam"}
       </h1>
 
       <section className="mt-6 space-y-5 rounded-2xl border border-border bg-card p-5 shadow-peacock">
