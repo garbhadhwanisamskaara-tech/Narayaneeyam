@@ -222,9 +222,23 @@ export function useGroupMembers(groupId: string | undefined, sessionId: string |
         .update({ left_at: new Date().toISOString() })
         .eq("id", memberId);
       if (err) throw new Error(err.message);
+
+      const departed = members.find((m) => m.id === memberId);
+      if (departed?.user_id && groupId) {
+        try {
+          const { error: rpcErr } = await (supabase as any).rpc("handle_member_departure", {
+            p_group_id: groupId,
+            p_user_id: departed.user_id,
+          });
+          if (rpcErr) console.error("handle_member_departure failed:", rpcErr.message);
+        } catch (e) {
+          console.error("handle_member_departure exception:", e);
+        }
+      }
+
       await refresh();
     },
-    [refresh]
+    [members, groupId, refresh]
   );
 
   return { members, loading, error, refresh, removeMember };
