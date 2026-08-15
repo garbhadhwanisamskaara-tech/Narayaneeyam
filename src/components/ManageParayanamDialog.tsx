@@ -243,8 +243,8 @@ export default function ManageParayanamDialog({
                       </span>
                       {m.user_id !== ownerId && (
                         <button
-                          onClick={() => setRemoveTarget({ userId: m.user_id, name: m.display_name })}
-                          disabled={busy}
+                          onClick={() => void startRemove(m.user_id, m.display_name)}
+                          disabled={busy || checking}
                           className="inline-flex items-center gap-1 rounded-lg border border-destructive/50 px-3 py-1.5 font-sans text-xs font-semibold text-destructive hover:bg-destructive/10 disabled:opacity-60"
                         >
                           <UserMinus className="h-3.5 w-3.5" /> Remove from this parayanam
