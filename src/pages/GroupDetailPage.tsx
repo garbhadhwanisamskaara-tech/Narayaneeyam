@@ -172,6 +172,13 @@ export default function GroupDetailPage() {
   const ownerMember = members.find((m) => m.user_id === group?.owner_id);
   const ownerName = ownerMember?.display_name ?? null;
 
+  // Only people with a relationship to the active parayanam (invited, confirmed
+  // or declined) — plus the owner, who runs it — may see its progress.
+  const hasSession = !!group?.active_challenge_session_id;
+  const isParayanamParticipant =
+    isOwner || (!!user && participants.some((p) => p.user_id === user.id));
+  const canSeeParayanamData = !hasSession || isParayanamParticipant;
+
   // Prefer the live schedule the garden loaded; fall back to the session's list.
   const gardenNumbers = gardenDashakams.length ? gardenDashakams : (dashakamNumbers ?? []);
 
