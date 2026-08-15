@@ -101,7 +101,11 @@ export default function GroupDetailPage() {
     refresh: refreshGarden,
     toggleDashakam,
   } = useSessionGarden(group?.active_challenge_session_id);
-  const { statusFor } = useSessionParticipants(group?.active_challenge_session_id);
+  const {
+    participants,
+    loading: loadingParticipants,
+    statusFor,
+  } = useSessionParticipants(group?.active_challenge_session_id);
 
 
 
@@ -167,6 +171,13 @@ export default function GroupDetailPage() {
   const isOwner = !!user && !!group && group.owner_id === user.id;
   const ownerMember = members.find((m) => m.user_id === group?.owner_id);
   const ownerName = ownerMember?.display_name ?? null;
+
+  // Only people with a relationship to the active parayanam (invited, confirmed
+  // or declined) — plus the owner, who runs it — may see its progress.
+  const hasSession = !!group?.active_challenge_session_id;
+  const isParayanamParticipant =
+    isOwner || (!!user && participants.some((p) => p.user_id === user.id));
+  const canSeeParayanamData = !hasSession || isParayanamParticipant;
 
   // Prefer the live schedule the garden loaded; fall back to the session's list.
   const gardenNumbers = gardenDashakams.length ? gardenDashakams : (dashakamNumbers ?? []);
@@ -355,7 +366,19 @@ export default function GroupDetailPage() {
           )}
 
           <div className="mt-6">
-            {!!group.active_challenge_session_id && gardenNumbers.length > 0 ? (
+            {hasSession && loadingParticipants ? (
+              <div className="rounded-2xl border border-border bg-card p-5 shadow-peacock">
+                <Loader2 className="h-5 w-5 animate-spin text-primary" />
+              </div>
+            ) : !canSeeParayanamData ? (
+              <div className="rounded-2xl border border-border bg-card p-5 shadow-peacock">
+                <h2 className="font-display text-xl font-bold text-foreground">Group Dashakam Garden</h2>
+                <p className="mt-1 font-sans text-sm text-muted-foreground">
+                  You're not part of this group's current parayanam. The garden will bloom for you once
+                  you're invited to join one.
+                </p>
+              </div>
+            ) : !!group.active_challenge_session_id && gardenNumbers.length > 0 ? (
               <DashakamGarden
                 blooms={gardenBlooms}
                 dashakamNumbers={gardenNumbers}
@@ -401,8 +424,13 @@ export default function GroupDetailPage() {
                 <ChevronDown className="h-4 w-4 text-muted-foreground" />
               )}
             </button>
-            {!membersOpen ? null : loadingMembers ? (
+            {!membersOpen ? null : loadingMembers || (hasSession && loadingParticipants) ? (
               <Loader2 className="mt-4 h-5 w-5 animate-spin text-primary" />
+            ) : !canSeeParayanamData ? (
+              <p className="mt-3 font-sans text-sm text-muted-foreground">
+                You're not part of this group's current parayanam, so everyone's progress is kept private
+                for now.
+              </p>
             ) : members.length === 0 ? (
               <p className="mt-3 font-sans text-sm text-muted-foreground">
                 No members yet — share the invite link below.
@@ -430,7 +458,13 @@ export default function GroupDetailPage() {
                             : "No active parayanam yet"}
                         </span>
                         {isOwner && group.active_challenge_session_id && (
-                          <span className="rounded-full bg-secondary px-2 py-0.5 text-[10px] uppercase tracking-wide text-secondary-foreground">
+                          <span
+                            className={
+                              statusFor(m.user_id) === "confirmed"
+                                ? "rounded-full bg-secondary px-2 py-0.5 text-[10px] uppercase tracking-wide text-secondary-foreground"
+                                : "rounded-full border border-primary/50 px-2 py-0.5 text-[10px] uppercase tracking-wide text-primary"
+                            }
+                          >
                             {statusFor(m.user_id) ? STATUS_LABEL[statusFor(m.user_id)!] : "Not invited"}
                           </span>
                         )}
