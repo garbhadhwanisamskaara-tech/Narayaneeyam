@@ -88,7 +88,7 @@ export default function GroupSchedulePage() {
   }, [groupId]);
 
   useEffect(() => {
-    const sessionId = group?.active_challenge_session_id;
+    const sessionId = editingSessionId;
     if (!sessionId) return;
     let cancelled = false;
     (async () => {
@@ -113,7 +113,8 @@ export default function GroupSchedulePage() {
     return () => {
       cancelled = true;
     };
-  }, [group?.active_challenge_session_id]);
+  }, [editingSessionId]);
+
 
   useEffect(() => {
     if (session?.dashakam_set_id && sets.some((s) => s.id === session.dashakam_set_id)) {
