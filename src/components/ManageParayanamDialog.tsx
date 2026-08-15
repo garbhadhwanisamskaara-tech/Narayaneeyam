@@ -111,9 +111,7 @@ export default function ManageParayanamDialog({
       const { splitMode, incomplete: n } = await countIncompleteAssignments(sessionId, userId);
       if (splitMode && n > 0) {
         setIncomplete(n);
-        setRemoveTarget(null);
         setRedistributeOpen(true);
-        setRemoveTarget({ userId, name });
       }
     } catch {
       /* fall back to the plain confirmation */
