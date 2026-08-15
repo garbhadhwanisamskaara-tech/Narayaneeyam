@@ -26,7 +26,11 @@ import PendingInvitesSection from "@/components/PendingInvitesSection";
 import PushRemindersPrompt from "@/components/PushRemindersPrompt";
 import ParayanamScheduleViews from "@/components/ParayanamScheduleViews";
 import { toast } from "@/hooks/use-toast";
-import { useSessionParticipants, type ParticipantStatus } from "@/hooks/useParayanamParticipants";
+import {
+  useSessionParticipants,
+  removeParticipant,
+  type ParticipantStatus,
+} from "@/hooks/useParayanamParticipants";
 import {
   Dialog,
   DialogContent,
@@ -35,6 +39,14 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
+import {
+  AlertDialog,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 
 // Copy for the "How group parayanam works" help panel. Kept in one place so it is easy to tweak after review.
