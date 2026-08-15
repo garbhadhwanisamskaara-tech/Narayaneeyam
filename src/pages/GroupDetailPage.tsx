@@ -458,7 +458,13 @@ export default function GroupDetailPage() {
                             : "No active parayanam yet"}
                         </span>
                         {isOwner && group.active_challenge_session_id && (
-                          <span className="rounded-full bg-secondary px-2 py-0.5 text-[10px] uppercase tracking-wide text-secondary-foreground">
+                          <span
+                            className={
+                              statusFor(m.user_id) === "confirmed"
+                                ? "rounded-full bg-secondary px-2 py-0.5 text-[10px] uppercase tracking-wide text-secondary-foreground"
+                                : "rounded-full border border-primary/50 px-2 py-0.5 text-[10px] uppercase tracking-wide text-primary"
+                            }
+                          >
                             {statusFor(m.user_id) ? STATUS_LABEL[statusFor(m.user_id)!] : "Not invited"}
                           </span>
                         )}
