@@ -63,13 +63,10 @@ export default function GroupSchedulePage() {
   const isFinalized = !!session?.finalized_at;
 
   const { sets, loading: loadingSets, forkSet } = useDashakamSets();
-  const { members } = useGroupMembers(groupId, group?.active_challenge_session_id);
-  const { rows, loading: loadingRows, updateRow, refresh } = useParayanamSchedule(
-    group?.active_challenge_session_id
-  );
-  const { participants, statusFor, refresh: refreshParticipants } = useSessionParticipants(
-    group?.active_challenge_session_id
-  );
+  const { members } = useGroupMembers(groupId, editingSessionId);
+  const { rows, loading: loadingRows, updateRow, refresh } = useParayanamSchedule(editingSessionId);
+  const { participants, statusFor, refresh: refreshParticipants } =
+    useSessionParticipants(editingSessionId);
 
   useEffect(() => {
     if (!groupId) return;
