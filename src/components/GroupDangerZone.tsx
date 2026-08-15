@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { AlertTriangle, LogOut, Trash2 } from "lucide-react";
+import { AlertTriangle, LogOut, Trash2, UserMinus } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "@/hooks/use-toast";
@@ -48,6 +48,67 @@ export default function GroupDangerZone({ groupId, groupName, isOwner }: GroupDa
   const [dissolveOpen, setDissolveOpen] = useState(false);
   const [confirmText, setConfirmText] = useState("");
   const [dissolving, setDissolving] = useState(false);
+
+  const [removeMemberOpen, setRemoveMemberOpen] = useState(false);
+  const [groupMembers, setGroupMembers] = useState<MemberOption[]>([]);
+  const [removeCandidate, setRemoveCandidate] = useState<string | null>(null);
+  const [removingMember, setRemovingMember] = useState(false);
+
+  /** Other active members of this group, for the group-level removal dialog. */
+  const loadGroupMembers = async () => {
+    setLoadingMembers(true);
+    setGroupMembers([]);
+    const { data: rows, error } = await (supabase as any)
+      .from("group_members")
+      .select("user_id, joined_at")
+      .eq("group_id", groupId)
+      .neq("user_id", user?.id ?? "")
+      .is("left_at", null)
+      .order("joined_at", { ascending: true });
+    if (error) {
+      setLoadingMembers(false);
+      toast({ title: "Could not load members", description: error.message, variant: "destructive" });
+      return;
+    }
+    const ids = (rows ?? []).map((r: any) => r.user_id);
+    let profilesById = new Map<string, any>();
+    if (ids.length > 0) {
+      const { data: profiles } = await (supabase as any)
+        .from("profiles")
+        .select("id, display_name, email")
+        .in("id", ids);
+      profilesById = new Map((profiles ?? []).map((p: any) => [p.id, p]));
+    }
+    setGroupMembers(
+      (rows ?? []).map((r: any) => ({
+        user_id: r.user_id,
+        display_name: profilesById.get(r.user_id)?.display_name || "Unnamed member",
+        email: profilesById.get(r.user_id)?.email ?? null,
+      })),
+    );
+    setLoadingMembers(false);
+  };
+
+  /** Removes someone from the group entirely (sets group_members.left_at). */
+  const handleRemoveFromGroup = async () => {
+    if (!removeCandidate) return;
+    setRemovingMember(true);
+    const { error } = await (supabase as any)
+      .from("group_members")
+      .update({ left_at: new Date().toISOString() })
+      .eq("group_id", groupId)
+      .eq("user_id", removeCandidate)
+      .is("left_at", null);
+    setRemovingMember(false);
+    if (error) {
+      toast({ title: "Could not remove member", description: error.message, variant: "destructive" });
+      return;
+    }
+    const name = groupMembers.find((m) => m.user_id === removeCandidate)?.display_name ?? "The member";
+    toast({ title: "Removed from group", description: `${name} is no longer part of ${groupName}.` });
+    setRemoveCandidate(null);
+    setRemoveMemberOpen(false);
+  };
 
   const loadMembers = async () => {
     setLoadingMembers(true);
