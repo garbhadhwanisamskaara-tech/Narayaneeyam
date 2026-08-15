@@ -63,6 +63,11 @@ export default function ManageParayanamDialog({
   const [selected, setSelected] = useState<string[]>([]);
   const [removeTarget, setRemoveTarget] = useState<{ userId: string; name: string } | null>(null);
   const [cancelOpen, setCancelOpen] = useState(false);
+  const [checking, setChecking] = useState(false);
+  const [incomplete, setIncomplete] = useState(0);
+  const [redistributeOpen, setRedistributeOpen] = useState(false);
+  const [removalMode, setRemovalMode] = useState<RemovalMode>("distribute");
+  const [assignTo, setAssignTo] = useState("");
 
   const statusById = useMemo(
     () => new Map(participants.map((p) => [p.user_id, p.status])),
