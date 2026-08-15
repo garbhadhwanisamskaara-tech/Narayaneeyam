@@ -2,7 +2,6 @@ import { motion } from "framer-motion";
 import { BookOpen, Headphones, Music, BarChart3, Heart, Languages, Sparkles, Play } from "lucide-react";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import SEO from "@/components/SEO";
-import ReminderSettings from "@/components/ReminderSettings";
 import LanguagePreferences from "@/components/LanguagePreferences";
 
 const sections = [
@@ -179,7 +178,6 @@ const UserGuidePage = () => {
 
       {/* Content */}
       <div className="container mx-auto max-w-3xl px-4 py-8">
-        <ReminderSettings />
         <Accordion type="multiple" className="space-y-4">
           {sections.map((section, idx) => (
             <motion.div

@@ -7,6 +7,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
 import { Input } from "@/components/ui/input";
 import LanguagePreferences from "@/components/LanguagePreferences";
+import ReminderSettings from "@/components/ReminderSettings";
 import {
   AlertDialog,
   AlertDialogCancel,
@@ -229,6 +230,8 @@ export default function PreferencesPage() {
       </section>
 
       <LanguagePreferences />
+
+      <ReminderSettings />
 
       <section className="rounded-xl border border-border bg-card p-5 mb-6">
         <div className="flex items-center gap-2 mb-1">
