@@ -366,7 +366,19 @@ export default function GroupDetailPage() {
           )}
 
           <div className="mt-6">
-            {!!group.active_challenge_session_id && gardenNumbers.length > 0 ? (
+            {hasSession && loadingParticipants ? (
+              <div className="rounded-2xl border border-border bg-card p-5 shadow-peacock">
+                <Loader2 className="h-5 w-5 animate-spin text-primary" />
+              </div>
+            ) : !canSeeParayanamData ? (
+              <div className="rounded-2xl border border-border bg-card p-5 shadow-peacock">
+                <h2 className="font-display text-xl font-bold text-foreground">Group Dashakam Garden</h2>
+                <p className="mt-1 font-sans text-sm text-muted-foreground">
+                  You're not part of this group's current parayanam. The garden will bloom for you once
+                  you're invited to join one.
+                </p>
+              </div>
+            ) : !!group.active_challenge_session_id && gardenNumbers.length > 0 ? (
               <DashakamGarden
                 blooms={gardenBlooms}
                 dashakamNumbers={gardenNumbers}
