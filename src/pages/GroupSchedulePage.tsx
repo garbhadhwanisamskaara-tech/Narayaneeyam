@@ -171,7 +171,9 @@ export default function GroupSchedulePage() {
     setError(null);
     setNotice(null);
     try {
-      let sessionId = group.active_challenge_session_id;
+      // Editing one specific parayanam updates it in place; otherwise this
+      // always adds a new parayanam alongside any the group already has.
+      let sessionId = editingSessionId;
 
       const sessionPayload = {
         user_id: user!.id,
@@ -202,12 +204,16 @@ export default function GroupSchedulePage() {
           .single();
         if (insErr) throw new Error(insErr.message);
         sessionId = data.id as string;
-        const { error: gErr } = await (supabase as any)
-          .from("groups")
-          .update({ active_challenge_session_id: sessionId })
-          .eq("id", group.id);
-        if (gErr) throw new Error(gErr.message);
-        setGroup({ ...group, active_challenge_session_id: sessionId });
+        // The group pointer is only a default for the group page, so set it
+        // when nothing is pointed at yet and leave existing parayanams alone.
+        if (!group.active_challenge_session_id) {
+          const { error: gErr } = await (supabase as any)
+            .from("groups")
+            .update({ active_challenge_session_id: sessionId })
+            .eq("id", group.id);
+          if (gErr) throw new Error(gErr.message);
+          setGroup({ ...group, active_challenge_session_id: sessionId });
+        }
       }
 
       await inviteParticipants(sessionId!, selectedParticipants, includeSelf ? user!.id : null);
@@ -217,6 +223,7 @@ export default function GroupSchedulePage() {
       setNotice(
         "Invites sent. The day-by-day schedule is prepared automatically when the parayanam begins."
       );
+
     } catch (e: any) {
       setError(e?.message ?? "Could not save the parayanam.");
     } finally {
