@@ -319,6 +319,90 @@ export default function ManageParayanamDialog({
         </AlertDialogContent>
       </AlertDialog>
 
+      {/* Split-mode removal: decide where the unchanted dashakams should go. */}
+      <AlertDialog
+        open={redistributeOpen}
+        onOpenChange={(o) => {
+          if (!o) {
+            setRedistributeOpen(false);
+            setRemoveTarget(null);
+          }
+        }}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>
+              {removeTarget?.name} has {incomplete} incomplete {incomplete === 1 ? "dashakam" : "dashakams"} in this
+              parayanam. What should happen to them?
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              Choose how these dashakams should be carried on once they leave “{parayanamName || "this parayanam"}”.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+
+          <div className="space-y-3">
+            <label className="flex cursor-pointer items-start gap-3 rounded-lg border border-border p-3 hover:bg-muted">
+              <input
+                type="radio"
+                name="removal-mode"
+                className="mt-1"
+                checked={removalMode === "distribute"}
+                onChange={() => setRemovalMode("distribute")}
+              />
+              <span className="font-sans text-sm text-foreground">
+                Distribute evenly among remaining participants
+              </span>
+            </label>
+
+            <label className="flex cursor-pointer items-start gap-3 rounded-lg border border-border p-3 hover:bg-muted">
+              <input
+                type="radio"
+                name="removal-mode"
+                className="mt-1"
+                checked={removalMode === "assign_to"}
+                onChange={() => setRemovalMode("assign_to")}
+              />
+              <span className="min-w-0 flex-1">
+                <span className="block font-sans text-sm text-foreground">Assign all to one member</span>
+                {removalMode === "assign_to" && (
+                  <select
+                    value={assignTo}
+                    onChange={(e) => setAssignTo(e.target.value)}
+                    className="mt-2 w-full rounded-md border border-border bg-background px-3 py-2 font-sans text-sm text-foreground"
+                  >
+                    <option value="">Choose a member…</option>
+                    {reassignCandidates.map((m) => (
+                      <option key={m.user_id} value={m.user_id}>
+                        {m.display_name}
+                      </option>
+                    ))}
+                  </select>
+                )}
+              </span>
+            </label>
+          </div>
+
+          <AlertDialogFooter>
+            <button
+              onClick={() => {
+                setRedistributeOpen(false);
+                setRemoveTarget(null);
+              }}
+              className="rounded-md border border-border px-4 py-2 font-sans text-sm font-semibold text-foreground hover:bg-muted"
+            >
+              Keep them
+            </button>
+            <button
+              onClick={() => void doRemove(removalMode, assignTo || null)}
+              disabled={busy || (removalMode === "assign_to" && !assignTo)}
+              className="rounded-md bg-destructive px-4 py-2 font-sans text-sm font-semibold text-destructive-foreground hover:bg-destructive/90 disabled:opacity-50"
+            >
+              {busy ? "Removing…" : "Remove from this parayanam"}
+            </button>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
       <AlertDialog open={cancelOpen} onOpenChange={setCancelOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
