@@ -117,6 +117,7 @@ export default function GroupDetailPage() {
     participants,
     loading: loadingParticipants,
     statusFor,
+    refresh: refreshParticipants,
   } = useSessionParticipants(group?.active_challenge_session_id);
 
 
