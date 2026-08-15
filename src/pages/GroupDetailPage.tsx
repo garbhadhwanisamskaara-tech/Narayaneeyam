@@ -396,83 +396,8 @@ export default function GroupDetailPage() {
 
           <PushRemindersPrompt />
 
-          {isOwner && (
-            <section className="mt-6 rounded-2xl border border-border bg-card p-5 shadow-peacock">
-              <h2 className="font-display text-lg font-semibold text-foreground">
-                {group.active_challenge_session_id ? parayanamName || "Parayanam" : "Parayanam"} Schedule
-              </h2>
-              <p className="mt-1 font-sans text-sm text-muted-foreground">
-                {group.active_challenge_session_id
-                  ? "Review or reassign the dashakams for your group."
-                  : "Choose a dashakam set, a timeline and how the dashakams are shared."}
-              </p>
-              <div className="mt-4 flex flex-wrap gap-3">
-                <Link
-                  to={`/groups/${group.id}/schedule`}
-                  className="inline-flex items-center gap-2 rounded-lg bg-gradient-peacock px-4 py-2 font-sans text-sm font-semibold text-primary-foreground hover:opacity-90"
-                >
-                  <CalendarDays className="h-4 w-4" />
-                  {group.active_challenge_session_id ? "Manage schedule" : "Plan parayanam"}
-                </Link>
-                <Link
-                  to={`/parayanam/new?group=${group.id}`}
-                  className="inline-flex items-center gap-2 rounded-lg border border-border px-4 py-2 font-sans text-sm font-semibold text-foreground hover:border-primary"
-                >
-                  Create a Parayanam
-                </Link>
-                {canStartNow && (
-                  <button
-                    onClick={handleStartNow}
-                    disabled={starting}
-                    className="inline-flex items-center gap-2 rounded-lg border border-primary px-4 py-2 font-sans text-sm font-semibold text-primary hover:bg-primary/10 disabled:opacity-60"
-                  >
-                    {starting ? <Loader2 className="h-4 w-4 animate-spin" /> : <PlayCircle className="h-4 w-4" />}
-                    Start parayanam now
-                  </button>
-                )}
-              </div>
-            </section>
-          )}
+          {/* Parayanam-specific panels live below the divider further down. */}
 
-          <div className="mt-6">
-            {hasSession && loadingParticipants ? (
-              <div className="rounded-2xl border border-border bg-card p-5 shadow-peacock">
-                <Loader2 className="h-5 w-5 animate-spin text-primary" />
-              </div>
-            ) : !canSeeParayanamData ? (
-              <div className="rounded-2xl border border-border bg-card p-5 shadow-peacock">
-                <h2 className="font-display text-xl font-bold text-foreground">Group Dashakam Garden</h2>
-                <p className="mt-1 font-sans text-sm text-muted-foreground">
-                  You're not part of this group's current parayanam. The garden will bloom for you once
-                  you're invited to join one.
-                </p>
-              </div>
-            ) : !!group.active_challenge_session_id && gardenNumbers.length > 0 ? (
-              <DashakamGarden
-                blooms={gardenBlooms}
-                dashakamNumbers={gardenNumbers}
-                tiles={gardenTiles}
-                onTapDashakam={handleTapDashakam}
-                pendingDashakam={gardenPending}
-                title={`${parayanamName || "Parayanam"} — Dashakam Garden`}
-                loading={gardenLoading}
-              />
-            ) : (
-              <div className="rounded-2xl border border-border bg-card p-5 shadow-peacock">
-                <h2 className="font-display text-xl font-bold text-foreground">Group Dashakam Garden</h2>
-                <p className="mt-1 font-sans text-sm text-muted-foreground">
-                  {group.active_challenge_session_id
-                    ? "The day-by-day schedule is prepared automatically when this parayanam begins."
-                    : "No parayanam running yet — the garden will appear once one starts."}
-                </p>
-              </div>
-            )}
-          </div>
-
-          <ParayanamScheduleViews
-            challengeSessionId={group.active_challenge_session_id}
-            refreshKey={refreshKey}
-          />
 
 
 
