@@ -184,6 +184,25 @@ export default function GroupDangerZone({ groupId, groupName, isOwner }: GroupDa
       {isOwner && (
         <div className="mt-6 border-t border-destructive/30 pt-5">
           <p className="font-sans text-sm text-muted-foreground">
+            Remove a member from the group entirely. They lose access to all of this group's parayanams, present
+            and future, but keep their own chanting history and feathers. To only take someone out of the current
+            parayanam, use “Remove from parayanam” on the group page instead.
+          </p>
+          <button
+            onClick={() => {
+              setRemoveMemberOpen(true);
+              void loadGroupMembers();
+            }}
+            className="mt-3 inline-flex w-full items-center justify-center gap-2 rounded-lg border border-destructive px-4 py-2.5 font-sans text-sm font-semibold text-destructive transition-colors hover:bg-destructive/10"
+          >
+            <UserMinus className="h-4 w-4" /> Remove a Member from Group
+          </button>
+        </div>
+      )}
+
+      {isOwner && (
+        <div className="mt-6 border-t border-destructive/30 pt-5">
+          <p className="font-sans text-sm text-muted-foreground">
             Dissolving is permanent. All group parayanams will be cancelled and every member becomes an independent
             user, keeping their own individual chanting history and feathers.
           </p>
@@ -198,6 +217,77 @@ export default function GroupDangerZone({ groupId, groupName, isOwner }: GroupDa
           </button>
         </div>
       )}
+
+      {/* Remove a member from the group */}
+      <AlertDialog
+        open={removeMemberOpen}
+        onOpenChange={(open) => {
+          if (!open) {
+            setRemoveMemberOpen(false);
+            setRemoveCandidate(null);
+          }
+        }}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Remove a member from “{groupName}”?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This removes them from the whole group, not just the current parayanam. They keep their own chanting
+              history and feathers.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+
+          {loadingMembers ? (
+            <p className="font-sans text-sm text-muted-foreground">Loading members…</p>
+          ) : groupMembers.length === 0 ? (
+            <p className="font-sans text-sm text-muted-foreground">There are no other members in this group.</p>
+          ) : (
+            <div className="max-h-64 space-y-2 overflow-y-auto">
+              {groupMembers.map((m) => (
+                <label
+                  key={m.user_id}
+                  className="flex cursor-pointer items-start gap-3 rounded-lg border border-border p-3 hover:bg-muted"
+                >
+                  <input
+                    type="radio"
+                    name="remove-member"
+                    className="mt-1"
+                    value={m.user_id}
+                    checked={removeCandidate === m.user_id}
+                    onChange={() => setRemoveCandidate(m.user_id)}
+                  />
+                  <span className="min-w-0">
+                    <span className="block font-sans text-sm text-foreground">{m.display_name}</span>
+                    <span className="block break-all font-sans text-xs text-muted-foreground">
+                      {m.email ?? "email not available"}
+                    </span>
+                  </span>
+                </label>
+              ))}
+            </div>
+          )}
+
+          <AlertDialogFooter>
+            <button
+              onClick={() => {
+                setRemoveMemberOpen(false);
+                setRemoveCandidate(null);
+              }}
+              className="rounded-md border border-border px-4 py-2 font-sans text-sm font-semibold text-foreground hover:bg-muted"
+            >
+              Cancel
+            </button>
+            <button
+              onClick={handleRemoveFromGroup}
+              disabled={!removeCandidate || removingMember}
+              className="rounded-md bg-destructive px-4 py-2 font-sans text-sm font-semibold text-destructive-foreground hover:bg-destructive/90 disabled:opacity-50"
+            >
+              {removingMember ? "Removing…" : "Remove from Group"}
+            </button>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
 
       {/* Leave confirmation */}
       <AlertDialog open={leaveDialogOpen} onOpenChange={setLeaveDialogOpen}>
