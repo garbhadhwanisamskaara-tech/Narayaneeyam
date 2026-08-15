@@ -424,8 +424,13 @@ export default function GroupDetailPage() {
                 <ChevronDown className="h-4 w-4 text-muted-foreground" />
               )}
             </button>
-            {!membersOpen ? null : loadingMembers ? (
+            {!membersOpen ? null : loadingMembers || (hasSession && loadingParticipants) ? (
               <Loader2 className="mt-4 h-5 w-5 animate-spin text-primary" />
+            ) : !canSeeParayanamData ? (
+              <p className="mt-3 font-sans text-sm text-muted-foreground">
+                You're not part of this group's current parayanam, so everyone's progress is kept private
+                for now.
+              </p>
             ) : members.length === 0 ? (
               <p className="mt-3 font-sans text-sm text-muted-foreground">
                 No members yet — share the invite link below.
