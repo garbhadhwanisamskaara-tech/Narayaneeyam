@@ -96,12 +96,12 @@ export default function GroupDetailPage() {
   const [refreshKey, setRefreshKey] = useState(0);
   const [membersOpen, setMembersOpen] = useState(true);
   const [helpOpen, setHelpOpen] = useState(false);
+  const [removeTarget, setRemoveTarget] = useState<{ userId: string; name: string } | null>(null);
 
   const { invite, loading, generateInvite, revokeInvite, regenerateInvite } = useGroupInvite(groupId);
   const {
     members,
     loading: loadingMembers,
-    removeMember,
     refresh: refreshMembers,
   } = useGroupMembers(groupId, group?.active_challenge_session_id);
   const {
