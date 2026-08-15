@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { Link, useParams } from "react-router-dom";
+import { Link, useParams, useSearchParams } from "react-router-dom";
 import { ArrowLeft, CalendarDays, Copy, Info, Loader2, Sparkles } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
@@ -30,7 +30,12 @@ const plusDays = (n: number) => {
 
 export default function GroupSchedulePage() {
   const { groupId } = useParams<{ groupId: string }>();
+  const [searchParams] = useSearchParams();
+  // A group can run several parayanams, so this page edits one specific
+  // session when ?session=… is given, and otherwise adds a brand new one.
+  const editingSessionId = searchParams.get("session");
   const { user } = useAuth();
+
 
   const [group, setGroup] = useState<Group | null>(null);
   const [loadingGroup, setLoadingGroup] = useState(true);
