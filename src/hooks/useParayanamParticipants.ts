@@ -61,6 +61,18 @@ export async function inviteParticipants(
   if (error) throw new Error(error.message);
 }
 
+/** Revokes one person's participation in a single parayanam (does not touch group membership). */
+export async function removeParticipant(sessionId: string, userId: string): Promise<void> {
+  const { error } = await (supabase as any)
+    .from("parayanam_participants")
+    .delete()
+    .eq("challenge_session_id", sessionId)
+    .eq("user_id", userId);
+  if (error) throw new Error(error.message);
+}
+
+
+
 /** Participants (and their invite status) for one parayanam. */
 export function useSessionParticipants(sessionId: string | null | undefined) {
   const [participants, setParticipants] = useState<Participant[]>([]);

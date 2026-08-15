@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { AlertTriangle, LogOut, Trash2 } from "lucide-react";
+import { AlertTriangle, LogOut, Trash2, UserMinus } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "@/hooks/use-toast";
@@ -48,6 +48,67 @@ export default function GroupDangerZone({ groupId, groupName, isOwner }: GroupDa
   const [dissolveOpen, setDissolveOpen] = useState(false);
   const [confirmText, setConfirmText] = useState("");
   const [dissolving, setDissolving] = useState(false);
+
+  const [removeMemberOpen, setRemoveMemberOpen] = useState(false);
+  const [groupMembers, setGroupMembers] = useState<MemberOption[]>([]);
+  const [removeCandidate, setRemoveCandidate] = useState<string | null>(null);
+  const [removingMember, setRemovingMember] = useState(false);
+
+  /** Other active members of this group, for the group-level removal dialog. */
+  const loadGroupMembers = async () => {
+    setLoadingMembers(true);
+    setGroupMembers([]);
+    const { data: rows, error } = await (supabase as any)
+      .from("group_members")
+      .select("user_id, joined_at")
+      .eq("group_id", groupId)
+      .neq("user_id", user?.id ?? "")
+      .is("left_at", null)
+      .order("joined_at", { ascending: true });
+    if (error) {
+      setLoadingMembers(false);
+      toast({ title: "Could not load members", description: error.message, variant: "destructive" });
+      return;
+    }
+    const ids = (rows ?? []).map((r: any) => r.user_id);
+    let profilesById = new Map<string, any>();
+    if (ids.length > 0) {
+      const { data: profiles } = await (supabase as any)
+        .from("profiles")
+        .select("id, display_name, email")
+        .in("id", ids);
+      profilesById = new Map((profiles ?? []).map((p: any) => [p.id, p]));
+    }
+    setGroupMembers(
+      (rows ?? []).map((r: any) => ({
+        user_id: r.user_id,
+        display_name: profilesById.get(r.user_id)?.display_name || "Unnamed member",
+        email: profilesById.get(r.user_id)?.email ?? null,
+      })),
+    );
+    setLoadingMembers(false);
+  };
+
+  /** Removes someone from the group entirely (sets group_members.left_at). */
+  const handleRemoveFromGroup = async () => {
+    if (!removeCandidate) return;
+    setRemovingMember(true);
+    const { error } = await (supabase as any)
+      .from("group_members")
+      .update({ left_at: new Date().toISOString() })
+      .eq("group_id", groupId)
+      .eq("user_id", removeCandidate)
+      .is("left_at", null);
+    setRemovingMember(false);
+    if (error) {
+      toast({ title: "Could not remove member", description: error.message, variant: "destructive" });
+      return;
+    }
+    const name = groupMembers.find((m) => m.user_id === removeCandidate)?.display_name ?? "The member";
+    toast({ title: "Removed from group", description: `${name} is no longer part of ${groupName}.` });
+    setRemoveCandidate(null);
+    setRemoveMemberOpen(false);
+  };
 
   const loadMembers = async () => {
     setLoadingMembers(true);
@@ -184,6 +245,25 @@ export default function GroupDangerZone({ groupId, groupName, isOwner }: GroupDa
       {isOwner && (
         <div className="mt-6 border-t border-destructive/30 pt-5">
           <p className="font-sans text-sm text-muted-foreground">
+            Remove a member from the group entirely. They lose access to all of this group's parayanams, present
+            and future, but keep their own chanting history and feathers. To only take someone out of the current
+            parayanam, use “Remove from parayanam” on the group page instead.
+          </p>
+          <button
+            onClick={() => {
+              setRemoveMemberOpen(true);
+              void loadGroupMembers();
+            }}
+            className="mt-3 inline-flex w-full items-center justify-center gap-2 rounded-lg border border-destructive px-4 py-2.5 font-sans text-sm font-semibold text-destructive transition-colors hover:bg-destructive/10"
+          >
+            <UserMinus className="h-4 w-4" /> Remove a Member from Group
+          </button>
+        </div>
+      )}
+
+      {isOwner && (
+        <div className="mt-6 border-t border-destructive/30 pt-5">
+          <p className="font-sans text-sm text-muted-foreground">
             Dissolving is permanent. All group parayanams will be cancelled and every member becomes an independent
             user, keeping their own individual chanting history and feathers.
           </p>
@@ -198,6 +278,77 @@ export default function GroupDangerZone({ groupId, groupName, isOwner }: GroupDa
           </button>
         </div>
       )}
+
+      {/* Remove a member from the group */}
+      <AlertDialog
+        open={removeMemberOpen}
+        onOpenChange={(open) => {
+          if (!open) {
+            setRemoveMemberOpen(false);
+            setRemoveCandidate(null);
+          }
+        }}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Remove a member from “{groupName}”?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This removes them from the whole group, not just the current parayanam. They keep their own chanting
+              history and feathers.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+
+          {loadingMembers ? (
+            <p className="font-sans text-sm text-muted-foreground">Loading members…</p>
+          ) : groupMembers.length === 0 ? (
+            <p className="font-sans text-sm text-muted-foreground">There are no other members in this group.</p>
+          ) : (
+            <div className="max-h-64 space-y-2 overflow-y-auto">
+              {groupMembers.map((m) => (
+                <label
+                  key={m.user_id}
+                  className="flex cursor-pointer items-start gap-3 rounded-lg border border-border p-3 hover:bg-muted"
+                >
+                  <input
+                    type="radio"
+                    name="remove-member"
+                    className="mt-1"
+                    value={m.user_id}
+                    checked={removeCandidate === m.user_id}
+                    onChange={() => setRemoveCandidate(m.user_id)}
+                  />
+                  <span className="min-w-0">
+                    <span className="block font-sans text-sm text-foreground">{m.display_name}</span>
+                    <span className="block break-all font-sans text-xs text-muted-foreground">
+                      {m.email ?? "email not available"}
+                    </span>
+                  </span>
+                </label>
+              ))}
+            </div>
+          )}
+
+          <AlertDialogFooter>
+            <button
+              onClick={() => {
+                setRemoveMemberOpen(false);
+                setRemoveCandidate(null);
+              }}
+              className="rounded-md border border-border px-4 py-2 font-sans text-sm font-semibold text-foreground hover:bg-muted"
+            >
+              Cancel
+            </button>
+            <button
+              onClick={handleRemoveFromGroup}
+              disabled={!removeCandidate || removingMember}
+              className="rounded-md bg-destructive px-4 py-2 font-sans text-sm font-semibold text-destructive-foreground hover:bg-destructive/90 disabled:opacity-50"
+            >
+              {removingMember ? "Removing…" : "Remove from Group"}
+            </button>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
 
       {/* Leave confirmation */}
       <AlertDialog open={leaveDialogOpen} onOpenChange={setLeaveDialogOpen}>
