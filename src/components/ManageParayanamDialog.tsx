@@ -95,16 +95,44 @@ export default function ManageParayanamDialog({
     }
   };
 
-  const handleRemove = async () => {
+  /** Confirmed participants who could take over someone else's dashakams. */
+  const reassignCandidates = members.filter(
+    (m) => statusById.get(m.user_id) === "confirmed" && m.user_id !== removeTarget?.userId
+  );
+
+  /** Ask about redistribution only when there is actually something to redistribute. */
+  const startRemove = async (userId: string, name: string) => {
+    setRemoveTarget({ userId, name });
+    setRemovalMode("distribute");
+    setAssignTo("");
+    setIncomplete(0);
+    setChecking(true);
+    try {
+      const { splitMode, incomplete: n } = await countIncompleteAssignments(sessionId, userId);
+      if (splitMode && n > 0) {
+        setIncomplete(n);
+        setRemoveTarget(null);
+        setRedistributeOpen(true);
+        setRemoveTarget({ userId, name });
+      }
+    } catch {
+      /* fall back to the plain confirmation */
+    } finally {
+      setChecking(false);
+    }
+  };
+
+  const doRemove = async (mode: RemovalMode, targetUserId?: string | null) => {
     if (!removeTarget) return;
     setBusy(true);
     try {
-      await removeParticipant(sessionId, removeTarget.userId);
+      await removeParticipant(sessionId, removeTarget.userId, mode, targetUserId);
       toast({
         title: "Removed from this parayanam",
         description: `${removeTarget.name} is still a member of the group.`,
       });
       setRemoveTarget(null);
+      setRedistributeOpen(false);
       await onChanged();
     } catch (e: any) {
       toast({ title: "Could not remove them", description: e?.message, variant: "destructive" });
@@ -112,6 +140,8 @@ export default function ManageParayanamDialog({
       setBusy(false);
     }
   };
+
+  const handleRemove = () => doRemove("distribute");
 
   const handleCancel = async () => {
     setBusy(true);
