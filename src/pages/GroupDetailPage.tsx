@@ -593,6 +593,136 @@ export default function GroupDetailPage() {
             </Link>
           </div>
 
+          {/* ── Divider: everything below belongs to one chosen parayanam ── */}
+          <div className="mt-8 flex items-center gap-3">
+            <Separator className="flex-1" />
+            <span className="font-sans text-xs uppercase tracking-wide text-muted-foreground">
+              Parayanams
+            </span>
+            <Separator className="flex-1" />
+          </div>
+
+          <section className="mt-4 rounded-2xl border border-border bg-card p-5 shadow-peacock">
+            <div className="flex flex-wrap items-end justify-between gap-3">
+              <div className="min-w-0 flex-1">
+                <h2 className="font-display text-lg font-semibold text-foreground">
+                  Choose a parayanam
+                </h2>
+                <p className="mt-1 font-sans text-sm text-muted-foreground">
+                  This group can run several parayanams at once. Pick one to see its garden and schedule.
+                </p>
+                {loadingParayanams ? (
+                  <Loader2 className="mt-3 h-5 w-5 animate-spin text-primary" />
+                ) : parayanams.length === 0 ? (
+                  <p className="mt-3 font-sans text-sm text-muted-foreground">
+                    {isOwner
+                      ? "No parayanams yet — add one to get started."
+                      : "You're not confirmed in any of this group's parayanams yet. Once you accept an invite, it will appear here."}
+                  </p>
+                ) : (
+                  <div className="mt-3 max-w-md">
+                    <Select
+                      value={selectedSessionId ?? undefined}
+                      onValueChange={(v) => {
+                        setPickerTouched(true);
+                        setSelectedSessionId(v);
+                        setRefreshKey((k) => k + 1);
+                      }}
+                    >
+                      <SelectTrigger className="font-sans text-sm">
+                        <SelectValue placeholder="Select a parayanam" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {parayanams.map((p) => (
+                          <SelectItem key={p.session_id} value={p.session_id}>
+                            {parayanamLabel(p)}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                )}
+              </div>
+              {isOwner && (
+                <Link
+                  to={`/parayanam/new?group=${group.id}`}
+                  className="inline-flex items-center gap-2 rounded-lg bg-gradient-peacock px-4 py-2 font-sans text-sm font-semibold text-primary-foreground hover:opacity-90"
+                >
+                  <Plus className="h-4 w-4" /> Add a Parayanam
+                </Link>
+              )}
+            </div>
+          </section>
+
+          {isOwner && selectedSessionId && (
+            <section className="mt-6 rounded-2xl border border-border bg-card p-5 shadow-peacock">
+              <h2 className="font-display text-lg font-semibold text-foreground">
+                {parayanamName || "Parayanam"} Schedule
+              </h2>
+              <p className="mt-1 font-sans text-sm text-muted-foreground">
+                Review or reassign the dashakams for this parayanam.
+              </p>
+              <div className="mt-4 flex flex-wrap gap-3">
+                <Link
+                  to={`/groups/${group.id}/schedule?session=${selectedSessionId}`}
+                  className="inline-flex items-center gap-2 rounded-lg bg-gradient-peacock px-4 py-2 font-sans text-sm font-semibold text-primary-foreground hover:opacity-90"
+                >
+                  <CalendarDays className="h-4 w-4" /> Manage schedule
+                </Link>
+                {canStartNow && (
+                  <button
+                    onClick={handleStartNow}
+                    disabled={starting}
+                    className="inline-flex items-center gap-2 rounded-lg border border-primary px-4 py-2 font-sans text-sm font-semibold text-primary hover:bg-primary/10 disabled:opacity-60"
+                  >
+                    {starting ? <Loader2 className="h-4 w-4 animate-spin" /> : <PlayCircle className="h-4 w-4" />}
+                    Start parayanam now
+                  </button>
+                )}
+              </div>
+            </section>
+          )}
+
+          {selectedSessionId && (
+            <>
+              <div className="mt-6">
+                {loadingParticipants ? (
+                  <div className="rounded-2xl border border-border bg-card p-5 shadow-peacock">
+                    <Loader2 className="h-5 w-5 animate-spin text-primary" />
+                  </div>
+                ) : !canSeeParayanamData ? (
+                  <div className="rounded-2xl border border-border bg-card p-5 shadow-peacock">
+                    <h2 className="font-display text-xl font-bold text-foreground">Group Dashakam Garden</h2>
+                    <p className="mt-1 font-sans text-sm text-muted-foreground">
+                      You're not part of this parayanam. The garden will bloom for you once you're invited
+                      to join one.
+                    </p>
+                  </div>
+                ) : gardenNumbers.length > 0 ? (
+                  <DashakamGarden
+                    blooms={gardenBlooms}
+                    dashakamNumbers={gardenNumbers}
+                    tiles={gardenTiles}
+                    onTapDashakam={handleTapDashakam}
+                    pendingDashakam={gardenPending}
+                    title={`${parayanamName || "Parayanam"} — Dashakam Garden`}
+                    loading={gardenLoading}
+                  />
+                ) : (
+                  <div className="rounded-2xl border border-border bg-card p-5 shadow-peacock">
+                    <h2 className="font-display text-xl font-bold text-foreground">Group Dashakam Garden</h2>
+                    <p className="mt-1 font-sans text-sm text-muted-foreground">
+                      The day-by-day schedule is prepared automatically when this parayanam begins.
+                    </p>
+                  </div>
+                )}
+              </div>
+
+              <ParayanamScheduleViews challengeSessionId={selectedSessionId} refreshKey={refreshKey} />
+            </>
+          )}
+
+
         </>
       )}
     </div>
