@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { Link, useParams } from "react-router-dom";
+import { Link, useParams, useSearchParams } from "react-router-dom";
 import { ArrowLeft, CalendarDays, Copy, Info, Loader2, Sparkles } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
@@ -30,7 +30,12 @@ const plusDays = (n: number) => {
 
 export default function GroupSchedulePage() {
   const { groupId } = useParams<{ groupId: string }>();
+  const [searchParams] = useSearchParams();
+  // A group can run several parayanams, so this page edits one specific
+  // session when ?session=… is given, and otherwise adds a brand new one.
+  const editingSessionId = searchParams.get("session");
   const { user } = useAuth();
+
 
   const [group, setGroup] = useState<Group | null>(null);
   const [loadingGroup, setLoadingGroup] = useState(true);
@@ -58,13 +63,10 @@ export default function GroupSchedulePage() {
   const isFinalized = !!session?.finalized_at;
 
   const { sets, loading: loadingSets, forkSet } = useDashakamSets();
-  const { members } = useGroupMembers(groupId, group?.active_challenge_session_id);
-  const { rows, loading: loadingRows, updateRow, refresh } = useParayanamSchedule(
-    group?.active_challenge_session_id
-  );
-  const { participants, statusFor, refresh: refreshParticipants } = useSessionParticipants(
-    group?.active_challenge_session_id
-  );
+  const { members } = useGroupMembers(groupId, editingSessionId);
+  const { rows, loading: loadingRows, updateRow, refresh } = useParayanamSchedule(editingSessionId);
+  const { participants, statusFor, refresh: refreshParticipants } =
+    useSessionParticipants(editingSessionId);
 
   useEffect(() => {
     if (!groupId) return;
@@ -86,7 +88,7 @@ export default function GroupSchedulePage() {
   }, [groupId]);
 
   useEffect(() => {
-    const sessionId = group?.active_challenge_session_id;
+    const sessionId = editingSessionId;
     if (!sessionId) return;
     let cancelled = false;
     (async () => {
@@ -111,7 +113,8 @@ export default function GroupSchedulePage() {
     return () => {
       cancelled = true;
     };
-  }, [group?.active_challenge_session_id]);
+  }, [editingSessionId]);
+
 
   useEffect(() => {
     if (session?.dashakam_set_id && sets.some((s) => s.id === session.dashakam_set_id)) {
@@ -168,7 +171,9 @@ export default function GroupSchedulePage() {
     setError(null);
     setNotice(null);
     try {
-      let sessionId = group.active_challenge_session_id;
+      // Editing one specific parayanam updates it in place; otherwise this
+      // always adds a new parayanam alongside any the group already has.
+      let sessionId = editingSessionId;
 
       const sessionPayload = {
         user_id: user!.id,
@@ -199,12 +204,16 @@ export default function GroupSchedulePage() {
           .single();
         if (insErr) throw new Error(insErr.message);
         sessionId = data.id as string;
-        const { error: gErr } = await (supabase as any)
-          .from("groups")
-          .update({ active_challenge_session_id: sessionId })
-          .eq("id", group.id);
-        if (gErr) throw new Error(gErr.message);
-        setGroup({ ...group, active_challenge_session_id: sessionId });
+        // The group pointer is only a default for the group page, so set it
+        // when nothing is pointed at yet and leave existing parayanams alone.
+        if (!group.active_challenge_session_id) {
+          const { error: gErr } = await (supabase as any)
+            .from("groups")
+            .update({ active_challenge_session_id: sessionId })
+            .eq("id", group.id);
+          if (gErr) throw new Error(gErr.message);
+          setGroup({ ...group, active_challenge_session_id: sessionId });
+        }
       }
 
       await inviteParticipants(sessionId!, selectedParticipants, includeSelf ? user!.id : null);
@@ -214,6 +223,7 @@ export default function GroupSchedulePage() {
       setNotice(
         "Invites sent. The day-by-day schedule is prepared automatically when the parayanam begins."
       );
+
     } catch (e: any) {
       setError(e?.message ?? "Could not save the parayanam.");
     } finally {
@@ -257,7 +267,7 @@ export default function GroupSchedulePage() {
       </Link>
 
       <h1 className="mt-4 font-display text-2xl font-bold text-foreground">
-        Plan {parayanamName.trim() || "the Parayanam"}
+        {editingSessionId ? `Plan ${parayanamName.trim() || "the Parayanam"}` : "Add a Parayanam"}
       </h1>
 
       <section className="mt-6 space-y-5 rounded-2xl border border-border bg-card p-5 shadow-peacock">
