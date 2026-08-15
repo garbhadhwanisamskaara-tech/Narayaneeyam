@@ -164,8 +164,15 @@ export default function GroupDetailPage() {
   }, [groupId]);
 
   useEffect(() => {
-    const sessionId = group?.active_challenge_session_id;
-    if (!sessionId) return;
+    const sessionId = selectedSessionId;
+    if (!sessionId) {
+      setTarget(null);
+      setSessionStartDate(null);
+      setSessionFinalizedAt(null);
+      setParayanamName(null);
+      setDashakamNumbers(undefined);
+      return;
+    }
     let cancelled = false;
     (async () => {
       const { data } = await (supabase as any)
@@ -201,15 +208,15 @@ export default function GroupDetailPage() {
     return () => {
       cancelled = true;
     };
-  }, [group?.active_challenge_session_id, refreshKey]);
+  }, [selectedSessionId, refreshKey]);
 
   const isOwner = !!user && !!group && group.owner_id === user.id;
   const ownerMember = members.find((m) => m.user_id === group?.owner_id);
   const ownerName = ownerMember?.display_name ?? null;
 
-  // Only people with a relationship to the active parayanam (invited, confirmed
+  // Only people with a relationship to the selected parayanam (invited, confirmed
   // or declined) — plus the owner, who runs it — may see its progress.
-  const hasSession = !!group?.active_challenge_session_id;
+  const hasSession = !!selectedSessionId;
   const isParayanamParticipant =
     isOwner || (!!user && participants.some((p) => p.user_id === user.id));
   const canSeeParayanamData = !hasSession || isParayanamParticipant;
@@ -224,9 +231,9 @@ export default function GroupDetailPage() {
     await refreshMembers();
   };
 
-  /** Owner-only: revokes one person's place in the current parayanam (they stay in the group). */
+  /** Owner-only: revokes one person's place in the selected parayanam (they stay in the group). */
   const handleRemoveFromParayanam = async () => {
-    const sessionId = group?.active_challenge_session_id;
+    const sessionId = selectedSessionId;
     if (!removeTarget || !sessionId) return;
     setBusy(true);
     try {
@@ -264,13 +271,13 @@ export default function GroupDetailPage() {
 
   const todayISO = new Date().toISOString().slice(0, 10);
   const canStartNow =
-    isOwner && !!group?.active_challenge_session_id && !!sessionStartDate && sessionStartDate <= todayISO && !sessionFinalizedAt;
+    isOwner && !!selectedSessionId && !!sessionStartDate && sessionStartDate <= todayISO && !sessionFinalizedAt;
 
   const handleStartNow = async () => {
-    if (!group?.active_challenge_session_id) return;
+    if (!selectedSessionId) return;
     setStarting(true);
     const { error } = await (supabase as any).rpc("finalize_parayanam", {
-      p_session_id: group.active_challenge_session_id,
+      p_session_id: selectedSessionId,
     });
     setStarting(false);
     if (error) {
@@ -279,8 +286,9 @@ export default function GroupDetailPage() {
     }
     toast({ title: "Parayanam started", description: "The day-by-day schedule is ready." });
     setRefreshKey((k) => k + 1);
-    await refreshGarden();
+    await Promise.all([refreshGarden(), refreshParayanams()]);
   };
+
 
   const handleCopy = async () => {
     if (!invite) return;
