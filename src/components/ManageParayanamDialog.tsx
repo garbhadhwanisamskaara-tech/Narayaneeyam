@@ -5,10 +5,12 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
 import type { GroupMember } from "@/hooks/useGroups";
 import {
+  countIncompleteAssignments,
   inviteParticipants,
   removeParticipant,
   type Participant,
   type ParticipantStatus,
+  type RemovalMode,
 } from "@/hooks/useParayanamParticipants";
 import {
   Dialog,
@@ -61,6 +63,11 @@ export default function ManageParayanamDialog({
   const [selected, setSelected] = useState<string[]>([]);
   const [removeTarget, setRemoveTarget] = useState<{ userId: string; name: string } | null>(null);
   const [cancelOpen, setCancelOpen] = useState(false);
+  const [checking, setChecking] = useState(false);
+  const [incomplete, setIncomplete] = useState(0);
+  const [redistributeOpen, setRedistributeOpen] = useState(false);
+  const [removalMode, setRemovalMode] = useState<RemovalMode>("distribute");
+  const [assignTo, setAssignTo] = useState("");
 
   const statusById = useMemo(
     () => new Map(participants.map((p) => [p.user_id, p.status])),
@@ -88,16 +95,42 @@ export default function ManageParayanamDialog({
     }
   };
 
-  const handleRemove = async () => {
+  /** Confirmed participants who could take over someone else's dashakams. */
+  const reassignCandidates = members.filter(
+    (m) => statusById.get(m.user_id) === "confirmed" && m.user_id !== removeTarget?.userId
+  );
+
+  /** Ask about redistribution only when there is actually something to redistribute. */
+  const startRemove = async (userId: string, name: string) => {
+    setRemoveTarget({ userId, name });
+    setRemovalMode("distribute");
+    setAssignTo("");
+    setIncomplete(0);
+    setChecking(true);
+    try {
+      const { splitMode, incomplete: n } = await countIncompleteAssignments(sessionId, userId);
+      if (splitMode && n > 0) {
+        setIncomplete(n);
+        setRedistributeOpen(true);
+      }
+    } catch {
+      /* fall back to the plain confirmation */
+    } finally {
+      setChecking(false);
+    }
+  };
+
+  const doRemove = async (mode: RemovalMode, targetUserId?: string | null) => {
     if (!removeTarget) return;
     setBusy(true);
     try {
-      await removeParticipant(sessionId, removeTarget.userId);
+      await removeParticipant(sessionId, removeTarget.userId, mode, targetUserId);
       toast({
         title: "Removed from this parayanam",
         description: `${removeTarget.name} is still a member of the group.`,
       });
       setRemoveTarget(null);
+      setRedistributeOpen(false);
       await onChanged();
     } catch (e: any) {
       toast({ title: "Could not remove them", description: e?.message, variant: "destructive" });
@@ -105,6 +138,8 @@ export default function ManageParayanamDialog({
       setBusy(false);
     }
   };
+
+  const handleRemove = () => doRemove("distribute");
 
   const handleCancel = async () => {
     setBusy(true);
@@ -208,8 +243,8 @@ export default function ManageParayanamDialog({
                       </span>
                       {m.user_id !== ownerId && (
                         <button
-                          onClick={() => setRemoveTarget({ userId: m.user_id, name: m.display_name })}
-                          disabled={busy}
+                          onClick={() => void startRemove(m.user_id, m.display_name)}
+                          disabled={busy || checking}
                           className="inline-flex items-center gap-1 rounded-lg border border-destructive/50 px-3 py-1.5 font-sans text-xs font-semibold text-destructive hover:bg-destructive/10 disabled:opacity-60"
                         >
                           <UserMinus className="h-3.5 w-3.5" /> Remove from this parayanam
@@ -254,7 +289,10 @@ export default function ManageParayanamDialog({
         </DialogContent>
       </Dialog>
 
-      <AlertDialog open={!!removeTarget} onOpenChange={(o) => !o && setRemoveTarget(null)}>
+      <AlertDialog
+        open={!!removeTarget && !redistributeOpen && !checking}
+        onOpenChange={(o) => !o && setRemoveTarget(null)}
+      >
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>Remove {removeTarget?.name} from this parayanam?</AlertDialogTitle>
@@ -273,6 +311,90 @@ export default function ManageParayanamDialog({
             <button
               onClick={() => void handleRemove()}
               disabled={busy}
+              className="rounded-md bg-destructive px-4 py-2 font-sans text-sm font-semibold text-destructive-foreground hover:bg-destructive/90 disabled:opacity-50"
+            >
+              {busy ? "Removing…" : "Remove from this parayanam"}
+            </button>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Split-mode removal: decide where the unchanted dashakams should go. */}
+      <AlertDialog
+        open={redistributeOpen}
+        onOpenChange={(o) => {
+          if (!o) {
+            setRedistributeOpen(false);
+            setRemoveTarget(null);
+          }
+        }}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>
+              {removeTarget?.name} has {incomplete} incomplete {incomplete === 1 ? "dashakam" : "dashakams"} in this
+              parayanam. What should happen to them?
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              Choose how these dashakams should be carried on once they leave “{parayanamName || "this parayanam"}”.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+
+          <div className="space-y-3">
+            <label className="flex cursor-pointer items-start gap-3 rounded-lg border border-border p-3 hover:bg-muted">
+              <input
+                type="radio"
+                name="removal-mode"
+                className="mt-1"
+                checked={removalMode === "distribute"}
+                onChange={() => setRemovalMode("distribute")}
+              />
+              <span className="font-sans text-sm text-foreground">
+                Distribute evenly among remaining participants
+              </span>
+            </label>
+
+            <label className="flex cursor-pointer items-start gap-3 rounded-lg border border-border p-3 hover:bg-muted">
+              <input
+                type="radio"
+                name="removal-mode"
+                className="mt-1"
+                checked={removalMode === "assign_to"}
+                onChange={() => setRemovalMode("assign_to")}
+              />
+              <span className="min-w-0 flex-1">
+                <span className="block font-sans text-sm text-foreground">Assign all to one member</span>
+                {removalMode === "assign_to" && (
+                  <select
+                    value={assignTo}
+                    onChange={(e) => setAssignTo(e.target.value)}
+                    className="mt-2 w-full rounded-md border border-border bg-background px-3 py-2 font-sans text-sm text-foreground"
+                  >
+                    <option value="">Choose a member…</option>
+                    {reassignCandidates.map((m) => (
+                      <option key={m.user_id} value={m.user_id}>
+                        {m.display_name}
+                      </option>
+                    ))}
+                  </select>
+                )}
+              </span>
+            </label>
+          </div>
+
+          <AlertDialogFooter>
+            <button
+              onClick={() => {
+                setRedistributeOpen(false);
+                setRemoveTarget(null);
+              }}
+              className="rounded-md border border-border px-4 py-2 font-sans text-sm font-semibold text-foreground hover:bg-muted"
+            >
+              Keep them
+            </button>
+            <button
+              onClick={() => void doRemove(removalMode, assignTo || null)}
+              disabled={busy || (removalMode === "assign_to" && !assignTo)}
               className="rounded-md bg-destructive px-4 py-2 font-sans text-sm font-semibold text-destructive-foreground hover:bg-destructive/90 disabled:opacity-50"
             >
               {busy ? "Removing…" : "Remove from this parayanam"}

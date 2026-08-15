@@ -61,14 +61,59 @@ export async function inviteParticipants(
   if (error) throw new Error(error.message);
 }
 
-/** Revokes one person's participation in a single parayanam (does not touch group membership). */
-export async function removeParticipant(sessionId: string, userId: string): Promise<void> {
-  const { error } = await (supabase as any)
-    .from("parayanam_participants")
-    .delete()
-    .eq("challenge_session_id", sessionId)
-    .eq("user_id", userId);
+export type RemovalMode = "distribute" | "assign_to";
+
+/**
+ * Revokes one person's participation in a single parayanam (does not touch group
+ * membership). Their incomplete Split-mode dashakams are either shared out among
+ * the remaining confirmed participants, or handed to one chosen member.
+ */
+export async function removeParticipant(
+  sessionId: string,
+  userId: string,
+  mode: RemovalMode = "distribute",
+  targetUserId?: string | null
+): Promise<void> {
+  const { error } = await (supabase as any).rpc("remove_participant_from_parayanam", {
+    p_session_id: sessionId,
+    p_user_id: userId,
+    p_mode: mode,
+    p_target_user_id: mode === "assign_to" ? targetUserId ?? null : null,
+  });
   if (error) throw new Error(error.message);
+}
+
+/**
+ * How many dashakams in this parayanam are assigned to someone and still
+ * unchanted — only meaningful for Split-mode (group_relay) parayanams.
+ */
+export async function countIncompleteAssignments(
+  sessionId: string,
+  userId: string
+): Promise<{ splitMode: boolean; incomplete: number }> {
+  const { data: session } = await (supabase as any)
+    .from("challenge_sessions")
+    .select("challenge_type")
+    .eq("id", sessionId)
+    .maybeSingle();
+  const splitMode = session?.challenge_type === "group_relay";
+  if (!splitMode) return { splitMode: false, incomplete: 0 };
+
+  const { data: rows } = await (supabase as any)
+    .from("parayanam_schedule")
+    .select("id")
+    .eq("challenge_session_id", sessionId)
+    .eq("assigned_user_id", userId);
+  const ids = ((rows ?? []) as { id: string }[]).map((r) => r.id);
+  if (!ids.length) return { splitMode: true, incomplete: 0 };
+
+  const { data: prog } = await (supabase as any)
+    .from("parayanam_member_progress")
+    .select("schedule_id")
+    .eq("user_id", userId)
+    .in("schedule_id", ids);
+  const done = new Set(((prog ?? []) as { schedule_id: string }[]).map((p) => p.schedule_id));
+  return { splitMode: true, incomplete: ids.filter((id) => !done.has(id)).length };
 }
 
 

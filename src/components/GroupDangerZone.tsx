@@ -230,20 +230,8 @@ export default function GroupDangerZone({ groupId, groupName, isOwner }: GroupDa
         These actions are permanent and cannot be undone. Please read carefully before proceeding.
       </p>
 
-      <div className="mt-4">
-        <p className="font-sans text-sm text-muted-foreground">
-          Leaving this group keeps your own chanting history and feathers.
-        </p>
-        <button
-          onClick={() => setLeaveDialogOpen(true)}
-          className="mt-3 inline-flex w-full items-center justify-center gap-2 rounded-lg border border-destructive px-4 py-2.5 font-sans text-sm font-semibold text-destructive transition-colors hover:bg-destructive/10"
-        >
-          <LogOut className="h-4 w-4" /> Leave Group
-        </button>
-      </div>
-
       {isOwner && (
-        <div className="mt-6 border-t border-destructive/30 pt-5">
+        <div className="mt-4">
           <p className="font-sans text-sm text-muted-foreground">
             Remove a member from the group entirely. They lose access to all of this group's parayanams, present
             and future, but keep their own chanting history and feathers. To only take someone out of the current
@@ -260,6 +248,19 @@ export default function GroupDangerZone({ groupId, groupName, isOwner }: GroupDa
           </button>
         </div>
       )}
+
+      <div className={isOwner ? "mt-6 border-t border-destructive/30 pt-5" : "mt-4"}>
+        <p className="font-sans text-sm text-muted-foreground">
+          Leaving this group keeps your own chanting history and feathers.
+        </p>
+        <button
+          onClick={() => setLeaveDialogOpen(true)}
+          className="mt-3 inline-flex w-full items-center justify-center gap-2 rounded-lg border border-destructive px-4 py-2.5 font-sans text-sm font-semibold text-destructive transition-colors hover:bg-destructive/10"
+        >
+          <LogOut className="h-4 w-4" /> Leave Group
+        </button>
+      </div>
+
 
       {isOwner && (
         <div className="mt-6 border-t border-destructive/30 pt-5">
