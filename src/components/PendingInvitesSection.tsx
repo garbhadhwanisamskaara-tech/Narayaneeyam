@@ -1,23 +1,35 @@
 import { useState } from "react";
 import { Check, Loader2, MailQuestion, X } from "lucide-react";
 import { useMyPendingInvites } from "@/hooks/useParayanamParticipants";
+import PushRemindersPrompt from "@/components/PushRemindersPrompt";
+
+const NUDGE_KEY = "push-nudge-shown";
 
 /** Invites to group parayanams that are waiting for the current user's answer. */
 export default function PendingInvitesSection({ groupId }: { groupId?: string }) {
   const { invites, loading, busyId, respond } = useMyPendingInvites();
   const [error, setError] = useState<string | null>(null);
+  const [showNudge, setShowNudge] = useState(false);
 
   const list = groupId ? invites.filter((i) => i.group_id === groupId) : invites;
-  if (loading || list.length === 0) return null;
 
   const answer = async (id: string, status: "confirmed" | "declined") => {
     setError(null);
     try {
       await respond(id, status);
+      // A one-time nudge the first time someone joins a parayanam — reminders are
+      // an account-level setting, so we never repeat this on every group page.
+      if (status === "confirmed" && localStorage.getItem(NUDGE_KEY) !== "1") {
+        localStorage.setItem(NUDGE_KEY, "1");
+        setShowNudge(true);
+      }
     } catch (e: any) {
       setError(e?.message ?? "Could not save your answer. Please try again.");
     }
   };
+
+  if (loading || (list.length === 0 && !showNudge)) return null;
+  if (list.length === 0) return <PushRemindersPrompt />;
 
   return (
     <section className="mt-6 rounded-2xl border border-border bg-card p-5 shadow-peacock">
@@ -61,6 +73,7 @@ export default function PendingInvitesSection({ groupId }: { groupId?: string })
         ))}
       </ul>
       {error && <p className="mt-3 font-sans text-sm text-destructive">{error}</p>}
+      {showNudge && <PushRemindersPrompt />}
     </section>
   );
 }
