@@ -98,12 +98,17 @@ export default function GroupDetailPage() {
   const [helpOpen, setHelpOpen] = useState(false);
   const [removeTarget, setRemoveTarget] = useState<{ userId: string; name: string } | null>(null);
 
+  const [selectedSessionId, setSelectedSessionId] = useState<string | null>(null);
+  const [pickerTouched, setPickerTouched] = useState(false);
+
   const { invite, loading, generateInvite, revokeInvite, regenerateInvite } = useGroupInvite(groupId);
+  const { parayanams, loading: loadingParayanams, refresh: refreshParayanams } =
+    useGroupParayanams(groupId);
   const {
     members,
     loading: loadingMembers,
     refresh: refreshMembers,
-  } = useGroupMembers(groupId, group?.active_challenge_session_id);
+  } = useGroupMembers(groupId, selectedSessionId);
   const {
     blooms: gardenBlooms,
     tiles: gardenTiles,
@@ -112,13 +117,29 @@ export default function GroupDetailPage() {
     pending: gardenPending,
     refresh: refreshGarden,
     toggleDashakam,
-  } = useSessionGarden(group?.active_challenge_session_id);
+  } = useSessionGarden(selectedSessionId);
   const {
     participants,
     loading: loadingParticipants,
     statusFor,
     refresh: refreshParticipants,
-  } = useSessionParticipants(group?.active_challenge_session_id);
+  } = useSessionParticipants(selectedSessionId);
+
+  // Default selection: the group's active pointer when it is in the list,
+  // otherwise the most recent parayanam. Explicit picks always win afterwards.
+  useEffect(() => {
+    if (pickerTouched || loadingParayanams) return;
+    if (!parayanams.length) {
+      setSelectedSessionId(null);
+      return;
+    }
+    const active = group?.active_challenge_session_id;
+    const fallback = parayanams[0].session_id;
+    setSelectedSessionId(
+      active && parayanams.some((p) => p.session_id === active) ? active : fallback
+    );
+  }, [parayanams, loadingParayanams, group?.active_challenge_session_id, pickerTouched]);
+
 
 
 
