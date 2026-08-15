@@ -354,9 +354,10 @@ export default function GroupDetailPage() {
           <div className="mt-4 flex flex-wrap items-center justify-between gap-3">
             <div className="min-w-0">
               <h1 className="font-display text-2xl font-bold text-foreground">{group.group_name}</h1>
-              {group.active_challenge_session_id && (
-                <p className="font-sans text-sm text-muted-foreground">{parayanamName || "Parayanam"}</p>
-              )}
+              <p className="font-sans text-sm text-muted-foreground">
+                {members.length} {members.length === 1 ? "member" : "members"}
+              </p>
+
             </div>
             <Dialog open={helpOpen} onOpenChange={setHelpOpen}>
               <DialogTrigger asChild>
@@ -465,11 +466,11 @@ export default function GroupDetailPage() {
                           </p>
                           <p className="flex flex-wrap items-center gap-2 font-sans text-xs text-muted-foreground">
                             <span>
-                              {group.active_challenge_session_id
-                                ? `${m.completed}${target ? ` / ${target}` : ""} dashakams completed`
-                                : "No active parayanam yet"}
+                              {selectedSessionId
+                                ? `${m.completed}${target ? ` / ${target}` : ""} dashakams completed in ${parayanamName || "the selected parayanam"}`
+                                : "No parayanam selected yet"}
                             </span>
-                            {group.active_challenge_session_id && (
+                            {selectedSessionId && (
                               <span
                                 className={
                                   statusFor(m.user_id) === "confirmed"
@@ -482,7 +483,8 @@ export default function GroupDetailPage() {
                             )}
                           </p>
                         </div>
-                        {m.user_id !== group.owner_id && group.active_challenge_session_id && (
+                        {m.user_id !== group.owner_id && selectedSessionId && (
+
                           <button
                             onClick={() => setRemoveTarget({ userId: m.user_id, name: m.display_name })}
                             disabled={busy}
