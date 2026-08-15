@@ -19,6 +19,7 @@ import {
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useGroupInvite, useGroupMembers, inviteLink, type Group } from "@/hooks/useGroups";
+import { useGroupParayanams, parayanamLabel } from "@/hooks/useGroupParayanams";
 import SEO from "@/components/SEO";
 import DashakamGarden from "@/components/DashakamGarden";
 import { useSessionGarden } from "@/hooks/useSessionGarden";
