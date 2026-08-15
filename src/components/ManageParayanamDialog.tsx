@@ -289,7 +289,10 @@ export default function ManageParayanamDialog({
         </DialogContent>
       </Dialog>
 
-      <AlertDialog open={!!removeTarget} onOpenChange={(o) => !o && setRemoveTarget(null)}>
+      <AlertDialog
+        open={!!removeTarget && !redistributeOpen && !checking}
+        onOpenChange={(o) => !o && setRemoveTarget(null)}
+      >
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>Remove {removeTarget?.name} from this parayanam?</AlertDialogTitle>
