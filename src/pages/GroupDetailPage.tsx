@@ -409,87 +409,135 @@ export default function GroupDetailPage() {
 
 
           <section className="mt-6 rounded-2xl border border-border bg-card p-5 shadow-peacock">
-            <button
-              type="button"
-              onClick={() => setMembersOpen((v) => !v)}
-              aria-expanded={membersOpen}
-              className="flex w-full items-center justify-between gap-3 text-left"
-            >
-              <h2 className="font-display text-lg font-semibold text-foreground">
-                Members{members.length ? ` (${members.length})` : ""}
-              </h2>
-              {membersOpen ? (
-                <ChevronUp className="h-4 w-4 text-muted-foreground" />
-              ) : (
-                <ChevronDown className="h-4 w-4 text-muted-foreground" />
-              )}
-            </button>
-            {!membersOpen ? null : loadingMembers || (hasSession && loadingParticipants) ? (
-              <Loader2 className="mt-4 h-5 w-5 animate-spin text-primary" />
-            ) : !canSeeParayanamData ? (
-              <p className="mt-3 font-sans text-sm text-muted-foreground">
-                You're not part of this group's current parayanam, so everyone's progress is kept private
-                for now.
-              </p>
-            ) : members.length === 0 ? (
-              <p className="mt-3 font-sans text-sm text-muted-foreground">
-                No members yet — share the invite link below.
-              </p>
+            {!isOwner ? (
+              <>
+                <h2 className="font-display text-lg font-semibold text-foreground">Members</h2>
+                <p className="mt-1 font-sans text-sm text-muted-foreground">
+                  {loadingMembers
+                    ? "Loading…"
+                    : `${members.length} ${members.length === 1 ? "member" : "members"} in this group.`}
+                </p>
+                <p className="mt-2 font-sans text-xs text-muted-foreground">
+                  Everyone's individual progress is private. You can follow your own dashakams in “My Schedule”.
+                </p>
+              </>
             ) : (
-              <ul className="mt-4 space-y-3">
-                {members.map((m) => (
-                  <li key={m.id} className="flex items-center gap-3">
-                    <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-gradient-peacock font-sans text-xs font-bold text-primary-foreground">
-                      {initials(m.display_name)}
-                    </span>
-                    <div className="min-w-0 flex-1">
-                      <p className="truncate font-sans text-sm font-semibold text-foreground">
-                        {m.display_name}
-                        {m.user_id === group.owner_id && (
-                          <span className="ml-2 rounded-full bg-secondary px-2 py-0.5 font-sans text-[10px] uppercase tracking-wide text-secondary-foreground">
-                            Owner
-                          </span>
-                        )}
-                      </p>
-                      <p className="flex flex-wrap items-center gap-2 font-sans text-xs text-muted-foreground">
-                        <span>
-                          {group.active_challenge_session_id
-                            ? `${m.completed}${target ? ` / ${target}` : ""} dashakams completed`
-                            : "No active parayanam yet"}
+              <>
+                <button
+                  type="button"
+                  onClick={() => setMembersOpen((v) => !v)}
+                  aria-expanded={membersOpen}
+                  className="flex w-full items-center justify-between gap-3 text-left"
+                >
+                  <h2 className="font-display text-lg font-semibold text-foreground">
+                    Members{members.length ? ` (${members.length})` : ""}
+                  </h2>
+                  {membersOpen ? (
+                    <ChevronUp className="h-4 w-4 text-muted-foreground" />
+                  ) : (
+                    <ChevronDown className="h-4 w-4 text-muted-foreground" />
+                  )}
+                </button>
+                {!membersOpen ? null : loadingMembers || (hasSession && loadingParticipants) ? (
+                  <Loader2 className="mt-4 h-5 w-5 animate-spin text-primary" />
+                ) : members.length === 0 ? (
+                  <p className="mt-3 font-sans text-sm text-muted-foreground">
+                    No members yet — share the invite link below.
+                  </p>
+                ) : (
+                  <ul className="mt-4 space-y-3">
+                    {members.map((m) => (
+                      <li key={m.id} className="flex items-center gap-3">
+                        <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-gradient-peacock font-sans text-xs font-bold text-primary-foreground">
+                          {initials(m.display_name)}
                         </span>
-                        {isOwner && group.active_challenge_session_id && (
-                          <span
-                            className={
-                              statusFor(m.user_id) === "confirmed"
-                                ? "rounded-full bg-secondary px-2 py-0.5 text-[10px] uppercase tracking-wide text-secondary-foreground"
-                                : "rounded-full border border-primary/50 px-2 py-0.5 text-[10px] uppercase tracking-wide text-primary"
-                            }
+                        <div className="min-w-0 flex-1">
+                          <p className="truncate font-sans text-sm font-semibold text-foreground">
+                            {m.display_name}
+                            {m.user_id === group.owner_id && (
+                              <span className="ml-2 rounded-full bg-secondary px-2 py-0.5 font-sans text-[10px] uppercase tracking-wide text-secondary-foreground">
+                                Owner
+                              </span>
+                            )}
+                          </p>
+                          <p className="flex flex-wrap items-center gap-2 font-sans text-xs text-muted-foreground">
+                            <span>
+                              {group.active_challenge_session_id
+                                ? `${m.completed}${target ? ` / ${target}` : ""} dashakams completed`
+                                : "No active parayanam yet"}
+                            </span>
+                            {group.active_challenge_session_id && (
+                              <span
+                                className={
+                                  statusFor(m.user_id) === "confirmed"
+                                    ? "rounded-full bg-secondary px-2 py-0.5 text-[10px] uppercase tracking-wide text-secondary-foreground"
+                                    : "rounded-full border border-primary/50 px-2 py-0.5 text-[10px] uppercase tracking-wide text-primary"
+                                }
+                              >
+                                {statusFor(m.user_id) ? STATUS_LABEL[statusFor(m.user_id)!] : "Not invited"}
+                              </span>
+                            )}
+                          </p>
+                        </div>
+                        {m.user_id !== group.owner_id && group.active_challenge_session_id && (
+                          <button
+                            onClick={() => setRemoveTarget({ userId: m.user_id, name: m.display_name })}
+                            disabled={busy}
+                            aria-label={`Remove ${m.display_name} from this parayanam`}
+                            className="inline-flex items-center gap-1 rounded-lg border border-destructive/50 px-3 py-1.5 font-sans text-xs font-semibold text-destructive hover:bg-destructive/10 disabled:opacity-60"
                           >
-                            {statusFor(m.user_id) ? STATUS_LABEL[statusFor(m.user_id)!] : "Not invited"}
-                          </span>
+                            <UserMinus className="h-3.5 w-3.5" /> Remove from parayanam
+                          </button>
                         )}
-                      </p>
-                    </div>
-                    {isOwner && m.user_id !== group.owner_id && (
-                      <button
-                        onClick={() => run(() => removeMember(m.id))}
-                        disabled={busy}
-                        aria-label={`Remove ${m.display_name}`}
-                        className="inline-flex items-center gap-1 rounded-lg border border-border px-3 py-1.5 font-sans text-xs font-semibold text-destructive hover:border-destructive disabled:opacity-60"
-                      >
-                        <UserMinus className="h-3.5 w-3.5" /> Remove
-                      </button>
-                    )}
-                  </li>
-                ))}
-              </ul>
-            )}
-            {membersOpen && members.length === 1 && (
-              <p className="mt-3 font-sans text-xs text-muted-foreground">
-                Invite others to join this group's parayanam.
-              </p>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+                {membersOpen && members.length === 1 && (
+                  <p className="mt-3 font-sans text-xs text-muted-foreground">
+                    Invite others to join this group's parayanam.
+                  </p>
+                )}
+                <p className="mt-4 font-sans text-xs text-muted-foreground">
+                  Removing someone here only revokes their place in the current parayanam. To remove them from
+                  the group entirely, use{" "}
+                  <Link to={`/groups/${group.id}/settings`} className="underline hover:text-foreground">
+                    Manage group
+                  </Link>
+                  .
+                </p>
+              </>
             )}
           </section>
+
+          <AlertDialog open={!!removeTarget} onOpenChange={(open) => !open && setRemoveTarget(null)}>
+            <AlertDialogContent>
+              <AlertDialogHeader>
+                <AlertDialogTitle>Remove {removeTarget?.name} from this parayanam?</AlertDialogTitle>
+                <AlertDialogDescription>
+                  They will no longer take part in “{parayanamName || "this parayanam"}”, and their assigned
+                  dashakams will be freed. They stay a member of {group.group_name} and keep their own chanting
+                  history.
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <button
+                  onClick={() => setRemoveTarget(null)}
+                  className="rounded-md border border-border px-4 py-2 font-sans text-sm font-semibold text-foreground hover:bg-muted"
+                >
+                  Keep them
+                </button>
+                <button
+                  onClick={handleRemoveFromParayanam}
+                  disabled={busy}
+                  className="rounded-md bg-destructive px-4 py-2 font-sans text-sm font-semibold text-destructive-foreground hover:bg-destructive/90 disabled:opacity-50"
+                >
+                  {busy ? "Removing…" : "Remove from parayanam"}
+                </button>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
+
 
           {isOwner && (
             <section className="mt-6 rounded-2xl border border-border bg-card p-5 shadow-peacock">
