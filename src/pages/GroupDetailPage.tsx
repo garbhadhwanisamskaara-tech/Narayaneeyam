@@ -9,7 +9,6 @@ import {
   Share2,
   Ban,
   CalendarDays,
-  UserMinus,
   HelpCircle,
   ChevronDown,
   ChevronUp,
@@ -28,11 +27,7 @@ import PendingInvitesSection from "@/components/PendingInvitesSection";
 import ManageParayanamDialog from "@/components/ManageParayanamDialog";
 import ParayanamScheduleViews from "@/components/ParayanamScheduleViews";
 import { toast } from "@/hooks/use-toast";
-import {
-  useSessionParticipants,
-  removeParticipant,
-  type ParticipantStatus,
-} from "@/hooks/useParayanamParticipants";
+import { useSessionParticipants, type ParticipantStatus } from "@/hooks/useParayanamParticipants";
 import {
   Dialog,
   DialogContent,
@@ -41,14 +36,6 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import {
-  AlertDialog,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
 import { Separator } from "@/components/ui/separator";
 import {
   Select,
