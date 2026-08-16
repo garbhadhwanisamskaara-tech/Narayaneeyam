@@ -83,6 +83,20 @@ export default function CreateParayanamPage() {
   const toggleCustom = (n: number) =>
     setCustom((prev) => (prev.includes(n) ? prev.filter((x) => x !== n) : [...prev, n]));
 
+  const applyTemplate = (templateId: string) => {
+    if (templateId === "scratch") {
+      setSelectedTemplateId("scratch");
+      setCustom([]);
+      setSetId("");
+      return;
+    }
+    const t = templates.find((tmpl) => tmpl.id === templateId);
+    if (!t) return;
+    setSelectedTemplateId(templateId);
+    setSetId("custom");
+    setCustom([...t.dashakam_list]);
+  };
+
   const canNext =
     step === 1
       ? dashakams.length > 0
