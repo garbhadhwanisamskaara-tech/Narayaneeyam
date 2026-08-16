@@ -4,6 +4,7 @@ import { ArrowLeft, Loader2, Sparkles } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useDashakamSets } from "@/hooks/useDashakamSets";
+import { useParayanamTemplates } from "@/hooks/useParayanamTemplates";
 import { prefetchDashakamList } from "@/hooks/useDashakam";
 import { useGroupMembers } from "@/hooks/useGroups";
 import { buildSchedule } from "@/hooks/useParayanamSchedule";
@@ -27,12 +28,14 @@ export default function CreateParayanamPage() {
   const navigate = useNavigate();
 
   const { sets, loading: loadingSets } = useDashakamSets();
+  const { templates, loading: loadingTemplates } = useParayanamTemplates();
   const { members } = useGroupMembers(groupId, null);
 
   const [step, setStep] = useState(1);
   const [parayanamName, setParayanamName] = useState("");
   const [setId, setSetId] = useState<string>("");
   const [custom, setCustom] = useState<number[]>([]);
+  const [selectedTemplateId, setSelectedTemplateId] = useState<string>("scratch");
   const [startDate, setStartDate] = useState(today());
   const [endDate, setEndDate] = useState(plusDays(99));
   const [distribution, setDistribution] = useState<"synchronized" | "split">("synchronized");
