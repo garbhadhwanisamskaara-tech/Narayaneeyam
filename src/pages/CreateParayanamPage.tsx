@@ -4,6 +4,7 @@ import { ArrowLeft, Loader2, Sparkles } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useDashakamSets } from "@/hooks/useDashakamSets";
+import { useParayanamTemplates } from "@/hooks/useParayanamTemplates";
 import { prefetchDashakamList } from "@/hooks/useDashakam";
 import { useGroupMembers } from "@/hooks/useGroups";
 import { buildSchedule } from "@/hooks/useParayanamSchedule";
@@ -27,12 +28,14 @@ export default function CreateParayanamPage() {
   const navigate = useNavigate();
 
   const { sets, loading: loadingSets } = useDashakamSets();
+  const { templates, loading: loadingTemplates } = useParayanamTemplates();
   const { members } = useGroupMembers(groupId, null);
 
   const [step, setStep] = useState(1);
   const [parayanamName, setParayanamName] = useState("");
   const [setId, setSetId] = useState<string>("");
   const [custom, setCustom] = useState<number[]>([]);
+  const [selectedTemplateId, setSelectedTemplateId] = useState<string>("scratch");
   const [startDate, setStartDate] = useState(today());
   const [endDate, setEndDate] = useState(plusDays(99));
   const [distribution, setDistribution] = useState<"synchronized" | "split">("synchronized");
@@ -79,6 +82,20 @@ export default function CreateParayanamPage() {
 
   const toggleCustom = (n: number) =>
     setCustom((prev) => (prev.includes(n) ? prev.filter((x) => x !== n) : [...prev, n]));
+
+  const applyTemplate = (templateId: string) => {
+    if (templateId === "scratch") {
+      setSelectedTemplateId("scratch");
+      setCustom([]);
+      setSetId("");
+      return;
+    }
+    const t = templates.find((tmpl) => tmpl.id === templateId);
+    if (!t) return;
+    setSelectedTemplateId(templateId);
+    setSetId("custom");
+    setCustom([...t.dashakam_list]);
+  };
 
   const canNext =
     step === 1
@@ -203,64 +220,105 @@ export default function CreateParayanamPage() {
         )}
 
         {step === 1 && (
-          <div>
-            <p className="font-sans text-sm font-semibold text-foreground">Choose a dashakam set</p>
-            {loadingSets ? (
-              <Loader2 className="mt-3 h-5 w-5 animate-spin text-primary" />
-            ) : (
-              <div className="mt-3 space-y-2">
-                {orderedSets.map((s) => (
+          <div className="space-y-5">
+            <div>
+              <p className="font-sans text-sm font-semibold text-foreground">Start from a template</p>
+              <p className="font-sans text-xs text-muted-foreground">
+                Pick a shortcut to pre-fill your dashakams, or choose your own set below.
+              </p>
+              {loadingTemplates ? (
+                <Loader2 className="mt-3 h-5 w-5 animate-spin text-primary" />
+              ) : (
+                <div className="mt-3 flex flex-wrap gap-2">
                   <button
-                    key={s.id}
-                    onClick={() => setSetId(s.id)}
-                    className={`w-full rounded-xl border p-4 text-left transition-colors ${
-                      setId === s.id ? "border-primary bg-secondary/30" : "border-border hover:border-primary"
-                    }`}
-                  >
-                    <span className="font-sans text-sm font-semibold text-foreground">
-                      {s.set_name}{" "}
-                      <span className="font-normal text-muted-foreground">
-                        ({s.dashakam_list.length} dashakams{s.is_official ? "" : " · yours"})
-                      </span>
-                    </span>
-                    {s.description && (
-                      <span className="mt-1 block font-sans text-xs text-muted-foreground">{s.description}</span>
-                    )}
-                  </button>
-                ))}
-                <button
-                  onClick={() => setSetId("custom")}
-                  className={`w-full rounded-xl border p-4 text-left transition-colors ${
-                    setId === "custom" ? "border-primary bg-secondary/30" : "border-border hover:border-primary"
-                  }`}
-                >
-                  <span className="font-sans text-sm font-semibold text-foreground">Custom selection</span>
-                  <span className="mt-1 block font-sans text-xs text-muted-foreground">
-                    Pick the dashakams yourself.
-                  </span>
-                </button>
-              </div>
-            )}
-
-            {setId === "custom" && (
-              <div className="mt-4 grid grid-cols-10 gap-1.5">
-                {publishedList.map((d) => (
-                  <button
-                    key={d.dashakam_no}
-                    onClick={() => toggleCustom(d.dashakam_no)}
-                    title={d.dashakam_name}
-                    className={`aspect-square rounded-md border font-sans text-[11px] font-semibold transition-colors ${
-                      custom.includes(d.dashakam_no)
+                    type="button"
+                    onClick={() => applyTemplate("scratch")}
+                    className={`rounded-full border px-3 py-1.5 font-sans text-xs font-semibold transition-colors ${
+                      selectedTemplateId === "scratch"
                         ? "border-primary bg-primary/15 text-primary"
-                        : "border-border text-muted-foreground hover:border-primary"
+                        : "border-border text-muted-foreground hover:border-primary hover:text-foreground"
                     }`}
                   >
-                    {d.dashakam_no}
+                    Start from scratch
                   </button>
-                ))}
-              </div>
-            )}
-            <p className="mt-3 font-sans text-xs text-muted-foreground">{dashakams.length} dashakams selected</p>
+                  {templates.map((t) => (
+                    <button
+                      key={t.id}
+                      type="button"
+                      title={t.description ?? undefined}
+                      onClick={() => applyTemplate(t.id)}
+                      className={`rounded-full border px-3 py-1.5 font-sans text-xs font-semibold transition-colors ${
+                        selectedTemplateId === t.id
+                          ? "border-primary bg-primary/15 text-primary"
+                          : "border-border text-muted-foreground hover:border-primary hover:text-foreground"
+                      }`}
+                    >
+                      {t.template_name}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            <div>
+              <p className="font-sans text-sm font-semibold text-foreground">Choose a dashakam set</p>
+              {loadingSets ? (
+                <Loader2 className="mt-3 h-5 w-5 animate-spin text-primary" />
+              ) : (
+                <div className="mt-3 space-y-2">
+                  {orderedSets.map((s) => (
+                    <button
+                      key={s.id}
+                      onClick={() => setSetId(s.id)}
+                      className={`w-full rounded-xl border p-4 text-left transition-colors ${
+                        setId === s.id ? "border-primary bg-secondary/30" : "border-border hover:border-primary"
+                      }`}
+                    >
+                      <span className="font-sans text-sm font-semibold text-foreground">
+                        {s.set_name}{" "}
+                        <span className="font-normal text-muted-foreground">
+                          ({s.dashakam_list.length} dashakams{s.is_official ? "" : " · yours"})
+                        </span>
+                      </span>
+                      {s.description && (
+                        <span className="mt-1 block font-sans text-xs text-muted-foreground">{s.description}</span>
+                      )}
+                    </button>
+                  ))}
+                  <button
+                    onClick={() => setSetId("custom")}
+                    className={`w-full rounded-xl border p-4 text-left transition-colors ${
+                      setId === "custom" ? "border-primary bg-secondary/30" : "border-border hover:border-primary"
+                    }`}
+                  >
+                    <span className="font-sans text-sm font-semibold text-foreground">Custom selection</span>
+                    <span className="mt-1 block font-sans text-xs text-muted-foreground">
+                      Pick the dashakams yourself.
+                    </span>
+                  </button>
+                </div>
+              )}
+
+              {setId === "custom" && (
+                <div className="mt-4 grid grid-cols-10 gap-1.5">
+                  {publishedList.map((d) => (
+                    <button
+                      key={d.dashakam_no}
+                      onClick={() => toggleCustom(d.dashakam_no)}
+                      title={d.dashakam_name}
+                      className={`aspect-square rounded-md border font-sans text-[11px] font-semibold transition-colors ${
+                        custom.includes(d.dashakam_no)
+                          ? "border-primary bg-primary/15 text-primary"
+                          : "border-border text-muted-foreground hover:border-primary"
+                      }`}
+                    >
+                      {d.dashakam_no}
+                    </button>
+                  ))}
+                </div>
+              )}
+              <p className="mt-3 font-sans text-xs text-muted-foreground">{dashakams.length} dashakams selected</p>
+            </div>
           </div>
         )}
 
