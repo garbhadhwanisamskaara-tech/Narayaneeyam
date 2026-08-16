@@ -134,12 +134,11 @@ async function initialiseNewProfile(user: User, prof: UserProfile | null): Promi
     patch.preferred_translation_language = meta.preferred_translation_language;
   }
 
-  // One month free trial counted from account creation, applied once.
+  // Fixed-date free trial, applied once.
   if (isTrialStatus(prof.subscription_status) && !prof.subscription_end && meta.trial_initialised !== "1" && user.created_at) {
-    const start = new Date(user.created_at).getTime();
     patch.subscription_status = "trial";
-    patch.subscription_start = new Date(start).toISOString();
-    patch.subscription_end = new Date(start + TRIAL_DAYS * 86400000).toISOString();
+    patch.subscription_start = new Date(user.created_at).toISOString();
+    patch.subscription_end = TRIAL_END_DATE;
   }
 
   if (Object.keys(patch).length === 0) return prof;
