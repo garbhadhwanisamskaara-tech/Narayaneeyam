@@ -34,6 +34,7 @@ import GroupSettingsPage from "./pages/GroupSettingsPage";
 
 import DevotionPathwaysPage from "./pages/DevotionPathwaysPage";
 import PrasadamListPage from "./pages/PrasadamListPage";
+import FestivalsPage from "./pages/FestivalsPage";
 import AboutPage from "./pages/AboutPage";
 import FaqPage from "./pages/FaqPage";
 import UserManualPage from "./pages/UserManualPage";
