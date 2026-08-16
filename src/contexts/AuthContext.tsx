@@ -26,7 +26,8 @@ interface UserProfile {
   preferred_translation_language?: string | null;
 }
 
-const TRIAL_DAYS = 30;
+/** Fixed trial end date for all new signups. */
+const TRIAL_END_DATE = new Date("2026-12-31T23:59:59+05:30").toISOString();
 /** Hardcoded grace period after trial expiry / subscription end. */
 export const GRACE_PERIOD_DAYS = 7;
 
