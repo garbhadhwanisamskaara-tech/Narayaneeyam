@@ -17,6 +17,8 @@ import {
   Crown,
   Newspaper,
   HelpCircle,
+  Sparkles,
+  Flower2,
 } from "lucide-react";
 import { getProgress } from "@/lib/progress";
 import heroBg from "@/assets/hero-bg.jpg";
