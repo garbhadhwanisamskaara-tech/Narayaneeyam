@@ -1,6 +1,6 @@
 import React from "react";
 import { Link } from "react-router-dom";
-import { FileText, Bookmark, Heart, HelpCircle, BookOpen, Settings, X } from "lucide-react";
+import { FileText, Bookmark, Heart, HelpCircle, BookOpen, Settings, Sparkles, Flower2, X } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 
 interface Props {
@@ -10,6 +10,8 @@ interface Props {
 
 const menuItems = [
   { path: "/script", label: "Script Library", icon: FileText },
+  { path: "/festivals", label: "Festival Parayanams", icon: Sparkles },
+  { path: "/prasadam", label: "Prasadam Guide", icon: Flower2 },
   { path: "/saved-places", label: "Bookmarks", icon: Bookmark },
   { path: "/heart-shelf", label: "Favourites", icon: Heart },
   { path: "/faq", label: "FAQ", icon: HelpCircle },
