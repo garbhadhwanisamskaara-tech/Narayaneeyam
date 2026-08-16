@@ -589,11 +589,11 @@ export default function PodcastPage() {
                 }}
                 className="rounded-lg bg-primary-foreground/20 text-primary-foreground px-3 py-1.5 text-xs font-sans border border-primary-foreground/20 appearance-none cursor-pointer [&>option]:bg-card [&>option]:text-foreground"
               >
+                <option value={0.6}>0.6×</option>
                 <option value={0.75}>0.75×</option>
                 <option value={1}>1×</option>
                 <option value={1.25}>1.25×</option>
                 <option value={1.5}>1.5×</option>
-                <option value={2}>2×</option>
               </select>
             </div>
             <div className="flex flex-col items-center gap-1">
