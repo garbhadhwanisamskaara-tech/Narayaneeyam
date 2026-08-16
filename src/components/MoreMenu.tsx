@@ -10,6 +10,8 @@ interface Props {
 
 const menuItems = [
   { path: "/script", label: "Script Library", icon: FileText },
+  { path: "/festivals", label: "Festival Parayanams", icon: Sparkles },
+  { path: "/prasadam", label: "Prasadam Guide", icon: Flower2 },
   { path: "/saved-places", label: "Bookmarks", icon: Bookmark },
   { path: "/heart-shelf", label: "Favourites", icon: Heart },
   { path: "/faq", label: "FAQ", icon: HelpCircle },
