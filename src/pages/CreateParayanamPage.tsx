@@ -220,9 +220,49 @@ export default function CreateParayanamPage() {
         )}
 
         {step === 1 && (
-          <div>
-            <p className="font-sans text-sm font-semibold text-foreground">Choose a dashakam set</p>
-            {loadingSets ? (
+          <div className="space-y-5">
+            <div>
+              <p className="font-sans text-sm font-semibold text-foreground">Start from a template</p>
+              <p className="font-sans text-xs text-muted-foreground">
+                Pick a shortcut to pre-fill your dashakams, or choose your own set below.
+              </p>
+              {loadingTemplates ? (
+                <Loader2 className="mt-3 h-5 w-5 animate-spin text-primary" />
+              ) : (
+                <div className="mt-3 flex flex-wrap gap-2">
+                  <button
+                    type="button"
+                    onClick={() => applyTemplate("scratch")}
+                    className={`rounded-full border px-3 py-1.5 font-sans text-xs font-semibold transition-colors ${
+                      selectedTemplateId === "scratch"
+                        ? "border-primary bg-primary/15 text-primary"
+                        : "border-border text-muted-foreground hover:border-primary hover:text-foreground"
+                    }`}
+                  >
+                    Start from scratch
+                  </button>
+                  {templates.map((t) => (
+                    <button
+                      key={t.id}
+                      type="button"
+                      title={t.description ?? undefined}
+                      onClick={() => applyTemplate(t.id)}
+                      className={`rounded-full border px-3 py-1.5 font-sans text-xs font-semibold transition-colors ${
+                        selectedTemplateId === t.id
+                          ? "border-primary bg-primary/15 text-primary"
+                          : "border-border text-muted-foreground hover:border-primary hover:text-foreground"
+                      }`}
+                    >
+                      {t.template_name}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            <div>
+              <p className="font-sans text-sm font-semibold text-foreground">Choose a dashakam set</p>
+              {loadingSets ? (
               <Loader2 className="mt-3 h-5 w-5 animate-spin text-primary" />
             ) : (
               <div className="mt-3 space-y-2">
