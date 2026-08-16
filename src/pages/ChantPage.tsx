@@ -939,7 +939,7 @@ export default function ChantPage() {
               }}
               className={`${selectCls} flex-1 basis-0 md:flex-none md:w-24`}
             >
-              {[0.75, 1, 1.25, 1.5, 2].map((s) => (
+              {[0.6, 0.75, 1, 1.25, 1.5].map((s) => (
                 <option key={s} value={s}>
                   {s}×
                 </option>
@@ -1318,7 +1318,7 @@ export default function ChantPage() {
 
               {/* Desktop: speed pills */}
               <div className="hidden items-center gap-1.5 md:flex">
-                {[0.75, 1, 1.25, 1.5, 2].map((s) => (
+                {[0.6, 0.75, 1, 1.25, 1.5].map((s) => (
                   <button
                     key={s}
                     onClick={() => {
@@ -1347,7 +1347,7 @@ export default function ChantPage() {
                 }}
                 className="md:hidden h-7 rounded-full border border-primary-foreground/20 bg-primary-foreground/10 px-2 text-[11px] font-sans text-primary-foreground"
               >
-                {[0.75, 1, 1.25, 1.5, 2].map((s) => (
+                {[0.6, 0.75, 1, 1.25, 1.5].map((s) => (
                   <option key={s} value={s} className="text-foreground">
                     {s}×
                   </option>
