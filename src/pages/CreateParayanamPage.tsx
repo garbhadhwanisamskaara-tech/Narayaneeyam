@@ -111,7 +111,7 @@ export default function CreateParayanamPage() {
 
   const canNext =
     step === 1
-      ? dashakams.length > 0
+      ? dashakams.length > 0 && notReady.length === 0
       : step === 2
         ? !!startDate && !!endDate && endDate >= startDate
         : true;
