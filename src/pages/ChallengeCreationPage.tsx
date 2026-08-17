@@ -4,6 +4,7 @@ import { ArrowLeft, Copy, Loader2, Sparkles, Sprout } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useDashakamSets, type DashakamSet } from "@/hooks/useDashakamSets";
+import { prefetchDashakamList } from "@/hooks/useDashakam";
 import { useParayanamSchedule } from "@/hooks/useParayanamSchedule";
 import BudGrid from "@/components/BudGrid";
 import SEO from "@/components/SEO";
@@ -38,6 +39,19 @@ export default function ChallengeCreationPage() {
     () => sets.find((s) => s.id === setId),
     [sets, setId]
   );
+
+  const [readyList, setReadyList] = useState<number[] | null>(null);
+  useEffect(() => {
+    prefetchDashakamList()
+      .then((list) => setReadyList(list.filter((d) => d.is_published).map((d) => d.dashakam_no)))
+      .catch(() => {});
+  }, []);
+
+  const notReady = useMemo(() => {
+    if (!readyList || !selectedSet) return [];
+    const ready = new Set(readyList);
+    return selectedSet.dashakam_list.filter((n) => !ready.has(n));
+  }, [readyList, selectedSet]);
 
   const handleFork = async () => {
     if (!selectedSet) return;
@@ -189,13 +203,19 @@ export default function ChallengeCreationPage() {
 
         <button
           onClick={handleGenerate}
-          disabled={busy || !selectedSet}
+          disabled={busy || !selectedSet || notReady.length > 0}
           className="inline-flex items-center gap-2 rounded-lg bg-gradient-peacock px-4 py-2 font-sans text-sm font-semibold text-primary-foreground hover:opacity-90 disabled:opacity-60"
         >
           {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4" />}
           {rows.length ? "Regenerate parayanam" : "Create my parayanam"}
         </button>
 
+        {notReady.length > 0 && (
+          <p className="rounded-lg border border-destructive/40 bg-destructive/10 px-3 py-2 font-sans text-xs text-destructive">
+            These dashakams are still being recorded: {notReady.join(", ")}. Please choose another set so your
+            parayanam does not hit a gap partway through.
+          </p>
+        )}
         {error && <p className="font-sans text-sm text-destructive">{error}</p>}
         {notice && <p className="font-sans text-sm text-primary">{notice}</p>}
       </section>

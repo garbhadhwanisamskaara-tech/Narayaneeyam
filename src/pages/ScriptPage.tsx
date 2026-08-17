@@ -93,8 +93,9 @@ export default function ScriptPage() {
               className="rounded-lg border border-border bg-background px-3 py-2 text-sm font-sans text-foreground"
             >
               {dropdownList.map((d) => (
-                <option key={d.dashakam_no} value={d.dashakam_no}>
+                <option key={d.dashakam_no} value={d.dashakam_no} disabled={!d.is_published}>
                   {d.dashakam_no}. {d.dashakam_name}
+                  {d.is_published ? "" : " — Coming soon"}
                 </option>
               ))}
             </select>

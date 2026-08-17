@@ -176,11 +176,15 @@ export default function ChantPage() {
   const { openingChants, dashakamClosingChant, sessionClosingChant } = useRitualChants("en");
 
   // Build the dashakam dropdown list from DB
-  const dropdownList = dashakamList
-    .map((d) => ({ id: d.dashakam_no, title: d.dashakam_name }));
+  const dropdownList = dashakamList.map((d) => ({
+    id: d.dashakam_no,
+    title: d.dashakam_name,
+    available: d.is_published,
+  }));
 
   // Get dashakam metadata from DB list
   const dashakamMeta = dashakamList.find((d) => d.dashakam_no === selectedDashakam);
+  const comingSoon = !!dashakamMeta && !dashakamMeta.is_published;
 
   useEffect(() => {
     if (!dashakamList.length) return;
@@ -188,7 +192,8 @@ export default function ChantPage() {
     const hasSelectedDashakam = dashakamList.some((d) => d.dashakam_no === selectedDashakam);
     if (hasSelectedDashakam) return;
 
-    setSelectedDashakam(dashakamList[0].dashakam_no);
+    const firstReady = dashakamList.find((d) => d.is_published) ?? dashakamList[0];
+    setSelectedDashakam(firstReady.dashakam_no);
     setSelectedPara(null);
     setHighlightedVerse(0);
   }, [dashakamList, selectedDashakam]);
@@ -908,8 +913,9 @@ export default function ChantPage() {
                 <option value={selectedDashakam}>Loading...</option>
               ) : (
                 dropdownList.map((d) => (
-                  <option key={d.id} value={d.id}>
+                  <option key={d.id} value={d.id} disabled={!d.available}>
                     {d.id}. {d.title}
+                    {d.available ? "" : " — Coming soon"}
                   </option>
                 ))
               )}
@@ -1098,7 +1104,14 @@ export default function ChantPage() {
         {/* Verses */}
         {!dbLoading && (
           <div className="space-y-3 pb-28 md:pb-24" ref={versesContainerRef}>
-            {!hasVerses ? (
+            {comingSoon ? (
+              <div className="rounded-xl bg-card border border-border p-8 text-center">
+                <p className="font-sans text-sm font-semibold text-foreground">Coming soon</p>
+                <p className="text-muted-foreground font-sans mt-2">
+                  This dashakam's chant is still being recorded — check back soon! 🙏
+                </p>
+              </div>
+            ) : !hasVerses ? (
               <div className="rounded-xl bg-card border border-border p-8 text-center">
                 <p className="text-muted-foreground font-sans mt-2">
                   Working with divine energy to make this available soon 🙏

@@ -44,11 +44,21 @@ export default function CreateParayanamPage() {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [soloWarning, setSoloWarning] = useState(false);
-  const [publishedList, setPublishedList] = useState<{ dashakam_no: number; dashakam_name: string }[]>([]);
+  const [allDashakams, setAllDashakams] = useState<
+    { dashakam_no: number; dashakam_name: string; is_published: boolean }[]
+  >([]);
 
   useEffect(() => {
     prefetchDashakamList()
-      .then((list) => setPublishedList(list.map((d) => ({ dashakam_no: d.dashakam_no, dashakam_name: d.dashakam_name }))))
+      .then((list) =>
+        setAllDashakams(
+          list.map((d) => ({
+            dashakam_no: d.dashakam_no,
+            dashakam_name: d.dashakam_name,
+            is_published: d.is_published,
+          }))
+        )
+      )
       .catch(() => {});
   }, []);
 
@@ -70,6 +80,8 @@ export default function CreateParayanamPage() {
   );
   const selectedSet = sets.find((s) => s.id === setId);
   const dashakams = setId === "custom" ? [...custom].sort((a, b) => a - b) : selectedSet?.dashakam_list ?? [];
+  const readySet = new Set(allDashakams.filter((d) => d.is_published).map((d) => d.dashakam_no));
+  const notReady = allDashakams.length ? dashakams.filter((n) => !readySet.has(n)) : [];
 
   // Date-spread preview (assignment resolved at submit time)
   const planned = useMemo(
@@ -99,7 +111,7 @@ export default function CreateParayanamPage() {
 
   const canNext =
     step === 1
-      ? dashakams.length > 0
+      ? dashakams.length > 0 && notReady.length === 0
       : step === 2
         ? !!startDate && !!endDate && endDate >= startDate
         : true;
@@ -301,15 +313,18 @@ export default function CreateParayanamPage() {
 
               {setId === "custom" && (
                 <div className="mt-4 grid grid-cols-10 gap-1.5">
-                  {publishedList.map((d) => (
+                  {allDashakams.map((d) => (
                     <button
                       key={d.dashakam_no}
-                      onClick={() => toggleCustom(d.dashakam_no)}
-                      title={d.dashakam_name}
+                      onClick={() => d.is_published && toggleCustom(d.dashakam_no)}
+                      disabled={!d.is_published}
+                      title={d.is_published ? d.dashakam_name : `${d.dashakam_name} — coming soon`}
                       className={`aspect-square rounded-md border font-sans text-[11px] font-semibold transition-colors ${
-                        custom.includes(d.dashakam_no)
-                          ? "border-primary bg-primary/15 text-primary"
-                          : "border-border text-muted-foreground hover:border-primary"
+                        !d.is_published
+                          ? "cursor-not-allowed border-dashed border-border text-muted-foreground/40"
+                          : custom.includes(d.dashakam_no)
+                            ? "border-primary bg-primary/15 text-primary"
+                            : "border-border text-muted-foreground hover:border-primary"
                       }`}
                     >
                       {d.dashakam_no}
@@ -318,6 +333,12 @@ export default function CreateParayanamPage() {
                 </div>
               )}
               <p className="mt-3 font-sans text-xs text-muted-foreground">{dashakams.length} dashakams selected</p>
+              {notReady.length > 0 && (
+                <p className="mt-2 rounded-lg border border-destructive/40 bg-destructive/10 px-3 py-2 font-sans text-xs text-destructive">
+                  Not recorded yet: {notReady.join(", ")}. These are still being recorded — please remove
+                  them or pick another set before continuing.
+                </p>
+              )}
             </div>
           </div>
         )}

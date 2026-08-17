@@ -91,7 +91,8 @@ async function fetchDashakamRows(
  * supplies the names (falling back to English per-dashakam when missing).
  */
 async function fetchDashakamList(lang: string, signal?: AbortSignal): Promise<DashakamListItem[]> {
-  const published = await fetchDashakamRows("en", true, signal);
+  // All 100 dashakams are listed; `is_published` marks which ones are ready.
+  const published = await fetchDashakamRows("en", false, signal);
 
   let list = published;
   if (lang !== "en") {
@@ -315,7 +316,7 @@ export function useDashakam(
 
     const idx = dashakamList.findIndex((d) => d.dashakam_no === selectedDashakam);
     const next = idx >= 0 ? dashakamList[idx + 1] : undefined;
-    if (!next) return;
+    if (!next || !next.is_published) return;
 
     const id = window.setTimeout(() => {
       queryClient.prefetchQuery(
@@ -355,6 +356,11 @@ export function getDashakamName(dashakamNo: number, lang: string = "en"): string
   if (item?.dashakam_name) return item.dashakam_name;
   prefetchDashakamList(lang).catch(() => {});
   return `Dashakam ${dashakamNo}`;
+}
+
+/** Only dashakams whose content is ready to chant/read. */
+export function publishedDashakams(list: DashakamListItem[]): DashakamListItem[] {
+  return list.filter((d) => d.is_published);
 }
 
 /** Prefetch dashakam list — can be called from any page */
