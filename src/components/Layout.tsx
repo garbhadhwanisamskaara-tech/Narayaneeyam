@@ -247,19 +247,6 @@ export default function Layout({ children }: { children: React.ReactNode }) {
             className="lg:hidden border-t border-primary-foreground/10 px-4 pb-4 max-h-[calc(100vh-3.5rem)] overflow-y-auto overscroll-contain"
           >
 
-            {navItems.map((item) => {
-              const isActive = location.pathname === item.path;
-              return (
-                <Link
-                  key={item.path}
-                  to={item.path}
-                  onClick={() => setMobileOpen(false)}
-                  className={`flex items-center gap-3 rounded-lg px-3 py-3 text-sm font-sans ${isActive ? "text-secondary font-semibold border-l-2 border-secondary" : "text-primary-foreground/70"}`}
-                >
-                  <item.icon className="h-4 w-4" /> {item.label}
-                </Link>
-              );
-            })}
             <button
               type="button"
               onClick={toggleTheme}
@@ -319,6 +306,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
                     <User className="h-4 w-4 text-secondary" />
                     <span className="text-sm font-sans text-primary-foreground">{displayName}</span>
                   </div>
+                  <div className="my-1 border-t border-primary-foreground/10" />
                   <button
                     type="button"
                     onClick={() => {
