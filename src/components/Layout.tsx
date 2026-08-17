@@ -244,8 +244,9 @@ export default function Layout({ children }: { children: React.ReactNode }) {
           <motion.nav
             initial={{ opacity: 0, y: -10 }}
             animate={{ opacity: 1, y: 0 }}
-            className="lg:hidden border-t border-primary-foreground/10 px-4 pb-4"
+            className="lg:hidden border-t border-primary-foreground/10 px-4 pb-4 max-h-[calc(100vh-3.5rem)] overflow-y-auto overscroll-contain"
           >
+
             {navItems.map((item) => {
               const isActive = location.pathname === item.path;
               return (
