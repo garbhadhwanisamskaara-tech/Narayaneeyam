@@ -315,22 +315,21 @@ export default function Layout({ children }: { children: React.ReactNode }) {
                     <Shield className="h-4 w-4" /> Privacy Policy
                   </Link>
 
-                  <div className="flex items-center justify-between px-3 py-3">
-                    <div className="flex items-center gap-2">
-                      <User className="h-4 w-4 text-secondary" />
-                      <span className="text-sm font-sans text-primary-foreground">{displayName}</span>
-                    </div>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        void signOut();
-                        setMobileOpen(false);
-                      }}
-                      className="text-xs text-primary-foreground/60 font-sans"
-                    >
-                      Sign Out
-                    </button>
+                  <div className="flex items-center gap-2 px-3 py-3">
+                    <User className="h-4 w-4 text-secondary" />
+                    <span className="text-sm font-sans text-primary-foreground">{displayName}</span>
                   </div>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      void signOut();
+                      setMobileOpen(false);
+                    }}
+                    className="flex w-full items-center gap-3 rounded-lg px-3 py-3 text-sm font-sans font-semibold text-secondary"
+                  >
+                    <LogOut className="h-4 w-4" /> Sign Out
+                  </button>
+
                 </>
               ) : (
                 <Link
