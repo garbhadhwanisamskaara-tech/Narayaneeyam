@@ -4,6 +4,7 @@ import { SkipForward, Volume2 } from "lucide-react";
 import type { RitualChant } from "@/hooks/useRitualChants";
 import { getStorageUrl } from "@/lib/storageUrl";
 import { registerAudioElement } from "@/lib/globalMute";
+import { fadeOutElement } from "@/lib/audioFade";
 import heroBg from "@/assets/hero-bg.jpg";
 
 interface Props {
@@ -34,6 +35,17 @@ export default function RitualChantOverlay({ chants, useLearnAudio = false, titl
 
   const current = chants[currentIdx];
 
+  // True-unmount marker: this effect's cleanup fires before the per-step
+  // effect's below (hooks run cleanup in declaration order), so by the time
+  // that one checks mountedRef, it already knows whether this is a real
+  // unmount (navigate away) or just advancing to the next chant.
+  const mountedRef = useRef(true);
+  useEffect(() => {
+    return () => {
+      mountedRef.current = false;
+    };
+  }, []);
+
   const advance = useCallback(() => {
     if (currentIdx < chants.length - 1) {
       setCurrentIdx((i) => i + 1);
@@ -43,7 +55,10 @@ export default function RitualChantOverlay({ chants, useLearnAudio = false, titl
   }, [currentIdx, chants.length, onComplete]);
 
   useEffect(() => {
-    if (!current) { onComplete(); return; }
+    if (!current) {
+      onComplete();
+      return;
+    }
 
     // One guarded completion per ritual step — ended / error / rejected play /
     // cleanup can all fire, but only the first one advances the sequence.
@@ -62,7 +77,9 @@ export default function RitualChantOverlay({ chants, useLearnAudio = false, titl
       const unregisterMute = registerAudioElement(audio);
       audio.defaultPlaybackRate = speedRef.current;
       audio.playbackRate = speedRef.current;
-      const onLoadedMetadata = () => { audio.playbackRate = speedRef.current; };
+      const onLoadedMetadata = () => {
+        audio.playbackRate = speedRef.current;
+      };
       audio.addEventListener("loadedmetadata", onLoadedMetadata);
       audio.onended = finishOnce;
       audio.onerror = finishOnce;
@@ -81,14 +98,35 @@ export default function RitualChantOverlay({ chants, useLearnAudio = false, titl
       return () => {
         // Cleanup must never advance the sequence itself
         done = true;
-        release();
+        if (mountedRef.current) {
+          // Normal step-to-step transition — hard stop immediately so the
+          // next chant's audio never overlaps this one.
+          release();
+        } else {
+          // True unmount (navigating away) — fade out over 2s instead of
+          // cutting off abruptly.
+          audio.removeEventListener("loadedmetadata", onLoadedMetadata);
+          audio.onended = null;
+          audio.onerror = null;
+          if (audioRef.current === audio) audioRef.current = null;
+          fadeOutElement(audio, 2000, () => {
+            try {
+              audio.pause();
+            } catch {
+              /* ignore */
+            }
+            unregisterMute();
+          });
+        }
       };
     } else {
       const t = setTimeout(finishOnce, 4000);
-      return () => { done = true; clearTimeout(t); };
+      return () => {
+        done = true;
+        clearTimeout(t);
+      };
     }
   }, [currentIdx, current, useLearnAudio, advance, onComplete]);
-
 
   if (!current) return null;
 
@@ -115,9 +153,7 @@ export default function RitualChantOverlay({ chants, useLearnAudio = false, titl
                 {current.transliteration_text}
               </p>
               {current.translation_text && (
-                <p className="mt-4 text-sm text-gold-light font-sans leading-relaxed">
-                  {current.translation_text}
-                </p>
+                <p className="mt-4 text-sm text-gold-light font-sans leading-relaxed">{current.translation_text}</p>
               )}
             </>
           ) : (
@@ -128,9 +164,7 @@ export default function RitualChantOverlay({ chants, useLearnAudio = false, titl
                 className="w-40 h-40 object-cover rounded-full border-2 border-gold-light/30"
               />
               {current.translation_text && (
-                <p className="text-sm text-gold-light font-sans leading-relaxed">
-                  {current.translation_text}
-                </p>
+                <p className="text-sm text-gold-light font-sans leading-relaxed">{current.translation_text}</p>
               )}
             </div>
           )}
@@ -143,7 +177,10 @@ export default function RitualChantOverlay({ chants, useLearnAudio = false, titl
 
         <button
           onClick={() => {
-            if (audioRef.current) { audioRef.current.pause(); audioRef.current = null; }
+            if (audioRef.current) {
+              audioRef.current.pause();
+              audioRef.current = null;
+            }
             onComplete();
           }}
           className="inline-flex items-center gap-2 rounded-lg border border-border bg-card px-4 py-2 text-sm font-sans text-foreground hover:bg-muted transition-colors"
