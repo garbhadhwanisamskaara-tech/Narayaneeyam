@@ -2,7 +2,7 @@ import { useState, useRef, useCallback, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { getStorageUrl } from "@/lib/storageUrl";
 import { registerAudioElement } from "@/lib/globalMute";
-import { fadeOutElement } from "@/lib/audioFade";
+import { fadeOutElement } from "@/lib/audiofade";
 
 export interface SlokaData {
   sloka_audio_id: string;

@@ -4,7 +4,7 @@ import { SkipForward, Volume2 } from "lucide-react";
 import type { RitualChant } from "@/hooks/useRitualChants";
 import { getStorageUrl } from "@/lib/storageUrl";
 import { registerAudioElement } from "@/lib/globalMute";
-import { fadeOutElement } from "@/lib/audioFade";
+import { fadeOutElement } from "@/lib/audiofade";
 import heroBg from "@/assets/hero-bg.jpg";
 
 interface Props {
