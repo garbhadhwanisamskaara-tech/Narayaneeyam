@@ -19,6 +19,7 @@ import {
   HelpCircle,
   Sparkles,
   Flower2,
+  LifeBuoy,
 } from "lucide-react";
 import { getProgress } from "@/lib/progress";
 import heroBg from "@/assets/hero-bg.jpg";
@@ -55,6 +56,7 @@ export default function Index() {
     },
     { path: "/subscribe", icon: Crown, title: "Subscription", desc: "View your plan, upgrade, or renew" },
     { path: "/blog", icon: Newspaper, title: "Blog", desc: "Stories and guides for your Narayaneeyam journey" },
+    { path: "/support", icon: LifeBuoy, title: "Help & Support", desc: "Raise a ticket or get assistance" },
     { path: "/faq", icon: HelpCircle, title: "FAQ", desc: "Answers to common questions" },
     { path: "/user-guide", icon: Settings, title: "Settings & Guide", desc: "App guide and preferences" },
   ];
