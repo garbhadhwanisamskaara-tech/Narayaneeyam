@@ -5,7 +5,7 @@ const blogJsonLd = {
   "@type": "Article",
   headline: "What is Narayaneeyam? A Complete Beginner's Guide",
   description:
-    "Discover what Narayaneeyam is, who wrote it, why it is chanted, and how this 1036-verse Sanskrit masterpiece can transform your life.",
+    "Discover what Narayaneeyam is, who wrote it, why it is chanted, and how this 1,033-verse Sanskrit masterpiece can transform your life.",
   url: "https://narayaneeyam.app/blog/what-is-narayaneeyam-beginners-guide",
   author: { "@type": "Organization", name: "Narayaneeyam.app" },
   publisher: {
@@ -58,7 +58,7 @@ export default function LandingBlog() {
 
         <h2 className="landing-blog-h2">What is Narayaneeyam?</h2>
         <p>
-          Narayaneeyam is a Sanskrit devotional composition of 1036 verses organized into 100 chapters called Dashakams. It is a condensed poetic retelling of the Srimad Bhagavatam — the great Purana dedicated to Lord Vishnu — written with extraordinary literary beauty and deep devotional intent.
+          Narayaneeyam is a Sanskrit devotional composition of 1,033 verses organized into 100 chapters called Dashakams. It is a condensed poetic retelling of the Srimad Bhagavatam — the great Purana dedicated to Lord Vishnu — written with extraordinary literary beauty and deep devotional intent.
         </p>
         <p>
           The name "Narayaneeyam" means "that which is about Narayana" — Lord Vishnu or Krishna, the supreme being in Vaishnavite tradition.
@@ -90,7 +90,7 @@ export default function LandingBlog() {
           <strong>Literary excellence</strong> — Narayaneeyam is considered a masterpiece of Sanskrit poetry. Bhattathiri's command over Sanskrit grammar, meter, and imagery is exceptional.
         </p>
         <p>
-          <strong>Condensed wisdom</strong> — It contains the essence of the entire Srimad Bhagavatam — 18,000 verses — compressed into 1036 verses without losing any philosophical or devotional depth.
+          <strong>Condensed wisdom</strong> — It contains the essence of the entire Srimad Bhagavatam — 18,000 verses — compressed into 1,033 verses without losing any philosophical or devotional depth.
         </p>
         <p>
           <strong>Proven healing</strong> — Countless devotees report experiencing physical and mental relief after regular chanting. The tradition holds that Narayaneeyam grants Ayur (long life), Arogya (health), and Saukhyam (happiness).
@@ -110,7 +110,7 @@ export default function LandingBlog() {
 
         <h2 className="landing-blog-h2">How Long Does it Take to Chant Narayaneeyam?</h2>
         <p>
-          A full recitation of all 1036 verses takes approximately <strong>5 hours</strong>. Many devotees chant the complete text in one sitting as a special offering called "Narayaneeyam Parayanam."
+          A full recitation of all 1,033 verses takes approximately <strong>5 hours</strong>. Many devotees chant the complete text in one sitting as a special offering called "Narayaneeyam Parayanam."
         </p>
         <p>
           For daily practice, most devotees chant one or a few Dashakams per day, completing the full text over 100 days — mirroring Bhattathiri's original composition.

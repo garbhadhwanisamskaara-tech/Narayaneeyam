@@ -19,7 +19,7 @@ const websiteJsonLd = {
   alternateName: "Narayaneeyam App",
   url: SITE_URL,
   description:
-    "Chant, learn and grow with the 1,034-verse Sriman Narayaneeyam by Melpathur Narayana Bhattathiri — synchronised audio, multi-script text and devotional practice tools.",
+    "Chant, learn and grow with the 1,033-verse Sriman Narayaneeyam by Melpathur Narayana Bhattathiri — synchronised audio, multi-script text and devotional practice tools.",
   inLanguage: ["en", "sa"],
   potentialAction: {
     "@type": "SearchAction",
@@ -47,13 +47,13 @@ const LOGO_URL = "https://znglsaxfyhkuzyrfbuhn.supabase.co/storage/v1/object/pub
 
 const features = [
   { icon: "🎵", name: "Chant With Me", desc: "Follow along with synchronized text highlighting as an expert recites each sloka. Never lose your place in the chant again." },
-  { icon: "📜", name: "Script Library", desc: "Read slokas in Malayalam, Sanskrit Devanagari, IAST transliteration, and Tamil scripts — choose what feels natural to you." },
+  { icon: "📜", name: "Script Library", desc: "Read the slokas in Sanskrit Devanagari or in Tamil, Telugu, Malayalam, Kannada, Hindi, Marathi and English transliteration — choose what feels natural to you." },
   { icon: "🎙️", name: "Sacred Podcast", desc: "Listen to dashakams in the background while going about your day. Let the divine vibrations fill your space." },
-  { icon: "🔖", name: "Bookmarks", desc: "Save your favourite verses for quick access. Build a personal collection of slokas that resonate most with your heart." },
-  { icon: "❤️", name: "Favourites", desc: "Mark slokas close to your heart. Perfect for slokas you chant daily for specific blessings — health, peace, or gratitude." },
+  { icon: "🔖", name: "Bookmarks", desc: "Save your place in any dashakam and return to it in a tap, from any device you sign in on." },
+  { icon: "❤️", name: "Favourites & Playlists", desc: "Mark the slokas closest to your heart and arrange them into your own playlist, with loop counts, for a personal daily session." },
   { icon: "📊", name: "Practice Tracker", desc: "Track your streak days, minutes chanted, and sessions completed. Build a meaningful, consistent devotional practice." },
-  { icon: "🌐", name: "Group Chanting", desc: "Join virtual group chanting sessions with devotees around the world. Experience the power of collective prayer." },
-  { icon: "📖", name: "Meanings & Context", desc: "Deep-dive into word-by-word meanings, contextual explanations, and the stories behind each dashakam." },
+  { icon: "🌐", name: "Group Parayanam", desc: "Create a private group with family or friends, invite them by link, and share a parayanam — dashakams together or split among participants, with a shared progress garden." },
+  { icon: "📖", name: "Meanings & Context", desc: "Verse meanings in your chosen language, along with each dashakam's traditional benefits, remarks and prasadam." },
 ];
 
 const stories = [
@@ -140,7 +140,7 @@ export default function LandingPage() {
       <SEO
         path="/"
         title="Sriman Narayaneeyam — Chant · Learn · Grow in Devotion"
-        description="Chant Sriman Narayaneeyam — 1,034 sacred verses by Bhattathiri with synchronised audio, multi-script text, meanings and a daily devotional practice."
+        description="Chant Sriman Narayaneeyam — 1,033 sacred verses by Bhattathiri with synchronised audio, multi-script text, meanings and a daily devotional practice."
         jsonLd={[websiteJsonLd, faqJsonLd, blogJsonLd]}
       />
       {/* NAV */}
@@ -192,7 +192,7 @@ export default function LandingPage() {
         </p>
         <div className="landing-hero-btns">
           <button className="landing-btn-primary" onClick={goAuth}>Begin Your Journey</button>
-          <button className="landing-btn-outline" onClick={() => scrollTo("sloka")}>▶ Listen to a Sloka for Health benefits</button>
+          <button className="landing-btn-outline" onClick={() => scrollTo("sloka")}>Read a Sloka for Health benefits</button>
         </div>
         <div className="landing-scroll-hint">
           <span>Explore</span>
@@ -209,7 +209,7 @@ export default function LandingPage() {
               <div className="landing-what-circle-num">100</div>
               <div className="landing-what-circle-label">Dashakams</div>
               <div className="landing-what-circle-divider" />
-              <div className="landing-what-circle-num" style={{ fontSize: "2.5rem" }}>1036</div>
+              <div className="landing-what-circle-num" style={{ fontSize: "2.5rem" }}>1,033</div>
               <div className="landing-what-circle-label">Divine Slokas</div>
               <div className="landing-what-circle-divider" />
               <div className="landing-what-circle-sub">Composed in 1586 CE<br />at Guruvayur Temple</div>
@@ -239,7 +239,7 @@ export default function LandingPage() {
               {[
                 { num: "1586", lbl: "Year Composed" },
                 { num: "100", lbl: "Dashakams" },
-                { num: "1036", lbl: "Slokas" },
+                { num: "1,033", lbl: "Slokas" },
                 { num: "438+", lbl: "Years of Devotion" },
               ].map((s) => (
                 <div key={s.lbl} className="landing-stat-item">
@@ -278,11 +278,11 @@ export default function LandingPage() {
         <div className="landing-sloka-wrapper">
           <div style={{ textAlign: "center", marginBottom: "2.5rem" }}>
             <span className="landing-section-label" style={{ color: "#0d5c5c" }}>No Sign-up Required</span>
-            <h2 className="landing-section-title" style={{ color: "#063d3d" }}>Experience a Sloka for Health &amp; Healing</h2>
+            <h2 className="landing-section-title" style={{ color: "#063d3d" }}>Read a Sloka for Health &amp; Healing</h2>
             <div className="landing-gold-line center-line" />
             <p style={{ color: "#7a6845", fontSize: "1.05rem", lineHeight: 1.8, maxWidth: 560, margin: "0 auto" }}>
-              Listen to this powerful sloka from Dashakam 90, traditionally chanted for health,
-              healing, and physical wellbeing. No account needed.
+              This sloka from Dashakam 8 is traditionally chanted for health,
+              healing, and physical wellbeing. Read it here — no account needed.
             </p>
           </div>
           <div className="landing-sloka-card landing-animate-in">
@@ -311,11 +311,11 @@ export default function LandingPage() {
             </p>
             <p className="landing-sloka-chapter">Dashakam 8, Sloka 13 · Narayaneeyam by Melpathur Narayana Bhattathiri</p>
             <p style={{ textAlign: "center", fontSize: "0.85rem", color: "#7a6845", fontStyle: "italic", marginTop: "1rem" }}>
-              🔓 Audio player coming soon.{" "}
+              🔓{" "}
               <button onClick={goAuth} style={{ color: "#1a7a7a", textDecoration: "underline", background: "none", border: "none", cursor: "pointer", font: "inherit" }}>
-                Sign up
+                Create a free account
               </button>{" "}
-              to access all 1036 slokas.
+              to chant along with synchronised audio across all 1,033 slokas as they are published.
             </p>
           </div>
         </div>
@@ -368,14 +368,14 @@ export default function LandingPage() {
               a daily practice. Your account gives you full access to everything.
             </p>
             <ul className="landing-auth-benefits">
-              <li>All 1036 slokas with synchronized audio chanting</li>
-              <li>Malayalam, Sanskrit, Tamil &amp; transliteration scripts</li>
-              <li>Verse-by-verse meanings and commentaries</li>
-              <li>Personal bookmarks and favourites</li>
+              <li>All 1,033 slokas with synchronized audio chanting, released dashakam by dashakam</li>
+              <li>Sanskrit Devanagari plus Tamil, Telugu, Malayalam, Kannada, Hindi, Marathi and English scripts</li>
+              <li>Verse meanings, dashakam benefits, remarks and prasadam</li>
+              <li>Personal bookmarks, favourites and playlists</li>
               <li>Practice streaks and progress tracking</li>
-              <li>Group chanting sessions</li>
+              <li>Private group parayanams with family and friends</li>
               <li>Podcast — listen while on the go</li>
-              <li>Works on web, iOS, and Android</li>
+              <li>Works in any browser — add it to your home screen on iPhone or Android</li>
             </ul>
           </div>
           <div className="landing-auth-form-card">

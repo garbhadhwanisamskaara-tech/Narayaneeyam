@@ -31,7 +31,7 @@ export default function BlogIndexPage() {
         <title>Narayaneeyam Blog — Devotional Articles & Chanting Guides | Narayaneeyam App</title>
         <meta
           name="description"
-          content="Read devotional articles, chanting guides, and beginner tutorials on Sriman Narayaneeyam — the 1036-verse hymn to Lord Guruvayurappan."
+          content="Read devotional articles, chanting guides, and beginner tutorials on Sriman Narayaneeyam — the 1,033-verse hymn to Lord Guruvayurappan."
         />
         <meta property="og:title" content="Narayaneeyam Blog — Devotional Articles & Chanting Guides" />
         <meta property="og:description" content="Articles, guides and personal stories from devotees of Sriman Narayaneeyam." />

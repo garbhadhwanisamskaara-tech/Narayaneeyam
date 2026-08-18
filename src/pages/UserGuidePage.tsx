@@ -1,8 +1,23 @@
 import { motion } from "framer-motion";
-import { BookOpen, Headphones, Music, BarChart3, Heart, Languages, Sparkles, Play } from "lucide-react";
+import {
+  BookOpen,
+  Headphones,
+  Music,
+  BarChart3,
+  Heart,
+  Languages,
+  Sparkles,
+  Play,
+  Users,
+  CalendarDays,
+  Bell,
+  CreditCard,
+  LifeBuoy,
+  UserCog,
+  ListMusic,
+} from "lucide-react";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import SEO from "@/components/SEO";
-import LanguagePreferences from "@/components/LanguagePreferences";
 
 const sections = [
   {
@@ -12,15 +27,23 @@ const sections = [
     items: [
       {
         q: "How do I open the app?",
-        a: "Simply open the app link in any browser — on your phone, tablet, or computer. No download is needed. You can also add it to your phone's home screen for easy access, just like a regular app.",
+        a: "Open narayaneeyam.app in any browser — phone, tablet or computer. Nothing needs to be downloaded; there is no separate App Store or Play Store app. You can add the site to your home screen and it will open full-screen like an installed app.",
       },
       {
-        q: "How do I create an account and sign in?",
-        a: "Tap the Sign In icon at the top right corner. You can sign up with your email address or use Google sign-in. Once signed in, your progress and favourites are saved automatically.",
+        q: "How do I create an account?",
+        a: "Tap Begin Journey or the Sign In icon and choose Create Account. Enter your email and a password, or continue with Google. During sign-up you also choose your preferred script and translation language — both can be changed later.",
+      },
+      {
+        q: "How do I verify my email?",
+        a: "After signing up with email, we send you a confirmation link. Open it and your account is verified. Until then the app shows the Verify Email screen; you can request the mail again from there if it has not arrived (do check your spam folder).",
+      },
+      {
+        q: "How do I sign in, and what if I forget my password?",
+        a: "Sign in with your email and password, or with Google. If you have forgotten your password, use 'Forgot password' on the sign-in page and follow the reset link sent to your email.",
       },
       {
         q: "How do I navigate the app?",
-        a: "On mobile, use the bottom menu to quickly access Home, Chant, Podcast, Progress, and More. On desktop, use the top navigation bar. The 'More' menu has additional options like Script Library, Bookmarks, Favourites, Support, and Settings.",
+        a: "On mobile use the bottom bar — Home, Chant, Podcast, Progress and More. On desktop use the top navigation. The 'More' menu holds Script Library, Festival Parayanams, Prasadam Guide, Saved Places, Favourites, Playlists, Blog, FAQ, Support and Settings. Your avatar at the top right opens account options and Sign Out.",
       },
     ],
   },
@@ -31,27 +54,27 @@ const sections = [
     items: [
       {
         q: "How do I select a Dashakam?",
-        a: "On the Chant page, you'll see a list of all 100 Dashakams. Simply tap the one you wish to chant. You can also search by number or name.",
+        a: "On the Chant page, open the Dashakam selector. All 100 Dashakams are listed so you can see the whole journey. Tap the one you wish to chant.",
       },
       {
-        q: "How do I play and pause the audio?",
-        a: "Tap the Play button to start the chanting audio. Tap it again to pause at any time. The audio will pick up right where you left off.",
+        q: "Why are some dashakams shown as 'Coming soon'?",
+        a: "Recordings are being published dashakam by dashakam. A dashakam that is not yet published is greyed out with a 'Coming soon' label and cannot be opened. New ones appear on their own as they are released — nothing to update on your side.",
       },
       {
-        q: "How do I adjust the speed?",
-        a: "Use the Speed control (shown as 1x) to slow down or speed up the chanting. You can go from 0.5x (very slow, great for learning) up to 2x (for experienced chanters).",
+        q: "How do I play and pause?",
+        a: "Tap Play to begin and tap again to pause. Playback resumes from where you paused. Use the forward and back arrows to move between verses.",
       },
       {
-        q: "How do I use the Loop feature?",
-        a: "Tap the Loop icon to repeat the current verse continuously. This is wonderful for memorising a particular shloka through repeated listening and chanting along.",
+        q: "How do I change the speed?",
+        a: "The speed control offers 0.6×, 0.75×, 1×, 1.25× and 1.5×. Slow it down while learning a new verse and return to 1× once the words feel familiar.",
+      },
+      {
+        q: "How do I use Loop?",
+        a: "Set the loop count to repeat the current verse or dashakam automatically — ideal for memorising through repetition.",
       },
       {
         q: "How does the text highlighting work?",
-        a: "As the audio plays, the words on screen are highlighted in sync with the chanting. This helps you follow along and learn the correct pronunciation naturally.",
-      },
-      {
-        q: "How do I skip to the next or previous verse?",
-        a: "Use the Forward and Back arrows next to the play button to move between verses within the Dashakam.",
+        a: "As the audio plays, the line being chanted is highlighted in gold and the page scrolls to keep it centred, so you can follow along without losing your place.",
       },
     ],
   },
@@ -61,16 +84,15 @@ const sections = [
     title: "Understanding the Verses",
     items: [
       {
-        q: "How do I see the meaning of a shloka?",
-        a: "Tap the 'Show Meaning' button on the Chant page. The meaning (translation) will appear below each verse in your preferred translation language.",
+        q: "Where do I see the meaning of a verse?",
+        a: "Use the meaning icon or 'Show Meaning' on the Chant page. The translation appears with the verse, in your preferred translation language.",
       },
       {
-        q: "How do I learn at my own pace?",
-        a: "Use the speed control to slow down the chanting for easier learning. You can pause at any time and rewind to listen again. Use the loop feature to repeat a verse as many times as you need — there's no rush in devotion.",
+        q: "What are benefits, remarks and prasadam?",
+        a: "Each dashakam carries its traditional benefit and, where relevant, remarks — special instructions such as an additional sloka to recite after a particular verse. Verses that have a prescribed prasadam show it on the verse, and the Prasadam Guide lists them all together.",
       },
     ],
   },
-
   {
     id: "podcast",
     icon: <Headphones className="h-5 w-5 text-primary" />,
@@ -78,11 +100,53 @@ const sections = [
     items: [
       {
         q: "How do I listen to Dashakam episodes?",
-        a: "Go to the Podcast section and select any Dashakam. The full episode audio will start playing. You can pause, resume, and skip just like any podcast.",
+        a: "Open Podcast and choose a published Dashakam. The full episode plays end to end, with the same speed and loop controls as Chant.",
       },
       {
         q: "Can I listen in the background?",
-        a: "Yes! Once you start playing, you can switch to other apps or lock your screen — the audio continues playing. Perfect for listening during your daily activities.",
+        a: "Yes. Once playback starts you can switch apps or lock your screen and the audio continues, with play and pause available from your device's media controls.",
+      },
+    ],
+  },
+  {
+    id: "languages",
+    icon: <Languages className="h-5 w-5 text-primary" />,
+    title: "Script, Language and Text Size",
+    items: [
+      {
+        q: "Which languages are available?",
+        a: "The verses are published in Sanskrit (Devanagari) with transliterations and meanings in English, Tamil, Telugu, Malayalam, Kannada, Hindi and Marathi. Coverage grows as each dashakam is published.",
+      },
+      {
+        q: "How do I change my script and translation language?",
+        a: "Open My Preferences and set your preferred script language and translation language. Everything you read in the app — verses, dashakam names, benefits, remarks and prasadam — follows those settings, falling back to English where a translation is not yet available.",
+      },
+      {
+        q: "How do I change the text size?",
+        a: "My Preferences has a Text Size setting. Choose the size that reads most comfortably and it applies across the verse displays.",
+      },
+      {
+        q: "What is the Script Library?",
+        a: "The Script Library lets you read the verses in the script of your choice without playing audio — useful for silent reading or for dashakams you prefer to follow from the text.",
+      },
+    ],
+  },
+  {
+    id: "collections",
+    icon: <Heart className="h-5 w-5 text-primary" />,
+    title: "Bookmarks, Favourites and Playlists",
+    items: [
+      {
+        q: "How do bookmarks work?",
+        a: "Tap the gold ribbon on a verse to bookmark it. All bookmarks are collected under Saved Places so you can return to a spot quickly.",
+      },
+      {
+        q: "How do favourites work?",
+        a: "Tap the heart on a verse you love. Favourites are gathered in the Heart Shelf and shown in your chosen language.",
+      },
+      {
+        q: "How do I build a playlist?",
+        a: "Use the Playlist Builder to arrange verses or dashakams in the order you want, set how many times each item loops, and play the whole sequence as one session.",
       },
     ],
   },
@@ -92,67 +156,134 @@ const sections = [
     title: "Tracking Your Progress",
     items: [
       {
-        q: "How do I see which verses I've completed?",
-        a: "Visit your Dashboard to see a beautiful overview of your journey — which Dashakams you've chanted, your completion percentage, and how far you've come.",
+        q: "What does the Progress page show?",
+        a: "Your dashboard shows how many of the 100 Dashakams you have completed, minutes chanted, sessions and your daily streak — a gentle picture of your practice over time.",
       },
       {
-        q: "How do I continue from where I left off?",
-        a: "The app remembers your last position. When you return, you'll see a 'Continue' banner that takes you right back to where you were.",
+        q: "How do I continue where I left off?",
+        a: "The app remembers your last position. When you return, a Continue banner takes you straight back to that dashakam and verse.",
       },
       {
-        q: "How do streak days work?",
-        a: "Each day you chant, your streak grows by one day. Maintaining a daily practice builds your streak — a gentle reminder of your devotion and consistency.",
-      },
-      {
-        q: "How do I use bookmarks?",
-        a: "Tap the Bookmark icon on any verse to save it for later. You can find all your bookmarked verses in the Saved Places section.",
+        q: "How do streaks work?",
+        a: "Each day you chant adds a day to your streak. Consistency matters more than duration — even a few minutes keeps it going.",
       },
     ],
   },
   {
-    id: "playlist",
-    icon: <Heart className="h-5 w-5 text-primary" />,
-    title: "Custom Playlist",
+    id: "groups",
+    icon: <Users className="h-5 w-5 text-primary" />,
+    title: "Groups and Group Parayanams",
     items: [
       {
-        q: "How do I create a playlist?",
-        a: "Tap the Heart icon on any shloka you love. Your favourited shlokas are collected in the Heart Shelf, where you can play them as a continuous playlist — your personal collection of divine verses.",
+        q: "What is a group?",
+        a: "A group is your own private circle — family, friends or a satsang. Create a group from the Groups page, give it a name, and invite others with a link. It is not a public or live global chanting room.",
+      },
+      {
+        q: "How do I invite people?",
+        a: "Open your group and share the invite link. When someone opens it while signed in, they join the group. The group switcher at the top lets you move between the groups you belong to.",
+      },
+      {
+        q: "How do I organise a parayanam?",
+        a: "As group owner, choose 'Add a Parayanam', give it a name and dates, pick the dashakams (you can start from a template such as Sampoorna or Mini, or select your own), choose whether everyone chants the same dashakam or the dashakams are split among participants, then invite the participants and start it.",
+      },
+      {
+        q: "How do invitations work for members?",
+        a: "Invited members see the parayanam under pending invitations and can accept or decline. Only participants see the parayanam's progress views.",
+      },
+      {
+        q: "What is the Lotus Garden?",
+        a: "The Lotus Garden is the parayanam's progress grid. Each tile is a dashakam; tap your assigned tile to mark it complete. Tiles bloom in proportion to how many participants have finished them, and the schedule views (Full Schedule and My Schedule) update alongside.",
+      },
+      {
+        q: "How do I manage a group or a parayanam?",
+        a: "Owners get 'Manage Group' (rename, remove a member, dissolve) and 'Manage Parayanam' (remove a participant, with the option to redistribute their dashakams). Members see 'Leave Group'. A group can run more than one parayanam at a time — use the parayanam switcher to choose which one you are viewing.",
       },
     ],
   },
   {
-    id: "scripts",
-    icon: <Languages className="h-5 w-5 text-primary" />,
-    title: "Script Library",
+    id: "festivals",
+    icon: <CalendarDays className="h-5 w-5 text-primary" />,
+    title: "Festival Parayanams and Prasadam Guide",
     items: [
       {
-        q: "How do I view shlokas in different scripts?",
-        a: "Go to the Script Library and choose your preferred script and language. You can view the sacred verses in Devanagari, Malayalam, Tamil, Telugu, Kannada, and more.",
+        q: "What are Festival Parayanams?",
+        a: "A read-only list of festival days with the dashakams traditionally chanted on each and the benefits associated with them. Upcoming festivals appear first; past ones stay collapsed below.",
+      },
+      {
+        q: "What is the Prasadam Guide?",
+        a: "A list of the prasadam prescribed for particular dashakams and verses, in your chosen language where available, so you know what to prepare before you begin.",
       },
     ],
   },
   {
-    id: "tips",
-    icon: <Sparkles className="h-5 w-5 text-primary" />,
+    id: "reminders",
+    icon: <Bell className="h-5 w-5 text-primary" />,
+    title: "Daily Reminders",
+    items: [
+      {
+        q: "How do I turn on reminders?",
+        a: "Open My Preferences and enable parayanam reminders. Your browser will ask permission to show notifications; once allowed, the app can send you a gentle nudge at your chosen time. You can switch them off from the same place.",
+      },
+    ],
+  },
+  {
+    id: "account",
+    icon: <UserCog className="h-5 w-5 text-primary" />,
+    title: "Your Account",
+    items: [
+      {
+        q: "How do I change my password?",
+        a: "My Preferences has a Change Password section — enter a new password and save.",
+      },
+      {
+        q: "How do I delete my account?",
+        a: "The Danger Zone in My Preferences has Delete My Account. If you own a group, the app first asks you to transfer ownership to another member (or dissolve the group), then removes your account and personal data. This cannot be undone.",
+      },
+      {
+        q: "How do I sign out?",
+        a: "Tap your avatar and choose Sign Out — it is the last item in the account menu on both mobile and desktop.",
+      },
+    ],
+  },
+  {
+    id: "subscription",
+    icon: <CreditCard className="h-5 w-5 text-primary" />,
+    title: "Subscription and Payments",
+    items: [
+      {
+        q: "What does my access include right now?",
+        a: "Every verified account is on the launch trial, which runs until 31 December 2026, followed by a 7-day grace period. The app shows a banner as the date approaches.",
+      },
+      {
+        q: "Where do I see plans and subscribe?",
+        a: "The Subscribe page lists the current plans, durations and prices. Payment is handled securely through Razorpay.",
+      },
+      {
+        q: "Where are my receipts?",
+        a: "Payment History in the account menu lists your payments with their dates, amounts and status.",
+      },
+    ],
+  },
+  {
+    id: "support",
+    icon: <LifeBuoy className="h-5 w-5 text-primary" />,
+    title: "Support",
+    items: [
+      {
+        q: "How do I report a problem or ask a question?",
+        a: "Open Support and raise a ticket describing the issue — you can attach a screenshot. Your tickets and our replies stay on the same page so you can follow the conversation.",
+      },
+    ],
+  },
+  {
+    id: "playlist-tips",
+    icon: <ListMusic className="h-5 w-5 text-primary" />,
     title: "Tips for the Best Experience",
     items: [
-      {
-        q: "🎧  Use headphones",
-        a: "For the clearest audio and a more immersive experience, we recommend using headphones or earphones.",
-      },
-      {
-        q: "🪔  Chant along daily",
-        a: "Even 10 minutes of daily chanting brings immense peace. Consistency is more powerful than duration.",
-      },
-      {
-        q: "🌱  Start with Dashakam 1",
-        a: "If you are new to Narayaneeyam, begin with the first Dashakam. Each one builds upon the previous, like a beautiful garland of devotion.",
-      },
-      {
-        q: "📖  Slow down, then flow",
-        a: "Chant a verse at a slower speed until the words feel familiar, then return to normal speed to experience the full flow. This deepens both understanding and devotion.",
-      },
-
+      { q: "🎧  Use headphones", a: "For the clearest audio and a more immersive experience, headphones or earphones are recommended." },
+      { q: "🪔  Chant along daily", a: "Even 10 minutes of daily chanting brings immense peace. Consistency is more powerful than duration." },
+      { q: "🌱  Start with Dashakam 1", a: "If you are new to Narayaneeyam, begin with the first Dashakam. Each one builds upon the previous, like a beautiful garland of devotion." },
+      { q: "📖  Slow down, then flow", a: "Chant a verse at 0.6× or 0.75× until the words feel familiar, then return to normal speed to experience the full flow." },
     ],
   },
 ];
@@ -163,15 +294,16 @@ const UserGuidePage = () => {
       <SEO
         path="/user-guide"
         title="User Guide — Sriman Narayaneeyam"
-        description="Step-by-step guide to using every feature of the Sriman Narayaneeyam app — chanting, podcast, progress and more."
+        description="Step-by-step guide to every feature of the Sriman Narayaneeyam app — chanting, podcast, languages, groups, parayanams, reminders and account settings."
       />
       {/* Hero */}
       <div className="bg-gradient-peacock text-primary-foreground py-10 px-4 text-center">
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6 }}>
           <h1 className="text-3xl md:text-4xl font-bold mb-3">How to Use Narayaneeyam App</h1>
           <p className="text-base md:text-lg max-w-2xl mx-auto opacity-90">
-            Welcome, dear devotee! 🙏 This simple guide will walk you through every feature of the app so you can chant,
-            learn, and grow in devotion with ease and joy. No technical knowledge needed — just an open heart.
+            Welcome, dear devotee! 🙏 This guide walks you through every feature of the app as it works today — from
+            creating your account to chanting, listening, joining a group parayanam and managing your settings.
+            No technical knowledge needed — just an open heart.
           </p>
         </motion.div>
       </div>
