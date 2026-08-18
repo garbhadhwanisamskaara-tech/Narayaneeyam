@@ -3,13 +3,13 @@ import SEO from "@/components/SEO";
 export default function AboutPage() {
   return (
     <div className="container mx-auto px-4 py-6 max-w-2xl">
-      <SEO path="/about" title="About Sriman Narayaneeyam — The 1,034-Verse Hymn" description="About Sriman Narayaneeyam — Bhattathiri's 1,034-verse condensation of the Bhagavata Purana, now a modern app to chant, learn and grow daily." />
+      <SEO path="/about" title="About Sriman Narayaneeyam — The 1,033-Verse Hymn" description="About Sriman Narayaneeyam — Bhattathiri's 1,033-verse condensation of the Bhagavata Purana, now a modern app to chant, learn and grow daily." />
       <h1 className="font-display text-2xl font-bold text-foreground mb-4">About</h1>
       <div className="prose prose-sm dark:prose-invert font-sans">
         <p>
           <strong>Narayaneeyam Sadhana</strong> is a devotional web application designed to help
           devotees chant, learn, and grow through the sacred text of Sriman Narayaneeyam — a
-          1,034-verse hymn composed by Melpathur Narayana Bhattathiri at the Guruvayur Temple.
+          1,033-verse hymn composed by Melpathur Narayana Bhattathiri at the Guruvayur Temple.
         </p>
         <h2>Features</h2>
         <ul>

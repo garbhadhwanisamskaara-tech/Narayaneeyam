@@ -30,7 +30,7 @@ export default function SEO({
   const ogTitle = title || "Sriman Narayaneeyam — Chant · Learn · Grow";
   const ogDesc =
     description ||
-    "Chant, learn and grow with the 1,034-verse Sriman Narayaneeyam — synchronised audio, translations and a daily devotional practice.";
+    "Chant, learn and grow with the 1,033-verse Sriman Narayaneeyam — synchronised audio, translations and a daily devotional practice.";
 
   return (
     <Helmet>
