@@ -14,21 +14,33 @@ export default function SubscriptionBanner() {
 
   if (!user || loading) return null;
 
+  const supportButton = (
+    <Link
+      to="/support"
+      className="rounded-md bg-primary px-3 py-1 text-primary-foreground font-semibold hover:opacity-90 transition-opacity"
+    >
+      Raise Ticket
+    </Link>
+  );
+
   // Grace period — end date has passed but access continues for a short while.
   if (isInGracePeriod) {
     const wasTrial = !profile?.subscription_status || profile.subscription_status === "trial";
     return (
-      <div className="bg-destructive/10 border-b border-destructive/20 px-4 py-2 flex items-center justify-center gap-3 text-xs font-sans text-foreground">
+      <div className="bg-destructive/10 border-b border-destructive/20 px-4 py-2 flex flex-wrap items-center justify-center gap-3 text-xs font-sans text-foreground">
         <span>
           🙏 Your {wasTrial ? "free trial" : "subscription"} has ended. You have {graceDaysRemaining}{" "}
           {graceDaysRemaining === 1 ? "day" : "days"} of grace remaining — please subscribe to avoid losing access.
         </span>
-        <Link
-          to="/subscribe"
-          className="rounded-md bg-primary px-3 py-1 text-primary-foreground font-semibold hover:opacity-90 transition-opacity"
-        >
-          Subscribe
-        </Link>
+        <div className="flex items-center gap-2">
+          <Link
+            to="/subscribe"
+            className="rounded-md bg-primary px-3 py-1 text-primary-foreground font-semibold hover:opacity-90 transition-opacity"
+          >
+            Subscribe
+          </Link>
+          {supportButton}
+        </div>
       </div>
     );
   }
@@ -44,23 +56,32 @@ export default function SubscriptionBanner() {
       daysRemaining <= REMINDER_WINDOW_DAYS
     ) {
       return (
-        <div className="bg-amber-50 dark:bg-amber-900/20 border-b border-amber-200 dark:border-amber-800 px-4 py-2 flex items-center justify-center gap-3 text-xs font-sans text-foreground">
+        <div className="bg-amber-50 dark:bg-amber-900/20 border-b border-amber-200 dark:border-amber-800 px-4 py-2 flex flex-wrap items-center justify-center gap-3 text-xs font-sans text-foreground">
           <span>
             🙏 Your subscription ends in {daysRemaining} {daysRemaining === 1 ? "day" : "days"} — renew to continue
             without a break.
           </span>
-          <Link
-            to="/subscribe"
-            className="rounded-md bg-primary px-3 py-1 text-primary-foreground font-semibold hover:opacity-90 transition-opacity"
-          >
-            Renew
-          </Link>
+          <div className="flex items-center gap-2">
+            <Link
+              to="/subscribe"
+              className="rounded-md bg-primary px-3 py-1 text-primary-foreground font-semibold hover:opacity-90 transition-opacity"
+            >
+              Renew
+            </Link>
+            {supportButton}
+          </div>
         </div>
       );
     }
-    return null;
-  }
 
+    // Paid and up to date — still show Raise Ticket for every profile.
+    return (
+      <div className="bg-muted/30 border-b border-border px-4 py-2 flex items-center justify-center gap-3 text-xs font-sans text-foreground">
+        <span>🙏 Need help with your account or chanting?</span>
+        {supportButton}
+      </div>
+    );
+  }
 
   if (isTrialActive && trialExpiresAt) {
     const left = daysUntil(trialExpiresAt);
@@ -72,17 +93,20 @@ export default function SubscriptionBanner() {
 
     if (left <= REMINDER_WINDOW_DAYS) {
       return (
-        <div className="bg-amber-50 dark:bg-amber-900/20 border-b border-amber-200 dark:border-amber-800 px-4 py-2 flex items-center justify-center gap-3 text-xs font-sans text-foreground">
+        <div className="bg-amber-50 dark:bg-amber-900/20 border-b border-amber-200 dark:border-amber-800 px-4 py-2 flex flex-wrap items-center justify-center gap-3 text-xs font-sans text-foreground">
           <span>
             🙏 Your free trial ends in {left} {left === 1 ? "day" : "days"} ({expiryDate}) — subscribe to keep
             chanting.
           </span>
-          <Link
-            to="/subscribe"
-            className="rounded-md bg-primary px-3 py-1 text-primary-foreground font-semibold hover:opacity-90 transition-opacity"
-          >
-            Subscribe
-          </Link>
+          <div className="flex items-center gap-2">
+            <Link
+              to="/subscribe"
+              className="rounded-md bg-primary px-3 py-1 text-primary-foreground font-semibold hover:opacity-90 transition-opacity"
+            >
+              Subscribe
+            </Link>
+            {supportButton}
+          </div>
         </div>
       );
     }
@@ -90,29 +114,33 @@ export default function SubscriptionBanner() {
     return (
       <div className="bg-amber-50 dark:bg-amber-900/20 border-b border-amber-200 dark:border-amber-800 px-4 py-2 flex items-center justify-center gap-3 text-xs font-sans text-foreground">
         <span>🙏 You are on a free trial valid until {expiryDate}</span>
-        <Link
-          to="/support"
-          className="rounded-md bg-primary px-3 py-1 text-primary-foreground font-semibold hover:opacity-90 transition-opacity"
-        >
-          Raise Ticket
-        </Link>
+        {supportButton}
       </div>
     );
   }
 
   if (isTrialExpired) {
     return (
-      <div className="bg-destructive/10 border-b border-destructive/20 px-4 py-2 flex items-center justify-center gap-3 text-xs font-sans text-foreground">
+      <div className="bg-destructive/10 border-b border-destructive/20 px-4 py-2 flex flex-wrap items-center justify-center gap-3 text-xs font-sans text-foreground">
         <span>Your trial has ended. Please subscribe to continue.</span>
-        <Link
-          to="/subscribe"
-          className="rounded-md bg-primary px-3 py-1 text-primary-foreground font-semibold hover:opacity-90 transition-opacity"
-        >
-          Subscribe
-        </Link>
+        <div className="flex items-center gap-2">
+          <Link
+            to="/subscribe"
+            className="rounded-md bg-primary px-3 py-1 text-primary-foreground font-semibold hover:opacity-90 transition-opacity"
+          >
+            Subscribe
+          </Link>
+          {supportButton}
+        </div>
       </div>
     );
   }
 
-  return null;
+  // Fallback for any other signed-in state.
+  return (
+    <div className="bg-muted/30 border-b border-border px-4 py-2 flex items-center justify-center gap-3 text-xs font-sans text-foreground">
+      <span>🙏 Need help with your account or chanting?</span>
+      {supportButton}
+    </div>
+  );
 }
