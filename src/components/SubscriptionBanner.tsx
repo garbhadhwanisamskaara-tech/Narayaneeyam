@@ -90,6 +90,12 @@ export default function SubscriptionBanner() {
     return (
       <div className="bg-amber-50 dark:bg-amber-900/20 border-b border-amber-200 dark:border-amber-800 px-4 py-2 flex items-center justify-center gap-3 text-xs font-sans text-foreground">
         <span>🙏 You are on a free trial valid until {expiryDate}</span>
+        <Link
+          to="/support"
+          className="rounded-md bg-primary px-3 py-1 text-primary-foreground font-semibold hover:opacity-90 transition-opacity"
+        >
+          Raise Ticket
+        </Link>
       </div>
     );
   }
