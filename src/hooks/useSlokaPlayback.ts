@@ -2,6 +2,7 @@ import { useState, useRef, useCallback, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { getStorageUrl } from "@/lib/storageUrl";
 import { registerAudioElement } from "@/lib/globalMute";
+import { fadeOutElement } from "@/lib/audioFade";
 
 export interface SlokaData {
   sloka_audio_id: string;
@@ -27,7 +28,7 @@ interface UseSlokaPlaybackReturn {
     languageCode: string,
     mode: "chant" | "learn",
     speed: number,
-    onComplete: () => void
+    onComplete: () => void,
   ) => void;
   /** Stop any in-progress sloka playback */
   stopSloka: () => void;
@@ -70,15 +71,32 @@ export function useSlokaPlayback(): UseSlokaPlaybackReturn {
     setIsSlokaPlaying(false);
   }, [releaseAudio]);
 
-  // Never leave a temporary element registered when the hook goes away
+  // True unmount only (navigating away from the Chant screen entirely) — fade
+  // out over 2s instead of cutting off. stopSloka() (used for every in-page
+  // transition) is untouched and stays instant.
   useEffect(() => {
     return () => {
       cancelledRef.current = true;
       sessionRef.current += 1;
-      releaseAudio();
+      const audio = audioRef.current;
+      const unregister = unregisterRef.current;
+      audioRef.current = null;
+      unregisterRef.current = null;
+      if (audio) {
+        audio.onended = null;
+        audio.onerror = null;
+        audio.onpause = null;
+        fadeOutElement(audio, 2000, () => {
+          try {
+            audio.pause();
+          } catch {
+            /* ignore */
+          }
+          unregister?.();
+        });
+      }
     };
-  }, [releaseAudio]);
-
+  }, []);
 
   const handlePostVerse = useCallback(
     async (
@@ -86,7 +104,7 @@ export function useSlokaPlayback(): UseSlokaPlaybackReturn {
       languageCode: string,
       mode: "chant" | "learn",
       speed: number,
-      onComplete: () => void
+      onComplete: () => void,
     ) => {
       // Each invocation owns a session id; stale events can never touch the UI
       sessionRef.current += 1;
@@ -132,10 +150,7 @@ export function useSlokaPlayback(): UseSlokaPlaybackReturn {
 
         // Play sloka audio
         const audioData = audioRes.data;
-        const audioFile =
-          mode === "learn"
-            ? audioData?.learn_audio_file
-            : audioData?.chant_audio_file;
+        const audioFile = mode === "learn" ? audioData?.learn_audio_file : audioData?.chant_audio_file;
 
         const resolvedAudioFile = getStorageUrl(audioFile);
 
@@ -160,7 +175,9 @@ export function useSlokaPlayback(): UseSlokaPlaybackReturn {
           unregisterRef.current = registerAudioElement(audio);
           audio.defaultPlaybackRate = speed;
           audio.playbackRate = speed;
-          const onLoadedMetadata = () => { audio.playbackRate = speed; };
+          const onLoadedMetadata = () => {
+            audio.playbackRate = speed;
+          };
           audio.addEventListener("loadedmetadata", onLoadedMetadata);
 
           audio.onended = () => {
@@ -191,9 +208,8 @@ export function useSlokaPlayback(): UseSlokaPlaybackReturn {
           onComplete();
         }
       }
-
     },
-    [releaseAudio]
+    [releaseAudio],
   );
 
   return {
