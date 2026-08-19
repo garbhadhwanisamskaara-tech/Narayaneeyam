@@ -936,24 +936,8 @@ export default function ChantPage() {
             </select>
 
             <select
-              aria-label="Speed"
-              value={speed}
-              onChange={(e) => {
-                const newSpeed = Number(e.target.value);
-                setSpeed(newSpeed);
-                engine.setSpeed(newSpeed);
-              }}
-              className={`${selectCls} flex-1 basis-0 md:flex-none md:w-24`}
-            >
-              {[0.6, 0.75, 1, 1.25, 1.5].map((s) => (
-                <option key={s} value={s}>
-                  {s}×
-                </option>
-              ))}
-            </select>
-
-            <select
               aria-label="Loop"
+
               value={loopCount}
               onChange={(e) => setLoopCount(Number(e.target.value))}
               className={`${selectCls} flex-1 basis-0 md:flex-none md:w-24`}
