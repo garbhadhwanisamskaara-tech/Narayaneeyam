@@ -807,87 +807,6 @@ export default function ChantPage() {
 
       <SEO path="/chant" title="Chant Narayaneeyam — All 100 Dashakams" description="Chant all 100 Dashakams of Sriman Narayaneeyam with audio, transliteration and meaning." />
       <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
-        <div className="mb-4 flex items-center justify-between flex-wrap gap-2">
-          <div>
-            <h1 className="font-display text-3xl font-bold text-foreground mb-2">Chant with Me</h1>
-            <p className="text-muted-foreground font-sans">Follow along with synchronized text highlighting</p>
-          </div>
-          <div className="flex items-center gap-2">
-            <button
-              onClick={() => setPlaylistOpen(true)}
-              className="flex items-center gap-2 rounded-lg border border-secondary/30 bg-secondary/10 px-4 py-2 text-sm font-sans text-foreground hover:bg-secondary/20 transition-colors"
-            >
-              <ListMusic className="h-4 w-4 text-secondary" /> Playlist
-            </button>
-          </div>
-        </div>
-
-        {/* Continue Banner */}
-        <AnimatePresence>
-          {lastPosition && !isGuest && (
-            <ContinueBanner
-              position={lastPosition}
-              onContinue={() => {
-                setSelectedDashakam(lastPosition.dashakam_number);
-                setHighlightedVerse(lastPosition.verse_number - 1);
-                setSelectedPara(null);
-                dismissBanner();
-              }}
-              onDismiss={dismissBanner}
-            />
-          )}
-        </AnimatePresence>
-
-        {/* Playlist Bar */}
-        {inPlaylistMode && (
-          <PlaylistBar
-            items={playlistItems!}
-            currentIndex={playlistIndex}
-            currentLoop={playlistLoop}
-            totalCompleted={playlistIndex}
-            onPrevDashakam={() => {
-              if (playlistIndex > 0) {
-                const newIdx = playlistIndex - 1;
-                setPlaylistIndex(newIdx);
-                setPlaylistLoop(0);
-                setSelectedDashakam(playlistItems![newIdx].dashakam_no);
-                setHighlightedVerse(0);
-                setSelectedPara(null);
-                setVerseProgress(0);
-                stopAudio();
-                stopSloka();
-              }
-            }}
-            onNextDashakam={() => {
-              if (playlistIndex < playlistItems!.length - 1) {
-                const newIdx = playlistIndex + 1;
-                setPlaylistIndex(newIdx);
-                setPlaylistLoop(0);
-                setSelectedDashakam(playlistItems![newIdx].dashakam_no);
-                setHighlightedVerse(0);
-                setSelectedPara(null);
-                setVerseProgress(0);
-                stopAudio();
-                stopSloka();
-              }
-            }}
-            onSkipLoop={() => {
-              setPlaylistLoop(0);
-              const nextIdx = playlistIndex + 1;
-              if (nextIdx < playlistItems!.length) {
-                setPlaylistIndex(nextIdx);
-                setSelectedDashakam(playlistItems![nextIdx].dashakam_no);
-                setHighlightedVerse(0);
-                setSelectedPara(null);
-                setVerseProgress(0);
-                stopAudio();
-                stopSloka();
-              }
-            }}
-            onExit={exitPlaylist}
-          />
-        )}
-
         {/* Compact sticky Chant control bar */}
         <div
           className="sticky z-40 -mx-4 mb-3 border-b border-border bg-background/95 px-3 py-2 backdrop-blur supports-[backdrop-filter]:bg-background/80"
@@ -1124,6 +1043,87 @@ export default function ChantPage() {
             </div>
           </div>
         </div>
+        <div className="mb-4 flex items-center justify-between flex-wrap gap-2">
+          <div>
+            <h1 className="font-display text-3xl font-bold text-foreground mb-2">Chant with Me</h1>
+            <p className="text-muted-foreground font-sans">Follow along with synchronized text highlighting</p>
+          </div>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => setPlaylistOpen(true)}
+              className="flex items-center gap-2 rounded-lg border border-secondary/30 bg-secondary/10 px-4 py-2 text-sm font-sans text-foreground hover:bg-secondary/20 transition-colors"
+            >
+              <ListMusic className="h-4 w-4 text-secondary" /> Playlist
+            </button>
+          </div>
+        </div>
+
+        {/* Continue Banner */}
+        <AnimatePresence>
+          {lastPosition && !isGuest && (
+            <ContinueBanner
+              position={lastPosition}
+              onContinue={() => {
+                setSelectedDashakam(lastPosition.dashakam_number);
+                setHighlightedVerse(lastPosition.verse_number - 1);
+                setSelectedPara(null);
+                dismissBanner();
+              }}
+              onDismiss={dismissBanner}
+            />
+          )}
+        </AnimatePresence>
+
+        {/* Playlist Bar */}
+        {inPlaylistMode && (
+          <PlaylistBar
+            items={playlistItems!}
+            currentIndex={playlistIndex}
+            currentLoop={playlistLoop}
+            totalCompleted={playlistIndex}
+            onPrevDashakam={() => {
+              if (playlistIndex > 0) {
+                const newIdx = playlistIndex - 1;
+                setPlaylistIndex(newIdx);
+                setPlaylistLoop(0);
+                setSelectedDashakam(playlistItems![newIdx].dashakam_no);
+                setHighlightedVerse(0);
+                setSelectedPara(null);
+                setVerseProgress(0);
+                stopAudio();
+                stopSloka();
+              }
+            }}
+            onNextDashakam={() => {
+              if (playlistIndex < playlistItems!.length - 1) {
+                const newIdx = playlistIndex + 1;
+                setPlaylistIndex(newIdx);
+                setPlaylistLoop(0);
+                setSelectedDashakam(playlistItems![newIdx].dashakam_no);
+                setHighlightedVerse(0);
+                setSelectedPara(null);
+                setVerseProgress(0);
+                stopAudio();
+                stopSloka();
+              }
+            }}
+            onSkipLoop={() => {
+              setPlaylistLoop(0);
+              const nextIdx = playlistIndex + 1;
+              if (nextIdx < playlistItems!.length) {
+                setPlaylistIndex(nextIdx);
+                setSelectedDashakam(playlistItems![nextIdx].dashakam_no);
+                setHighlightedVerse(0);
+                setSelectedPara(null);
+                setVerseProgress(0);
+                stopAudio();
+                stopSloka();
+              }
+            }}
+            onExit={exitPlaylist}
+          />
+        )}
+
 
         {/* Gist / Benefit / Remarks panels */}
         {dashakamMeta && (
