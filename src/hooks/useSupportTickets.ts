@@ -7,9 +7,9 @@ export interface Ticket {
   user_id: string;
   user_email?: string;
   subject: string;
-  category: string;
-  priority: string;
-  status: string;
+  category: TicketCategory | string;
+  priority: TicketPriority | string;
+  status: TicketStatus | string;
   description: string;
   created_at: string;
   updated_at: string;
@@ -35,19 +35,45 @@ export interface TicketAttachment {
   created_at: string;
 }
 
-const CATEGORIES = [
-  "Audio Issue",
-  "Content Error",
-  "Subscription",
-  "Technical",
-  "Feature Request",
-  "Other",
+export type TicketCategory =
+  | "audio_issue"
+  | "content_error"
+  | "subscription"
+  | "technical"
+  | "feature_request"
+  | "other";
+export type TicketPriority = "low" | "normal" | "high" | "urgent";
+export type TicketStatus = "open" | "in_progress" | "resolved" | "closed";
+
+export const CATEGORY_OPTIONS: { value: TicketCategory; label: string }[] = [
+  { value: "audio_issue", label: "Audio Issue" },
+  { value: "content_error", label: "Content Error" },
+  { value: "subscription", label: "Subscription" },
+  { value: "technical", label: "Technical" },
+  { value: "feature_request", label: "Feature Request" },
+  { value: "other", label: "Other" },
 ];
 
-const PRIORITIES = ["Normal", "High", "Urgent"];
-const STATUSES = ["Open", "In Progress", "Resolved", "Closed"];
+export const PRIORITY_OPTIONS: { value: TicketPriority; label: string }[] = [
+  { value: "low", label: "Low" },
+  { value: "normal", label: "Normal" },
+  { value: "high", label: "High" },
+  { value: "urgent", label: "Urgent" },
+];
 
-export { CATEGORIES, PRIORITIES, STATUSES };
+export const STATUS_OPTIONS: { value: TicketStatus; label: string }[] = [
+  { value: "open", label: "Open" },
+  { value: "in_progress", label: "In Progress" },
+  { value: "resolved", label: "Resolved" },
+  { value: "closed", label: "Closed" },
+];
+
+export const categoryLabel = (v: string) =>
+  CATEGORY_OPTIONS.find((o) => o.value === v?.toLowerCase())?.label || v;
+export const priorityLabel = (v: string) =>
+  PRIORITY_OPTIONS.find((o) => o.value === v?.toLowerCase())?.label || v;
+export const statusLabel = (v: string) =>
+  STATUS_OPTIONS.find((o) => o.value === v?.toLowerCase())?.label || v;
 
 export function useSupportTickets(isAdmin = false) {
   const { user } = useAuth();
@@ -95,7 +121,7 @@ export function useSupportTickets(isAdmin = false) {
         user_id: user.id,
         email: user.email,
         ...data,
-        status: "Open",
+        status: "open",
       })
       .select()
       .single();
@@ -104,7 +130,7 @@ export function useSupportTickets(isAdmin = false) {
     return ticket;
   };
 
-  const updateTicketStatus = async (ticketId: string, status: string) => {
+  const updateTicketStatus = async (ticketId: string, status: TicketStatus) => {
     const { error } = await supabase
       .from("support_tickets")
       .update({ status, updated_at: new Date().toISOString() })
@@ -113,7 +139,7 @@ export function useSupportTickets(isAdmin = false) {
     await fetchTickets();
   };
 
-  const updateTicketPriority = async (ticketId: string, priority: string) => {
+  const updateTicketPriority = async (ticketId: string, priority: TicketPriority) => {
     const { error } = await supabase
       .from("support_tickets")
       .update({ priority, updated_at: new Date().toISOString() })
