@@ -4,6 +4,7 @@ import { Receipt } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { usePaymentHistory, type PaymentRecord } from "@/hooks/usePaymentHistory";
 import SEO from "@/components/SEO";
+import { SUBSCRIPTION_ENABLED } from "@/config/features";
 
 function statusStyle(status: string | null) {
   const s = (status ?? "").toLowerCase();
@@ -81,12 +82,14 @@ export default function PaymentHistoryPage() {
           <p className="text-sm text-muted-foreground font-sans mb-5">
             When you subscribe, your payments will appear here.
           </p>
-          <Link
-            to="/subscribe"
-            className="inline-block rounded-lg bg-primary px-6 py-2.5 text-sm font-sans font-semibold text-primary-foreground hover:opacity-90"
-          >
-            View Plans
-          </Link>
+          {SUBSCRIPTION_ENABLED && (
+            <Link
+              to="/subscribe"
+              className="inline-block rounded-lg bg-primary px-6 py-2.5 text-sm font-sans font-semibold text-primary-foreground hover:opacity-90"
+            >
+              View Plans
+            </Link>
+          )}
         </div>
       ) : (
         <div className="space-y-3">
