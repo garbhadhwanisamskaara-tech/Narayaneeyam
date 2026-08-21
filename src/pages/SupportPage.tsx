@@ -52,16 +52,19 @@ function StatusBadge({ status }: { status: string }) {
 }
 
 function PriorityBadge({ priority }: { priority: string }) {
+  const option = PRIORITY_OPTIONS.find((p) => p.value === priority.toLowerCase());
+  const label = option?.label || priority;
   const colors: Record<string, string> = {
-    Normal: "bg-muted text-muted-foreground",
-    High: "bg-amber-100 text-amber-700",
-    Urgent: "bg-red-100 text-red-700",
+    low: "bg-muted text-muted-foreground",
+    normal: "bg-muted text-muted-foreground",
+    high: "bg-amber-100 text-amber-700",
+    urgent: "bg-red-100 text-red-700",
   };
   return (
     <span
-      className={`inline-flex rounded-full px-2 py-0.5 text-[11px] font-sans font-semibold ${colors[priority] || colors.Normal}`}
+      className={`inline-flex rounded-full px-2 py-0.5 text-[11px] font-sans font-semibold ${colors[option?.value || "normal"]}`}
     >
-      {priority}
+      {label}
     </span>
   );
 }
