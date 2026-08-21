@@ -1,7 +1,15 @@
+import { Navigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import LandingPage from "@/pages/LandingPage";
 import Index from "@/pages/Index";
 import Layout from "@/components/Layout";
+
+// True when the app is running inside the Android TWA / installed PWA shell.
+function isTwa() {
+  if (typeof window === "undefined") return false;
+  if (document.referrer?.startsWith("android-app://")) return true;
+  return window.matchMedia?.("(display-mode: standalone)").matches ?? false;
+}
 
 export default function HomeGate() {
   const { user, loading } = useAuth();
@@ -15,6 +23,7 @@ export default function HomeGate() {
   }
 
   if (!user) {
+    if (isTwa()) return <Navigate to="/auth" replace />;
     return <LandingPage />;
   }
 
