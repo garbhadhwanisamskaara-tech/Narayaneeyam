@@ -3,7 +3,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { HelmetProvider } from "react-helmet-async";
 import { SentryErrorBoundary } from "@/components/SentryErrorBoundary";
 import { AuthProvider } from "@/contexts/AuthContext";
@@ -44,6 +44,7 @@ import SavedPlacesPage from "./pages/SavedPlacesPage";
 import AdminUploadPage from "./pages/AdminUploadPage";
 import SupportPage from "./pages/SupportPage";
 import SubscribePage from "./pages/SubscribePage";
+import { SUBSCRIPTION_ENABLED } from "@/config/features";
 import PaymentHistoryPage from "./pages/PaymentHistoryPage";
 import UserGuidePage from "./pages/UserGuidePage";
 import VerifyEmailPage from "./pages/VerifyEmailPage";
@@ -110,7 +111,10 @@ const App = () => {
                   <Route path="/heart-shelf" element={<HeartShelfPage />} />
                   <Route path="/saved-places" element={<SavedPlacesPage />} />
                   <Route path="/support" element={<SupportPage />} />
-                  <Route path="/subscribe" element={<SubscribePage />} />
+                  <Route
+                    path="/subscribe"
+                    element={SUBSCRIPTION_ENABLED ? <SubscribePage /> : <Navigate to="/" replace />}
+                  />
                   <Route path="/payment-history" element={<PaymentHistoryPage />} />
                   <Route path="/user-guide" element={<UserGuidePage />} />
                   <Route path="/preferences" element={<PreferencesPage />} />

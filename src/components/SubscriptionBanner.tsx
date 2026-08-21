@@ -1,5 +1,6 @@
 import { Link } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
+import { SUBSCRIPTION_ENABLED } from "@/config/features";
 
 
 const REMINDER_WINDOW_DAYS = 10;
@@ -22,6 +23,17 @@ export default function SubscriptionBanner() {
       Raise Ticket
     </Link>
   );
+
+  // Subscription UI is flagged off: show only the neutral support strip, no
+  // subscribe/renew nudges. Access/entitlement logic is untouched.
+  if (!SUBSCRIPTION_ENABLED) {
+    return (
+      <div className="bg-muted/30 border-b border-border px-4 py-2 flex items-center justify-center gap-3 text-xs font-sans text-foreground">
+        <span>🙏 Need help with your account or chanting?</span>
+        {supportButton}
+      </div>
+    );
+  }
 
   // Grace period — end date has passed but access continues for a short while.
   if (isInGracePeriod) {

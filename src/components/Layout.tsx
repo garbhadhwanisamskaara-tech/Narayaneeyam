@@ -25,6 +25,7 @@ import logoImg from "@/assets/logo.png";
 import { useAuth } from "@/contexts/AuthContext";
 import BottomNav from "@/components/BottomNav";
 import SubscriptionBanner from "@/components/SubscriptionBanner";
+import { SUBSCRIPTION_ENABLED } from "@/config/features";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -184,12 +185,14 @@ export default function Layout({ children }: { children: React.ReactNode }) {
                       My Groups
                     </Link>
                   </DropdownMenuItem>
-                  <DropdownMenuItem asChild className="cursor-pointer">
-                    <Link to="/subscribe">
-                      <CreditCard className="mr-2 h-4 w-4" />
-                      Subscription
-                    </Link>
-                  </DropdownMenuItem>
+                  {SUBSCRIPTION_ENABLED && (
+                    <DropdownMenuItem asChild className="cursor-pointer">
+                      <Link to="/subscribe">
+                        <CreditCard className="mr-2 h-4 w-4" />
+                        Subscription
+                      </Link>
+                    </DropdownMenuItem>
+                  )}
                   <DropdownMenuItem asChild className="cursor-pointer">
                     <Link to="/payment-history">
                       <Receipt className="mr-2 h-4 w-4" />
@@ -272,13 +275,15 @@ export default function Layout({ children }: { children: React.ReactNode }) {
                   >
                     <Users className="h-4 w-4" /> My Groups
                   </Link>
-                  <Link
-                    to="/subscribe"
-                    onClick={() => setMobileOpen(false)}
-                    className="flex items-center gap-3 rounded-lg px-3 py-3 text-sm font-sans text-primary-foreground/70"
-                  >
-                    <CreditCard className="h-4 w-4" /> Subscription
-                  </Link>
+                  {SUBSCRIPTION_ENABLED && (
+                    <Link
+                      to="/subscribe"
+                      onClick={() => setMobileOpen(false)}
+                      className="flex items-center gap-3 rounded-lg px-3 py-3 text-sm font-sans text-primary-foreground/70"
+                    >
+                      <CreditCard className="h-4 w-4" /> Subscription
+                    </Link>
+                  )}
                   <Link
                     to="/payment-history"
                     onClick={() => setMobileOpen(false)}

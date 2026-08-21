@@ -4,6 +4,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 import logoImg from "@/assets/logo.png";
 import SEO from "@/components/SEO";
+import { SUBSCRIPTION_ENABLED } from "@/config/features";
 
 export default function TrialExpiredPage() {
   const { user, signOut } = useAuth();
@@ -43,13 +44,15 @@ export default function TrialExpiredPage() {
           </div>
 
           <div className="space-y-3">
-            <a
-              href="mailto:support@narayaneeyam.app?subject=Upgrade%20Request"
-              className="flex items-center justify-center gap-2 w-full rounded-lg bg-gradient-peacock px-4 py-3 text-sm font-sans font-semibold text-primary-foreground hover:opacity-90 transition-opacity"
-            >
-              <Mail className="h-4 w-4" />
-              Contact Us to Upgrade
-            </a>
+            {SUBSCRIPTION_ENABLED && (
+              <a
+                href="mailto:support@narayaneeyam.app?subject=Upgrade%20Request"
+                className="flex items-center justify-center gap-2 w-full rounded-lg bg-gradient-peacock px-4 py-3 text-sm font-sans font-semibold text-primary-foreground hover:opacity-90 transition-opacity"
+              >
+                <Mail className="h-4 w-4" />
+                Contact Us to Upgrade
+              </a>
+            )}
 
             <Button
               variant="outline"

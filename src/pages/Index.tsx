@@ -27,6 +27,7 @@ import FestivalBanner from "@/components/FestivalBanner";
 import FestivalReminder from "@/components/FestivalReminder";
 import { supabase } from "@/integrations/supabase/client";
 import SEO from "@/components/SEO";
+import { SUBSCRIPTION_ENABLED } from "@/config/features";
 
 export default function Index() {
   // Defined inside the component so icon components are referenced at render
@@ -38,6 +39,9 @@ export default function Index() {
   ];
 
   const moreFeatures = [
+    ...(SUBSCRIPTION_ENABLED
+      ? [{ path: "/subscribe", icon: Crown, title: "Subscription", desc: "View your plan, upgrade, or renew" }]
+      : []),
     {
       path: "/script",
       icon: FileText,
@@ -54,7 +58,6 @@ export default function Index() {
       title: "My Groups",
       desc: "Chant together, become an Achaarya, and see your group's Garden",
     },
-    { path: "/subscribe", icon: Crown, title: "Subscription", desc: "View your plan, upgrade, or renew" },
     { path: "/blog", icon: Newspaper, title: "Blog", desc: "Stories and guides for your Narayaneeyam journey" },
     { path: "/support", icon: LifeBuoy, title: "Help & Support", desc: "Raise a ticket or get assistance" },
     { path: "/faq", icon: HelpCircle, title: "FAQ", desc: "Answers to common questions" },
