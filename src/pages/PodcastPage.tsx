@@ -342,12 +342,9 @@ export default function PodcastPage() {
   };
 
   const handleSeek = (value: number[]) => {
-    const seekTo = value[0];
-    if (audioRef.current && audioRef.current.duration) {
-      audioRef.current.currentTime = (seekTo / 100) * audioRef.current.duration;
-    }
-    setProgress(seekTo);
+    engine.seek(value[0]);
   };
+
 
   const formatTime = (sec: number) => {
     const m = Math.floor(sec / 60);
