@@ -169,9 +169,9 @@ function RaiseTicketForm({ onSuccess, onCancel }: { onSuccess: (id: string) => v
             onChange={(e) => setCategory(e.target.value)}
             className="w-full rounded-lg border border-border bg-card px-3 py-2 text-sm font-sans text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
           >
-            {CATEGORIES.map((c) => (
-              <option key={c} value={c}>
-                {c}
+            {CATEGORY_OPTIONS.map((c) => (
+              <option key={c.value} value={c.value}>
+                {c.label}
               </option>
             ))}
           </select>
