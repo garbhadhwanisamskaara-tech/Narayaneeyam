@@ -27,7 +27,7 @@ function WhatsAppIcon({ className }: { className?: string }) {
 }
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/AuthContext";
-import { useSupportTickets, useTicketDetail, CATEGORIES, PRIORITIES, type Ticket } from "@/hooks/useSupportTickets";
+import { useSupportTickets, useTicketDetail, PRIORITIES, type Ticket } from "@/hooks/useSupportTickets";
 import { useToast } from "@/hooks/use-toast";
 import { Link } from "react-router-dom";
 import SEO from "@/components/SEO";
@@ -67,11 +67,20 @@ function PriorityBadge({ priority }: { priority: string }) {
 }
 
 // ─── Raise Ticket Form ───
+const CATEGORY_OPTIONS = [
+  { label: "Audio Issue", value: "audio_issue" },
+  { label: "Content Error", value: "content_error" },
+  { label: "Subscription", value: "subscription" },
+  { label: "Technical", value: "technical" },
+  { label: "Feature Request", value: "feature_request" },
+  { label: "Other", value: "other" },
+];
+
 function RaiseTicketForm({ onSuccess, onCancel }: { onSuccess: (id: string) => void; onCancel: () => void }) {
   const { createTicket } = useSupportTickets();
   const { toast } = useToast();
   const [subject, setSubject] = useState("");
-  const [category, setCategory] = useState(CATEGORIES[0]);
+  const [category, setCategory] = useState(CATEGORY_OPTIONS[0].value);
   const [priority, setPriority] = useState("Normal");
   const [description, setDescription] = useState("");
   const [files, setFiles] = useState<File[]>([]);
@@ -160,9 +169,9 @@ function RaiseTicketForm({ onSuccess, onCancel }: { onSuccess: (id: string) => v
             onChange={(e) => setCategory(e.target.value)}
             className="w-full rounded-lg border border-border bg-card px-3 py-2 text-sm font-sans text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
           >
-            {CATEGORIES.map((c) => (
-              <option key={c} value={c}>
-                {c}
+            {CATEGORY_OPTIONS.map((c) => (
+              <option key={c.value} value={c.value}>
+                {c.label}
               </option>
             ))}
           </select>
