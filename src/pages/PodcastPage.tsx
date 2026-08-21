@@ -555,8 +555,9 @@ export default function PodcastPage() {
                 onChange={(e) => {
                   const s = Number(e.target.value);
                   setSpeed(s);
-                  if (audioRef.current) { audioRef.current.defaultPlaybackRate = s; audioRef.current.playbackRate = s; }
+                  engine.setSpeed(s);
                 }}
+
                 className="rounded-lg bg-primary-foreground/20 text-primary-foreground px-3 py-1.5 text-xs font-sans border border-primary-foreground/20 appearance-none cursor-pointer [&>option]:bg-card [&>option]:text-foreground"
               >
                 <option value={0.6}>0.6×</option>
