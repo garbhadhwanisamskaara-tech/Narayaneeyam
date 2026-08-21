@@ -76,6 +76,13 @@ const CATEGORY_OPTIONS = [
   { label: "Other", value: "other" },
 ];
 
+const PRIORITY_OPTIONS = [
+  { label: "Low", value: "low" },
+  { label: "Normal", value: "normal" },
+  { label: "High", value: "high" },
+  { label: "Urgent", value: "urgent" },
+];
+
 function RaiseTicketForm({ onSuccess, onCancel }: { onSuccess: (id: string) => void; onCancel: () => void }) {
   const { createTicket } = useSupportTickets();
   const { toast } = useToast();
