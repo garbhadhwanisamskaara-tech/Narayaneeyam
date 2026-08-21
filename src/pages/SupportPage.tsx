@@ -27,26 +27,38 @@ function WhatsAppIcon({ className }: { className?: string }) {
 }
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/AuthContext";
-import { useSupportTickets, useTicketDetail, type Ticket } from "@/hooks/useSupportTickets";
+import {
+  useSupportTickets,
+  useTicketDetail,
+  CATEGORY_OPTIONS,
+  PRIORITY_OPTIONS,
+  STATUS_OPTIONS,
+  categoryLabel,
+  type Ticket,
+  type TicketPriority,
+  type TicketStatus,
+} from "@/hooks/useSupportTickets";
 import { useToast } from "@/hooks/use-toast";
 import { Link } from "react-router-dom";
 import SEO from "@/components/SEO";
 
 const statusConfig: Record<string, { color: string; icon: any; bg: string }> = {
-  Open: { color: "text-amber-700", icon: Clock, bg: "bg-amber-100" },
-  "In Progress": { color: "text-blue-700", icon: AlertTriangle, bg: "bg-blue-100" },
-  Resolved: { color: "text-green-700", icon: CheckCircle, bg: "bg-green-100" },
-  Closed: { color: "text-gray-600", icon: XCircle, bg: "bg-gray-100" },
+  open: { color: "text-amber-700", icon: Clock, bg: "bg-amber-100" },
+  in_progress: { color: "text-blue-700", icon: AlertTriangle, bg: "bg-blue-100" },
+  resolved: { color: "text-green-700", icon: CheckCircle, bg: "bg-green-100" },
+  closed: { color: "text-gray-600", icon: XCircle, bg: "bg-gray-100" },
 };
 
 function StatusBadge({ status }: { status: string }) {
-  const cfg = statusConfig[status] || statusConfig.Open;
+  const key = (status || "").toLowerCase();
+  const cfg = statusConfig[key] || statusConfig.open;
   const Icon = cfg.icon;
+  const label = STATUS_OPTIONS.find((o) => o.value === key)?.label || status;
   return (
     <span
       className={`inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-[11px] font-sans font-semibold ${cfg.bg} ${cfg.color}`}
     >
-      <Icon className="h-3 w-3" /> {status}
+      <Icon className="h-3 w-3" /> {label}
     </span>
   );
 }
@@ -70,22 +82,6 @@ function PriorityBadge({ priority }: { priority: string }) {
 }
 
 // ─── Raise Ticket Form ───
-const CATEGORY_OPTIONS = [
-  { label: "Audio Issue", value: "audio_issue" },
-  { label: "Content Error", value: "content_error" },
-  { label: "Subscription", value: "subscription" },
-  { label: "Technical", value: "technical" },
-  { label: "Feature Request", value: "feature_request" },
-  { label: "Other", value: "other" },
-];
-
-const PRIORITY_OPTIONS = [
-  { label: "Low", value: "low" },
-  { label: "Normal", value: "normal" },
-  { label: "High", value: "high" },
-  { label: "Urgent", value: "urgent" },
-];
-
 function RaiseTicketForm({ onSuccess, onCancel }: { onSuccess: (id: string) => void; onCancel: () => void }) {
   const { createTicket } = useSupportTickets();
   const { toast } = useToast();
@@ -314,7 +310,7 @@ function TicketDetailView({
         <div className="flex-1">
           <h2 className="font-display text-base font-semibold text-foreground">{ticket.subject}</h2>
           <p className="text-[11px] text-muted-foreground font-sans">
-            #{ticket.id.slice(0, 8)} · {ticket.category} · {new Date(ticket.created_at).toLocaleDateString()}
+            #{ticket.id.slice(0, 8)} · {categoryLabel(ticket.category)} · {new Date(ticket.created_at).toLocaleDateString()}
           </p>
         </div>
         <StatusBadge status={ticket.status} />
@@ -326,19 +322,19 @@ function TicketDetailView({
         <div className="flex gap-2 flex-wrap">
           <select
             value={ticket.status}
-            onChange={(e) => handleStatusChange(e.target.value)}
+            onChange={(e) => handleStatusChange(e.target.value as TicketStatus)}
             className="rounded-lg border border-border bg-card px-2 py-1 text-xs font-sans"
           >
-            {["Open", "In Progress", "Resolved", "Closed"].map((s) => (
-              <option key={s} value={s}>
-                {s}
+            {STATUS_OPTIONS.map((s) => (
+              <option key={s.value} value={s.value}>
+                {s.label}
               </option>
             ))}
           </select>
           <select
             value={ticket.priority}
             onChange={async (e) => {
-              await updateTicketPriority(ticketId, e.target.value);
+              await updateTicketPriority(ticketId, e.target.value as TicketPriority);
               refetch();
             }}
             className="rounded-lg border border-border bg-card px-2 py-1 text-xs font-sans"
@@ -494,12 +490,12 @@ function TicketDetailView({
 
       {/* Close / Reopen */}
       <div className="flex gap-2">
-        {ticket.status !== "Closed" ? (
-          <Button variant="outline" size="sm" onClick={() => handleStatusChange("Closed")} className="text-xs">
+        {ticket.status !== "closed" ? (
+          <Button variant="outline" size="sm" onClick={() => handleStatusChange("closed")} className="text-xs">
             <XCircle className="h-3.5 w-3.5 mr-1" /> Close Ticket
           </Button>
         ) : (
-          <Button variant="outline" size="sm" onClick={() => handleStatusChange("Open")} className="text-xs">
+          <Button variant="outline" size="sm" onClick={() => handleStatusChange("open")} className="text-xs">
             <RotateCcw className="h-3.5 w-3.5 mr-1" /> Reopen Ticket
           </Button>
         )}
@@ -534,7 +530,7 @@ function TicketsList({ tickets, onSelect }: { tickets: Ticket[]; onSelect: (id: 
           </div>
           <p className="text-sm font-sans font-medium text-foreground truncate">{t.subject}</p>
           <div className="flex items-center gap-2 mt-1">
-            <span className="text-[10px] text-muted-foreground font-sans">{t.category}</span>
+            <span className="text-[10px] text-muted-foreground font-sans">{categoryLabel(t.category)}</span>
             <span className="text-[10px] text-muted-foreground font-sans">·</span>
             <PriorityBadge priority={t.priority} />
             <span className="text-[10px] text-muted-foreground font-sans ml-auto">

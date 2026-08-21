@@ -3,9 +3,10 @@ import { motion } from "framer-motion";
 import { Search, Filter, Ticket as TicketIcon, Clock, AlertTriangle, CheckCircle } from "lucide-react";
 import {
   useSupportTickets,
-  CATEGORIES,
-  PRIORITIES,
-  STATUSES,
+  CATEGORY_OPTIONS,
+  PRIORITY_OPTIONS,
+  STATUS_OPTIONS,
+  categoryLabel,
   type Ticket,
 } from "@/hooks/useSupportTickets";
 import { TicketDetailView, StatusBadge, PriorityBadge } from "@/pages/SupportPage";
@@ -34,9 +35,9 @@ export default function AdminTicketsPanel() {
 
   const filtered = useMemo(() => {
     return tickets.filter(t => {
-      if (statusFilter !== "All" && t.status !== statusFilter) return false;
-      if (priorityFilter !== "All" && t.priority !== priorityFilter) return false;
-      if (categoryFilter !== "All" && t.category !== categoryFilter) return false;
+      if (statusFilter !== "All" && t.status?.toLowerCase() !== statusFilter) return false;
+      if (priorityFilter !== "All" && t.priority?.toLowerCase() !== priorityFilter) return false;
+      if (categoryFilter !== "All" && t.category?.toLowerCase() !== categoryFilter) return false;
       if (search) {
         const q = search.toLowerCase();
         if (!t.subject.toLowerCase().includes(q) && !(t.user_email || "").toLowerCase().includes(q)) return false;
@@ -46,10 +47,10 @@ export default function AdminTicketsPanel() {
   }, [tickets, statusFilter, priorityFilter, categoryFilter, search]);
 
   // Summary stats
-  const openCount = tickets.filter(t => t.status === "Open").length;
-  const urgentCount = tickets.filter(t => t.priority === "High" || t.priority === "Urgent").filter(t => t.status !== "Closed" && t.status !== "Resolved").length;
+  const openCount = tickets.filter(t => t.status === "open").length;
+  const urgentCount = tickets.filter(t => t.priority === "high" || t.priority === "urgent").filter(t => t.status !== "closed" && t.status !== "resolved").length;
   const resolvedToday = tickets.filter(t => {
-    if (t.status !== "Resolved") return false;
+    if (t.status !== "resolved") return false;
     const today = new Date().toDateString();
     return new Date(t.updated_at).toDateString() === today;
   }).length;
@@ -87,15 +88,15 @@ export default function AdminTicketsPanel() {
         </div>
         <select value={statusFilter} onChange={e => setStatusFilter(e.target.value)} className="rounded-lg border border-border bg-card px-2 py-1.5 text-xs font-sans">
           <option value="All">All Status</option>
-          {STATUSES.map(s => <option key={s} value={s}>{s}</option>)}
+          {STATUS_OPTIONS.map(s => <option key={s.value} value={s.value}>{s.label}</option>)}
         </select>
         <select value={priorityFilter} onChange={e => setPriorityFilter(e.target.value)} className="rounded-lg border border-border bg-card px-2 py-1.5 text-xs font-sans">
           <option value="All">All Priority</option>
-          {PRIORITIES.map(p => <option key={p} value={p}>{p}</option>)}
+          {PRIORITY_OPTIONS.map(p => <option key={p.value} value={p.value}>{p.label}</option>)}
         </select>
         <select value={categoryFilter} onChange={e => setCategoryFilter(e.target.value)} className="rounded-lg border border-border bg-card px-2 py-1.5 text-xs font-sans">
           <option value="All">All Category</option>
-          {CATEGORIES.map(c => <option key={c} value={c}>{c}</option>)}
+          {CATEGORY_OPTIONS.map(c => <option key={c.value} value={c.value}>{c.label}</option>)}
         </select>
       </div>
 
@@ -122,7 +123,7 @@ export default function AdminTicketsPanel() {
               </thead>
               <tbody>
                 {filtered.map(t => {
-                  const daysOpen = t.status === "Closed" || t.status === "Resolved"
+                  const daysOpen = t.status === "closed" || t.status === "resolved"
                     ? "—"
                     : Math.ceil((Date.now() - new Date(t.created_at).getTime()) / (1000 * 60 * 60 * 24));
                   return (
@@ -134,7 +135,7 @@ export default function AdminTicketsPanel() {
                       <td className="px-3 py-2 text-muted-foreground">#{t.id.slice(0, 8)}</td>
                       <td className="px-3 py-2 truncate max-w-[140px]">{t.user_email || "—"}</td>
                       <td className="px-3 py-2 font-medium truncate max-w-[200px]">{t.subject}</td>
-                      <td className="px-3 py-2">{t.category}</td>
+                      <td className="px-3 py-2">{categoryLabel(t.category)}</td>
                       <td className="px-3 py-2"><PriorityBadge priority={t.priority} /></td>
                       <td className="px-3 py-2"><StatusBadge status={t.status} /></td>
                       <td className="px-3 py-2">{new Date(t.created_at).toLocaleDateString()}</td>
