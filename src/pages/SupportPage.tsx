@@ -27,7 +27,7 @@ function WhatsAppIcon({ className }: { className?: string }) {
 }
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/AuthContext";
-import { useSupportTickets, useTicketDetail, PRIORITIES, type Ticket } from "@/hooks/useSupportTickets";
+import { useSupportTickets, useTicketDetail, type Ticket } from "@/hooks/useSupportTickets";
 import { useToast } from "@/hooks/use-toast";
 import { Link } from "react-router-dom";
 import SEO from "@/components/SEO";
