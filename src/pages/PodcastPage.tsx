@@ -128,7 +128,6 @@ export default function PodcastPage() {
     setPlaylistLoop(resumeLoop ?? 0);
     setCurrentDashakam(items[idx].dashakam_no);
     setCurrentLoop(0);
-    setProgress(0);
     setCompleted(false);
     playSessionRef.current += 1; releaseAudio();
     pausedRef.current = false;
@@ -188,8 +187,6 @@ export default function PodcastPage() {
       const maxLoops = playlistItems![playlistIndex]?.loops ?? 1;
       if (nextLoop < maxLoops) {
         setPlaylistLoop(nextLoop);
-        setProgress(0);
-        setElapsed(0);
         // Audio will restart via effect
       } else {
         setPlaylistLoop(0);
@@ -197,11 +194,9 @@ export default function PodcastPage() {
         if (nextIdx < playlistItems!.length) {
           setPlaylistIndex(nextIdx);
           setCurrentDashakam(playlistItems![nextIdx].dashakam_no);
-          setProgress(0);
-          setElapsed(0);
           if (playlistId) savePlaylistProg(playlistId, nextIdx, 0, 0);
         } else {
-          setIsPlaying(false);
+          setWantsPlay(false);
           setCompleted(true);
         }
       }
@@ -209,21 +204,17 @@ export default function PodcastPage() {
       const idx = publishedList.findIndex((d) => d.dashakam_no === currentDashakam);
       if (idx >= 0 && idx < publishedList.length - 1) {
         setCurrentDashakam(publishedList[idx + 1].dashakam_no);
-        setProgress(0);
-        setElapsed(0);
         setCurrentLoop(0);
       } else {
-        setIsPlaying(false);
+        setWantsPlay(false);
         setCompleted(true);
       }
     } else if (playMode === "single") {
       const nextLoop = currentLoop + 1;
       if (nextLoop < loopCount) {
         setCurrentLoop(nextLoop);
-        setProgress(0);
-        setElapsed(0);
       } else {
-        setIsPlaying(false);
+        setWantsPlay(false);
         setCompleted(true);
         setCurrentLoop(0);
       }
@@ -250,7 +241,7 @@ export default function PodcastPage() {
 
     const url = getAudioUrl(currentDashakam);
     if (!url) {
-      setIsPlaying(false);
+      setWantsPlay(false);
       return;
     }
 
@@ -305,10 +296,10 @@ export default function PodcastPage() {
   const handlePlayPause = () => {
     if (isPlaying) {
       if (audioRef.current) { audioRef.current.pause(); pausedRef.current = true; }
-      setIsPlaying(false);
+      setWantsPlay(false);
     } else {
       setCompleted(false);
-      setIsPlaying(true);
+      setWantsPlay(true);
       saveProgress({ lastDashakam: currentDashakam, lastPage: "/podcast" });
     }
   };
@@ -316,8 +307,6 @@ export default function PodcastPage() {
   const handleNext = useCallback(() => {
     playSessionRef.current += 1; releaseAudio();
     pausedRef.current = false;
-    setProgress(0);
-    setElapsed(0);
     setCurrentLoop(0);
     setCompleted(false);
     if (inPlaylistMode) {
@@ -338,8 +327,6 @@ export default function PodcastPage() {
   const handlePrev = () => {
     playSessionRef.current += 1; releaseAudio();
     pausedRef.current = false;
-    setProgress(0);
-    setElapsed(0);
     setCurrentLoop(0);
     setCompleted(false);
     if (inPlaylistMode) {
@@ -414,7 +401,7 @@ export default function PodcastPage() {
                 const newIdx = playlistIndex - 1;
                 setPlaylistIndex(newIdx); setPlaylistLoop(0);
                 setCurrentDashakam(playlistItems![newIdx].dashakam_no);
-                setProgress(0); setElapsed(0); setCurrentLoop(0);
+                setCurrentLoop(0);
                 playSessionRef.current += 1; releaseAudio();
                 pausedRef.current = false;
               }
@@ -424,7 +411,7 @@ export default function PodcastPage() {
                 const newIdx = playlistIndex + 1;
                 setPlaylistIndex(newIdx); setPlaylistLoop(0);
                 setCurrentDashakam(playlistItems![newIdx].dashakam_no);
-                setProgress(0); setElapsed(0); setCurrentLoop(0);
+                setCurrentLoop(0);
                 playSessionRef.current += 1; releaseAudio();
                 pausedRef.current = false;
               }
@@ -435,7 +422,7 @@ export default function PodcastPage() {
               if (nextIdx < playlistItems!.length) {
                 setPlaylistIndex(nextIdx);
                 setCurrentDashakam(playlistItems![nextIdx].dashakam_no);
-                setProgress(0); setElapsed(0); setCurrentLoop(0);
+                setCurrentLoop(0);
                 playSessionRef.current += 1; releaseAudio();
                 pausedRef.current = false;
               }
@@ -456,9 +443,7 @@ export default function PodcastPage() {
                   setPlayMode(mode.value);
                   playSessionRef.current += 1; releaseAudio();
                   pausedRef.current = false;
-                  setIsPlaying(false);
-                  setProgress(0);
-                  setElapsed(0);
+                  setWantsPlay(false);
                   setCurrentLoop(0);
                   setCompleted(false);
                 }
@@ -488,7 +473,7 @@ export default function PodcastPage() {
                   playSessionRef.current += 1; releaseAudio();
                   pausedRef.current = false;
                   setCurrentDashakam(Number(e.target.value));
-                  setProgress(0); setElapsed(0); setCurrentLoop(0); setCompleted(false);
+                  setCurrentLoop(0); setCompleted(false);
                 }}
                 className="rounded-lg border border-border bg-background px-3 py-2 text-sm font-sans text-foreground"
               >
@@ -672,7 +657,7 @@ export default function PodcastPage() {
                   playSessionRef.current += 1; releaseAudio();
                   pausedRef.current = false;
                   setCurrentDashakam(d.id);
-                  setProgress(0); setElapsed(0); setCurrentLoop(0); setCompleted(false);
+                  setCurrentLoop(0); setCompleted(false);
                   saveProgress({ lastDashakam: d.id, lastPage: "/podcast" });
                 }}
                 className={`w-full flex items-center gap-3 px-4 py-3 text-left text-sm font-sans border-b border-border last:border-b-0 transition-colors ${
