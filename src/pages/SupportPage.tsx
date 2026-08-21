@@ -190,9 +190,9 @@ function RaiseTicketForm({ onSuccess, onCancel }: { onSuccess: (id: string) => v
             onChange={(e) => setPriority(e.target.value)}
             className="w-full rounded-lg border border-border bg-card px-3 py-2 text-sm font-sans text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
           >
-            {PRIORITIES.map((p) => (
-              <option key={p} value={p}>
-                {p}
+            {PRIORITY_OPTIONS.map((p) => (
+              <option key={p.value} value={p.value}>
+                {p.label}
               </option>
             ))}
           </select>
