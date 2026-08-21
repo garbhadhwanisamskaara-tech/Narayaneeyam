@@ -343,9 +343,9 @@ function TicketDetailView({
             }}
             className="rounded-lg border border-border bg-card px-2 py-1 text-xs font-sans"
           >
-            {PRIORITIES.map((p) => (
-              <option key={p} value={p}>
-                {p}
+            {PRIORITY_OPTIONS.map((p) => (
+              <option key={p.value} value={p.value}>
+                {p.label}
               </option>
             ))}
           </select>
