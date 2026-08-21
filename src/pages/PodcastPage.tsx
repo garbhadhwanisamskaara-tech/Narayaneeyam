@@ -224,9 +224,28 @@ export default function PodcastPage() {
   // Keep ref in sync
   useEffect(() => { advanceRef.current = advanceToNext; }, [advanceToNext]);
 
-  // Audio playback — one element per podcast source, reused across loops
+  // ── Resume service (localStorage + Supabase) ──
+  const { saveNow: saveResume, clearPosition: clearResume } = useAudioResume({
+    mode: "podcast",
+    isPlaying,
+    getSnapshot: () => ({
+      dashakamNumber: currentDashakam,
+      verseNumber: 0,
+      currentTimeSeconds: engine.state.currentTime,
+      durationSeconds: engine.state.duration,
+      audioUrl: engine.state.src,
+      playMode,
+    }),
+  });
+
+  // Media Session metadata — always replaces any stale Chant metadata
   useEffect(() => {
-    if (!isPlaying) return;
+    engine.setMediaMetadata(`Dashakam ${currentDashakam} — ${dashakamName}`, "Sriman Narayaneeyam");
+  }, [engine, currentDashakam, dashakamName, wantsPlay]);
+
+  // Audio playback via the shared global engine
+  useEffect(() => {
+    if (!wantsPlay) return;
 
     // Session guard: an event from an older dashakam/loop can never advance
     // the newly selected one.
@@ -236,6 +255,7 @@ export default function PodcastPage() {
     const finishOnce = () => {
       if (finished || playSessionRef.current !== session) return;
       finished = true;
+      clearResume(); // playback of this source completed
       advanceRef.current();
     };
 
@@ -245,64 +265,41 @@ export default function PodcastPage() {
       return;
     }
 
-    const existing = audioRef.current;
-    const canReuse = !!existing && audioSrcRef.current === url;
+    engine.setSpeed(speedRef.current);
+    engine.onEnded.current = finishOnce;
 
-    // Reuse the element for another repetition of the same source; only build a
-    // new one when the podcast source actually changes.
-    let audio: HTMLAudioElement;
-    if (canReuse) {
-      audio = existing!;
-      if (!pausedRef.current) audio.currentTime = 0;
+    // Resume in place after a pause on the same source; otherwise (re)start it
+    if (pausedRef.current && engine.state.src === url) {
+      void engine.resume();
     } else {
-      releaseAudio();
-      audio = new Audio(url);
-      audioRef.current = audio;
-      audioSrcRef.current = url;
-      unregisterMuteRef.current = registerAudioElement(audio);
+      void engine.play(url);
     }
-
-    audio.defaultPlaybackRate = speedRef.current;
-    audio.playbackRate = speedRef.current;
-    const onLoadedMetadata = () => { audio.playbackRate = speedRef.current; };
-    audio.addEventListener("loadedmetadata", onLoadedMetadata);
     pausedRef.current = false;
-    audio.play().catch((err) => console.error("Audio play error:", err));
-
-    const updateProgress = () => {
-      if (audio.duration) {
-        setElapsed(audio.currentTime);
-        setDuration(audio.duration);
-        setProgress((audio.currentTime / audio.duration) * 100);
-      }
-    };
-    audio.addEventListener("timeupdate", updateProgress);
-    audio.onended = finishOnce;
 
     return () => {
       finished = true; // cleanup itself never advances a loop
-      audio.onended = null;
-      audio.onerror = null;
-      audio.removeEventListener("timeupdate", updateProgress);
-      audio.removeEventListener("loadedmetadata", onLoadedMetadata);
+      if (engine.onEnded.current === finishOnce) engine.onEnded.current = null;
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isPlaying, currentDashakam, currentLoop, playlistLoop, getAudioUrl]);
+  }, [wantsPlay, currentDashakam, currentLoop, playlistLoop, getAudioUrl]);
 
-  // Release the podcast element (and its mute registration) on unmount
-  useEffect(() => releaseAudio, [releaseAudio]);
+  // Persist the position when leaving the page (playback itself continues)
+  useEffect(() => () => { saveResume(); }, [saveResume]);
 
 
   const handlePlayPause = () => {
     if (isPlaying) {
-      if (audioRef.current) { audioRef.current.pause(); pausedRef.current = true; }
+      engine.pause();
+      pausedRef.current = true;
       setWantsPlay(false);
+      saveResume(); // exact position at the moment of pause
     } else {
       setCompleted(false);
       setWantsPlay(true);
       saveProgress({ lastDashakam: currentDashakam, lastPage: "/podcast" });
     }
   };
+
 
   const handleNext = useCallback(() => {
     playSessionRef.current += 1; releaseAudio();
