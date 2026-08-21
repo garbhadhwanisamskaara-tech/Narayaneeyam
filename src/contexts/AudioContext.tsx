@@ -11,6 +11,7 @@ import {
 import { addChantingSeconds } from "@/lib/progress";
 import { recordListeningTimeSupabase } from "@/lib/supabaseProgress";
 import { registerAudioElement } from "@/lib/globalMute";
+import { track } from "@/lib/analytics";
 
 interface AudioState {
   src: string | null;
@@ -309,6 +310,7 @@ export function AudioProvider({ children }: { children: ReactNode }) {
       setState((s) => ({ ...s, src: url, progress: 0, currentTime: 0 }));
       try {
         await audio.play();
+        track("dashakam_played");
         audio.playbackRate = rateRef.current;
         pauseReasonRef.current = null;
         return true;

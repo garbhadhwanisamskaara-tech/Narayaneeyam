@@ -354,6 +354,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setSubscriptionPlan(null);
       setLoading(false);
       setSentryUser(null);
+      resetAnalytics();
 
       await supabase.auth.signOut({ scope: "local" });
     } catch (e) {

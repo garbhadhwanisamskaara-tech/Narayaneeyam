@@ -1,3 +1,4 @@
+import { useEffect } from "react";
 import { Helmet } from "react-helmet-async";
 import { Link, useParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
@@ -5,6 +6,7 @@ import DOMPurify from "dompurify";
 import BlogShell from "@/components/BlogShell";
 import InstagramFollow from "@/components/InstagramFollow";
 import { supabase } from "@/integrations/supabase/client";
+import { track } from "@/lib/analytics";
 
 export interface BlogPost {
   slug: string;
@@ -34,6 +36,10 @@ export default function BlogPostPage() {
     queryFn: () => fetchPost(slug),
     enabled: !!slug,
   });
+
+  useEffect(() => {
+    if (slug) track("blog_post_viewed", { slug });
+  }, [slug]);
 
   if (isLoading) {
     return (

@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Check, Loader2, MailQuestion, X } from "lucide-react";
 import { useMyPendingInvites } from "@/hooks/useParayanamParticipants";
 import PushRemindersPrompt from "@/components/PushRemindersPrompt";
+import { track } from "@/lib/analytics";
 
 const NUDGE_KEY = "push-nudge-shown";
 
@@ -17,6 +18,7 @@ export default function PendingInvitesSection({ groupId }: { groupId?: string })
     setError(null);
     try {
       await respond(id, status);
+      if (status === "confirmed") track("parayanam_joined");
       // A one-time nudge the first time someone joins a parayanam — reminders are
       // an account-level setting, so we never repeat this on every group page.
       if (status === "confirmed" && localStorage.getItem(NUDGE_KEY) !== "1") {

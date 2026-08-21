@@ -6,6 +6,7 @@ import { useSubscription } from "@/hooks/useSubscription";
 import { useSubscriptionPlans, type SubscriptionPlan } from "@/hooks/useSubscriptionPlans";
 import { useToast } from "@/hooks/use-toast";
 import { Link } from "react-router-dom";
+import { track } from "@/lib/analytics";
 import { supabase } from "@/integrations/supabase/client";
 import SEO from "@/components/SEO";
 
@@ -99,6 +100,7 @@ export default function SubscribePage() {
             return;
           }
 
+          track("subscription_started");
           toast({
             title: "Subscription activated!",
             description: `You're all set with ${orderData.plan_display_name}.`,
