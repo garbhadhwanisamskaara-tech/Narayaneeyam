@@ -12,7 +12,9 @@ import { usePlaylist, type PlaylistItem } from "@/hooks/usePlaylist";
 import SEO from "@/components/SEO";
 import { awardFeather } from "@/hooks/useFeathers";
 import { useAuth } from "@/contexts/AuthContext";
-import { registerAudioElement, useGlobalMute } from "@/lib/globalMute";
+import { useGlobalMute } from "@/lib/globalMute";
+import { useAudioEngine } from "@/contexts/AudioContext";
+import { useAudioResume } from "@/hooks/useAudioResume";
 import { useLanguagePrefs } from "@/hooks/useLanguagePrefs";
 import { VolumeX } from "lucide-react";
 
@@ -26,22 +28,22 @@ interface PodcastEntry {
 export default function PodcastPage() {
   const { user } = useAuth();
   const [muted, toggleMuted] = useGlobalMute();
+  const engine = useAudioEngine();
   const [currentDashakam, setCurrentDashakam] = useState(1);
-  const [isPlaying, setIsPlaying] = useState(false);
+  /** User intent to play. The visible state always comes from the engine. */
+  const [wantsPlay, setWantsPlay] = useState(false);
+  const isPlaying = engine.state.isPlaying;
   const [playMode, setPlayMode] = useState<PlayMode>("single");
-  const [progress, setProgress] = useState(0);
   const [showDashakamList, setShowDashakamList] = useState(false);
   const [speed, setSpeed] = useState(1);
   const [loopCount, setLoopCount] = useState(1);
   const [currentLoop, setCurrentLoop] = useState(0);
-  const [elapsed, setElapsed] = useState(0);
-  const [duration, setDuration] = useState(0);
+  const progress = engine.state.progress;
+  const elapsed = engine.state.currentTime;
+  const duration = engine.state.duration;
   const [podcastData, setPodcastData] = useState<PodcastEntry[]>([]);
   const [completed, setCompleted] = useState(false);
   const { scriptLang, translationLang } = useLanguagePrefs();
-  const audioRef = useRef<HTMLAudioElement | null>(null);
-  const audioSrcRef = useRef<string | null>(null);
-  const unregisterMuteRef = useRef<(() => void) | null>(null);
   /** Monotonic id of the active playback session — stale events are ignored. */
   const playSessionRef = useRef(0);
   const pausedRef = useRef(false);
@@ -49,24 +51,13 @@ export default function PodcastPage() {
   const speedRef = useRef(1);
   speedRef.current = speed;
 
-  /** Detach handlers, unregister from the global mute set and drop the element. */
+  /** Stop the shared engine and invalidate any in-flight podcast session. */
   const releaseAudio = useCallback(() => {
-    const audio = audioRef.current;
-    if (audio) {
-      audio.onended = null;
-      audio.onerror = null;
-      audio.onpause = null;
-      try {
-        audio.pause();
-      } catch {
-        /* ignore */
-      }
-    }
-    audioRef.current = null;
-    audioSrcRef.current = null;
-    unregisterMuteRef.current?.();
-    unregisterMuteRef.current = null;
-  }, []);
+    playSessionRef.current += 1;
+    engine.onEnded.current = null;
+    engine.stop();
+  }, [engine]);
+
 
 
   // ── Playlist state ──
@@ -137,7 +128,6 @@ export default function PodcastPage() {
     setPlaylistLoop(resumeLoop ?? 0);
     setCurrentDashakam(items[idx].dashakam_no);
     setCurrentLoop(0);
-    setProgress(0);
     setCompleted(false);
     playSessionRef.current += 1; releaseAudio();
     pausedRef.current = false;
@@ -197,8 +187,6 @@ export default function PodcastPage() {
       const maxLoops = playlistItems![playlistIndex]?.loops ?? 1;
       if (nextLoop < maxLoops) {
         setPlaylistLoop(nextLoop);
-        setProgress(0);
-        setElapsed(0);
         // Audio will restart via effect
       } else {
         setPlaylistLoop(0);
@@ -206,11 +194,9 @@ export default function PodcastPage() {
         if (nextIdx < playlistItems!.length) {
           setPlaylistIndex(nextIdx);
           setCurrentDashakam(playlistItems![nextIdx].dashakam_no);
-          setProgress(0);
-          setElapsed(0);
           if (playlistId) savePlaylistProg(playlistId, nextIdx, 0, 0);
         } else {
-          setIsPlaying(false);
+          setWantsPlay(false);
           setCompleted(true);
         }
       }
@@ -218,21 +204,17 @@ export default function PodcastPage() {
       const idx = publishedList.findIndex((d) => d.dashakam_no === currentDashakam);
       if (idx >= 0 && idx < publishedList.length - 1) {
         setCurrentDashakam(publishedList[idx + 1].dashakam_no);
-        setProgress(0);
-        setElapsed(0);
         setCurrentLoop(0);
       } else {
-        setIsPlaying(false);
+        setWantsPlay(false);
         setCompleted(true);
       }
     } else if (playMode === "single") {
       const nextLoop = currentLoop + 1;
       if (nextLoop < loopCount) {
         setCurrentLoop(nextLoop);
-        setProgress(0);
-        setElapsed(0);
       } else {
-        setIsPlaying(false);
+        setWantsPlay(false);
         setCompleted(true);
         setCurrentLoop(0);
       }
@@ -242,9 +224,28 @@ export default function PodcastPage() {
   // Keep ref in sync
   useEffect(() => { advanceRef.current = advanceToNext; }, [advanceToNext]);
 
-  // Audio playback — one element per podcast source, reused across loops
+  // ── Resume service (localStorage + Supabase) ──
+  const { saveNow: saveResume, clearPosition: clearResume } = useAudioResume({
+    mode: "podcast",
+    isPlaying,
+    getSnapshot: () => ({
+      dashakamNumber: currentDashakam,
+      verseNumber: 0,
+      currentTimeSeconds: engine.state.currentTime,
+      durationSeconds: engine.state.duration,
+      audioUrl: engine.state.src,
+      playMode,
+    }),
+  });
+
+  // Media Session metadata — always replaces any stale Chant metadata
   useEffect(() => {
-    if (!isPlaying) return;
+    engine.setMediaMetadata(`Dashakam ${currentDashakam} — ${dashakamName}`, "Sriman Narayaneeyam");
+  }, [engine, currentDashakam, dashakamName, wantsPlay]);
+
+  // Audio playback via the shared global engine
+  useEffect(() => {
+    if (!wantsPlay) return;
 
     // Session guard: an event from an older dashakam/loop can never advance
     // the newly selected one.
@@ -254,79 +255,55 @@ export default function PodcastPage() {
     const finishOnce = () => {
       if (finished || playSessionRef.current !== session) return;
       finished = true;
+      clearResume(); // playback of this source completed
       advanceRef.current();
     };
 
     const url = getAudioUrl(currentDashakam);
     if (!url) {
-      setIsPlaying(false);
+      setWantsPlay(false);
       return;
     }
 
-    const existing = audioRef.current;
-    const canReuse = !!existing && audioSrcRef.current === url;
+    engine.setSpeed(speedRef.current);
+    engine.onEnded.current = finishOnce;
 
-    // Reuse the element for another repetition of the same source; only build a
-    // new one when the podcast source actually changes.
-    let audio: HTMLAudioElement;
-    if (canReuse) {
-      audio = existing!;
-      if (!pausedRef.current) audio.currentTime = 0;
+    // Resume in place after a pause on the same source; otherwise (re)start it
+    if (pausedRef.current && engine.state.src === url) {
+      void engine.resume();
     } else {
-      releaseAudio();
-      audio = new Audio(url);
-      audioRef.current = audio;
-      audioSrcRef.current = url;
-      unregisterMuteRef.current = registerAudioElement(audio);
+      void engine.play(url);
     }
-
-    audio.defaultPlaybackRate = speedRef.current;
-    audio.playbackRate = speedRef.current;
-    const onLoadedMetadata = () => { audio.playbackRate = speedRef.current; };
-    audio.addEventListener("loadedmetadata", onLoadedMetadata);
     pausedRef.current = false;
-    audio.play().catch((err) => console.error("Audio play error:", err));
-
-    const updateProgress = () => {
-      if (audio.duration) {
-        setElapsed(audio.currentTime);
-        setDuration(audio.duration);
-        setProgress((audio.currentTime / audio.duration) * 100);
-      }
-    };
-    audio.addEventListener("timeupdate", updateProgress);
-    audio.onended = finishOnce;
 
     return () => {
       finished = true; // cleanup itself never advances a loop
-      audio.onended = null;
-      audio.onerror = null;
-      audio.removeEventListener("timeupdate", updateProgress);
-      audio.removeEventListener("loadedmetadata", onLoadedMetadata);
+      if (engine.onEnded.current === finishOnce) engine.onEnded.current = null;
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isPlaying, currentDashakam, currentLoop, playlistLoop, getAudioUrl]);
+  }, [wantsPlay, currentDashakam, currentLoop, playlistLoop, getAudioUrl]);
 
-  // Release the podcast element (and its mute registration) on unmount
-  useEffect(() => releaseAudio, [releaseAudio]);
+  // Persist the position when leaving the page (playback itself continues)
+  useEffect(() => () => { saveResume(); }, [saveResume]);
 
 
   const handlePlayPause = () => {
     if (isPlaying) {
-      if (audioRef.current) { audioRef.current.pause(); pausedRef.current = true; }
-      setIsPlaying(false);
+      engine.pause();
+      pausedRef.current = true;
+      setWantsPlay(false);
+      saveResume(); // exact position at the moment of pause
     } else {
       setCompleted(false);
-      setIsPlaying(true);
+      setWantsPlay(true);
       saveProgress({ lastDashakam: currentDashakam, lastPage: "/podcast" });
     }
   };
 
+
   const handleNext = useCallback(() => {
     playSessionRef.current += 1; releaseAudio();
     pausedRef.current = false;
-    setProgress(0);
-    setElapsed(0);
     setCurrentLoop(0);
     setCompleted(false);
     if (inPlaylistMode) {
@@ -347,8 +324,6 @@ export default function PodcastPage() {
   const handlePrev = () => {
     playSessionRef.current += 1; releaseAudio();
     pausedRef.current = false;
-    setProgress(0);
-    setElapsed(0);
     setCurrentLoop(0);
     setCompleted(false);
     if (inPlaylistMode) {
@@ -367,12 +342,9 @@ export default function PodcastPage() {
   };
 
   const handleSeek = (value: number[]) => {
-    const seekTo = value[0];
-    if (audioRef.current && audioRef.current.duration) {
-      audioRef.current.currentTime = (seekTo / 100) * audioRef.current.duration;
-    }
-    setProgress(seekTo);
+    engine.seek(value[0]);
   };
+
 
   const formatTime = (sec: number) => {
     const m = Math.floor(sec / 60);
@@ -423,7 +395,7 @@ export default function PodcastPage() {
                 const newIdx = playlistIndex - 1;
                 setPlaylistIndex(newIdx); setPlaylistLoop(0);
                 setCurrentDashakam(playlistItems![newIdx].dashakam_no);
-                setProgress(0); setElapsed(0); setCurrentLoop(0);
+                setCurrentLoop(0);
                 playSessionRef.current += 1; releaseAudio();
                 pausedRef.current = false;
               }
@@ -433,7 +405,7 @@ export default function PodcastPage() {
                 const newIdx = playlistIndex + 1;
                 setPlaylistIndex(newIdx); setPlaylistLoop(0);
                 setCurrentDashakam(playlistItems![newIdx].dashakam_no);
-                setProgress(0); setElapsed(0); setCurrentLoop(0);
+                setCurrentLoop(0);
                 playSessionRef.current += 1; releaseAudio();
                 pausedRef.current = false;
               }
@@ -444,7 +416,7 @@ export default function PodcastPage() {
               if (nextIdx < playlistItems!.length) {
                 setPlaylistIndex(nextIdx);
                 setCurrentDashakam(playlistItems![nextIdx].dashakam_no);
-                setProgress(0); setElapsed(0); setCurrentLoop(0);
+                setCurrentLoop(0);
                 playSessionRef.current += 1; releaseAudio();
                 pausedRef.current = false;
               }
@@ -465,9 +437,7 @@ export default function PodcastPage() {
                   setPlayMode(mode.value);
                   playSessionRef.current += 1; releaseAudio();
                   pausedRef.current = false;
-                  setIsPlaying(false);
-                  setProgress(0);
-                  setElapsed(0);
+                  setWantsPlay(false);
                   setCurrentLoop(0);
                   setCompleted(false);
                 }
@@ -497,7 +467,7 @@ export default function PodcastPage() {
                   playSessionRef.current += 1; releaseAudio();
                   pausedRef.current = false;
                   setCurrentDashakam(Number(e.target.value));
-                  setProgress(0); setElapsed(0); setCurrentLoop(0); setCompleted(false);
+                  setCurrentLoop(0); setCompleted(false);
                 }}
                 className="rounded-lg border border-border bg-background px-3 py-2 text-sm font-sans text-foreground"
               >
@@ -585,8 +555,9 @@ export default function PodcastPage() {
                 onChange={(e) => {
                   const s = Number(e.target.value);
                   setSpeed(s);
-                  if (audioRef.current) { audioRef.current.defaultPlaybackRate = s; audioRef.current.playbackRate = s; }
+                  engine.setSpeed(s);
                 }}
+
                 className="rounded-lg bg-primary-foreground/20 text-primary-foreground px-3 py-1.5 text-xs font-sans border border-primary-foreground/20 appearance-none cursor-pointer [&>option]:bg-card [&>option]:text-foreground"
               >
                 <option value={0.6}>0.6×</option>
@@ -681,7 +652,7 @@ export default function PodcastPage() {
                   playSessionRef.current += 1; releaseAudio();
                   pausedRef.current = false;
                   setCurrentDashakam(d.id);
-                  setProgress(0); setElapsed(0); setCurrentLoop(0); setCompleted(false);
+                  setCurrentLoop(0); setCompleted(false);
                   saveProgress({ lastDashakam: d.id, lastPage: "/podcast" });
                 }}
                 className={`w-full flex items-center gap-3 px-4 py-3 text-left text-sm font-sans border-b border-border last:border-b-0 transition-colors ${
