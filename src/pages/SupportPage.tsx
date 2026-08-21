@@ -27,7 +27,7 @@ function WhatsAppIcon({ className }: { className?: string }) {
 }
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/AuthContext";
-import { useSupportTickets, useTicketDetail, PRIORITIES, type Ticket } from "@/hooks/useSupportTickets";
+import { useSupportTickets, useTicketDetail, type Ticket } from "@/hooks/useSupportTickets";
 import { useToast } from "@/hooks/use-toast";
 import { Link } from "react-router-dom";
 import SEO from "@/components/SEO";
@@ -52,16 +52,19 @@ function StatusBadge({ status }: { status: string }) {
 }
 
 function PriorityBadge({ priority }: { priority: string }) {
+  const option = PRIORITY_OPTIONS.find((p) => p.value === priority.toLowerCase());
+  const label = option?.label || priority;
   const colors: Record<string, string> = {
-    Normal: "bg-muted text-muted-foreground",
-    High: "bg-amber-100 text-amber-700",
-    Urgent: "bg-red-100 text-red-700",
+    low: "bg-muted text-muted-foreground",
+    normal: "bg-muted text-muted-foreground",
+    high: "bg-amber-100 text-amber-700",
+    urgent: "bg-red-100 text-red-700",
   };
   return (
     <span
-      className={`inline-flex rounded-full px-2 py-0.5 text-[11px] font-sans font-semibold ${colors[priority] || colors.Normal}`}
+      className={`inline-flex rounded-full px-2 py-0.5 text-[11px] font-sans font-semibold ${colors[option?.value || "normal"]}`}
     >
-      {priority}
+      {label}
     </span>
   );
 }
@@ -76,12 +79,19 @@ const CATEGORY_OPTIONS = [
   { label: "Other", value: "other" },
 ];
 
+const PRIORITY_OPTIONS = [
+  { label: "Low", value: "low" },
+  { label: "Normal", value: "normal" },
+  { label: "High", value: "high" },
+  { label: "Urgent", value: "urgent" },
+];
+
 function RaiseTicketForm({ onSuccess, onCancel }: { onSuccess: (id: string) => void; onCancel: () => void }) {
   const { createTicket } = useSupportTickets();
   const { toast } = useToast();
   const [subject, setSubject] = useState("");
   const [category, setCategory] = useState(CATEGORY_OPTIONS[0].value);
-  const [priority, setPriority] = useState("Normal");
+  const [priority, setPriority] = useState("normal");
   const [description, setDescription] = useState("");
   const [files, setFiles] = useState<File[]>([]);
   const [submitting, setSubmitting] = useState(false);
@@ -183,9 +193,9 @@ function RaiseTicketForm({ onSuccess, onCancel }: { onSuccess: (id: string) => v
             onChange={(e) => setPriority(e.target.value)}
             className="w-full rounded-lg border border-border bg-card px-3 py-2 text-sm font-sans text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
           >
-            {PRIORITIES.map((p) => (
-              <option key={p} value={p}>
-                {p}
+            {PRIORITY_OPTIONS.map((p) => (
+              <option key={p.value} value={p.value}>
+                {p.label}
               </option>
             ))}
           </select>
@@ -333,9 +343,9 @@ function TicketDetailView({
             }}
             className="rounded-lg border border-border bg-card px-2 py-1 text-xs font-sans"
           >
-            {PRIORITIES.map((p) => (
-              <option key={p} value={p}>
-                {p}
+            {PRIORITY_OPTIONS.map((p) => (
+              <option key={p.value} value={p.value}>
+                {p.label}
               </option>
             ))}
           </select>
