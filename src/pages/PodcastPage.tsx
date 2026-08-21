@@ -12,7 +12,9 @@ import { usePlaylist, type PlaylistItem } from "@/hooks/usePlaylist";
 import SEO from "@/components/SEO";
 import { awardFeather } from "@/hooks/useFeathers";
 import { useAuth } from "@/contexts/AuthContext";
-import { registerAudioElement, useGlobalMute } from "@/lib/globalMute";
+import { useGlobalMute } from "@/lib/globalMute";
+import { useAudioEngine } from "@/contexts/AudioContext";
+import { useAudioResume } from "@/hooks/useAudioResume";
 import { useLanguagePrefs } from "@/hooks/useLanguagePrefs";
 import { VolumeX } from "lucide-react";
 
@@ -26,22 +28,22 @@ interface PodcastEntry {
 export default function PodcastPage() {
   const { user } = useAuth();
   const [muted, toggleMuted] = useGlobalMute();
+  const engine = useAudioEngine();
   const [currentDashakam, setCurrentDashakam] = useState(1);
-  const [isPlaying, setIsPlaying] = useState(false);
+  /** User intent to play. The visible state always comes from the engine. */
+  const [wantsPlay, setWantsPlay] = useState(false);
+  const isPlaying = engine.state.isPlaying;
   const [playMode, setPlayMode] = useState<PlayMode>("single");
-  const [progress, setProgress] = useState(0);
   const [showDashakamList, setShowDashakamList] = useState(false);
   const [speed, setSpeed] = useState(1);
   const [loopCount, setLoopCount] = useState(1);
   const [currentLoop, setCurrentLoop] = useState(0);
-  const [elapsed, setElapsed] = useState(0);
-  const [duration, setDuration] = useState(0);
+  const progress = engine.state.progress;
+  const elapsed = engine.state.currentTime;
+  const duration = engine.state.duration;
   const [podcastData, setPodcastData] = useState<PodcastEntry[]>([]);
   const [completed, setCompleted] = useState(false);
   const { scriptLang, translationLang } = useLanguagePrefs();
-  const audioRef = useRef<HTMLAudioElement | null>(null);
-  const audioSrcRef = useRef<string | null>(null);
-  const unregisterMuteRef = useRef<(() => void) | null>(null);
   /** Monotonic id of the active playback session — stale events are ignored. */
   const playSessionRef = useRef(0);
   const pausedRef = useRef(false);
@@ -49,24 +51,13 @@ export default function PodcastPage() {
   const speedRef = useRef(1);
   speedRef.current = speed;
 
-  /** Detach handlers, unregister from the global mute set and drop the element. */
+  /** Stop the shared engine and invalidate any in-flight podcast session. */
   const releaseAudio = useCallback(() => {
-    const audio = audioRef.current;
-    if (audio) {
-      audio.onended = null;
-      audio.onerror = null;
-      audio.onpause = null;
-      try {
-        audio.pause();
-      } catch {
-        /* ignore */
-      }
-    }
-    audioRef.current = null;
-    audioSrcRef.current = null;
-    unregisterMuteRef.current?.();
-    unregisterMuteRef.current = null;
-  }, []);
+    playSessionRef.current += 1;
+    engine.onEnded.current = null;
+    engine.stop();
+  }, [engine]);
+
 
 
   // ── Playlist state ──
