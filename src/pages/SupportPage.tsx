@@ -172,7 +172,7 @@ function RaiseTicketForm({ onSuccess, onCancel }: { onSuccess: (id: string) => v
           <label className="text-xs font-sans font-medium text-foreground mb-1 block">Category</label>
           <select
             value={category}
-            onChange={(e) => setCategory(e.target.value)}
+            onChange={(e) => setCategory(e.target.value as import("@/hooks/useSupportTickets").TicketCategory)}
             className="w-full rounded-lg border border-border bg-card px-3 py-2 text-sm font-sans text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
           >
             {CATEGORY_OPTIONS.map((c) => (
@@ -186,7 +186,7 @@ function RaiseTicketForm({ onSuccess, onCancel }: { onSuccess: (id: string) => v
           <label className="text-xs font-sans font-medium text-foreground mb-1 block">Priority</label>
           <select
             value={priority}
-            onChange={(e) => setPriority(e.target.value)}
+            onChange={(e) => setPriority(e.target.value as import("@/hooks/useSupportTickets").TicketPriority)}
             className="w-full rounded-lg border border-border bg-card px-3 py-2 text-sm font-sans text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
           >
             {PRIORITY_OPTIONS.map((p) => (
@@ -292,7 +292,7 @@ function TicketDetailView({
 
   const handleStatusChange = async (newStatus: string) => {
     try {
-      await updateTicketStatus(ticketId, newStatus);
+      await updateTicketStatus(ticketId, newStatus as import("@/hooks/useSupportTickets").TicketStatus);
       refetch();
       toast({ title: `Status changed to ${newStatus}` });
     } catch (e: any) {
