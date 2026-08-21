@@ -93,7 +93,7 @@ export function useSupportTickets(isAdmin = false) {
       .from("support_tickets")
       .insert({
         user_id: user.id,
-        user_email: user.email,
+        email: user.email,
         ...data,
         status: "Open",
       })
