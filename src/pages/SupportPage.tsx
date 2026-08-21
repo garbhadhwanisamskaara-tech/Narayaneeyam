@@ -67,11 +67,20 @@ function PriorityBadge({ priority }: { priority: string }) {
 }
 
 // ─── Raise Ticket Form ───
+const CATEGORY_OPTIONS = [
+  { label: "Audio Issue", value: "audio_issue" },
+  { label: "Content Error", value: "content_error" },
+  { label: "Subscription", value: "subscription" },
+  { label: "Technical", value: "technical" },
+  { label: "Feature Request", value: "feature_request" },
+  { label: "Other", value: "other" },
+];
+
 function RaiseTicketForm({ onSuccess, onCancel }: { onSuccess: (id: string) => void; onCancel: () => void }) {
   const { createTicket } = useSupportTickets();
   const { toast } = useToast();
   const [subject, setSubject] = useState("");
-  const [category, setCategory] = useState(CATEGORIES[0]);
+  const [category, setCategory] = useState(CATEGORY_OPTIONS[0].value);
   const [priority, setPriority] = useState("Normal");
   const [description, setDescription] = useState("");
   const [files, setFiles] = useState<File[]>([]);
