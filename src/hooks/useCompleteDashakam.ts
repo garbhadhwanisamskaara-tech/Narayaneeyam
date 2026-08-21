@@ -1,6 +1,7 @@
 import { useCallback, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
+import { track } from "@/lib/analytics";
 
 /**
  * Per-person dashakam completion. Each chanter records their own row in
@@ -29,6 +30,7 @@ export function useCompleteDashakam() {
         setError(err.message);
         return false;
       }
+      track("dashakam_completed");
       return true;
     },
     [user]

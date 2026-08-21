@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
+import { track } from "@/lib/analytics";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 
@@ -282,6 +283,7 @@ export function useGroupInvite(groupId: string | undefined) {
       .single();
     if (err) throw new Error(err.message);
     setInvite(data as GroupInvite);
+    track("group_invite_sent");
     return data as GroupInvite;
   }, [user, groupId]);
 

@@ -2,6 +2,7 @@ import { createContext, useContext, useEffect, useState, type ReactNode } from "
 import { supabase } from "@/integrations/supabase/client";
 import { logEvent } from "@/services/eventLogger";
 import { setSentryUser, trackSpan } from "@/monitoring/sentry";
+import { identifyUser, resetAnalytics } from "@/lib/analytics";
 import { queryClient } from "@/lib/queryClient";
 
 import type { User, Session } from "@supabase/supabase-js";
@@ -227,6 +228,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setSession(nextSession);
       setUser(nextUser);
       setSentryUser(nextUser?.id ?? null, nextUser?.email ?? undefined);
+      if (nextUser) identifyUser(nextUser.id, nextUser.email);
+
 
       void loadUserData(nextUser).finally(() => {
         if (isActive) setLoading(false);
@@ -351,6 +354,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setSubscriptionPlan(null);
       setLoading(false);
       setSentryUser(null);
+      resetAnalytics();
 
       await supabase.auth.signOut({ scope: "local" });
     } catch (e) {

@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate, useSearchParams, Link } from "react-router-dom";
 import { ArrowLeft, Loader2, Sparkles } from "lucide-react";
+import { track } from "@/lib/analytics";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useDashakamSets } from "@/hooks/useDashakamSets";
@@ -152,6 +153,7 @@ export default function CreateParayanamPage() {
         .select("id")
         .single();
       if (sErr) throw new Error(sErr.message);
+      track("parayanam_created");
 
       if (isGroup) {
         // No schedule rows here — finalize_parayanam() builds them on the start date.
