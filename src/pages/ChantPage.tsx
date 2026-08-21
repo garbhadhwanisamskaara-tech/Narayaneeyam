@@ -718,8 +718,8 @@ export default function ChantPage() {
         if (gapTimerRef.current) clearTimeout(gapTimerRef.current);
       };
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isPlaying, highlightedVerse, displayVerses.length, isSlokaPlaying]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isPlaying, highlightedVerse, displayVerses.length, isSlokaPlaying, currentLoopIteration, playlistLoop]);
 
   // Cleanup gap timers on unmount (but NOT audio — let it persist)
   useEffect(() => {
@@ -951,7 +951,19 @@ export default function ChantPage() {
             <select
               aria-label="Verse"
               value={selectedPara || "all"}
-              onChange={(e) => setSelectedPara(e.target.value === "all" ? null : Number(e.target.value))}
+              onChange={(e) => {
+                stopAudio();
+                stopSloka();
+                setIsPlaying(false);
+                setIsPaused(false);
+                setSelectedPara(
+                  e.target.value === "all" ? null : Number(e.target.value)
+                );
+                setHighlightedVerse(0);
+                setCurrentLoopIteration(0);
+                setVerseProgress(0);
+                setActiveLine(null);
+              }}
               className={`${selectCls} flex-1 basis-0 md:flex-none md:w-28`}
             >
               <option value="all">All verses</option>
