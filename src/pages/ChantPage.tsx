@@ -96,6 +96,22 @@ export default function ChantPage() {
   const versesContainerRef = useRef<HTMLDivElement | null>(null);
   const programmaticScrollRef = useRef(false);
   const scrollTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  // Live-measured sticky offset (app header + chant control bar + safe-area inset)
+  const stickyBarRef = useRef<HTMLDivElement | null>(null);
+  const measureStickyOffsetRef = useRef<() => number>(() => 0);
+  measureStickyOffsetRef.current = () => {
+    const appHeader = document.querySelector("header");
+    const headerBox = appHeader?.getBoundingClientRect().height ?? 0;
+    const barBox = stickyBarRef.current?.getBoundingClientRect().height ?? 0;
+    const safeTop = (() => {
+      if (typeof window === "undefined") return 0;
+      const raw = getComputedStyle(document.documentElement).getPropertyValue("--safe-area-top");
+      const parsed = parseFloat(raw);
+      return Number.isFinite(parsed) ? parsed : 0;
+    })();
+    return headerBox + barBox + safeTop;
+  };
+
   const manualScrollTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const { isBookmarked, addBookmark, removeBookmark, undoRemoveBookmark } = useBookmarks();
   const { isFavourited, addFavourite, removeFavourite, undoRemoveFavourite } = useFavourites(translitLang || "en");
@@ -314,27 +330,49 @@ export default function ChantPage() {
     fetchVerseStatuses(selectedDashakam);
   }, [selectedDashakam, fetchVerseStatuses]);
 
-  // Scroll-to-center helper
-  const scrollToVerse = useCallback((idx: number) => {
-    const el = verseRefsMap.current.get(idx);
-    if (!el) return;
+  // Scroll helper — offsets by the live sticky-header height (never hardcoded)
+  const scrollElementIntoView = useCallback((el: HTMLElement) => {
     programmaticScrollRef.current = true;
     const container = el.closest(".overflow-y-auto") || el.closest(".overflow-auto") || window;
     const isWindow = container === window;
-    const elTop = isWindow ? el.getBoundingClientRect().top + window.scrollY : (el as HTMLElement).offsetTop;
+    const offset = measureStickyOffsetRef.current() + 8;
     const viewH = isWindow ? window.innerHeight : (container as HTMLElement).clientHeight;
-    (isWindow ? window : container).scrollTo({ top: elTop - viewH / 2 + el.offsetHeight / 2, behavior: "smooth" });
+    const currentTop = isWindow ? window.scrollY : (container as HTMLElement).scrollTop;
+    const elTop = isWindow
+      ? el.getBoundingClientRect().top + window.scrollY
+      : (el as HTMLElement).offsetTop;
+    const usableH = Math.max(0, viewH - offset);
+    // Centre within the visible area below the sticky header, but never let the
+    // element's first line slide underneath it.
+    const centred = elTop - offset - Math.max(0, (usableH - el.offsetHeight) / 2);
+    const top = Math.max(0, Math.min(centred, elTop - offset));
+    if (Math.abs(top - currentTop) < 2) {
+      programmaticScrollRef.current = false;
+      return;
+    }
+    (isWindow ? window : container).scrollTo({ top, behavior: "smooth" });
     if (scrollTimeoutRef.current) clearTimeout(scrollTimeoutRef.current);
     scrollTimeoutRef.current = setTimeout(() => {
       programmaticScrollRef.current = false;
     }, 600);
   }, []);
 
+  const scrollToVerse = useCallback(
+    (idx: number) => {
+      const el = verseRefsMap.current.get(idx);
+      if (!el) return;
+      // Wait for layout (header/dropdowns) to settle before measuring
+      requestAnimationFrame(() => requestAnimationFrame(() => scrollElementIntoView(el)));
+    },
+    [scrollElementIntoView],
+  );
+
   // Auto-scroll whenever active verse changes
   useEffect(() => {
     const timer = setTimeout(() => scrollToVerse(highlightedVerse), 100);
     return () => clearTimeout(timer);
   }, [highlightedVerse, scrollToVerse]);
+
 
   // Clear highlighting when verse changes
   useEffect(() => {
@@ -381,13 +419,9 @@ export default function ChantPage() {
     const key = `${highlightedVerse}-${activeLine}`;
     const el = lineRefsMap.current.get(key);
     if (!el) return;
-    programmaticScrollRef.current = true;
-    el.scrollIntoView({ behavior: "smooth", block: "center" });
-    if (scrollTimeoutRef.current) clearTimeout(scrollTimeoutRef.current);
-    scrollTimeoutRef.current = setTimeout(() => {
-      programmaticScrollRef.current = false;
-    }, 600);
-  }, [activeLine, highlightedVerse, isPlaying]);
+    requestAnimationFrame(() => scrollElementIntoView(el));
+  }, [activeLine, highlightedVerse, isPlaying, scrollElementIntoView]);
+
 
   // Manual scroll detection
   useEffect(() => {
@@ -797,6 +831,33 @@ export default function ChantPage() {
       window.removeEventListener("orientationchange", measure);
     };
   }, []);
+
+  // Re-align the active verse when the sticky bar's own height changes
+  // (font scaling, dropdown wrapping, orientation change)
+  useEffect(() => {
+    const bar = stickyBarRef.current;
+    if (!bar) return;
+    let last = bar.getBoundingClientRect().height;
+    let raf = 0;
+    const onChange = () => {
+      const next = bar.getBoundingClientRect().height;
+      if (Math.abs(next - last) < 1) return;
+      last = next;
+      cancelAnimationFrame(raf);
+      raf = requestAnimationFrame(() => scrollToVerse(highlightedVerse));
+    };
+    const ro = new ResizeObserver(onChange);
+    ro.observe(bar);
+    window.addEventListener("resize", onChange);
+    window.addEventListener("orientationchange", onChange);
+    return () => {
+      ro.disconnect();
+      cancelAnimationFrame(raf);
+      window.removeEventListener("resize", onChange);
+      window.removeEventListener("orientationchange", onChange);
+    };
+  }, [highlightedVerse, scrollToVerse]);
+
   const [moreOpen, setMoreOpen] = useState(false);
 
   const selectCls =
@@ -809,9 +870,11 @@ export default function ChantPage() {
       <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
         {/* Compact sticky Chant control bar */}
         <div
+          ref={stickyBarRef}
           className="sticky z-40 -mx-4 mb-3 border-b border-border bg-background/95 px-3 py-2 backdrop-blur supports-[backdrop-filter]:bg-background/80"
           style={{ top: headerH }}
         >
+
           {/* Compact Audio Player Bar */}
           <div className="-mx-3 mb-2 bg-gradient-peacock px-3 py-1.5 shadow-peacock md:mx-0 md:rounded-xl">
             <div className="flex flex-col items-center gap-1 md:flex-row md:justify-center md:gap-4">
