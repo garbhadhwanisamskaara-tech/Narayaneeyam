@@ -96,6 +96,22 @@ export default function ChantPage() {
   const versesContainerRef = useRef<HTMLDivElement | null>(null);
   const programmaticScrollRef = useRef(false);
   const scrollTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  // Live-measured sticky offset (app header + chant control bar + safe-area inset)
+  const stickyBarRef = useRef<HTMLDivElement | null>(null);
+  const measureStickyOffsetRef = useRef<() => number>(() => 0);
+  measureStickyOffsetRef.current = () => {
+    const appHeader = document.querySelector("header");
+    const headerBox = appHeader?.getBoundingClientRect().height ?? 0;
+    const barBox = stickyBarRef.current?.getBoundingClientRect().height ?? 0;
+    const safeTop = (() => {
+      if (typeof window === "undefined") return 0;
+      const raw = getComputedStyle(document.documentElement).getPropertyValue("--safe-area-top");
+      const parsed = parseFloat(raw);
+      return Number.isFinite(parsed) ? parsed : 0;
+    })();
+    return headerBox + barBox + safeTop;
+  };
+
   const manualScrollTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const { isBookmarked, addBookmark, removeBookmark, undoRemoveBookmark } = useBookmarks();
   const { isFavourited, addFavourite, removeFavourite, undoRemoveFavourite } = useFavourites(translitLang || "en");
