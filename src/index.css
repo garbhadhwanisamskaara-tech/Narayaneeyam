@@ -12,7 +12,11 @@
 
 @layer base {
   :root {
+    /* Device safe-area inset (notch / punch-hole / status bar) */
+    --safe-area-top: env(safe-area-inset-top, 0px);
+
     /* Peacock Blue + Gold Theme */
+
     --background: 40 30% 97%;
     --foreground: 200 30% 12%;
 
