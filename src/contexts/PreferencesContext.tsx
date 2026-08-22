@@ -1,15 +1,24 @@
-import { createContext, useContext, useEffect, useState, useMemo, type ReactNode } from "react";
+import { createContext, useContext, useEffect, useRef, useState, useMemo, type ReactNode } from "react";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/contexts/AuthContext";
 
-export type FontSize = "small" | "medium" | "large" | "xlarge";
+export type FontSize = "small" | "medium" | "large" | "extra_large";
 
-export const FONT_SIZES: { value: FontSize; label: string; px: number }[] = [
-  { value: "small", label: "Small", px: 14 },
-  { value: "medium", label: "Medium", px: 16 },
-  { value: "large", label: "Large", px: 18 },
-  { value: "xlarge", label: "X-Large", px: 20 },
+export const FONT_SIZES: { value: FontSize; label: string }[] = [
+  { value: "small", label: "Small" },
+  { value: "medium", label: "Medium" },
+  { value: "large", label: "Large" },
+  { value: "extra_large", label: "Extra Large" },
 ];
 
-const STORAGE_KEY = "app-font-size";
+const STORAGE_KEY = "textSizePreference";
+const LEGACY_KEY = "app-font-size";
+
+function normalize(value: string | null | undefined): FontSize | null {
+  if (!value) return null;
+  if (value === "xlarge") return "extra_large";
+  return FONT_SIZES.some((f) => f.value === value) ? (value as FontSize) : null;
+}
 
 interface PreferencesValue {
   fontSize: FontSize;
@@ -25,20 +34,40 @@ export function usePreferences(): PreferencesValue {
 }
 
 function applyFontSize(size: FontSize) {
-  const entry = FONT_SIZES.find((f) => f.value === size) ?? FONT_SIZES[1];
-  document.documentElement.style.fontSize = `${entry.px}px`;
+  document.documentElement.setAttribute("data-text-size", size);
 }
 
 export function PreferencesProvider({ children }: { children: ReactNode }) {
+  const { user, profile } = useAuth() as {
+    user?: { id: string } | null;
+    profile?: { text_size?: string | null } | null;
+  };
+
   const [fontSize, setFontSizeState] = useState<FontSize>(() => {
     if (typeof window === "undefined") return "medium";
-    const saved = localStorage.getItem(STORAGE_KEY) as FontSize | null;
-    return saved && FONT_SIZES.some((f) => f.value === saved) ? saved : "medium";
+    return (
+      normalize(localStorage.getItem(STORAGE_KEY)) ??
+      normalize(localStorage.getItem(LEGACY_KEY)) ??
+      "medium"
+    );
   });
 
   useEffect(() => {
     applyFontSize(fontSize);
   }, [fontSize]);
+
+  // Sync from the user's profile once auth resolves (multi-device consistency)
+  const syncedFor = useRef<string | null>(null);
+  useEffect(() => {
+    if (!user?.id || !profile) return;
+    if (syncedFor.current === user.id) return;
+    syncedFor.current = user.id;
+    const remote = normalize(profile.text_size);
+    if (remote && remote !== fontSize) {
+      setFontSizeState(remote);
+      localStorage.setItem(STORAGE_KEY, remote);
+    }
+  }, [user?.id, profile, fontSize]);
 
   const value = useMemo<PreferencesValue>(
     () => ({
@@ -46,9 +75,15 @@ export function PreferencesProvider({ children }: { children: ReactNode }) {
       setFontSize: (size: FontSize) => {
         setFontSizeState(size);
         localStorage.setItem(STORAGE_KEY, size);
+        if (user?.id) {
+          void supabase
+            .from("profiles")
+            .update({ text_size: size } as never)
+            .eq("id", user.id);
+        }
       },
     }),
-    [fontSize],
+    [fontSize, user?.id],
   );
 
   return <PreferencesCtx.Provider value={value}>{children}</PreferencesCtx.Provider>;
