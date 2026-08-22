@@ -870,9 +870,11 @@ export default function ChantPage() {
       <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
         {/* Compact sticky Chant control bar */}
         <div
+          ref={stickyBarRef}
           className="sticky z-40 -mx-4 mb-3 border-b border-border bg-background/95 px-3 py-2 backdrop-blur supports-[backdrop-filter]:bg-background/80"
           style={{ top: headerH }}
         >
+
           {/* Compact Audio Player Bar */}
           <div className="-mx-3 mb-2 bg-gradient-peacock px-3 py-1.5 shadow-peacock md:mx-0 md:rounded-xl">
             <div className="flex flex-col items-center gap-1 md:flex-row md:justify-center md:gap-4">
