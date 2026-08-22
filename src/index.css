@@ -111,12 +111,30 @@
 }
 
 @layer base {
+  :root {
+    --font-scale-sm: 0.875;
+    --font-scale-md: 1;
+    --font-scale-lg: 1.125;
+    --font-scale-xl: 1.25;
+    --font-scale: var(--font-scale-md);
+  }
+
+  html[data-text-size="small"] { --font-scale: var(--font-scale-sm); }
+  html[data-text-size="medium"] { --font-scale: var(--font-scale-md); }
+  html[data-text-size="large"] { --font-scale: var(--font-scale-lg); }
+  html[data-text-size="extra_large"] { --font-scale: var(--font-scale-xl); }
+
+  html {
+    font-size: calc(16px * var(--font-scale));
+  }
+
   * {
     @apply border-border;
   }
 
   body {
     @apply bg-background text-foreground font-body antialiased;
+
     -webkit-user-select: none;
     -moz-user-select: none;
     -ms-user-select: none;
