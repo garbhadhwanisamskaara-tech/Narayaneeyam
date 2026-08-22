@@ -207,17 +207,27 @@ export default function PreferencesPage() {
       <section className="rounded-xl border border-border bg-card p-5 mb-6">
         <div className="flex items-center gap-2 mb-1">
           <Type className="h-4 w-4 text-muted-foreground" />
-          <h2 className="font-display text-base font-semibold text-foreground">Text Size</h2>
+          <h2 className="font-display text-base font-semibold text-foreground" style={{ fontSize: "16px" }}>
+            Accessibility
+          </h2>
         </div>
-        <p className="text-xs text-muted-foreground font-sans mb-4">
-          Medium is the default. Changes apply immediately across the app.
+        <p className="font-sans text-muted-foreground mb-4" style={{ fontSize: "12px" }}>
+          Text Size — Medium is the default. Changes apply immediately across the app.
         </p>
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+        <div
+          role="radiogroup"
+          aria-label="Text size"
+          className="flex flex-wrap gap-2 sm:gap-3"
+        >
           {FONT_SIZES.map((f) => (
             <button
               key={f.value}
+              type="button"
+              role="radio"
+              aria-checked={fontSize === f.value}
               onClick={() => setFontSize(f.value)}
-              className={`rounded-lg px-3 py-2 text-sm font-sans transition-colors border ${
+              style={{ fontSize: "14px" }}
+              className={`flex-1 basis-[calc(50%-0.25rem)] sm:basis-0 min-h-11 min-w-11 rounded-lg px-3 py-2 font-sans leading-tight transition-colors border ${
                 fontSize === f.value
                   ? "bg-primary text-primary-foreground border-primary font-semibold"
                   : "bg-background text-foreground border-border hover:bg-muted"
@@ -227,7 +237,11 @@ export default function PreferencesPage() {
             </button>
           ))}
         </div>
+        <p className="mt-4 text-foreground font-body overflow-wrap-anywhere">
+          The quick brown fox chants beautifully.
+        </p>
       </section>
+
 
       <LanguagePreferences />
 
