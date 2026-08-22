@@ -403,13 +403,9 @@ export default function ChantPage() {
     const key = `${highlightedVerse}-${activeLine}`;
     const el = lineRefsMap.current.get(key);
     if (!el) return;
-    programmaticScrollRef.current = true;
-    el.scrollIntoView({ behavior: "smooth", block: "center" });
-    if (scrollTimeoutRef.current) clearTimeout(scrollTimeoutRef.current);
-    scrollTimeoutRef.current = setTimeout(() => {
-      programmaticScrollRef.current = false;
-    }, 600);
-  }, [activeLine, highlightedVerse, isPlaying]);
+    requestAnimationFrame(() => scrollElementIntoView(el));
+  }, [activeLine, highlightedVerse, isPlaying, scrollElementIntoView]);
+
 
   // Manual scroll detection
   useEffect(() => {
