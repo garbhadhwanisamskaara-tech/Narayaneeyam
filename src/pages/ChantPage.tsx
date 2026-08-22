@@ -314,27 +314,49 @@ export default function ChantPage() {
     fetchVerseStatuses(selectedDashakam);
   }, [selectedDashakam, fetchVerseStatuses]);
 
-  // Scroll-to-center helper
-  const scrollToVerse = useCallback((idx: number) => {
-    const el = verseRefsMap.current.get(idx);
-    if (!el) return;
+  // Scroll helper — offsets by the live sticky-header height (never hardcoded)
+  const scrollElementIntoView = useCallback((el: HTMLElement) => {
     programmaticScrollRef.current = true;
     const container = el.closest(".overflow-y-auto") || el.closest(".overflow-auto") || window;
     const isWindow = container === window;
-    const elTop = isWindow ? el.getBoundingClientRect().top + window.scrollY : (el as HTMLElement).offsetTop;
+    const offset = measureStickyOffsetRef.current() + 8;
     const viewH = isWindow ? window.innerHeight : (container as HTMLElement).clientHeight;
-    (isWindow ? window : container).scrollTo({ top: elTop - viewH / 2 + el.offsetHeight / 2, behavior: "smooth" });
+    const currentTop = isWindow ? window.scrollY : (container as HTMLElement).scrollTop;
+    const elTop = isWindow
+      ? el.getBoundingClientRect().top + window.scrollY
+      : (el as HTMLElement).offsetTop;
+    const usableH = Math.max(0, viewH - offset);
+    // Centre within the visible area below the sticky header, but never let the
+    // element's first line slide underneath it.
+    const centred = elTop - offset - Math.max(0, (usableH - el.offsetHeight) / 2);
+    const top = Math.max(0, Math.min(centred, elTop - offset));
+    if (Math.abs(top - currentTop) < 2) {
+      programmaticScrollRef.current = false;
+      return;
+    }
+    (isWindow ? window : container).scrollTo({ top, behavior: "smooth" });
     if (scrollTimeoutRef.current) clearTimeout(scrollTimeoutRef.current);
     scrollTimeoutRef.current = setTimeout(() => {
       programmaticScrollRef.current = false;
     }, 600);
   }, []);
 
+  const scrollToVerse = useCallback(
+    (idx: number) => {
+      const el = verseRefsMap.current.get(idx);
+      if (!el) return;
+      // Wait for layout (header/dropdowns) to settle before measuring
+      requestAnimationFrame(() => requestAnimationFrame(() => scrollElementIntoView(el)));
+    },
+    [scrollElementIntoView],
+  );
+
   // Auto-scroll whenever active verse changes
   useEffect(() => {
     const timer = setTimeout(() => scrollToVerse(highlightedVerse), 100);
     return () => clearTimeout(timer);
   }, [highlightedVerse, scrollToVerse]);
+
 
   // Clear highlighting when verse changes
   useEffect(() => {
