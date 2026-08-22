@@ -831,6 +831,33 @@ export default function ChantPage() {
       window.removeEventListener("orientationchange", measure);
     };
   }, []);
+
+  // Re-align the active verse when the sticky bar's own height changes
+  // (font scaling, dropdown wrapping, orientation change)
+  useEffect(() => {
+    const bar = stickyBarRef.current;
+    if (!bar) return;
+    let last = bar.getBoundingClientRect().height;
+    let raf = 0;
+    const onChange = () => {
+      const next = bar.getBoundingClientRect().height;
+      if (Math.abs(next - last) < 1) return;
+      last = next;
+      cancelAnimationFrame(raf);
+      raf = requestAnimationFrame(() => scrollToVerse(highlightedVerse));
+    };
+    const ro = new ResizeObserver(onChange);
+    ro.observe(bar);
+    window.addEventListener("resize", onChange);
+    window.addEventListener("orientationchange", onChange);
+    return () => {
+      ro.disconnect();
+      cancelAnimationFrame(raf);
+      window.removeEventListener("resize", onChange);
+      window.removeEventListener("orientationchange", onChange);
+    };
+  }, [highlightedVerse, scrollToVerse]);
+
   const [moreOpen, setMoreOpen] = useState(false);
 
   const selectCls =
