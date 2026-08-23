@@ -232,7 +232,8 @@ export default function Layout({ children }: { children: React.ReactNode }) {
             ) : null}
           </div>
 
-          <div className="lg:hidden flex items-center gap-1 flex-shrink-0">
+          <div className="lg:hidden flex items-center gap-2 flex-shrink-0">
+            {!loading && user && <NotificationBell />}
             {!loading && user && (
               <button
                 type="button"
