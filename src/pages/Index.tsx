@@ -107,6 +107,7 @@ export default function Index() {
         title="Sriman Narayaneeyam — Chant · Learn · Grow"
         description="A sacred journey through 100 Dashakams — chant, learn, and grow in devotion with the divine grace of Guruvayurappan."
       />
+      <TrialStatusLine />
       {/* Hero Section */}
       <section className="relative overflow-hidden">
         <div className="absolute inset-0">
