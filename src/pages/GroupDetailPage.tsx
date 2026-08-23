@@ -513,6 +513,12 @@ export default function GroupDetailPage() {
             >
               <Settings className="h-4 w-4" /> Manage Group
             </Link>
+            <Link
+              to={`/my-parayanams?group=${group.id}`}
+              className="ml-3 inline-flex items-center gap-2 rounded-lg border border-border px-4 py-2 font-sans text-sm font-semibold text-muted-foreground hover:border-primary hover:text-foreground"
+            >
+              <BarChart3 className="h-4 w-4" /> Group report
+            </Link>
           </div>
 
           {/* ── Divider: everything below belongs to one chosen parayanam ── */}
