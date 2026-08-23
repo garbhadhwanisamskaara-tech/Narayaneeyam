@@ -108,7 +108,12 @@ export default function CreateParayanamPage() {
     setSelectedTemplateId(templateId);
     setSetId("custom");
     setCustom([...t.dashakam_list]);
+    // Suggest the template name — the user can rename it (e.g. "Marriage Chennai Group").
+    setParayanamName((prev) =>
+      !prev.trim() || templates.some((tmpl) => tmpl.template_name === prev.trim()) ? t.template_name : prev
+    );
   };
+
 
   /** Picking a predefined set or Custom also clears any active template. */
   const chooseSet = (id: string) => {
