@@ -189,6 +189,33 @@ export default function ManageParayanamDialog({
           <div className="mt-2 space-y-6">
             <div>
               <h3 className="flex items-center gap-2 font-sans text-sm font-semibold text-foreground">
+                <Pencil className="h-4 w-4 text-primary" /> Rename parayanam
+              </h3>
+              <p className="mt-1 font-sans text-xs text-muted-foreground">
+                Give it a name everyone recognises, like “Marriage Chennai Group”.
+              </p>
+              <div className="mt-3 flex flex-wrap items-center gap-2">
+                <input
+                  type="text"
+                  maxLength={80}
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  placeholder="Parayanam name"
+                  aria-label="Parayanam name"
+                  className="min-w-0 flex-1 rounded-lg border border-border bg-background px-3 py-2 font-sans text-sm text-foreground outline-none focus:ring-2 focus:ring-primary"
+                />
+                <button
+                  onClick={() => void handleRename()}
+                  disabled={busy || !name.trim() || name.trim() === (parayanamName ?? "")}
+                  className="rounded-lg bg-gradient-peacock px-4 py-2 font-sans text-sm font-semibold text-primary-foreground hover:opacity-90 disabled:opacity-60"
+                >
+                  Save name
+                </button>
+              </div>
+            </div>
+
+            <div>
+              <h3 className="flex items-center gap-2 font-sans text-sm font-semibold text-foreground">
                 <UserPlus className="h-4 w-4 text-primary" /> Invite more members
               </h3>
               {invitable.length === 0 ? (
