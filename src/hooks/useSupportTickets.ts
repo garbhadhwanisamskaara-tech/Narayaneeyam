@@ -297,6 +297,3 @@ export function useTicketDetail(ticketId: string | null) {
     refetch: fetchDetail,
   };
 }
-
-  };
-}
