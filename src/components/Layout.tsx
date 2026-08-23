@@ -109,7 +109,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
   return (
     <div className="min-h-screen bg-background">
       <header className="sticky top-0 z-50 bg-gradient-peacock shadow-peacock">
-        <div className="container mx-auto flex items-center justify-between px-3 sm:px-4 py-2 lg:py-3 overflow-hidden min-w-0">
+        <div className="container mx-auto flex items-center justify-between px-3 sm:px-4 py-2 lg:py-3 min-w-0">
           <Link to="/" className="flex items-center gap-2 lg:gap-3 min-w-0 flex-1">
             <img
               src={logoImg}
