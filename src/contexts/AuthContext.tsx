@@ -299,9 +299,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const accessEndsAt = profile?.subscription_end ?? null;
   const accessEndsMs = accessEndsAt ? new Date(accessEndsAt).getTime() : null;
   const graceEndsMs = accessEndsMs !== null ? accessEndsMs + GRACE_PERIOD_DAYS * 86400000 : null;
-  // Paused subscriptions are handled elsewhere; grace applies to trial + active/expired paid.
+  // Identical 7-day grace window for trial and subscribed users (and expired ones).
   const graceApplies =
-    !!profile && accessEndsMs !== null && profile.subscription_status !== "paused";
+    !!profile && accessEndsMs !== null && profile.subscription_status !== "deleted";
   const isInGracePeriod =
     graceApplies && accessEndsMs! <= Date.now() && Date.now() < graceEndsMs!;
   const graceDaysRemaining = isInGracePeriod
