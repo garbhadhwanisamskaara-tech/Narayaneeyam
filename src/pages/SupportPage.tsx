@@ -134,7 +134,6 @@ function RaiseTicketForm({ onSuccess, onCancel }: { onSuccess: (id: string) => v
           ticket_id: createdId,
           file_url: urlData.publicUrl,
           file_name: file.name,
-          storage_path: path,
         });
         if (insErr) throw insErr;
       }

@@ -237,7 +237,6 @@ export function useTicketDetail(ticketId: string | null) {
           update_id: update.id,
           file_url: urlData.publicUrl,
           file_name: file.name,
-          storage_path: path,
         });
         if (insertError) throw insertError;
       }
@@ -276,7 +275,6 @@ export function useTicketDetail(ticketId: string | null) {
       update_id: updateId || null,
       file_url: urlData.publicUrl,
       file_name: file.name,
-      storage_path: path,
     });
     if (insertError) {
       await supabase.storage.from(ATTACHMENT_BUCKET).remove([path]);

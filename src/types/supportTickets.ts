@@ -48,7 +48,5 @@ export interface TicketAttachmentRow {
   update_id: string | null;
   file_url: string;
   file_name: string;
-  /** Object path inside the `ticket-attachments` storage bucket. */
-  storage_path: string | null;
   created_at: string;
 }
