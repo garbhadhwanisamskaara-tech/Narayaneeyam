@@ -1,6 +1,6 @@
 import { useMemo, useState } from "react";
 import { Link } from "react-router-dom";
-import { Ban, CalendarDays, Loader2, Settings2, UserMinus, UserPlus } from "lucide-react";
+import { Ban, CalendarDays, Loader2, Pencil, Settings2, UserMinus, UserPlus } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
 import type { GroupMember } from "@/hooks/useGroups";
@@ -59,6 +59,7 @@ export default function ManageParayanamDialog({
   onChanged,
 }: Props) {
   const [open, setOpen] = useState(false);
+  const [name, setName] = useState(parayanamName ?? "");
   const [busy, setBusy] = useState(false);
   const [selected, setSelected] = useState<string[]>([]);
   const [removeTarget, setRemoveTarget] = useState<{ userId: string; name: string } | null>(null);
@@ -140,6 +141,23 @@ export default function ManageParayanamDialog({
   };
 
   const handleRemove = () => doRemove("distribute");
+
+  const handleRename = async () => {
+    const trimmed = name.trim();
+    if (!trimmed || trimmed === (parayanamName ?? "")) return;
+    setBusy(true);
+    const { error } = await (supabase as any)
+      .from("challenge_sessions")
+      .update({ parayanam_name: trimmed })
+      .eq("id", sessionId);
+    setBusy(false);
+    if (error) {
+      toast({ title: "Could not rename", description: error.message, variant: "destructive" });
+      return;
+    }
+    toast({ title: "Parayanam renamed", description: `Now called ${trimmed}.` });
+    await onChanged();
+  };
 
   const handleCancel = async () => {
     setBusy(true);
