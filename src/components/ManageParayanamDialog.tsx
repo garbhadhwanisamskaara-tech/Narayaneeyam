@@ -1,6 +1,6 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
-import { Ban, CalendarDays, Loader2, Settings2, UserMinus, UserPlus } from "lucide-react";
+import { Ban, CalendarDays, Loader2, Pencil, Settings2, UserMinus, UserPlus } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
 import type { GroupMember } from "@/hooks/useGroups";
@@ -59,6 +59,8 @@ export default function ManageParayanamDialog({
   onChanged,
 }: Props) {
   const [open, setOpen] = useState(false);
+  const [name, setName] = useState(parayanamName ?? "");
+  useEffect(() => setName(parayanamName ?? ""), [parayanamName]);
   const [busy, setBusy] = useState(false);
   const [selected, setSelected] = useState<string[]>([]);
   const [removeTarget, setRemoveTarget] = useState<{ userId: string; name: string } | null>(null);
@@ -141,6 +143,23 @@ export default function ManageParayanamDialog({
 
   const handleRemove = () => doRemove("distribute");
 
+  const handleRename = async () => {
+    const trimmed = name.trim();
+    if (!trimmed || trimmed === (parayanamName ?? "")) return;
+    setBusy(true);
+    const { error } = await (supabase as any)
+      .from("challenge_sessions")
+      .update({ parayanam_name: trimmed })
+      .eq("id", sessionId);
+    setBusy(false);
+    if (error) {
+      toast({ title: "Could not rename", description: error.message, variant: "destructive" });
+      return;
+    }
+    toast({ title: "Parayanam renamed", description: `Now called ${trimmed}.` });
+    await onChanged();
+  };
+
   const handleCancel = async () => {
     setBusy(true);
     const { error } = await (supabase as any)
@@ -187,6 +206,33 @@ export default function ManageParayanamDialog({
           </DialogHeader>
 
           <div className="mt-2 space-y-6">
+            <div>
+              <h3 className="flex items-center gap-2 font-sans text-sm font-semibold text-foreground">
+                <Pencil className="h-4 w-4 text-primary" /> Rename parayanam
+              </h3>
+              <p className="mt-1 font-sans text-xs text-muted-foreground">
+                Give it a name everyone recognises, like “Marriage Chennai Group”.
+              </p>
+              <div className="mt-3 flex flex-wrap items-center gap-2">
+                <input
+                  type="text"
+                  maxLength={80}
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  placeholder="Parayanam name"
+                  aria-label="Parayanam name"
+                  className="min-w-0 flex-1 rounded-lg border border-border bg-background px-3 py-2 font-sans text-sm text-foreground outline-none focus:ring-2 focus:ring-primary"
+                />
+                <button
+                  onClick={() => void handleRename()}
+                  disabled={busy || !name.trim() || name.trim() === (parayanamName ?? "")}
+                  className="rounded-lg bg-gradient-peacock px-4 py-2 font-sans text-sm font-semibold text-primary-foreground hover:opacity-90 disabled:opacity-60"
+                >
+                  Save name
+                </button>
+              </div>
+            </div>
+
             <div>
               <h3 className="flex items-center gap-2 font-sans text-sm font-semibold text-foreground">
                 <UserPlus className="h-4 w-4 text-primary" /> Invite more members

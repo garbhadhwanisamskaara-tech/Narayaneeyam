@@ -108,7 +108,12 @@ export default function CreateParayanamPage() {
     setSelectedTemplateId(templateId);
     setSetId("custom");
     setCustom([...t.dashakam_list]);
+    // Suggest the template name — the user can rename it (e.g. "Marriage Chennai Group").
+    setParayanamName((prev) =>
+      !prev.trim() || templates.some((tmpl) => tmpl.template_name === prev.trim()) ? t.template_name : prev
+    );
   };
+
 
   /** Picking a predefined set or Custom also clears any active template. */
   const chooseSet = (id: string) => {
@@ -143,7 +148,7 @@ export default function CreateParayanamPage() {
         .insert({
           user_id: user.id,
           group_id: groupId ?? null,
-          parayanam_name: isGroup ? parayanamName.trim() || null : null,
+          parayanam_name: parayanamName.trim() || null,
           mode: "daily",
           challenge_type: isGroup
             ? distribution === "synchronized"
@@ -224,7 +229,7 @@ export default function CreateParayanamPage() {
       </p>
 
       <section className="mt-6 space-y-5 rounded-2xl border border-border bg-card p-5">
-        {isGroup && step === 1 && (
+        {step === 1 && (
           <div>
             <label htmlFor="parayanam-name" className="font-sans text-sm font-semibold text-foreground">
               Parayanam name <span className="font-normal text-muted-foreground">(optional)</span>
@@ -282,6 +287,28 @@ export default function CreateParayanamPage() {
               )}
             </div>
 
+            {templateLocked ? (
+              <div>
+                <p className="font-sans text-sm font-semibold text-foreground">Dashakams in this template</p>
+                <p className="font-sans text-xs text-muted-foreground">
+                  These are fixed. Choose “Start from scratch” above to pick your own.
+                </p>
+                <div className="mt-3 flex flex-wrap gap-1.5">
+                  {dashakams.map((n) => (
+                    <span
+                      key={n}
+                      title={allDashakams.find((d) => d.dashakam_no === n)?.dashakam_name}
+                      className="rounded-md border border-primary/40 bg-primary/10 px-2.5 py-1 font-sans text-[11px] font-semibold text-primary"
+                    >
+                      {n}
+                    </span>
+                  ))}
+                </div>
+                <p className="mt-3 font-sans text-xs text-muted-foreground">
+                  {dashakams.length} dashakams in this parayanam
+                </p>
+              </div>
+            ) : (
             <div>
               <p className="font-sans text-sm font-semibold text-foreground">Choose a dashakam set</p>
               {loadingSets ? (
@@ -293,9 +320,7 @@ export default function CreateParayanamPage() {
                       key={s.id}
                       onClick={() => chooseSet(s.id)}
                       className={`w-full rounded-xl border p-4 text-left transition-colors ${
-                        !templateLocked && setId === s.id
-                          ? "border-primary bg-secondary/30"
-                          : "border-border hover:border-primary"
+                        setId === s.id ? "border-primary bg-secondary/30" : "border-border hover:border-primary"
                       }`}
                     >
                       <span className="font-sans text-sm font-semibold text-foreground">
@@ -312,9 +337,7 @@ export default function CreateParayanamPage() {
                   <button
                     onClick={() => chooseSet("custom")}
                     className={`w-full rounded-xl border p-4 text-left transition-colors ${
-                      !templateLocked && setId === "custom"
-                        ? "border-primary bg-secondary/30"
-                        : "border-border hover:border-primary"
+                      setId === "custom" ? "border-primary bg-secondary/30" : "border-border hover:border-primary"
                     }`}
                   >
                     <span className="font-sans text-sm font-semibold text-foreground">Custom selection</span>
@@ -332,14 +355,13 @@ export default function CreateParayanamPage() {
                     return (
                       <button
                         key={d.dashakam_no}
-                        onClick={() => !templateLocked && toggleCustom(d.dashakam_no)}
-                        disabled={templateLocked}
+                        onClick={() => toggleCustom(d.dashakam_no)}
                         title={d.dashakam_name}
-                        className={`aspect-square rounded-md border font-sans text-[11px] font-semibold transition-colors ${
+                        className={`aspect-square rounded-md border font-sans text-[11px] font-semibold transition-colors hover:border-primary ${
                           picked
                             ? "border-primary bg-primary/15 text-primary"
                             : "border-border text-muted-foreground"
-                        } ${templateLocked ? "cursor-not-allowed opacity-80" : "hover:border-primary"}`}
+                        }`}
                       >
                         {d.dashakam_no}
                       </button>
@@ -347,15 +369,11 @@ export default function CreateParayanamPage() {
                   })}
                 </div>
               )}
-              {templateLocked && (
-                <p className="mt-2 font-sans text-xs text-muted-foreground">
-                  This template's dashakams are fixed. Choose “Start from scratch” or “Custom selection” to pick
-                  your own.
-                </p>
-              )}
               <p className="mt-3 font-sans text-xs text-muted-foreground">{dashakams.length} dashakams selected</p>
 
             </div>
+            )}
+
           </div>
         )}
 
