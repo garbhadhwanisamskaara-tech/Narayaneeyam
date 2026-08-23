@@ -57,10 +57,10 @@ export function useSubscription() {
 
   const isTrialActive = subscription?.status === "trial" && daysRemaining > 0;
   const isTrialExpired = subscription?.status === "trial" && daysRemaining <= 0;
-  const isActive = subscription?.status === "active" && daysRemaining > 0;
+  const isActive = subscription?.status === "subscribed" && daysRemaining > 0;
   const isExpired =
-    (subscription?.status === "active" || subscription?.status === "expired") && daysRemaining <= 0;
-  const isPaused = subscription?.status === "paused";
+    (subscription?.status === "subscribed" || subscription?.status === "expired") && daysRemaining <= 0;
+  const isPaused = false;
 
   return {
     subscription,

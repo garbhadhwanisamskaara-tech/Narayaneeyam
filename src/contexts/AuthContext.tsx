@@ -28,11 +28,14 @@ interface UserProfile {
 }
 
 /** Fixed trial end date for all new signups. */
-const TRIAL_END_DATE = new Date("2026-12-31T23:59:59+05:30").toISOString();
+const TRIAL_END_DATE = new Date("2026-12-30T23:59:59+05:30").toISOString();
 /** Hardcoded grace period after trial expiry / subscription end. */
 export const GRACE_PERIOD_DAYS = 7;
 
-/** A user is on the free trial when their subscription state says so. */
+/**
+ * Allowed values of profiles.subscription_status: trial | subscribed | expired | deleted.
+ * A missing status is treated as trial (the column default).
+ */
 function isTrialStatus(status: string | null | undefined) {
   return !status || status === "trial";
 }
@@ -118,9 +121,24 @@ async function fetchPlan(planId: string | null | undefined): Promise<Subscriptio
   }
 }
 
+/** The trial plan row from subscription_plans (is_trial = true). */
+async function fetchTrialPlanId(): Promise<string | null> {
+  try {
+    const { data } = await supabase
+      .from("subscription_plans")
+      .select("id")
+      .eq("is_trial", true)
+      .limit(1)
+      .maybeSingle();
+    return (data as { id: string } | null)?.id ?? null;
+  } catch {
+    return null;
+  }
+}
+
 /**
  * First-login initialisation: copy the language preferences chosen at sign-up
- * into the profile row, and start the 1-month free trial from the sign-up date.
+ * into the profile row, and put the user on the fixed-date free trial.
  */
 async function initialiseNewProfile(user: User, prof: UserProfile | null): Promise<UserProfile | null> {
   if (!prof) return prof;
@@ -135,20 +153,29 @@ async function initialiseNewProfile(user: User, prof: UserProfile | null): Promi
     patch.preferred_translation_language = meta.preferred_translation_language;
   }
 
-  // Fixed-date free trial, applied once.
-  if (isTrialStatus(prof.subscription_status) && !prof.subscription_end && meta.trial_initialised !== "1" && user.created_at) {
+  // Fixed-date free trial: fill in anything missing for a trial profile.
+  const needsTrialInit =
+    isTrialStatus(prof.subscription_status) &&
+    (!prof.subscription_status || !prof.subscription_end || !prof.subscription_plan_id || !prof.subscription_start);
+
+  if (needsTrialInit) {
     patch.subscription_status = "trial";
-    patch.subscription_start = new Date(user.created_at).toISOString();
-    patch.subscription_end = TRIAL_END_DATE;
+    if (!prof.subscription_start) {
+      patch.subscription_start = new Date(user.created_at ?? Date.now()).toISOString();
+    }
+    if (!prof.subscription_end) {
+      patch.subscription_end = TRIAL_END_DATE;
+    }
+    if (!prof.subscription_plan_id) {
+      const trialPlanId = await fetchTrialPlanId();
+      if (trialPlanId) patch.subscription_plan_id = trialPlanId;
+    }
   }
 
   if (Object.keys(patch).length === 0) return prof;
 
   try {
     await supabase.from("profiles").update(patch).eq("id", user.id);
-    if (patch.subscription_end) {
-      await supabase.auth.updateUser({ data: { trial_initialised: "1" } });
-    }
   } catch {
     return prof;
   }
@@ -272,9 +299,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const accessEndsAt = profile?.subscription_end ?? null;
   const accessEndsMs = accessEndsAt ? new Date(accessEndsAt).getTime() : null;
   const graceEndsMs = accessEndsMs !== null ? accessEndsMs + GRACE_PERIOD_DAYS * 86400000 : null;
-  // Paused subscriptions are handled elsewhere; grace applies to trial + active/expired paid.
+  // Identical 7-day grace window for trial and subscribed users (and expired ones).
   const graceApplies =
-    !!profile && accessEndsMs !== null && profile.subscription_status !== "paused";
+    !!profile && accessEndsMs !== null && profile.subscription_status !== "deleted";
   const isInGracePeriod =
     graceApplies && accessEndsMs! <= Date.now() && Date.now() < graceEndsMs!;
   const graceDaysRemaining = isInGracePeriod

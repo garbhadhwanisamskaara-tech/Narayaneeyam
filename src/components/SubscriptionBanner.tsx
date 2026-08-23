@@ -62,7 +62,7 @@ export default function SubscriptionBanner() {
     const endsAt = profile.subscription_end;
     const daysRemaining = endsAt ? daysUntil(endsAt) : null;
     if (
-      profile.subscription_status === "active" &&
+      profile.subscription_status === "subscribed" &&
       daysRemaining !== null &&
       daysRemaining >= 0 &&
       daysRemaining <= REMINDER_WINDOW_DAYS

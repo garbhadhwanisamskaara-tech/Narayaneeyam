@@ -14,7 +14,7 @@ interface SubRow {
   notes?: string;
 }
 
-const STATUS_OPTIONS = ["trial", "active", "expired", "paused"];
+const STATUS_OPTIONS = ["trial", "subscribed", "expired", "deleted"];
 const TIER_OPTIONS = ["trial", "chanting", "learner", "premium"];
 
 export default function AdminSubscriptionsPanel() {
@@ -110,7 +110,7 @@ export default function AdminSubscriptionsPanel() {
   };
 
   // Summary stats
-  const totalActive = subs.filter(s => s.status === "active" || s.status === "trial").length;
+  const totalActive = subs.filter(s => s.status === "subscribed" || s.status === "trial").length;
   const totalExpired = subs.filter(s => s.status === "expired").length;
   const totalTrial = subs.filter(s => s.status === "trial").length;
 

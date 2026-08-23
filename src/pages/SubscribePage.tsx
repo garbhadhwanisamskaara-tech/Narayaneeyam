@@ -170,7 +170,7 @@ export default function SubscribePage() {
         <p className="text-sm text-muted-foreground font-sans mt-1">
           Continue your devotional journey with Sriman Narayaneeyam
         </p>
-        {previousTier && subscription?.status !== "active" && subscription?.status !== "trial" && (
+        {previousTier && subscription?.status !== "subscribed" && subscription?.status !== "trial" && (
           <p className="text-sm text-secondary font-sans mt-2">
             Welcome back! Your {previousTier} subscription expired
             {subscription?.expires_at ? ` on ${new Date(subscription.expires_at).toLocaleDateString()}` : ""}. Renew for
