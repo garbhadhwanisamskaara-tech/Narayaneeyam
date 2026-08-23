@@ -81,8 +81,7 @@ export default function CreateParayanamPage() {
   );
   const selectedSet = sets.find((s) => s.id === setId);
   const dashakams = setId === "custom" ? [...custom].sort((a, b) => a - b) : selectedSet?.dashakam_list ?? [];
-  const readySet = new Set(allDashakams.filter((d) => d.is_published).map((d) => d.dashakam_no));
-  const notReady = allDashakams.length ? dashakams.filter((n) => !readySet.has(n)) : [];
+  const templateLocked = selectedTemplateId !== "scratch";
 
   // Date-spread preview (assignment resolved at submit time)
   const planned = useMemo(
@@ -96,11 +95,12 @@ export default function CreateParayanamPage() {
   const toggleCustom = (n: number) =>
     setCustom((prev) => (prev.includes(n) ? prev.filter((x) => x !== n) : [...prev, n]));
 
+  /** Selecting a template REPLACES the whole selection state. */
   const applyTemplate = (templateId: string) => {
     if (templateId === "scratch") {
       setSelectedTemplateId("scratch");
       setCustom([]);
-      setSetId("");
+      setSetId("custom");
       return;
     }
     const t = templates.find((tmpl) => tmpl.id === templateId);
@@ -110,12 +110,20 @@ export default function CreateParayanamPage() {
     setCustom([...t.dashakam_list]);
   };
 
+  /** Picking a predefined set or Custom also clears any active template. */
+  const chooseSet = (id: string) => {
+    setSelectedTemplateId("scratch");
+    setSetId(id);
+    if (id === "custom") setCustom([]);
+  };
+
   const canNext =
     step === 1
-      ? dashakams.length > 0 && notReady.length === 0
+      ? dashakams.length > 0
       : step === 2
         ? !!startDate && !!endDate && endDate >= startDate
         : true;
+
 
   const handleBegin = () => {
     if (isGroup && members.length <= 1 && !soloWarning) {
