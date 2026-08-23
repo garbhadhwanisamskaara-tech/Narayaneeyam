@@ -148,7 +148,7 @@ export default function CreateParayanamPage() {
         .insert({
           user_id: user.id,
           group_id: groupId ?? null,
-          parayanam_name: isGroup ? parayanamName.trim() || null : null,
+          parayanam_name: parayanamName.trim() || null,
           mode: "daily",
           challenge_type: isGroup
             ? distribution === "synchronized"
@@ -229,7 +229,7 @@ export default function CreateParayanamPage() {
       </p>
 
       <section className="mt-6 space-y-5 rounded-2xl border border-border bg-card p-5">
-        {isGroup && step === 1 && (
+        {step === 1 && (
           <div>
             <label htmlFor="parayanam-name" className="font-sans text-sm font-semibold text-foreground">
               Parayanam name <span className="font-normal text-muted-foreground">(optional)</span>
