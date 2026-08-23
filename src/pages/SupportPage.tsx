@@ -268,7 +268,7 @@ function TicketDetailView({
   onBack: () => void;
   isAdmin?: boolean;
 }) {
-  const { ticket, updates, attachments, loading, addUpdate, uploadAttachment, refetch } = useTicketDetail(ticketId);
+  const { ticket, updates, attachments, loading, addUpdateWithAttachments, refetch } = useTicketDetail(ticketId);
   const { updateTicketStatus, updateTicketPriority } = useSupportTickets(isAdmin);
   const { toast } = useToast();
   const [message, setMessage] = useState("");
@@ -283,13 +283,13 @@ function TicketDetailView({
   const ticketAttachments = attachments.filter((a) => !a.update_id);
 
   const handleSendUpdate = async () => {
-    if (!message.trim()) return;
+    if (sending || !message.trim()) return; // guard against duplicate replies
     setSending(true);
     try {
-      const update = await addUpdate(message, isAdmin ? replyAsAdmin : false, isAdmin ? isInternal : false);
-      for (const file of newFiles) {
-        await uploadAttachment(file, update?.id);
-      }
+      await addUpdateWithAttachments(message, newFiles, {
+        isAdminReply: isAdmin ? replyAsAdmin : false,
+        isInternal: isAdmin ? isInternal : false,
+      });
       setMessage("");
       setNewFiles([]);
       toast({ title: "Update added" });
@@ -299,6 +299,7 @@ function TicketDetailView({
       setSending(false);
     }
   };
+
 
   const handleStatusChange = async (newStatus: string) => {
     try {
