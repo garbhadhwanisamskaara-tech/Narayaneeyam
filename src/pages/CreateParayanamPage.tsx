@@ -291,9 +291,11 @@ export default function CreateParayanamPage() {
                   {orderedSets.map((s) => (
                     <button
                       key={s.id}
-                      onClick={() => setSetId(s.id)}
+                      onClick={() => chooseSet(s.id)}
                       className={`w-full rounded-xl border p-4 text-left transition-colors ${
-                        setId === s.id ? "border-primary bg-secondary/30" : "border-border hover:border-primary"
+                        !templateLocked && setId === s.id
+                          ? "border-primary bg-secondary/30"
+                          : "border-border hover:border-primary"
                       }`}
                     >
                       <span className="font-sans text-sm font-semibold text-foreground">
@@ -308,9 +310,11 @@ export default function CreateParayanamPage() {
                     </button>
                   ))}
                   <button
-                    onClick={() => setSetId("custom")}
+                    onClick={() => chooseSet("custom")}
                     className={`w-full rounded-xl border p-4 text-left transition-colors ${
-                      setId === "custom" ? "border-primary bg-secondary/30" : "border-border hover:border-primary"
+                      !templateLocked && setId === "custom"
+                        ? "border-primary bg-secondary/30"
+                        : "border-border hover:border-primary"
                     }`}
                   >
                     <span className="font-sans text-sm font-semibold text-foreground">Custom selection</span>
@@ -323,32 +327,34 @@ export default function CreateParayanamPage() {
 
               {setId === "custom" && (
                 <div className="mt-4 grid grid-cols-10 gap-1.5">
-                  {allDashakams.map((d) => (
-                    <button
-                      key={d.dashakam_no}
-                      onClick={() => d.is_published && toggleCustom(d.dashakam_no)}
-                      disabled={!d.is_published}
-                      title={d.is_published ? d.dashakam_name : `${d.dashakam_name} — coming soon`}
-                      className={`aspect-square rounded-md border font-sans text-[11px] font-semibold transition-colors ${
-                        !d.is_published
-                          ? "cursor-not-allowed border-dashed border-border text-muted-foreground/40"
-                          : custom.includes(d.dashakam_no)
+                  {allDashakams.map((d) => {
+                    const picked = custom.includes(d.dashakam_no);
+                    return (
+                      <button
+                        key={d.dashakam_no}
+                        onClick={() => !templateLocked && toggleCustom(d.dashakam_no)}
+                        disabled={templateLocked}
+                        title={d.dashakam_name}
+                        className={`aspect-square rounded-md border font-sans text-[11px] font-semibold transition-colors ${
+                          picked
                             ? "border-primary bg-primary/15 text-primary"
-                            : "border-border text-muted-foreground hover:border-primary"
-                      }`}
-                    >
-                      {d.dashakam_no}
-                    </button>
-                  ))}
+                            : "border-border text-muted-foreground"
+                        } ${templateLocked ? "cursor-not-allowed opacity-80" : "hover:border-primary"}`}
+                      >
+                        {d.dashakam_no}
+                      </button>
+                    );
+                  })}
                 </div>
               )}
-              <p className="mt-3 font-sans text-xs text-muted-foreground">{dashakams.length} dashakams selected</p>
-              {notReady.length > 0 && (
-                <p className="mt-2 rounded-lg border border-destructive/40 bg-destructive/10 px-3 py-2 font-sans text-xs text-destructive">
-                  Not recorded yet: {notReady.join(", ")}. These are still being recorded — please remove
-                  them or pick another set before continuing.
+              {templateLocked && (
+                <p className="mt-2 font-sans text-xs text-muted-foreground">
+                  This template's dashakams are fixed. Choose “Start from scratch” or “Custom selection” to pick
+                  your own.
                 </p>
               )}
+              <p className="mt-3 font-sans text-xs text-muted-foreground">{dashakams.length} dashakams selected</p>
+
             </div>
           </div>
         )}
