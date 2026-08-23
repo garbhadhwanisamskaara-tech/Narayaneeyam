@@ -15,6 +15,7 @@ import {
   Settings,
   PlayCircle,
   Plus,
+  BarChart3,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
@@ -512,6 +513,12 @@ export default function GroupDetailPage() {
               className="inline-flex items-center gap-2 rounded-lg border border-border px-4 py-2 font-sans text-sm font-semibold text-muted-foreground hover:border-primary hover:text-foreground"
             >
               <Settings className="h-4 w-4" /> Manage Group
+            </Link>
+            <Link
+              to={`/my-parayanams?group=${group.id}`}
+              className="ml-3 inline-flex items-center gap-2 rounded-lg border border-border px-4 py-2 font-sans text-sm font-semibold text-muted-foreground hover:border-primary hover:text-foreground"
+            >
+              <BarChart3 className="h-4 w-4" /> Group report
             </Link>
           </div>
 

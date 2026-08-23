@@ -27,6 +27,7 @@ import AdminRoute from "./components/AdminRoute";
 import ResetPasswordPage from "./pages/ResetPasswordPage";
 import JoinGroupPage from "./pages/JoinGroupPage";
 import GroupsPage from "./pages/GroupsPage";
+import MyParayanamsPage from "./pages/MyParayanamsPage";
 import GroupDetailPage from "./pages/GroupDetailPage";
 import GroupSchedulePage from "./pages/GroupSchedulePage";
 import GroupSettingsPage from "./pages/GroupSettingsPage";
@@ -96,6 +97,7 @@ const App = () => {
                   <Route path="/challenges/new" element={<ChallengeCreationPage />} />
                   <Route path="/parayanam/new" element={<CreateParayanamPage />} />
 
+                  <Route path="/my-parayanams" element={<MyParayanamsPage />} />
                   <Route path="/groups" element={<GroupsPage />} />
                   <Route path="/groups/:groupId" element={<GroupDetailPage />} />
                   <Route path="/groups/:groupId/schedule" element={<GroupSchedulePage />} />

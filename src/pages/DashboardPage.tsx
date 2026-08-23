@@ -59,6 +59,20 @@ export default function DashboardPage() {
           <FeatherShelf />
         </div>
 
+        {/* My Parayanams — group-first report */}
+        <Link
+          to="/my-parayanams"
+          className="mb-8 flex items-center justify-between gap-3 rounded-xl border border-border bg-card p-5 shadow-md transition-all hover:shadow-gold"
+        >
+          <div>
+            <h2 className="font-display text-lg font-semibold text-foreground">My Parayanams</h2>
+            <p className="font-sans text-sm text-muted-foreground">
+              Every group parayanam you have joined — completed, pending and bloomed dashakams.
+            </p>
+          </div>
+          <TrendingUp className="h-5 w-5 shrink-0 text-primary" />
+        </Link>
+
         {/* Greeting */}
         <div className="mb-8">
           <h1 className="font-display text-3xl font-bold text-foreground mb-1 flex items-center gap-2">
