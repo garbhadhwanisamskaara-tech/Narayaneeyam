@@ -27,6 +27,7 @@ import FestivalBanner from "@/components/FestivalBanner";
 import FestivalReminder from "@/components/FestivalReminder";
 import { supabase } from "@/integrations/supabase/client";
 import SEO from "@/components/SEO";
+import HomeDashakamQueues from "@/components/HomeDashakamQueues";
 import { SUBSCRIPTION_ENABLED } from "@/config/features";
 
 export default function Index() {
