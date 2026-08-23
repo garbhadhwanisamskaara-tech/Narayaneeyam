@@ -150,6 +150,8 @@ export default function Layout({ children }: { children: React.ReactNode }) {
           </nav>
 
           <div className="hidden lg:flex items-center gap-3">
+            {user && <NotificationBell />}
+
             <button
               type="button"
               onClick={toggleTheme}
