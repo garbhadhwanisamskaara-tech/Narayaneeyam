@@ -94,7 +94,7 @@ export function useSupportTickets(isAdmin = false) {
 
       const { data, error } = await query;
       if (error) throw error;
-      setTickets((data as Ticket[]) || []);
+      setTickets(((data as any[]) || []).map(mapTicket));
     } catch (e) {
       console.warn("Failed to fetch tickets:", e);
       setTickets([]);
@@ -127,8 +127,9 @@ export function useSupportTickets(isAdmin = false) {
       .single();
     if (error) throw error;
     await fetchTickets();
-    return ticket;
+    return mapTicket(ticket);
   };
+
 
   const updateTicketStatus = async (ticketId: string, status: TicketStatus) => {
     const { error } = await supabase
