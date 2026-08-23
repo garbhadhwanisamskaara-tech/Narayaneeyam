@@ -1010,7 +1010,7 @@ export default function ChantPage() {
                 <option value={selectedDashakam}>Loading...</option>
               ) : (
                 dropdownList.map((d) => (
-                  <option key={d.id} value={d.id} disabled={!d.available}>
+                  <option key={d.id} value={d.id}>
                     {d.id}. {d.title}
                     {d.available ? "" : " — Coming soon"}
                   </option>
