@@ -69,7 +69,14 @@ function Row({
  * Today's / Pending dashakams — each source (or source+date) row collapsed by
  * default, expanding to its tick-to-complete chips.
  */
-export default function DashakamQueueList({ showGroupsLink = true }: { showGroupsLink?: boolean }) {
+export default function DashakamQueueList({
+  showGroupsLink = true,
+  card = false,
+}: {
+  showGroupsLink?: boolean;
+  /** Wrap in a card surface — only rendered when there is something to show. */
+  card?: boolean;
+}) {
   const { todayRows, pendingRows, pendingCount, removeItem } = useMyDashakamQueue();
   const { markDashakamComplete, pendingId } = useCompleteDashakam();
 
@@ -81,7 +88,13 @@ export default function DashakamQueueList({ showGroupsLink = true }: { showGroup
   if (!todayRows.length && !pendingRows.length) return null;
 
   return (
-    <div className="space-y-4">
+    <div
+      className={
+        card
+          ? "space-y-4 rounded-2xl border border-border bg-card p-5 shadow-peacock"
+          : "space-y-4"
+      }
+    >
       {todayRows.length > 0 && (
         <div>
           <h4 className="font-display text-sm font-semibold text-foreground">Today's Dashakams</h4>

@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import { Loader2, Plus, Users } from "lucide-react";
 import { useGroups } from "@/hooks/useGroups";
 import SEO from "@/components/SEO";
+import DashakamQueueList from "@/components/DashakamQueueList";
 
 export default function GroupsPage() {
   const { groups, loading, error, createGroup } = useGroups();
@@ -31,6 +32,10 @@ export default function GroupsPage() {
       <p className="mt-1 font-sans text-sm text-muted-foreground">
         Chant together — create a group and invite loved ones.
       </p>
+
+      <div className="mt-6">
+        <DashakamQueueList showGroupsLink={false} card />
+      </div>
 
       <form onSubmit={handleCreate} className="mt-6 rounded-2xl border border-border bg-card p-5 shadow-peacock">
         <label htmlFor="group_name" className="font-sans text-sm font-semibold text-foreground">

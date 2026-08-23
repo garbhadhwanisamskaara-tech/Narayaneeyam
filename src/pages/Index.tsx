@@ -27,7 +27,6 @@ import FestivalBanner from "@/components/FestivalBanner";
 import FestivalReminder from "@/components/FestivalReminder";
 import { supabase } from "@/integrations/supabase/client";
 import SEO from "@/components/SEO";
-import HomeDashakamQueues from "@/components/HomeDashakamQueues";
 import TrialStatusLine from "@/components/TrialStatusLine";
 import { SUBSCRIPTION_ENABLED } from "@/config/features";
 
@@ -170,9 +169,6 @@ export default function Index() {
         <FestivalBanner />
       </section>
 
-      <section className="container mx-auto px-4 mt-4 relative z-20">
-        <HomeDashakamQueues />
-      </section>
 
 
       <section className="container mx-auto px-4 -mt-4 relative z-10 pb-8">

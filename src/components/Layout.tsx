@@ -24,6 +24,7 @@ import { useState, useEffect } from "react";
 import logoImg from "@/assets/logo.png";
 import { useAuth } from "@/contexts/AuthContext";
 import BottomNav from "@/components/BottomNav";
+import NotificationBell from "@/components/NotificationBell";
 import SubscriptionBanner from "@/components/SubscriptionBanner";
 import { SUBSCRIPTION_ENABLED } from "@/config/features";
 import {
@@ -149,6 +150,8 @@ export default function Layout({ children }: { children: React.ReactNode }) {
           </nav>
 
           <div className="hidden lg:flex items-center gap-3">
+            {user && <NotificationBell />}
+
             <button
               type="button"
               onClick={toggleTheme}
@@ -229,7 +232,8 @@ export default function Layout({ children }: { children: React.ReactNode }) {
             ) : null}
           </div>
 
-          <div className="lg:hidden flex items-center gap-1 flex-shrink-0">
+          <div className="lg:hidden flex items-center gap-2 flex-shrink-0">
+            {!loading && user && <NotificationBell />}
             {!loading && user && (
               <button
                 type="button"

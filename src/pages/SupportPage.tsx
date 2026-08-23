@@ -1,4 +1,6 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { useSearchParams } from "react-router-dom";
+import { markTicketViewed } from "@/lib/ticketViews";
 import { motion } from "framer-motion";
 import {
   LifeBuoy,
@@ -557,8 +559,15 @@ function TicketsList({ tickets, onSelect }: { tickets: Ticket[]; onSelect: (id: 
 export default function SupportPage() {
   const { user } = useAuth();
   const { tickets, loading } = useSupportTickets();
-  const [view, setView] = useState<"list" | "create" | "detail">("list");
-  const [selectedTicketId, setSelectedTicketId] = useState<string | null>(null);
+  const [searchParams, setSearchParams] = useSearchParams();
+  const deepLinkTicket = searchParams.get("ticket");
+  const [view, setView] = useState<"list" | "create" | "detail">(deepLinkTicket ? "detail" : "list");
+  const [selectedTicketId, setSelectedTicketId] = useState<string | null>(deepLinkTicket);
+
+  // Opening a ticket counts as viewing it — that is what clears its bell item.
+  useEffect(() => {
+    if (view === "detail" && selectedTicketId) markTicketViewed(selectedTicketId);
+  }, [view, selectedTicketId]);
 
   if (!user) {
     return (
@@ -651,6 +660,7 @@ export default function SupportPage() {
               onBack={() => {
                 setSelectedTicketId(null);
                 setView("list");
+                if (deepLinkTicket) setSearchParams({}, { replace: true });
               }}
             />
           )}
