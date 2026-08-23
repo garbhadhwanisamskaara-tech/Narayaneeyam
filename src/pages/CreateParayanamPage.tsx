@@ -81,8 +81,7 @@ export default function CreateParayanamPage() {
   );
   const selectedSet = sets.find((s) => s.id === setId);
   const dashakams = setId === "custom" ? [...custom].sort((a, b) => a - b) : selectedSet?.dashakam_list ?? [];
-  const readySet = new Set(allDashakams.filter((d) => d.is_published).map((d) => d.dashakam_no));
-  const notReady = allDashakams.length ? dashakams.filter((n) => !readySet.has(n)) : [];
+  const templateLocked = selectedTemplateId !== "scratch";
 
   // Date-spread preview (assignment resolved at submit time)
   const planned = useMemo(
@@ -96,11 +95,12 @@ export default function CreateParayanamPage() {
   const toggleCustom = (n: number) =>
     setCustom((prev) => (prev.includes(n) ? prev.filter((x) => x !== n) : [...prev, n]));
 
+  /** Selecting a template REPLACES the whole selection state. */
   const applyTemplate = (templateId: string) => {
     if (templateId === "scratch") {
       setSelectedTemplateId("scratch");
       setCustom([]);
-      setSetId("");
+      setSetId("custom");
       return;
     }
     const t = templates.find((tmpl) => tmpl.id === templateId);
@@ -110,12 +110,20 @@ export default function CreateParayanamPage() {
     setCustom([...t.dashakam_list]);
   };
 
+  /** Picking a predefined set or Custom also clears any active template. */
+  const chooseSet = (id: string) => {
+    setSelectedTemplateId("scratch");
+    setSetId(id);
+    if (id === "custom") setCustom([]);
+  };
+
   const canNext =
     step === 1
-      ? dashakams.length > 0 && notReady.length === 0
+      ? dashakams.length > 0
       : step === 2
         ? !!startDate && !!endDate && endDate >= startDate
         : true;
+
 
   const handleBegin = () => {
     if (isGroup && members.length <= 1 && !soloWarning) {
@@ -283,9 +291,11 @@ export default function CreateParayanamPage() {
                   {orderedSets.map((s) => (
                     <button
                       key={s.id}
-                      onClick={() => setSetId(s.id)}
+                      onClick={() => chooseSet(s.id)}
                       className={`w-full rounded-xl border p-4 text-left transition-colors ${
-                        setId === s.id ? "border-primary bg-secondary/30" : "border-border hover:border-primary"
+                        !templateLocked && setId === s.id
+                          ? "border-primary bg-secondary/30"
+                          : "border-border hover:border-primary"
                       }`}
                     >
                       <span className="font-sans text-sm font-semibold text-foreground">
@@ -300,9 +310,11 @@ export default function CreateParayanamPage() {
                     </button>
                   ))}
                   <button
-                    onClick={() => setSetId("custom")}
+                    onClick={() => chooseSet("custom")}
                     className={`w-full rounded-xl border p-4 text-left transition-colors ${
-                      setId === "custom" ? "border-primary bg-secondary/30" : "border-border hover:border-primary"
+                      !templateLocked && setId === "custom"
+                        ? "border-primary bg-secondary/30"
+                        : "border-border hover:border-primary"
                     }`}
                   >
                     <span className="font-sans text-sm font-semibold text-foreground">Custom selection</span>
@@ -315,32 +327,34 @@ export default function CreateParayanamPage() {
 
               {setId === "custom" && (
                 <div className="mt-4 grid grid-cols-10 gap-1.5">
-                  {allDashakams.map((d) => (
-                    <button
-                      key={d.dashakam_no}
-                      onClick={() => d.is_published && toggleCustom(d.dashakam_no)}
-                      disabled={!d.is_published}
-                      title={d.is_published ? d.dashakam_name : `${d.dashakam_name} — coming soon`}
-                      className={`aspect-square rounded-md border font-sans text-[11px] font-semibold transition-colors ${
-                        !d.is_published
-                          ? "cursor-not-allowed border-dashed border-border text-muted-foreground/40"
-                          : custom.includes(d.dashakam_no)
+                  {allDashakams.map((d) => {
+                    const picked = custom.includes(d.dashakam_no);
+                    return (
+                      <button
+                        key={d.dashakam_no}
+                        onClick={() => !templateLocked && toggleCustom(d.dashakam_no)}
+                        disabled={templateLocked}
+                        title={d.dashakam_name}
+                        className={`aspect-square rounded-md border font-sans text-[11px] font-semibold transition-colors ${
+                          picked
                             ? "border-primary bg-primary/15 text-primary"
-                            : "border-border text-muted-foreground hover:border-primary"
-                      }`}
-                    >
-                      {d.dashakam_no}
-                    </button>
-                  ))}
+                            : "border-border text-muted-foreground"
+                        } ${templateLocked ? "cursor-not-allowed opacity-80" : "hover:border-primary"}`}
+                      >
+                        {d.dashakam_no}
+                      </button>
+                    );
+                  })}
                 </div>
               )}
-              <p className="mt-3 font-sans text-xs text-muted-foreground">{dashakams.length} dashakams selected</p>
-              {notReady.length > 0 && (
-                <p className="mt-2 rounded-lg border border-destructive/40 bg-destructive/10 px-3 py-2 font-sans text-xs text-destructive">
-                  Not recorded yet: {notReady.join(", ")}. These are still being recorded — please remove
-                  them or pick another set before continuing.
+              {templateLocked && (
+                <p className="mt-2 font-sans text-xs text-muted-foreground">
+                  This template's dashakams are fixed. Choose “Start from scratch” or “Custom selection” to pick
+                  your own.
                 </p>
               )}
+              <p className="mt-3 font-sans text-xs text-muted-foreground">{dashakams.length} dashakams selected</p>
+
             </div>
           </div>
         )}

@@ -904,13 +904,20 @@ export default function ChantPage() {
                 >
                   <RotateCcw className="h-5 w-5" />
                 </button>
-                <button
-                  onClick={handlePlayPause}
-                  disabled={!isPlaying && !audioReady}
-                  className={`flex h-10 w-10 items-center justify-center rounded-full bg-gradient-gold text-primary shadow-gold transition-transform hover:scale-110 ${!isPlaying && !audioReady ? "opacity-50 cursor-not-allowed" : ""}`}
-                >
-                  {isPlaying ? <Pause className="h-5 w-5" /> : <Play className="h-5 w-5 ml-0.5" />}
-                </button>
+                {comingSoon ? (
+                  <span className="rounded-full bg-primary-foreground/15 px-3 py-1.5 font-sans text-[11px] font-semibold text-primary-foreground">
+                    Coming soon
+                  </span>
+                ) : (
+                  <button
+                    onClick={handlePlayPause}
+                    disabled={!isPlaying && !audioReady}
+                    className={`flex h-10 w-10 items-center justify-center rounded-full bg-gradient-gold text-primary shadow-gold transition-transform hover:scale-110 ${!isPlaying && !audioReady ? "opacity-50 cursor-not-allowed" : ""}`}
+                  >
+                    {isPlaying ? <Pause className="h-5 w-5" /> : <Play className="h-5 w-5 ml-0.5" />}
+                  </button>
+                )}
+
                 <button
                   onClick={() => {
                     stopAudio();
@@ -1003,7 +1010,7 @@ export default function ChantPage() {
                 <option value={selectedDashakam}>Loading...</option>
               ) : (
                 dropdownList.map((d) => (
-                  <option key={d.id} value={d.id} disabled={!d.available}>
+                  <option key={d.id} value={d.id}>
                     {d.id}. {d.title}
                     {d.available ? "" : " — Coming soon"}
                   </option>
