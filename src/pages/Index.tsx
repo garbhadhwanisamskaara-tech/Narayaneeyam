@@ -28,6 +28,7 @@ import FestivalReminder from "@/components/FestivalReminder";
 import { supabase } from "@/integrations/supabase/client";
 import SEO from "@/components/SEO";
 import HomeDashakamQueues from "@/components/HomeDashakamQueues";
+import TrialStatusLine from "@/components/TrialStatusLine";
 import { SUBSCRIPTION_ENABLED } from "@/config/features";
 
 export default function Index() {
@@ -106,6 +107,7 @@ export default function Index() {
         title="Sriman Narayaneeyam — Chant · Learn · Grow"
         description="A sacred journey through 100 Dashakams — chant, learn, and grow in devotion with the divine grace of Guruvayurappan."
       />
+      <TrialStatusLine />
       {/* Hero Section */}
       <section className="relative overflow-hidden">
         <div className="absolute inset-0">
