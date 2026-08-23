@@ -109,44 +109,54 @@ function RaiseTicketForm({ onSuccess, onCancel }: { onSuccess: (id: string) => v
   };
 
   const handleSubmit = async () => {
+    if (submitting) return; // guard against duplicate tickets from double taps
     if (!subject.trim() || description.trim().length < 20) {
       toast({ title: "Please fill all required fields (description min 20 chars)", variant: "destructive" });
       return;
     }
     setSubmitting(true);
+    const { supabase } = await import("@/integrations/supabase/client");
+    let createdId: string | null = null;
+    const uploadedPaths: string[] = [];
     try {
       const ticket = await createTicket({ subject, category, priority, description });
-      // Upload attachments if any — we'll use the ticket detail hook for that
-      if (ticket && files.length > 0) {
-        const { uploadAttachment } = await import("@/hooks/useSupportTickets").then((m) => {
-          // Can't use hook here, so do direct upload
-          return { uploadAttachment: null };
+      createdId = ticket?.id ?? null;
+      if (!createdId) throw new Error("Ticket could not be created");
+
+      for (const file of files) {
+        const ext = file.name.split(".").pop();
+        const path = `${createdId}/${Date.now()}_${Math.random().toString(36).slice(2)}.${ext}`;
+        const { error: upErr } = await supabase.storage.from("ticket-attachments").upload(path, file);
+        if (upErr) throw upErr;
+        uploadedPaths.push(path);
+        const { data: urlData } = supabase.storage.from("ticket-attachments").getPublicUrl(path);
+        const { error: insErr } = await supabase.from("ticket_attachments").insert({
+          ticket_id: createdId,
+          file_url: urlData.publicUrl,
+          file_name: file.name,
+          storage_path: path,
         });
-        // Direct upload for creation attachments
-        const { supabase } = await import("@/integrations/supabase/client");
-        for (const file of files) {
-          const ext = file.name.split(".").pop();
-          const path = `${ticket.id}/${Date.now()}_${Math.random().toString(36).slice(2)}.${ext}`;
-          await supabase.storage.from("ticket-attachments").upload(path, file);
-          const { data: urlData } = supabase.storage.from("ticket-attachments").getPublicUrl(path);
-          await supabase.from("ticket_attachments").insert({
-            ticket_id: ticket.id,
-            file_url: urlData.publicUrl,
-            file_name: file.name,
-          });
-        }
+        if (insErr) throw insErr;
       }
+
       toast({
-        title: `Ticket raised! ID: ${ticket?.id?.slice(0, 8)}`,
+        title: `Ticket raised! ID: ${createdId.slice(0, 8)}`,
         description: "We will respond within 24 hours.",
       });
-      onSuccess(ticket?.id || "");
+      onSuccess(createdId);
     } catch (e: any) {
+      // All-or-nothing: undo the ticket and any uploaded attachments.
+      if (createdId) {
+        if (uploadedPaths.length) await supabase.storage.from("ticket-attachments").remove(uploadedPaths);
+        await supabase.from("ticket_attachments").delete().eq("ticket_id", createdId);
+        await supabase.from("support_tickets").delete().eq("id", createdId);
+      }
       toast({ title: "Failed to create ticket", description: e.message, variant: "destructive" });
     } finally {
       setSubmitting(false);
     }
   };
+
 
   return (
     <div className="space-y-4">
