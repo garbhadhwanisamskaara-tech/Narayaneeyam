@@ -244,7 +244,7 @@ export function useTicketDetail(ticketId: string | null) {
     } catch (e) {
       // Roll back: storage objects, attachment rows, then the update itself.
       if (uploadedPaths.length) {
-        await supabase.storage.from(ATTACHMENT_BUCKET).remove(uploadedPaths).catch?.(() => {});
+        await supabase.storage.from(ATTACHMENT_BUCKET).remove(uploadedPaths);
       }
       await supabase.from("ticket_attachments").delete().eq("update_id", update.id);
       await supabase.from("ticket_updates").delete().eq("id", update.id);
