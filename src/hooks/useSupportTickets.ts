@@ -175,7 +175,7 @@ export function useTicketDetail(ticketId: string | null) {
         supabase.from("ticket_updates").select("*").eq("ticket_id", ticketId).order("created_at", { ascending: true }),
         supabase.from("ticket_attachments").select("*").eq("ticket_id", ticketId).order("created_at", { ascending: true }),
       ]);
-      setTicket(ticketRes.data as Ticket);
+      setTicket(ticketRes.data ? mapTicket(ticketRes.data) : null);
       setUpdates((updatesRes.data as TicketUpdate[]) || []);
       setAttachments((attachRes.data as TicketAttachment[]) || []);
     } catch (e) {
@@ -189,55 +189,99 @@ export function useTicketDetail(ticketId: string | null) {
     fetchDetail();
   }, [fetchDetail]);
 
-  const addUpdate = async (message: string, isAdminReply = false, isInternal = false) => {
+  const touchTicket = async () =>
+    supabase.from("support_tickets").update({ updated_at: new Date().toISOString() }).eq("id", ticketId!);
+
+  /**
+   * Post a reply together with its attachments as a single all-or-nothing unit.
+   * If any upload or metadata insert fails, the newly created update row,
+   * its attachment rows and any uploaded storage objects are removed.
+   */
+  const addUpdateWithAttachments = async (
+    message: string,
+    files: File[] = [],
+    opts: { isAdminReply?: boolean; isInternal?: boolean } = {}
+  ) => {
     if (!user || !ticketId) throw new Error("Missing context");
-    const { data, error } = await supabase
+
+    const { data: created, error } = await supabase
       .from("ticket_updates")
       .insert({
         ticket_id: ticketId,
         user_id: user.id,
         user_email: user.email,
         message,
-        is_admin_reply: isAdminReply,
-        is_internal: isInternal,
+        is_admin_reply: !!opts.isAdminReply,
+        is_internal: !!opts.isInternal,
       })
       .select()
       .single();
     if (error) throw error;
 
-    // Update ticket timestamp
-    await supabase
-      .from("support_tickets")
-      .update({ updated_at: new Date().toISOString() })
-      .eq("id", ticketId);
+    const update = created as TicketUpdate;
+    const uploadedPaths: string[] = [];
 
+    try {
+      for (const file of files) {
+        const ext = file.name.split(".").pop();
+        const path = `${ticketId}/${Date.now()}_${Math.random().toString(36).slice(2)}.${ext}`;
+
+        const { error: uploadError } = await supabase.storage.from(ATTACHMENT_BUCKET).upload(path, file);
+        if (uploadError) throw uploadError;
+        uploadedPaths.push(path);
+
+        const { data: urlData } = supabase.storage.from(ATTACHMENT_BUCKET).getPublicUrl(path);
+
+        const { error: insertError } = await supabase.from("ticket_attachments").insert({
+          ticket_id: ticketId,
+          update_id: update.id,
+          file_url: urlData.publicUrl,
+          file_name: file.name,
+          storage_path: path,
+        });
+        if (insertError) throw insertError;
+      }
+    } catch (e) {
+      // Roll back: storage objects, attachment rows, then the update itself.
+      if (uploadedPaths.length) {
+        await supabase.storage.from(ATTACHMENT_BUCKET).remove(uploadedPaths).catch?.(() => {});
+      }
+      await supabase.from("ticket_attachments").delete().eq("update_id", update.id);
+      await supabase.from("ticket_updates").delete().eq("id", update.id);
+      await fetchDetail();
+      throw e;
+    }
+
+    await touchTicket();
     await fetchDetail();
-    return data;
+    return update;
   };
+
+  /** Back-compat wrapper — a reply with no attachments. */
+  const addUpdate = (message: string, isAdminReply = false, isInternal = false) =>
+    addUpdateWithAttachments(message, [], { isAdminReply, isInternal });
 
   const uploadAttachment = async (file: File, updateId?: string) => {
     if (!user || !ticketId) throw new Error("Missing context");
     const ext = file.name.split(".").pop();
     const path = `${ticketId}/${Date.now()}_${Math.random().toString(36).slice(2)}.${ext}`;
 
-    const { error: uploadError } = await supabase.storage
-      .from("ticket-attachments")
-      .upload(path, file);
+    const { error: uploadError } = await supabase.storage.from(ATTACHMENT_BUCKET).upload(path, file);
     if (uploadError) throw uploadError;
 
-    const { data: urlData } = supabase.storage
-      .from("ticket-attachments")
-      .getPublicUrl(path);
+    const { data: urlData } = supabase.storage.from(ATTACHMENT_BUCKET).getPublicUrl(path);
 
-    const { error: insertError } = await supabase
-      .from("ticket_attachments")
-      .insert({
-        ticket_id: ticketId,
-        update_id: updateId || null,
-        file_url: urlData.publicUrl,
-        file_name: file.name,
-      });
-    if (insertError) throw insertError;
+    const { error: insertError } = await supabase.from("ticket_attachments").insert({
+      ticket_id: ticketId,
+      update_id: updateId || null,
+      file_url: urlData.publicUrl,
+      file_name: file.name,
+      storage_path: path,
+    });
+    if (insertError) {
+      await supabase.storage.from(ATTACHMENT_BUCKET).remove([path]);
+      throw insertError;
+    }
 
     await fetchDetail();
   };
@@ -248,7 +292,11 @@ export function useTicketDetail(ticketId: string | null) {
     attachments,
     loading,
     addUpdate,
+    addUpdateWithAttachments,
     uploadAttachment,
     refetch: fetchDetail,
+  };
+}
+
   };
 }
