@@ -1,11 +1,24 @@
 import { useState, useEffect, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
+import type {
+  SupportTicketRow,
+  TicketUpdateRow,
+  TicketAttachmentRow,
+  TicketCategory,
+  TicketPriority,
+  TicketStatus,
+} from "@/types/supportTickets";
 
+export type { TicketCategory, TicketPriority, TicketStatus };
+
+const ATTACHMENT_BUCKET = "ticket-attachments";
+
+/** UI-facing ticket. `user_email` is derived from the DB column `email`. */
 export interface Ticket {
   id: string;
   user_id: string;
-  user_email?: string;
+  user_email?: string | null;
   subject: string;
   category: TicketCategory | string;
   priority: TicketPriority | string;
@@ -15,35 +28,22 @@ export interface Ticket {
   updated_at: string;
 }
 
-export interface TicketUpdate {
-  id: string;
-  ticket_id: string;
-  user_id: string;
-  message: string;
-  is_admin_reply: boolean;
-  is_internal: boolean;
-  created_at: string;
-  user_email?: string;
-}
+export type TicketUpdate = TicketUpdateRow;
+export type TicketAttachment = TicketAttachmentRow;
 
-export interface TicketAttachment {
-  id: string;
-  ticket_id: string;
-  update_id?: string;
-  file_url: string;
-  file_name: string;
-  created_at: string;
-}
+const mapTicket = (row: any): Ticket => ({
+  id: row.id,
+  user_id: row.user_id,
+  user_email: row.email ?? row.user_email ?? null,
+  subject: row.subject,
+  category: row.category,
+  priority: row.priority,
+  status: row.status,
+  description: row.description,
+  created_at: row.created_at,
+  updated_at: row.updated_at ?? row.created_at,
+});
 
-export type TicketCategory =
-  | "audio_issue"
-  | "content_error"
-  | "subscription"
-  | "technical"
-  | "feature_request"
-  | "other";
-export type TicketPriority = "low" | "normal" | "high" | "urgent";
-export type TicketStatus = "open" | "in_progress" | "resolved" | "closed";
 
 export const CATEGORY_OPTIONS: { value: TicketCategory; label: string }[] = [
   { value: "audio_issue", label: "Audio Issue" },
