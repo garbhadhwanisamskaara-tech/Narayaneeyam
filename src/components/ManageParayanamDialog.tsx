@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { Ban, CalendarDays, Loader2, Pencil, Settings2, UserMinus, UserPlus } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
@@ -60,6 +60,7 @@ export default function ManageParayanamDialog({
 }: Props) {
   const [open, setOpen] = useState(false);
   const [name, setName] = useState(parayanamName ?? "");
+  useEffect(() => setName(parayanamName ?? ""), [parayanamName]);
   const [busy, setBusy] = useState(false);
   const [selected, setSelected] = useState<string[]>([]);
   const [removeTarget, setRemoveTarget] = useState<{ userId: string; name: string } | null>(null);
