@@ -33,10 +33,8 @@ export default function GroupsPage() {
         Chant together — create a group and invite loved ones.
       </p>
 
-      <div className="mt-6 empty:hidden [&:has(>*:empty)]:hidden">
-        <div className="rounded-2xl border border-border bg-card p-5 shadow-peacock empty:hidden">
-          <DashakamQueueList showGroupsLink={false} />
-        </div>
+      <div className="mt-6">
+        <DashakamQueueList showGroupsLink={false} card />
       </div>
 
       <form onSubmit={handleCreate} className="mt-6 rounded-2xl border border-border bg-card p-5 shadow-peacock">
