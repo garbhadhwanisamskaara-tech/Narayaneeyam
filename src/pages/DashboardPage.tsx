@@ -9,9 +9,9 @@ import { Progress } from "@/components/ui/progress";
 import ProgressRing from "@/components/ProgressRing";
 import SEO from "@/components/SEO";
 import ActiveChallengeCard from "@/components/ActiveChallengeCard";
-import FeatherShelf from "@/components/FeatherShelf";
 import PeacockFeather from "@/components/icons/PeacockFeatherIcon";
 import { useFeathers } from "@/hooks/useFeathers";
+import { useYearlyDashakamCount } from "@/hooks/useYearlyDashakamCount";
 
 export default function DashboardPage() {
   const localProgress = getProgress();
