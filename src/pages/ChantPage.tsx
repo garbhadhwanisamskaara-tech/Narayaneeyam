@@ -37,7 +37,7 @@ import RitualChantOverlay from "@/components/RitualChantOverlay";
 import { LearnBadge } from "@/components/LearnBadge";
 import VerseSkeleton from "@/components/VerseSkeleton";
 import { getProgress, saveProgress } from "@/lib/progress";
-import { updateStreakSupabase, markVerseCompleted } from "@/lib/supabaseProgress";
+import { updateStreakSupabase } from "@/lib/supabaseProgress";
 import { useAudioEngine } from "@/contexts/AudioContext";
 import { useGlobalMute } from "@/lib/globalMute";
 

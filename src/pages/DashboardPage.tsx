@@ -9,9 +9,9 @@ import { Progress } from "@/components/ui/progress";
 import ProgressRing from "@/components/ProgressRing";
 import SEO from "@/components/SEO";
 import ActiveChallengeCard from "@/components/ActiveChallengeCard";
-import FeatherShelf from "@/components/FeatherShelf";
 import PeacockFeather from "@/components/icons/PeacockFeatherIcon";
 import { useFeathers } from "@/hooks/useFeathers";
+import { useYearlyDashakamCount } from "@/hooks/useYearlyDashakamCount";
 
 export default function DashboardPage() {
   const localProgress = getProgress();
@@ -27,6 +27,7 @@ export default function DashboardPage() {
   } = useUserProgress();
   const { feathers } = useFeathers();
   const feathersEarned = feathers.length;
+  const { count: yearlyCount, loading: yearlyLoading, year: yearlyYear } = useYearlyDashakamCount();
 
   // Current position from local progress
   const currentDashakam = localProgress.chantState?.dashakam || localProgress.lastDashakam || 1;
@@ -55,8 +56,14 @@ export default function DashboardPage() {
       <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
         <ActiveChallengeCard />
 
-        <div className="mb-8">
-          <FeatherShelf />
+        <div className="mb-8 rounded-xl border border-border bg-card p-5 shadow-md">
+          <h2 className="font-display text-lg font-semibold text-foreground">Dashakams read this year</h2>
+          <p className="mt-1 font-sans text-sm text-muted-foreground">
+            Every completion recorded in {yearlyYear} — solo and within parayanams.
+          </p>
+          <p className="mt-3 font-display text-4xl font-bold text-primary">
+            {yearlyLoading ? "—" : yearlyCount}
+          </p>
         </div>
 
         {/* My Parayanams — group-first report */}
