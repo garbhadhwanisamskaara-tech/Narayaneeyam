@@ -9,8 +9,6 @@ import { Progress } from "@/components/ui/progress";
 import ProgressRing from "@/components/ProgressRing";
 import SEO from "@/components/SEO";
 import ActiveChallengeCard from "@/components/ActiveChallengeCard";
-import PeacockFeather from "@/components/icons/PeacockFeatherIcon";
-import { useFeathers } from "@/hooks/useFeathers";
 import { useYearlyDashakamCount } from "@/hooks/useYearlyDashakamCount";
 
 export default function DashboardPage() {
@@ -25,8 +23,6 @@ export default function DashboardPage() {
     loading: progressLoading,
     isGuest,
   } = useUserProgress();
-  const { feathers } = useFeathers();
-  const feathersEarned = feathers.length;
   const { count: yearlyCount, loading: yearlyLoading, year: yearlyYear } = useYearlyDashakamCount();
 
   // Current position from local progress
@@ -162,24 +158,6 @@ export default function DashboardPage() {
             </motion.div>
           ))}
         </div>
-
-        {/* Feathers Earned */}
-        <motion.div
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.12 }}
-          className="rounded-xl border border-border bg-card p-5 mb-8 flex items-center gap-4"
-        >
-          <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-secondary/15">
-            <PeacockFeather className="h-6 w-6 text-secondary" />
-          </div>
-          <div>
-            <p className="text-xs text-muted-foreground font-sans uppercase tracking-wide">Feathers Earned</p>
-            <p className="font-display text-2xl font-bold text-foreground">{feathersEarned}</p>
-          </div>
-        </motion.div>
-
-
 
         {/* Journey Completion Bar */}
         <motion.div
