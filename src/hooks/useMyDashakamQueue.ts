@@ -42,9 +42,7 @@ function groupRows(items: QueueItem[], withDate: boolean): QueueRow[] {
   }
   const rows = Array.from(map.values());
   rows.sort(
-    (a, b) =>
-      (a.scheduledDate ?? "").localeCompare(b.scheduledDate ?? "") ||
-      a.sourceName.localeCompare(b.sourceName)
+    (a, b) => (a.scheduledDate ?? "").localeCompare(b.scheduledDate ?? "") || a.sourceName.localeCompare(b.sourceName),
   );
   for (const r of rows) r.items.sort((a, b) => a.dashakamNo - b.dashakamNo);
   return rows;
@@ -53,8 +51,9 @@ function groupRows(items: QueueItem[], withDate: boolean): QueueRow[] {
 /**
  * Every dashakam assigned to the signed-in user (personal parayanams plus all
  * their groups') that is due today or past due and not yet marked complete.
- * Completion state comes from parayanam_member_progress — the same table the
- * garden's "mark as chanted" control writes to.
+ * Completion state comes from user_progress, filtered by challenge_session_id
+ * and dashakam_no — the same table the garden's "mark as chanted" control
+ * now writes to (mirrored alongside parayanam_member_progress).
  */
 export function useMyDashakamQueue() {
   const { user } = useAuth();
@@ -80,7 +79,7 @@ export function useMyDashakamQueue() {
         .filter((r) => !r.left_at)
         .map((r) => r.group_id);
       const groupNames = new Map<string, string>(
-        ((ownedRes.data ?? []) as { id: string; group_name: string }[]).map((g) => [g.id, g.group_name])
+        ((ownedRes.data ?? []) as { id: string; group_name: string }[]).map((g) => [g.id, g.group_name]),
       );
       const missing = memberGroupIds.filter((id) => !groupNames.has(id));
       if (missing.length) {
@@ -109,7 +108,7 @@ export function useMyDashakamQueue() {
             .from("challenge_sessions")
             .select("id, group_id, user_id")
             .in("group_id", groupIds)
-            .is("completed_at", null)
+            .is("completed_at", null),
         );
       }
       const sessionRes = await Promise.all(sessionQueries);
@@ -131,7 +130,7 @@ export function useMyDashakamQueue() {
         .eq("user_id", user.id)
         .in("challenge_session_id", sessionIds);
       const confirmed = new Set(
-        ((partData ?? []) as any[]).filter((p) => p.status === "confirmed").map((p) => p.challenge_session_id)
+        ((partData ?? []) as any[]).filter((p) => p.status === "confirmed").map((p) => p.challenge_session_id),
       );
 
       // 4. Schedule rows due today or earlier.
@@ -162,17 +161,19 @@ export function useMyDashakamQueue() {
         return;
       }
 
-      // 5. Drop the ones already marked complete by this user.
+      // 5. Drop the ones already marked complete by this user. Keyed by
+      // (challenge_session_id, dashakam_no) since that's what user_progress
+      // records per completion, not schedule_id.
       const { data: progData } = await (supabase as any)
-        .from("parayanam_member_progress")
-        .select("schedule_id")
+        .from("user_progress")
+        .select("challenge_session_id, dashakam_no")
         .eq("user_id", user.id)
-        .in("schedule_id", mine.map((r) => r.id));
-      const done = new Set(((progData ?? []) as any[]).map((p) => p.schedule_id));
+        .in("challenge_session_id", sessionIds);
+      const done = new Set(((progData ?? []) as any[]).map((p) => `${p.challenge_session_id}::${p.dashakam_no}`));
 
       setItems(
         mine
-          .filter((r) => !done.has(r.id))
+          .filter((r) => !done.has(`${r.challenge_session_id}::${r.dashakam_no}`))
           .map((r) => {
             const s = sessions.get(r.challenge_session_id)!;
             return {
@@ -180,9 +181,9 @@ export function useMyDashakamQueue() {
               dashakamNo: r.dashakam_no,
               scheduledDate: r.scheduled_date,
               sessionId: s.id,
-              sourceName: s.group_id ? groupNames.get(s.group_id) ?? "Group" : "Personal",
+              sourceName: s.group_id ? (groupNames.get(s.group_id) ?? "Group") : "Personal",
             };
-          })
+          }),
       );
     } catch {
       setItems([]);
@@ -201,7 +202,7 @@ export function useMyDashakamQueue() {
   const today = todayIso();
   const todayRows = groupRows(
     items.filter((i) => i.scheduledDate === today),
-    false
+    false,
   );
   const pendingItems = items.filter((i) => i.scheduledDate < today);
   const pendingRows = groupRows(pendingItems, true);
