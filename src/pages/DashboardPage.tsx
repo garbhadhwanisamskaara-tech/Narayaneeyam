@@ -27,6 +27,7 @@ export default function DashboardPage() {
   } = useUserProgress();
   const { feathers } = useFeathers();
   const feathersEarned = feathers.length;
+  const { count: yearlyCount, loading: yearlyLoading, year: yearlyYear } = useYearlyDashakamCount();
 
   // Current position from local progress
   const currentDashakam = localProgress.chantState?.dashakam || localProgress.lastDashakam || 1;
