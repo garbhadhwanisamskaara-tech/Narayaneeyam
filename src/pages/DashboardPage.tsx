@@ -55,8 +55,14 @@ export default function DashboardPage() {
       <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
         <ActiveChallengeCard />
 
-        <div className="mb-8">
-          <FeatherShelf />
+        <div className="mb-8 rounded-xl border border-border bg-card p-5 shadow-md">
+          <h2 className="font-display text-lg font-semibold text-foreground">Dashakams read this year</h2>
+          <p className="mt-1 font-sans text-sm text-muted-foreground">
+            Every completion recorded in {yearlyYear} — solo and within parayanams.
+          </p>
+          <p className="mt-3 font-display text-4xl font-bold text-primary">
+            {yearlyLoading ? "—" : yearlyCount}
+          </p>
         </div>
 
         {/* My Parayanams — group-first report */}
