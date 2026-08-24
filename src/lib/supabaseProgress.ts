@@ -2,7 +2,6 @@
  * Supabase-backed progress helpers.
  * Falls back to localStorage when not authenticated.
  */
-import { supabase } from "@/integrations/supabase/client";
 import { getProgress, saveProgress, type UserProgress } from "./progress";
 
 // ─── Streak ──────────────────────────────────────────────────────────────────
