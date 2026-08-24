@@ -50,7 +50,8 @@ interface ScheduleRow {
 }
 
 interface ProgressRow {
-  schedule_id: string;
+  challenge_session_id: string;
+  dashakam_no: number;
   user_id: string;
   completed_at: string | null;
 }
@@ -62,7 +63,14 @@ function emptyStats(): ReportStats {
 /**
  * Read-only "My Parayanams" report: every group the user belongs to, each of
  * its parayanams, and the completed / not-completed / bloom counts derived from
- * parayanam_schedule and parayanam_member_progress.
+ * parayanam_schedule and user_progress.
+ *
+ * Completions are read from user_progress (keyed by challenge_session_id +
+ * dashakam_no), not parayanam_member_progress -- both tables are written on
+ * every completion, but user_progress is the single source of truth going
+ * forward. Confirmed safe: no session has ever assigned the same user more
+ * than one schedule row for the same dashakam number, so collapsing from
+ * schedule_id to (session, dashakam_no) loses nothing.
  */
 export function useParayanamReport(groupIdFilter?: string) {
   const { user } = useAuth();
@@ -88,9 +96,7 @@ export function useParayanamReport(groupIdFilter?: string) {
           .neq("status", "dissolved"),
       ]);
 
-      const ids = new Set<string>(
-        ((memberRes.data ?? []) as { group_id: string }[]).map((r) => r.group_id)
-      );
+      const ids = new Set<string>(((memberRes.data ?? []) as { group_id: string }[]).map((r) => r.group_id));
       for (const g of (ownedRes.data ?? []) as any[]) ids.add(g.id);
       let groupIds = Array.from(ids);
       if (groupIdFilter) groupIds = groupIds.filter((id) => id === groupIdFilter);
@@ -152,15 +158,17 @@ export function useParayanamReport(groupIdFilter?: string) {
         status: string;
       }[];
 
-      const scheduleIds = schedule.map((r) => r.id);
+      // Completions now come from user_progress -- pathway_id is set to the
+      // session id for parayanam completions, so filtering on
+      // challenge_session_id (kept as its own column too) is unambiguous.
       let progress: ProgressRow[] = [];
       // Chunked so long-running groups do not overflow the URL length.
-      for (let i = 0; i < scheduleIds.length; i += 500) {
-        const chunk = scheduleIds.slice(i, i + 500);
+      for (let i = 0; i < sessionIds.length; i += 500) {
+        const chunk = sessionIds.slice(i, i + 500);
         const { data } = await (supabase as any)
-          .from("parayanam_member_progress")
-          .select("schedule_id, user_id, completed_at")
-          .in("schedule_id", chunk);
+          .from("user_progress")
+          .select("challenge_session_id, dashakam_no, user_id, completed_at")
+          .in("challenge_session_id", chunk);
         progress = progress.concat((data ?? []) as ProgressRow[]);
       }
 
@@ -172,9 +180,7 @@ export function useParayanamReport(groupIdFilter?: string) {
           .from("profiles")
           .select("id, display_name, email")
           .in("id", userIds);
-        nameById = new Map(
-          ((profs ?? []) as any[]).map((p) => [p.id, p.display_name ?? p.email ?? "Member"])
-        );
+        nameById = new Map(((profs ?? []) as any[]).map((p) => [p.id, p.display_name ?? p.email ?? "Member"]));
       }
 
       // 5. Fold everything into the report shape.
@@ -184,11 +190,14 @@ export function useParayanamReport(groupIdFilter?: string) {
         list.push({ id: r.id, dashakam_no: r.dashakam_no, assigned_user_id: r.assigned_user_id });
         scheduleBySession.set(r.challenge_session_id, list);
       }
-      const progressByRow = new Map<string, ProgressRow[]>();
+      // Keyed by "sessionId::dashakamNo" -- one bucket per dashakam per
+      // session, holding every user's completion of it.
+      const progressByDashakam = new Map<string, ProgressRow[]>();
       for (const p of progress) {
-        const list = progressByRow.get(p.schedule_id) ?? [];
+        const key = `${p.challenge_session_id}::${p.dashakam_no}`;
+        const list = progressByDashakam.get(key) ?? [];
         list.push(p);
-        progressByRow.set(p.schedule_id, list);
+        progressByDashakam.set(key, list);
       }
 
       const report: GroupReport[] = groupList
@@ -203,6 +212,7 @@ export function useParayanamReport(groupIdFilter?: string) {
               .map((p) => p.user_id);
             const splitMode = rows.some((r) => r.assigned_user_id);
             const expectedPerRow = splitMode ? 1 : Math.max(confirmed.length, 1);
+            const progressFor = (dashakamNo: number) => progressByDashakam.get(`${s.id}::${dashakamNo}`) ?? [];
 
             // Bloom state per dashakam (identical rule to the group garden).
             const rowsByDashakam = new Map<number, ScheduleRow[]>();
@@ -213,24 +223,19 @@ export function useParayanamReport(groupIdFilter?: string) {
             }
             const fullyBloomed = new Set<number>();
             for (const [no, list] of rowsByDashakam) {
-              const done = list.reduce(
-                (sum, r) => sum + (progressByRow.get(r.id)?.length ?? 0),
-                0
-              );
+              const done = progressFor(no).length;
               const total = list.length * expectedPerRow;
               if (total > 0 && done >= total) fullyBloomed.add(no);
             }
 
             const statsFor = (uid: string): ReportStats => {
-              const eligible = rows.filter((r) =>
-                r.assigned_user_id ? r.assigned_user_id === uid : true
-              );
+              const eligible = rows.filter((r) => (r.assigned_user_id ? r.assigned_user_id === uid : true));
               const completedList: CompletedDashakam[] = [];
               const notCompletedList: number[] = [];
               const myDashakams = new Set<number>();
               for (const r of eligible) {
                 myDashakams.add(r.dashakam_no);
-                const mine = (progressByRow.get(r.id) ?? []).find((p) => p.user_id === uid);
+                const mine = progressFor(r.dashakam_no).find((p) => p.user_id === uid);
                 if (mine) {
                   completedList.push({
                     dashakam_no: r.dashakam_no,
@@ -257,7 +262,7 @@ export function useParayanamReport(groupIdFilter?: string) {
               const completedList: CompletedDashakam[] = [];
               const notCompletedList: number[] = [];
               for (const r of rows) {
-                const done = progressByRow.get(r.id) ?? [];
+                const done = progressFor(r.dashakam_no);
                 for (const d of done) {
                   completedList.push({ dashakam_no: r.dashakam_no, completed_at: d.completed_at });
                 }
@@ -294,7 +299,7 @@ export function useParayanamReport(groupIdFilter?: string) {
             };
           });
 
-          parayanams.sort((a, b) => (a.start_date ?? "") < (b.start_date ?? "") ? 1 : -1);
+          parayanams.sort((a, b) => ((a.start_date ?? "") < (b.start_date ?? "") ? 1 : -1));
 
           return { group_id: g.id, group_name: g.group_name, isOwner, parayanams };
         })
