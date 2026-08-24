@@ -47,38 +47,23 @@ export function useChallengeSessions(): UseChallengeSessionsResult {
 
       // dashakams_done on the row itself is never updated by anything --
       // no trigger and no app code writes to it, so it stays at its
-      // creation-time value (usually 0) forever. Compute it live instead:
-      // count completed schedule rows for each session, the same way the
-      // group parayanam garden and report already do.
+      // creation-time value (usually 0) forever. Compute it live instead,
+      // from user_progress (pathway_id = the session's own id), the same
+      // single source of truth the garden and report now read from too.
       const sessionIds = sessions.map((s) => s.id);
 
-      const { data: scheduleRows, error: schedErr } = await (supabase as any)
-        .from("parayanam_schedule")
-        .select("id, challenge_session_id")
+      const { data: progressRows, error: progErr } = await (supabase as any)
+        .from("user_progress")
+        .select("challenge_session_id")
+        .eq("user_id", user!.id)
         .in("challenge_session_id", sessionIds);
 
-      if (schedErr) throw schedErr;
+      if (progErr) throw progErr;
 
-      const scheduleIds = (scheduleRows ?? []).map((r: any) => r.id);
-      const scheduleToSession = new Map<string, string>(
-        (scheduleRows ?? []).map((r: any) => [r.id, r.challenge_session_id]),
-      );
-
-      let doneCounts = new Map<string, number>();
-      if (scheduleIds.length > 0) {
-        const { data: progressRows, error: progErr } = await (supabase as any)
-          .from("parayanam_member_progress")
-          .select("schedule_id")
-          .eq("user_id", user!.id)
-          .in("schedule_id", scheduleIds);
-
-        if (progErr) throw progErr;
-
-        for (const row of progressRows ?? []) {
-          const sessionId = scheduleToSession.get(row.schedule_id);
-          if (!sessionId) continue;
-          doneCounts.set(sessionId, (doneCounts.get(sessionId) ?? 0) + 1);
-        }
+      const doneCounts = new Map<string, number>();
+      for (const row of progressRows ?? []) {
+        const sessionId = row.challenge_session_id;
+        doneCounts.set(sessionId, (doneCounts.get(sessionId) ?? 0) + 1);
       }
 
       return sessions.map((s) => ({
