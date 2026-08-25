@@ -39,7 +39,7 @@ export default function CreateParayanamPage() {
   const [selectedTemplateId, setSelectedTemplateId] = useState<string>("scratch");
   const [startDate, setStartDate] = useState(today());
   const [endDate, setEndDate] = useState(plusDays(99));
-  const [distribution, setDistribution] = useState<"synchronized" | "split">("synchronized");
+  const [distribution, setDistribution] = useState<"synchronized" | "repeat" | "split">("synchronized");
   const [selectedParticipants, setSelectedParticipants] = useState<string[]>([]);
   const [includeSelf, setIncludeSelf] = useState(true);
   const [busy, setBusy] = useState(false);
