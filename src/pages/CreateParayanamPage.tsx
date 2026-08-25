@@ -130,8 +130,9 @@ export default function CreateParayanamPage() {
     step === 1
       ? dashakams.length > 0
       : step === 2
-        ? !!startDate && !!endDate && endDate >= startDate
+        ? !!startDate && (isRelay || (!!endDate && endDate >= startDate))
         : true;
+
 
 
   const handleBegin = () => {
