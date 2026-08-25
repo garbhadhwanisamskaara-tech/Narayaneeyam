@@ -397,7 +397,7 @@ export default function GroupSchedulePage() {
             <div className="grid gap-4 sm:grid-cols-2">
               <div>
                 <label htmlFor="start" className="font-sans text-sm font-semibold text-foreground">
-                  Start date
+                  {isRelay ? "Date of the parayanam" : "Start date"}
                 </label>
                 <input
                   id="start"
@@ -406,20 +406,28 @@ export default function GroupSchedulePage() {
                   onChange={(e) => setStartDate(e.target.value)}
                   className="mt-2 w-full rounded-lg border border-border bg-background px-3 py-2 font-sans text-sm text-foreground outline-none focus:ring-2 focus:ring-primary"
                 />
+                {isRelay && (
+                  <p className="mt-2 font-sans text-xs text-muted-foreground">
+                    A relay parayanam is completed on this single day.
+                  </p>
+                )}
               </div>
-              <div>
-                <label htmlFor="end" className="font-sans text-sm font-semibold text-foreground">
-                  End date
-                </label>
-                <input
-                  id="end"
-                  type="date"
-                  value={endDate}
-                  onChange={(e) => setEndDate(e.target.value)}
-                  className="mt-2 w-full rounded-lg border border-border bg-background px-3 py-2 font-sans text-sm text-foreground outline-none focus:ring-2 focus:ring-primary"
-                />
-              </div>
+              {!isRelay && (
+                <div>
+                  <label htmlFor="end" className="font-sans text-sm font-semibold text-foreground">
+                    End date
+                  </label>
+                  <input
+                    id="end"
+                    type="date"
+                    value={endDate}
+                    onChange={(e) => setEndDate(e.target.value)}
+                    className="mt-2 w-full rounded-lg border border-border bg-background px-3 py-2 font-sans text-sm text-foreground outline-none focus:ring-2 focus:ring-primary"
+                  />
+                </div>
+              )}
             </div>
+
 
             <TooltipProvider delayDuration={150}>
               <div>
