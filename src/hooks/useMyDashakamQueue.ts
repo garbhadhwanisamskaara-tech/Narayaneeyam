@@ -73,7 +73,11 @@ export function useMyDashakamQueue() {
       // 1. Groups the user is an active member of, plus groups they own.
       const [memberRes, ownedRes] = await Promise.all([
         (supabase as any).from("group_members").select("group_id, left_at").eq("user_id", user.id),
-        (supabase as any).from("groups").select("id, group_name").eq("owner_id", user.id).neq("status", "dissolved"),
+        (supabase as any)
+          .from("groups")
+          .select("id, group_name")
+          .eq("owner_id", user.id)
+          .not("status", "in", HIDDEN_GROUP_STATUSES_FILTER),
       ]);
       const memberGroupIds = ((memberRes.data ?? []) as { group_id: string; left_at: string | null }[])
         .filter((r) => !r.left_at)
