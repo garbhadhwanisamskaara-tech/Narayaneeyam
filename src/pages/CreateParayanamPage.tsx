@@ -82,15 +82,19 @@ export default function CreateParayanamPage() {
   const selectedSet = sets.find((s) => s.id === setId);
   const dashakams = setId === "custom" ? [...custom].sort((a, b) => a - b) : selectedSet?.dashakam_list ?? [];
   const templateLocked = selectedTemplateId !== "scratch";
+  /** Relay parayanams run on a single day, so they have no duration. */
+  const isRelay = isGroup && distribution === "split";
+  const effectiveEndDate = isRelay ? startDate : endDate;
 
   // Date-spread preview (assignment resolved at submit time)
   const planned = useMemo(
     () =>
-      dashakams.length && endDate >= startDate
-        ? buildSchedule(dashakams, startDate, endDate, "synchronized", [])
+      dashakams.length && effectiveEndDate >= startDate
+        ? buildSchedule(dashakams, startDate, effectiveEndDate, "synchronized", [])
         : [],
-    [dashakams, startDate, endDate]
+    [dashakams, startDate, effectiveEndDate]
   );
+
 
   const toggleCustom = (n: number) =>
     setCustom((prev) => (prev.includes(n) ? prev.filter((x) => x !== n) : [...prev, n]));
