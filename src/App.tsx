@@ -94,7 +94,7 @@ const App = () => {
                   <Route path="/progress" element={<DashboardPage />} />
                   <Route path="/dashboard" element={<DashboardPage />} />
                   <Route path="/podcast" element={<PodcastPage />} />
-                  <Route path="/challenges/new" element={<ChallengeCreationPage />} />
+                  
                   <Route path="/parayanam/new" element={<CreateParayanamPage />} />
 
                   <Route path="/my-parayanams" element={<MyParayanamsPage />} />
