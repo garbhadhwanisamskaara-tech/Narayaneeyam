@@ -161,7 +161,8 @@ export default function CreateParayanamPage() {
               : "group_relay"
             : "personal",
           start_date: startDate,
-          end_date: endDate,
+          end_date: effectiveEndDate,
+
           technical_state: "ACTIVE",
           spiritual_state: "in_progress",
           dashakams_target: dashakams.length,
