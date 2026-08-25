@@ -8,7 +8,7 @@ import { useDashakamSets } from "@/hooks/useDashakamSets";
 import { useParayanamTemplates } from "@/hooks/useParayanamTemplates";
 import { prefetchDashakamList } from "@/hooks/useDashakam";
 import { useGroupMembers } from "@/hooks/useGroups";
-import { buildSchedule } from "@/hooks/useParayanamSchedule";
+import { buildSchedule, daysBetween } from "@/hooks/useParayanamSchedule";
 import { inviteParticipants } from "@/hooks/useParayanamParticipants";
 import ParticipantPicker from "@/components/ParticipantPicker";
 import SEO from "@/components/SEO";
@@ -39,7 +39,7 @@ export default function CreateParayanamPage() {
   const [selectedTemplateId, setSelectedTemplateId] = useState<string>("scratch");
   const [startDate, setStartDate] = useState(today());
   const [endDate, setEndDate] = useState(plusDays(99));
-  const [distribution, setDistribution] = useState<"synchronized" | "split">("synchronized");
+  const [distribution, setDistribution] = useState<"synchronized" | "repeat" | "split">("synchronized");
   const [selectedParticipants, setSelectedParticipants] = useState<string[]>([]);
   const [includeSelf, setIncludeSelf] = useState(true);
   const [busy, setBusy] = useState(false);
@@ -84,16 +84,28 @@ export default function CreateParayanamPage() {
   const templateLocked = selectedTemplateId !== "scratch";
   /** Relay parayanams run on a single day, so they have no duration. */
   const isRelay = isGroup && distribution === "split";
+  const isRepeat = isGroup && distribution === "repeat";
   const effectiveEndDate = isRelay ? startDate : endDate;
+
+  /**
+   * REPEAT: the same set is read every day, so the list is repeated once per day.
+   * The expanded length always divides evenly by the day count.
+   */
+  const submitDashakams = useMemo(() => {
+    if (!isRepeat || !dashakams.length || effectiveEndDate < startDate) return dashakams;
+    const days = daysBetween(startDate, effectiveEndDate);
+    return Array.from({ length: days }, () => dashakams).flat();
+  }, [isRepeat, dashakams, startDate, effectiveEndDate]);
 
   // Date-spread preview (assignment resolved at submit time)
   const planned = useMemo(
     () =>
-      dashakams.length && effectiveEndDate >= startDate
-        ? buildSchedule(dashakams, startDate, effectiveEndDate, "synchronized", [])
+      submitDashakams.length && effectiveEndDate >= startDate
+        ? buildSchedule(submitDashakams, startDate, effectiveEndDate, "synchronized", [])
         : [],
-    [dashakams, startDate, effectiveEndDate]
+    [submitDashakams, startDate, effectiveEndDate]
   );
+
 
 
   const toggleCustom = (n: number) =>
@@ -156,17 +168,18 @@ export default function CreateParayanamPage() {
           parayanam_name: parayanamName.trim() || null,
           mode: "daily",
           challenge_type: isGroup
-            ? distribution === "synchronized"
-              ? "group_standard"
-              : "group_relay"
+            ? distribution === "split"
+              ? "group_relay"
+              : "group_standard"
             : "personal",
           start_date: startDate,
           end_date: effectiveEndDate,
 
           technical_state: "ACTIVE",
           spiritual_state: "in_progress",
-          dashakams_target: dashakams.length,
-          dashakam_list: dashakams,
+          dashakams_target: submitDashakams.length,
+          dashakam_list: submitDashakams,
+
           dashakam_set_id: setId === "custom" ? null : setId,
         })
         .select("id")
@@ -388,20 +401,26 @@ export default function CreateParayanamPage() {
             {isGroup && (
               <div>
                 <p className="font-sans text-sm font-semibold text-foreground">How should dashakams be shared?</p>
-                <div className="mt-3 grid gap-3 sm:grid-cols-2">
+                <div className="mt-3 grid gap-3 sm:grid-cols-3">
                   {(
                     [
                       [
                         "synchronized",
-                        "Same Dashakam for everyone",
-                        "All participants chant the same dashakam on the same day.",
+                        "Everyone reads together, a new dashakam each day",
+                        "All participants chant the same dashakam on the same day, moving to the next one the next day.",
+                      ],
+                      [
+                        "repeat",
+                        "Everyone reads the same dashakams, every day",
+                        "All participants chant the whole selected set every day of the parayanam.",
                       ],
                       [
                         "split",
-                        "Relay — split among members",
+                        "Dashakams split among participants",
                         "All selected dashakams are split evenly among members and everyone reads their share on the same day.",
                       ],
                     ] as const
+
                   ).map(([value, label, hint]) => (
                     <button
                       key={value}
