@@ -300,7 +300,7 @@ export default function GroupSchedulePage() {
               <div>
                 <p className="font-sans text-xs uppercase tracking-wide text-muted-foreground">Distribution</p>
                 <p className="mt-1 font-sans text-sm text-foreground">
-                  {mode === "synchronized" ? "Same Dashakam for everyone" : "Dashakams split among participants"}
+                  {mode === "synchronized" ? "Same Dashakam for everyone" : "Relay — split among members"}
                 </p>
               </div>
               <div>
