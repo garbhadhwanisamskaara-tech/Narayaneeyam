@@ -28,7 +28,9 @@ export function daysBetween(start: string, end: string) {
 /**
  * Spread `dashakams` over the date range, then assign owners.
  * Synchronized → assigned_user_id = null (everyone chants the same dashakam).
- * Split        → dashakams dealt round-robin across the member list.
+ * Split (relay) → single day (startDate only); dashakams are cut into contiguous
+ *                 blocks, one per member, evenly (first `remainder` members get one extra).
+ *                 Mirrors the server-side finalize_parayanam() allocation.
  */
 export function buildSchedule(
   dashakams: number[],
@@ -37,6 +39,23 @@ export function buildSchedule(
   mode: DistributionMode,
   memberIds: string[]
 ): Omit<ScheduleRow, "id" | "challenge_session_id">[] {
+  if (mode === "split") {
+    const n = memberIds.length;
+    const base = n ? Math.floor(dashakams.length / n) : 0;
+    const remainder = n ? dashakams.length % n : 0;
+    const owners: (string | null)[] = [];
+    memberIds.forEach((id, idx) => {
+      const count = base + (idx < remainder ? 1 : 0);
+      for (let k = 0; k < count; k++) owners.push(id);
+    });
+    return dashakams.map((dashakam_no, i) => ({
+      dashakam_no,
+      scheduled_date: startDate,
+      assigned_user_id: owners[i] ?? null,
+      is_manual_override: false,
+    }));
+  }
+
   const totalDays = daysBetween(startDate, endDate);
   const perDay = Math.ceil(dashakams.length / totalDays);
   const start = new Date(`${startDate}T00:00:00Z`);
@@ -48,12 +67,12 @@ export function buildSchedule(
     return {
       dashakam_no,
       scheduled_date: isoDate(date),
-      assigned_user_id:
-        mode === "split" && memberIds.length ? memberIds[i % memberIds.length] : null,
+      assigned_user_id: null,
       is_manual_override: false,
     };
   });
 }
+
 
 export function useParayanamSchedule(sessionId: string | null | undefined) {
   const [rows, setRows] = useState<ScheduleRow[]>([]);
