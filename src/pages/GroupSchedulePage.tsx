@@ -163,10 +163,11 @@ export default function GroupSchedulePage() {
 
   const handleGenerate = async () => {
     if (!group || !selectedSet) return;
-    if (endDate < startDate) {
+    if (!isRelay && endDate < startDate) {
       setError("The end date must be on or after the start date.");
       return;
     }
+
     if (members.length <= 1 && !soloWarning) {
       setSoloWarning(true);
       return;
