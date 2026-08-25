@@ -71,10 +71,7 @@ export default function ManageParayanamDialog({
   const [removalMode, setRemovalMode] = useState<RemovalMode>("distribute");
   const [assignTo, setAssignTo] = useState("");
 
-  const statusById = useMemo(
-    () => new Map(participants.map((p) => [p.user_id, p.status])),
-    [participants]
-  );
+  const statusById = useMemo(() => new Map(participants.map((p) => [p.user_id, p.status])), [participants]);
 
   const invitable = members.filter((m) => !statusById.has(m.user_id));
   const current = members.filter((m) => statusById.has(m.user_id));
@@ -99,7 +96,7 @@ export default function ManageParayanamDialog({
 
   /** Confirmed participants who could take over someone else's dashakams. */
   const reassignCandidates = members.filter(
-    (m) => statusById.get(m.user_id) === "confirmed" && m.user_id !== removeTarget?.userId
+    (m) => statusById.get(m.user_id) === "confirmed" && m.user_id !== removeTarget?.userId,
   );
 
   /** Ask about redistribution only when there is actually something to redistribute. */
@@ -164,7 +161,7 @@ export default function ManageParayanamDialog({
     setBusy(true);
     const { error } = await (supabase as any)
       .from("challenge_sessions")
-      .update({ technical_state: "CANCELLED", completed_at: new Date().toISOString() })
+      .update({ technical_state: "ARCHIVED", completed_at: new Date().toISOString() })
       .eq("id", sessionId);
     if (!error) {
       await (supabase as any)
@@ -343,8 +340,8 @@ export default function ManageParayanamDialog({
           <AlertDialogHeader>
             <AlertDialogTitle>Remove {removeTarget?.name} from this parayanam?</AlertDialogTitle>
             <AlertDialogDescription>
-              They will no longer take part in “{parayanamName || "this parayanam"}”, and their assigned
-              dashakams will be freed. They stay a member of the group.
+              They will no longer take part in “{parayanamName || "this parayanam"}”, and their assigned dashakams will
+              be freed. They stay a member of the group.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
@@ -395,9 +392,7 @@ export default function ManageParayanamDialog({
                 checked={removalMode === "distribute"}
                 onChange={() => setRemovalMode("distribute")}
               />
-              <span className="font-sans text-sm text-foreground">
-                Distribute evenly among remaining participants
-              </span>
+              <span className="font-sans text-sm text-foreground">Distribute evenly among remaining participants</span>
             </label>
 
             <label className="flex cursor-pointer items-start gap-3 rounded-lg border border-border p-3 hover:bg-muted">
@@ -454,8 +449,8 @@ export default function ManageParayanamDialog({
           <AlertDialogHeader>
             <AlertDialogTitle>Cancel “{parayanamName || "this parayanam"}”?</AlertDialogTitle>
             <AlertDialogDescription>
-              This stops the parayanam for everyone taking part. It cannot be restarted, though you can always
-              add a new parayanam.
+              This stops the parayanam for everyone taking part. It cannot be restarted, though you can always add a new
+              parayanam.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
