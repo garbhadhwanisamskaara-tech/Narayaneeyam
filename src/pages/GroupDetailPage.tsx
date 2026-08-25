@@ -133,17 +133,29 @@ export default function GroupDetailPage() {
   // Default selection: the group's active pointer when it is in the list,
   // otherwise the most recent parayanam. Explicit picks always win afterwards.
   useEffect(() => {
-    if (pickerTouched || loadingParayanams) return;
+    if (loadingParayanams) return;
     if (!parayanams.length) {
       setSelectedSessionId(null);
       return;
     }
+    // A cancelled parayanam disappears from the list — fall back at once so
+    // the page never keeps showing something that is no longer visible.
+    const stillThere =
+      !!selectedSessionId && parayanams.some((p) => p.session_id === selectedSessionId);
+    if (pickerTouched && stillThere) return;
+
     const active = group?.active_challenge_session_id;
     const fallback = parayanams[0].session_id;
     setSelectedSessionId(
       active && parayanams.some((p) => p.session_id === active) ? active : fallback
     );
-  }, [parayanams, loadingParayanams, group?.active_challenge_session_id, pickerTouched]);
+  }, [
+    parayanams,
+    loadingParayanams,
+    group?.active_challenge_session_id,
+    pickerTouched,
+    selectedSessionId,
+  ]);
 
 
 
