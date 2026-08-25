@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from "react";
 import { track } from "@/lib/analytics";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
+import { HIDDEN_GROUP_STATUSES_FILTER } from "@/lib/parayanamFilters";
 
 export interface Group {
   id: string;
