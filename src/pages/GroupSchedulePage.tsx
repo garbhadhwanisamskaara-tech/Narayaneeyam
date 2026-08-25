@@ -131,6 +131,10 @@ export default function GroupSchedulePage() {
 
   const isOwner = !!user && !!group && group.owner_id === user.id;
   const memberIds = members.map((m) => m.user_id);
+  /** Relay parayanams run on a single day, so they have no duration. */
+  const isRelay = mode === "split";
+  const effectiveEndDate = isRelay ? startDate : endDate;
+
 
   useEffect(() => {
     if (!user) return;
