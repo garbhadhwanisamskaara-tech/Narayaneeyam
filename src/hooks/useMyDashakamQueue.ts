@@ -1,6 +1,10 @@
 import { useCallback, useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
+import {
+  HIDDEN_GROUP_STATUSES_FILTER,
+  HIDDEN_SESSION_STATES_FILTER,
+} from "@/lib/parayanamFilters";
 
 export interface QueueItem {
   /** parayanam_schedule row id — the unit of completion. */
@@ -91,7 +95,7 @@ export function useMyDashakamQueue() {
           .from("groups")
           .select("id, group_name")
           .in("id", missing)
-          .neq("status", "dissolved");
+          .not("status", "in", HIDDEN_GROUP_STATUSES_FILTER);
         for (const g of (data ?? []) as { id: string; group_name: string }[]) {
           groupNames.set(g.id, g.group_name);
         }
@@ -104,7 +108,8 @@ export function useMyDashakamQueue() {
           .from("challenge_sessions")
           .select("id, group_id, user_id")
           .eq("user_id", user.id)
-          .is("completed_at", null),
+          .is("completed_at", null)
+          .not("technical_state", "in", HIDDEN_SESSION_STATES_FILTER),
       ];
       if (groupIds.length) {
         sessionQueries.push(
@@ -112,7 +117,8 @@ export function useMyDashakamQueue() {
             .from("challenge_sessions")
             .select("id, group_id, user_id")
             .in("group_id", groupIds)
-            .is("completed_at", null),
+            .is("completed_at", null)
+            .not("technical_state", "in", HIDDEN_SESSION_STATES_FILTER),
         );
       }
       const sessionRes = await Promise.all(sessionQueries);

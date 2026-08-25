@@ -73,7 +73,7 @@ export function useGroups() {
         .from("groups")
         .select(GROUP_COLS)
         .eq("owner_id", user.id)
-        .neq("status", "dissolved"),
+        .not("status", "in", HIDDEN_GROUP_STATUSES_FILTER),
     ]);
 
     if (memberRes.error && ownedRes.error) {
@@ -93,7 +93,7 @@ export function useGroups() {
         .from("groups")
         .select(GROUP_COLS)
         .in("id", memberIds)
-        .neq("status", "dissolved");
+        .not("status", "in", HIDDEN_GROUP_STATUSES_FILTER);
       joined = (data ?? []) as Group[];
     }
 
