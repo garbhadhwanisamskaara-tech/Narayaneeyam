@@ -131,6 +131,10 @@ export default function GroupSchedulePage() {
 
   const isOwner = !!user && !!group && group.owner_id === user.id;
   const memberIds = members.map((m) => m.user_id);
+  /** Relay parayanams run on a single day, so they have no duration. */
+  const isRelay = mode === "split";
+  const effectiveEndDate = isRelay ? startDate : endDate;
+
 
   useEffect(() => {
     if (!user) return;
@@ -159,10 +163,11 @@ export default function GroupSchedulePage() {
 
   const handleGenerate = async () => {
     if (!group || !selectedSet) return;
-    if (endDate < startDate) {
+    if (!isRelay && endDate < startDate) {
       setError("The end date must be on or after the start date.");
       return;
     }
+
     if (members.length <= 1 && !soloWarning) {
       setSoloWarning(true);
       return;
@@ -182,7 +187,8 @@ export default function GroupSchedulePage() {
         mode: "daily",
         challenge_type: mode === "synchronized" ? "group_standard" : "group_relay",
         start_date: startDate,
-        end_date: endDate,
+        end_date: effectiveEndDate,
+
         technical_state: "ACTIVE",
         spiritual_state: "in_progress",
         dashakams_target: selectedSet.dashakam_list.length,
@@ -294,7 +300,7 @@ export default function GroupSchedulePage() {
               <div>
                 <p className="font-sans text-xs uppercase tracking-wide text-muted-foreground">Distribution</p>
                 <p className="mt-1 font-sans text-sm text-foreground">
-                  {mode === "synchronized" ? "Same Dashakam for everyone" : "Dashakams split among participants"}
+                  {mode === "synchronized" ? "Same Dashakam for everyone" : "Relay — split among members"}
                 </p>
               </div>
               <div>
@@ -309,18 +315,21 @@ export default function GroupSchedulePage() {
                     : "—"}
                 </p>
               </div>
-              <div>
-                <p className="font-sans text-xs uppercase tracking-wide text-muted-foreground">End date</p>
-                <p className="mt-1 font-sans text-sm text-foreground">
-                  {session?.end_date
-                    ? new Date(`${session.end_date}T00:00:00Z`).toLocaleDateString("en-IN", {
-                        day: "numeric",
-                        month: "short",
-                        year: "numeric",
-                      })
-                    : "—"}
-                </p>
-              </div>
+              {!isRelay && (
+                <div>
+                  <p className="font-sans text-xs uppercase tracking-wide text-muted-foreground">End date</p>
+                  <p className="mt-1 font-sans text-sm text-foreground">
+                    {session?.end_date
+                      ? new Date(`${session.end_date}T00:00:00Z`).toLocaleDateString("en-IN", {
+                          day: "numeric",
+                          month: "short",
+                          year: "numeric",
+                        })
+                      : "—"}
+                  </p>
+                </div>
+              )}
+
             </div>
 
             <div>
@@ -397,7 +406,7 @@ export default function GroupSchedulePage() {
             <div className="grid gap-4 sm:grid-cols-2">
               <div>
                 <label htmlFor="start" className="font-sans text-sm font-semibold text-foreground">
-                  Start date
+                  {isRelay ? "Date of the parayanam" : "Start date"}
                 </label>
                 <input
                   id="start"
@@ -406,20 +415,28 @@ export default function GroupSchedulePage() {
                   onChange={(e) => setStartDate(e.target.value)}
                   className="mt-2 w-full rounded-lg border border-border bg-background px-3 py-2 font-sans text-sm text-foreground outline-none focus:ring-2 focus:ring-primary"
                 />
+                {isRelay && (
+                  <p className="mt-2 font-sans text-xs text-muted-foreground">
+                    A relay parayanam is completed on this single day.
+                  </p>
+                )}
               </div>
-              <div>
-                <label htmlFor="end" className="font-sans text-sm font-semibold text-foreground">
-                  End date
-                </label>
-                <input
-                  id="end"
-                  type="date"
-                  value={endDate}
-                  onChange={(e) => setEndDate(e.target.value)}
-                  className="mt-2 w-full rounded-lg border border-border bg-background px-3 py-2 font-sans text-sm text-foreground outline-none focus:ring-2 focus:ring-primary"
-                />
-              </div>
+              {!isRelay && (
+                <div>
+                  <label htmlFor="end" className="font-sans text-sm font-semibold text-foreground">
+                    End date
+                  </label>
+                  <input
+                    id="end"
+                    type="date"
+                    value={endDate}
+                    onChange={(e) => setEndDate(e.target.value)}
+                    className="mt-2 w-full rounded-lg border border-border bg-background px-3 py-2 font-sans text-sm text-foreground outline-none focus:ring-2 focus:ring-primary"
+                  />
+                </div>
+              )}
             </div>
+
 
             <TooltipProvider delayDuration={150}>
               <div>
@@ -437,8 +454,9 @@ export default function GroupSchedulePage() {
                     </TooltipTrigger>
                     <TooltipContent side="top" className="max-w-[260px]">
                       <p className="font-sans text-xs text-popover-foreground">
-                        Same Dashakam for everyone: all participants chant the same dashakam on the same day. Dashakams
-                        split among participants: each dashakam is assigned to a different participant.
+                        Same Dashakam for everyone: all participants chant the same dashakam on the same day. Relay:
+                        all selected dashakams are split evenly among members and everyone reads their share on the
+                        same day.
                       </p>
                     </TooltipContent>
                   </Tooltip>
@@ -446,10 +464,19 @@ export default function GroupSchedulePage() {
                 <div className="mt-2 grid gap-3 sm:grid-cols-2">
                   {(
                     [
-                      ["synchronized", "Same Dashakam for everyone", ""],
-                      ["split", "Dashakams split among participants", ""],
+                      [
+                        "synchronized",
+                        "Same Dashakam for everyone",
+                        "All participants chant the same dashakam on the same day.",
+                      ],
+                      [
+                        "split",
+                        "Relay — split among members",
+                        "All selected dashakams are split evenly among members and everyone reads their share on the same day.",
+                      ],
                     ] as const
                   ).map(([value, label, hint]) => (
+
                     <button
                       key={value}
                       onClick={() => setMode(value)}

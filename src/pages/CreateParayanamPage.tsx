@@ -82,15 +82,19 @@ export default function CreateParayanamPage() {
   const selectedSet = sets.find((s) => s.id === setId);
   const dashakams = setId === "custom" ? [...custom].sort((a, b) => a - b) : selectedSet?.dashakam_list ?? [];
   const templateLocked = selectedTemplateId !== "scratch";
+  /** Relay parayanams run on a single day, so they have no duration. */
+  const isRelay = isGroup && distribution === "split";
+  const effectiveEndDate = isRelay ? startDate : endDate;
 
   // Date-spread preview (assignment resolved at submit time)
   const planned = useMemo(
     () =>
-      dashakams.length && endDate >= startDate
-        ? buildSchedule(dashakams, startDate, endDate, "synchronized", [])
+      dashakams.length && effectiveEndDate >= startDate
+        ? buildSchedule(dashakams, startDate, effectiveEndDate, "synchronized", [])
         : [],
-    [dashakams, startDate, endDate]
+    [dashakams, startDate, effectiveEndDate]
   );
+
 
   const toggleCustom = (n: number) =>
     setCustom((prev) => (prev.includes(n) ? prev.filter((x) => x !== n) : [...prev, n]));
@@ -126,8 +130,9 @@ export default function CreateParayanamPage() {
     step === 1
       ? dashakams.length > 0
       : step === 2
-        ? !!startDate && !!endDate && endDate >= startDate
+        ? !!startDate && (isRelay || (!!endDate && endDate >= startDate))
         : true;
+
 
 
   const handleBegin = () => {
@@ -156,7 +161,8 @@ export default function CreateParayanamPage() {
               : "group_relay"
             : "personal",
           start_date: startDate,
-          end_date: endDate,
+          end_date: effectiveEndDate,
+
           technical_state: "ACTIVE",
           spiritual_state: "in_progress",
           dashakams_target: dashakams.length,
@@ -378,63 +384,84 @@ export default function CreateParayanamPage() {
         )}
 
         {step === 2 && (
-          <div className="grid gap-4 sm:grid-cols-2">
-            <div>
-              <label htmlFor="start" className="font-sans text-sm font-semibold text-foreground">
-                Start date
-              </label>
-              <input
-                id="start"
-                type="date"
-                value={startDate}
-                onChange={(e) => setStartDate(e.target.value)}
-                className="mt-2 w-full rounded-lg border border-border bg-background px-3 py-2 font-sans text-sm text-foreground outline-none focus:ring-2 focus:ring-primary"
-              />
-            </div>
-            <div>
-              <label htmlFor="end" className="font-sans text-sm font-semibold text-foreground">
-                End date
-              </label>
-              <input
-                id="end"
-                type="date"
-                value={endDate}
-                onChange={(e) => setEndDate(e.target.value)}
-                className="mt-2 w-full rounded-lg border border-border bg-background px-3 py-2 font-sans text-sm text-foreground outline-none focus:ring-2 focus:ring-primary"
-              />
-            </div>
-            {endDate < startDate && (
-              <p className="font-sans text-xs text-destructive sm:col-span-2">
-                The end date must be on or after the start date.
-              </p>
+          <div className="space-y-5">
+            {isGroup && (
+              <div>
+                <p className="font-sans text-sm font-semibold text-foreground">How should dashakams be shared?</p>
+                <div className="mt-3 grid gap-3 sm:grid-cols-2">
+                  {(
+                    [
+                      [
+                        "synchronized",
+                        "Same Dashakam for everyone",
+                        "All participants chant the same dashakam on the same day.",
+                      ],
+                      [
+                        "split",
+                        "Relay — split among members",
+                        "All selected dashakams are split evenly among members and everyone reads their share on the same day.",
+                      ],
+                    ] as const
+                  ).map(([value, label, hint]) => (
+                    <button
+                      key={value}
+                      onClick={() => setDistribution(value)}
+                      className={`rounded-xl border p-4 text-left transition-colors ${
+                        distribution === value ? "border-primary bg-secondary/30" : "border-border hover:border-primary"
+                      }`}
+                    >
+                      <span className="font-sans text-sm font-semibold text-foreground">{label}</span>
+                      <span className="mt-1 block font-sans text-xs text-muted-foreground">{hint}</span>
+                    </button>
+                  ))}
+                </div>
+              </div>
             )}
+
+            <div className="grid gap-4 sm:grid-cols-2">
+              <div>
+                <label htmlFor="start" className="font-sans text-sm font-semibold text-foreground">
+                  {isRelay ? "Date of the parayanam" : "Start date"}
+                </label>
+                <input
+                  id="start"
+                  type="date"
+                  value={startDate}
+                  onChange={(e) => setStartDate(e.target.value)}
+                  className="mt-2 w-full rounded-lg border border-border bg-background px-3 py-2 font-sans text-sm text-foreground outline-none focus:ring-2 focus:ring-primary"
+                />
+                {isRelay && (
+                  <p className="mt-2 font-sans text-xs text-muted-foreground">
+                    A relay parayanam is completed on this single day.
+                  </p>
+                )}
+              </div>
+              {!isRelay && (
+                <div>
+                  <label htmlFor="end" className="font-sans text-sm font-semibold text-foreground">
+                    End date
+                  </label>
+                  <input
+                    id="end"
+                    type="date"
+                    value={endDate}
+                    onChange={(e) => setEndDate(e.target.value)}
+                    className="mt-2 w-full rounded-lg border border-border bg-background px-3 py-2 font-sans text-sm text-foreground outline-none focus:ring-2 focus:ring-primary"
+                  />
+                </div>
+              )}
+              {!isRelay && endDate < startDate && (
+                <p className="font-sans text-xs text-destructive sm:col-span-2">
+                  The end date must be on or after the start date.
+                </p>
+              )}
+            </div>
           </div>
         )}
 
         {step === 3 && isGroup && (
           <div className="space-y-5">
-            <div>
-              <p className="font-sans text-sm font-semibold text-foreground">How should dashakams be shared?</p>
-              <div className="mt-3 grid gap-3 sm:grid-cols-2">
-                {(
-                  [
-                    ["synchronized", "Same Dashakam for everyone", ""],
-                    ["split", "Dashakams split among participants", ""],
-                  ] as const
-                ).map(([value, label, hint]) => (
-                  <button
-                    key={value}
-                    onClick={() => setDistribution(value)}
-                    className={`rounded-xl border p-4 text-left transition-colors ${
-                      distribution === value ? "border-primary bg-secondary/30" : "border-border hover:border-primary"
-                    }`}
-                  >
-                    <span className="font-sans text-sm font-semibold text-foreground">{label}</span>
-                    <span className="mt-1 block font-sans text-xs text-muted-foreground">{hint}</span>
-                  </button>
-                ))}
-              </div>
-            </div>
+
 
             <ParticipantPicker
               members={members}
