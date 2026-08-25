@@ -84,16 +84,28 @@ export default function CreateParayanamPage() {
   const templateLocked = selectedTemplateId !== "scratch";
   /** Relay parayanams run on a single day, so they have no duration. */
   const isRelay = isGroup && distribution === "split";
+  const isRepeat = isGroup && distribution === "repeat";
   const effectiveEndDate = isRelay ? startDate : endDate;
+
+  /**
+   * REPEAT: the same set is read every day, so the list is repeated once per day.
+   * The expanded length always divides evenly by the day count.
+   */
+  const submitDashakams = useMemo(() => {
+    if (!isRepeat || !dashakams.length || effectiveEndDate < startDate) return dashakams;
+    const days = daysBetween(startDate, effectiveEndDate);
+    return Array.from({ length: days }, () => dashakams).flat();
+  }, [isRepeat, dashakams, startDate, effectiveEndDate]);
 
   // Date-spread preview (assignment resolved at submit time)
   const planned = useMemo(
     () =>
-      dashakams.length && effectiveEndDate >= startDate
-        ? buildSchedule(dashakams, startDate, effectiveEndDate, "synchronized", [])
+      submitDashakams.length && effectiveEndDate >= startDate
+        ? buildSchedule(submitDashakams, startDate, effectiveEndDate, "synchronized", [])
         : [],
-    [dashakams, startDate, effectiveEndDate]
+    [submitDashakams, startDate, effectiveEndDate]
   );
+
 
 
   const toggleCustom = (n: number) =>
