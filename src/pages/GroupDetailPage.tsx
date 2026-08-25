@@ -177,7 +177,7 @@ export default function GroupDetailPage() {
     return () => {
       cancelled = true;
     };
-  }, [groupId]);
+  }, [groupId, refreshKey]);
 
   useEffect(() => {
     const sessionId = selectedSessionId;
