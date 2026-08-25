@@ -8,7 +8,7 @@ import { useDashakamSets } from "@/hooks/useDashakamSets";
 import { useParayanamTemplates } from "@/hooks/useParayanamTemplates";
 import { prefetchDashakamList } from "@/hooks/useDashakam";
 import { useGroupMembers } from "@/hooks/useGroups";
-import { buildSchedule } from "@/hooks/useParayanamSchedule";
+import { buildSchedule, daysBetween } from "@/hooks/useParayanamSchedule";
 import { inviteParticipants } from "@/hooks/useParayanamParticipants";
 import ParticipantPicker from "@/components/ParticipantPicker";
 import SEO from "@/components/SEO";
