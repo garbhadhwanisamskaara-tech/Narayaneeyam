@@ -313,18 +313,21 @@ export default function GroupSchedulePage() {
                     : "—"}
                 </p>
               </div>
-              <div>
-                <p className="font-sans text-xs uppercase tracking-wide text-muted-foreground">End date</p>
-                <p className="mt-1 font-sans text-sm text-foreground">
-                  {session?.end_date
-                    ? new Date(`${session.end_date}T00:00:00Z`).toLocaleDateString("en-IN", {
-                        day: "numeric",
-                        month: "short",
-                        year: "numeric",
-                      })
-                    : "—"}
-                </p>
-              </div>
+              {!isRelay && (
+                <div>
+                  <p className="font-sans text-xs uppercase tracking-wide text-muted-foreground">End date</p>
+                  <p className="mt-1 font-sans text-sm text-foreground">
+                    {session?.end_date
+                      ? new Date(`${session.end_date}T00:00:00Z`).toLocaleDateString("en-IN", {
+                          day: "numeric",
+                          month: "short",
+                          year: "numeric",
+                        })
+                      : "—"}
+                  </p>
+                </div>
+              )}
+
             </div>
 
             <div>
