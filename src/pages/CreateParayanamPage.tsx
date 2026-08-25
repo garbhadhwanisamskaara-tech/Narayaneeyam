@@ -168,17 +168,18 @@ export default function CreateParayanamPage() {
           parayanam_name: parayanamName.trim() || null,
           mode: "daily",
           challenge_type: isGroup
-            ? distribution === "synchronized"
-              ? "group_standard"
-              : "group_relay"
+            ? distribution === "split"
+              ? "group_relay"
+              : "group_standard"
             : "personal",
           start_date: startDate,
           end_date: effectiveEndDate,
 
           technical_state: "ACTIVE",
           spiritual_state: "in_progress",
-          dashakams_target: dashakams.length,
-          dashakam_list: dashakams,
+          dashakams_target: submitDashakams.length,
+          dashakam_list: submitDashakams,
+
           dashakam_set_id: setId === "custom" ? null : setId,
         })
         .select("id")
