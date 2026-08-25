@@ -55,7 +55,7 @@ import BlogIndexPage from "./pages/blog/BlogIndexPage";
 import BlogPostPage from "./pages/blog/BlogPostPage";
 import PrivacyPage from "./pages/PrivacyPage";
 import SankalpaMomentPage from "./pages/SankalpaMomentPage";
-import ChallengeCreationPage from "./pages/ChallengeCreationPage";
+
 import CreateParayanamPage from "./pages/CreateParayanamPage";
 
 
@@ -94,7 +94,7 @@ const App = () => {
                   <Route path="/progress" element={<DashboardPage />} />
                   <Route path="/dashboard" element={<DashboardPage />} />
                   <Route path="/podcast" element={<PodcastPage />} />
-                  <Route path="/challenges/new" element={<ChallengeCreationPage />} />
+                  
                   <Route path="/parayanam/new" element={<CreateParayanamPage />} />
 
                   <Route path="/my-parayanams" element={<MyParayanamsPage />} />
