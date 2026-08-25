@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from "react";
 import { track } from "@/lib/analytics";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
+import { HIDDEN_GROUP_STATUSES_FILTER } from "@/lib/parayanamFilters";
 
 export interface Group {
   id: string;
@@ -73,7 +74,7 @@ export function useGroups() {
         .from("groups")
         .select(GROUP_COLS)
         .eq("owner_id", user.id)
-        .neq("status", "dissolved"),
+        .not("status", "in", HIDDEN_GROUP_STATUSES_FILTER),
     ]);
 
     if (memberRes.error && ownedRes.error) {
@@ -93,7 +94,7 @@ export function useGroups() {
         .from("groups")
         .select(GROUP_COLS)
         .in("id", memberIds)
-        .neq("status", "dissolved");
+        .not("status", "in", HIDDEN_GROUP_STATUSES_FILTER);
       joined = (data ?? []) as Group[];
     }
 

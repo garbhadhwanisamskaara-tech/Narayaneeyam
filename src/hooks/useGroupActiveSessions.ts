@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { HIDDEN_SESSION_STATES_FILTER } from "@/lib/parayanamFilters";
 
 export interface ActiveGroupSession {
   id: string;
@@ -38,13 +39,14 @@ export function useGroupActiveSessions(groupId: string | undefined) {
       return;
     }
     setLoading(true);
-    // A parayanam counts as running while it isn't completed/cancelled —
-    // finalizing it may move technical_state on, so don't filter on that.
+    // A parayanam counts as running while it isn't completed — finalizing it
+    // may move technical_state on, so only archived/cancelled ones are hidden.
     const { data } = await (supabase as any)
       .from("challenge_sessions")
       .select("id, start_date, end_date, dashakam_set_id, dashakams_target, parayanam_name, completed_at, technical_state")
       .eq("group_id", groupId)
       .is("completed_at", null)
+      .not("technical_state", "in", HIDDEN_SESSION_STATES_FILTER)
       .order("start_date", { ascending: false });
 
     const rows = (data ?? []) as Omit<ActiveGroupSession, "set_name">[];
