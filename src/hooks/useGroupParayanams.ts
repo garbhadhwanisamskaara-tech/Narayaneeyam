@@ -37,11 +37,30 @@ export function useGroupParayanams(groupId: string | undefined) {
       setParayanams([]);
     } else {
       setError(null);
-      const rows = ((data ?? []) as GroupParayanam[]).slice().sort((a, b) => {
+      let rows = ((data ?? []) as GroupParayanam[]).slice().sort((a, b) => {
         const av = a.start_date ?? "";
         const bv = b.start_date ?? "";
         return av < bv ? 1 : av > bv ? -1 : 0;
       });
+
+      // The RPC doesn't expose technical_state, so drop archived/cancelled
+      // parayanams here — they stay in the database, just out of sight.
+      if (rows.length) {
+        const { data: stateRows } = await (supabase as any)
+          .from("challenge_sessions")
+          .select("id, technical_state")
+          .in(
+            "id",
+            rows.map((r) => r.session_id)
+          );
+        const hidden = new Set(
+          ((stateRows ?? []) as { id: string; technical_state: string | null }[])
+            .filter((s) => isHiddenSessionState(s.technical_state))
+            .map((s) => s.id)
+        );
+        if (hidden.size) rows = rows.filter((r) => !hidden.has(r.session_id));
+      }
+
       setParayanams(rows);
     }
     setLoading(false);
