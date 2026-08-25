@@ -401,20 +401,26 @@ export default function CreateParayanamPage() {
             {isGroup && (
               <div>
                 <p className="font-sans text-sm font-semibold text-foreground">How should dashakams be shared?</p>
-                <div className="mt-3 grid gap-3 sm:grid-cols-2">
+                <div className="mt-3 grid gap-3 sm:grid-cols-3">
                   {(
                     [
                       [
                         "synchronized",
-                        "Same Dashakam for everyone",
-                        "All participants chant the same dashakam on the same day.",
+                        "Everyone reads together, a new dashakam each day",
+                        "All participants chant the same dashakam on the same day, moving to the next one the next day.",
+                      ],
+                      [
+                        "repeat",
+                        "Everyone reads the same dashakams, every day",
+                        "All participants chant the whole selected set every day of the parayanam.",
                       ],
                       [
                         "split",
-                        "Relay — split among members",
+                        "Dashakams split among participants",
                         "All selected dashakams are split evenly among members and everyone reads their share on the same day.",
                       ],
                     ] as const
+
                   ).map(([value, label, hint]) => (
                     <button
                       key={value}
