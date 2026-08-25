@@ -187,7 +187,8 @@ export default function GroupSchedulePage() {
         mode: "daily",
         challenge_type: mode === "synchronized" ? "group_standard" : "group_relay",
         start_date: startDate,
-        end_date: endDate,
+        end_date: effectiveEndDate,
+
         technical_state: "ACTIVE",
         spiritual_state: "in_progress",
         dashakams_target: selectedSet.dashakam_list.length,
