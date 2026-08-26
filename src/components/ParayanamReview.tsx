@@ -17,6 +17,10 @@ export type ParayanamReviewProps = {
   startDate: string;
   endDate: string;
   isSingleDay: boolean;
+  /** e.g. "Every Thursday & Saturday" */
+  scheduleLabel: string;
+  dayCount: number;
+  distributionLabel?: string;
   deliveryMode: "SELF_PACED" | "LIVE";
   live?: {
     planLabel: string;
@@ -43,6 +47,10 @@ export default function ParayanamReview(props: ParayanamReviewProps) {
     props.isSingleDay
       ? { label: "Date", value: prettyDate(props.startDate) }
       : { label: "Dates", value: `${prettyDate(props.startDate)} to ${prettyDate(props.endDate)}` },
+    { label: "Parayanam days", value: `${props.scheduleLabel} · ${props.dayCount} in all` },
+    ...(props.distributionLabel
+      ? [{ label: "How dashakams are shared", value: props.distributionLabel }]
+      : []),
     { label: "How it is conducted", value: props.deliveryMode === "LIVE" ? "Live" : "Self-paced" },
   ];
 

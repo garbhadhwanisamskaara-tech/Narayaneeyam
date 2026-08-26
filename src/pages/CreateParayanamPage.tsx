@@ -14,6 +14,7 @@ import {
   patternLabel,
   dayCountLabel,
   dayLine,
+  shortDate,
   WEEKDAY_CHIP_ORDER,
   WEEKDAY_LABELS,
   type SchedulePattern,
@@ -720,8 +721,19 @@ export default function CreateParayanamPage() {
             parayanamName={parayanamName}
             groupName={groupName}
             startDate={startDate}
-            endDate={effectiveEndDate}
-            isSingleDay={isRelay || effectiveEndDate === startDate}
+            endDate={endDate}
+            isSingleDay={dates.length === 1}
+            scheduleLabel={patternLabel(schedulePattern, weekdays)}
+            dayCount={dates.length}
+            distributionLabel={
+              isGroup
+                ? mode === "SAME_FOR_ALL"
+                  ? "Same dashakams for everyone"
+                  : mode === "REPEAT_SAME"
+                    ? "Everyone repeats the whole set"
+                    : "Relay — split among participants"
+                : undefined
+            }
             deliveryMode={deliveryMode}
             isGroup={isGroup}
             invitedCount={selectedParticipants.length + (includeSelf ? 1 : 0)}
@@ -729,11 +741,9 @@ export default function CreateParayanamPage() {
               isLive
                 ? {
                     planLabel:
-                      liveSchedule.option === "every_day"
-                        ? "Every day"
-                        : liveSchedule.option === "selected_days"
-                          ? "On selected days"
-                          : "Added individually",
+                      liveSchedule.option === "scheduled"
+                        ? "On every parayanam day"
+                        : "Added individually",
                     startTime: liveSchedule.startTime,
                     endTime: liveSchedule.endTime,
                     sessionCount: liveSchedule.sessions.length,
