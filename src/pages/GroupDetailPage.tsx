@@ -689,16 +689,15 @@ export default function GroupDetailPage() {
             </section>
           )}
 
-          {!selectedSessionId && !loadingParayanams && (
+          {!selectedSessionId && !loadingParayanams && isOwner && (
             <section className="mt-6 rounded-2xl border border-border bg-card p-5 shadow-peacock">
               <h2 className="font-display text-lg font-semibold text-foreground">No parayanam yet</h2>
               <p className="mt-1 font-sans text-sm text-muted-foreground">
-                {isOwner
-                  ? "Add a parayanam to plan the dashakams, invite members and watch the garden bloom."
-                  : "You're not confirmed in any parayanam in this group yet. Once you accept an invite, its garden and schedule will appear here."}
+                Add a parayanam to plan the dashakams, invite members and watch the garden bloom.
               </p>
             </section>
           )}
+
 
           {selectedSessionId && (
             <>
