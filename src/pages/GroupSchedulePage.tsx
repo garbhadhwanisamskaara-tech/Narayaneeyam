@@ -5,7 +5,11 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useGroupMembers, type Group } from "@/hooks/useGroups";
 import { useDashakamSets, type DashakamSet } from "@/hooks/useDashakamSets";
-import { useParayanamSchedule, type DistributionMode } from "@/hooks/useParayanamSchedule";
+import {
+  useParayanamSchedule,
+  deriveDistributionMode,
+  type DistributionMode,
+} from "@/hooks/useParayanamSchedule";
 import {
   inviteParticipants,
   useSessionParticipants,
