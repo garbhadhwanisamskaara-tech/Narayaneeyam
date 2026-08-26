@@ -21,15 +21,14 @@ export type DistributionMode = "SAME_FOR_ALL" | "RELAY" | "REPEAT_SAME";
 /** Legacy rows have no distribution_mode; fall back to challenge_type. */
 export function deriveDistributionMode(
   distributionMode: string | null | undefined,
-  challengeType: string | null | undefined
+  challengeType: string | null | undefined,
 ): DistributionMode {
   if (distributionMode === "RELAY" || distributionMode === "REPEAT_SAME" || distributionMode === "SAME_FOR_ALL")
     return distributionMode;
   return challengeType === "group_relay" ? "RELAY" : "SAME_FOR_ALL";
 }
 
-const ROW_COLS =
-  "id, challenge_session_id, dashakam_no, scheduled_date, assigned_user_id, is_manual_override";
+const ROW_COLS = "id, challenge_session_id, dashakam_no, scheduled_date, assigned_user_id, is_manual_override";
 
 /** Calendar span in days — for display only, never for allocation. */
 export function daysBetween(start: string, end: string) {
@@ -64,7 +63,7 @@ export function buildSchedule(
   dashakams: number[],
   dates: string[],
   mode: DistributionMode,
-  memberIds: string[]
+  memberIds: string[],
 ): Omit<ScheduleRow, "id" | "challenge_session_id">[] {
   if (!dashakams.length || !dates.length) return [];
 
@@ -75,14 +74,14 @@ export function buildSchedule(
       if (!n) {
         // No confirmed members yet — the preview still shows the day's set.
         dashakams.forEach((dashakam_no) =>
-          out.push({ dashakam_no, scheduled_date, assigned_user_id: null, is_manual_override: false })
+          out.push({ dashakam_no, scheduled_date, assigned_user_id: null, is_manual_override: false }),
         );
         return;
       }
       contiguousBlocks(dashakams, n).forEach((block, blockIndex) => {
         const owner = memberIds[(blockIndex + dayIndex) % n];
         block.forEach((dashakam_no) =>
-          out.push({ dashakam_no, scheduled_date, assigned_user_id: owner, is_manual_override: false })
+          out.push({ dashakam_no, scheduled_date, assigned_user_id: owner, is_manual_override: false }),
         );
       });
     });
@@ -96,18 +95,50 @@ export function buildSchedule(
         scheduled_date,
         assigned_user_id: null,
         is_manual_override: false,
-      }))
+      })),
     );
   }
 
-  // SAME_FOR_ALL — one contiguous block per parayanam day, read by everyone.
-  const perDay = Math.ceil(dashakams.length / dates.length);
-  return dashakams.map((dashakam_no, i) => ({
-    dashakam_no,
-    scheduled_date: dates[Math.min(dates.length - 1, Math.floor(i / perDay))],
-    assigned_user_id: null,
-    is_manual_override: false,
-  }));
+  // SAME_FOR_ALL — spread the selected dashakams as evenly as possible
+  // across the actual parayanam days.
+  //
+  // Example:
+  // 7 dashakams / 6 days
+  // Day 1 -> 2 dashakams
+  // Day 2 -> 1
+  // Day 3 -> 1
+  // Day 4 -> 1
+  // Day 5 -> 1
+  // Day 6 -> 1
+  const out: Omit<ScheduleRow, "id" | "challenge_session_id">[] = [];
+
+  const dayCount = dates.length;
+
+  if (!dayCount) return out;
+
+  const base = Math.floor(dashakams.length / dayCount);
+  const remainder = dashakams.length % dayCount;
+
+  let dashakamIndex = 0;
+
+  dates.forEach((scheduled_date, dayIndex) => {
+    const blockSize = base + (dayIndex < remainder ? 1 : 0);
+
+    for (let j = 0; j < blockSize; j += 1) {
+      if (dashakamIndex >= dashakams.length) break;
+
+      out.push({
+        dashakam_no: dashakams[dashakamIndex],
+        scheduled_date,
+        assigned_user_id: null,
+        is_manual_override: false,
+      });
+
+      dashakamIndex += 1;
+    }
+  });
+
+  return out;
 }
 
 export function useParayanamSchedule(sessionId: string | null | undefined) {
@@ -147,20 +178,17 @@ export function useParayanamSchedule(sessionId: string | null | undefined) {
       dashakams: number[],
       dates: string[],
       mode: DistributionMode,
-      memberIds: string[]
+      memberIds: string[],
     ) => {
       const planned = buildSchedule(dashakams, dates, mode, memberIds);
-      await (supabase as any)
-        .from("parayanam_schedule")
-        .delete()
-        .eq("challenge_session_id", targetSessionId);
+      await (supabase as any).from("parayanam_schedule").delete().eq("challenge_session_id", targetSessionId);
       const { error: err } = await (supabase as any)
         .from("parayanam_schedule")
         .insert(planned.map((p) => ({ ...p, challenge_session_id: targetSessionId })));
       if (err) throw new Error(err.message);
       await refresh();
     },
-    [refresh]
+    [refresh],
   );
 
   /** Owner hand-edits a single slot. */
@@ -171,11 +199,9 @@ export function useParayanamSchedule(sessionId: string | null | undefined) {
         .update({ ...patch, is_manual_override: true, updated_at: new Date().toISOString() })
         .eq("id", rowId);
       if (err) throw new Error(err.message);
-      setRows((prev) =>
-        prev.map((r) => (r.id === rowId ? { ...r, ...patch, is_manual_override: true } : r))
-      );
+      setRows((prev) => prev.map((r) => (r.id === rowId ? { ...r, ...patch, is_manual_override: true } : r)));
     },
-    []
+    [],
   );
 
   return { rows, loading, error, refresh, generate, updateRow };
