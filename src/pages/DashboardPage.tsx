@@ -9,6 +9,7 @@ import { Progress } from "@/components/ui/progress";
 import ProgressRing from "@/components/ProgressRing";
 import SEO from "@/components/SEO";
 import ActiveChallengeCard from "@/components/ActiveChallengeCard";
+import UpcomingLiveSessionCard from "@/components/UpcomingLiveSessionCard";
 import { useYearlyDashakamCount } from "@/hooks/useYearlyDashakamCount";
 
 export default function DashboardPage() {
