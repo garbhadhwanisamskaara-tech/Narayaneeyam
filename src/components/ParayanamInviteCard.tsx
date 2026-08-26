@@ -49,6 +49,17 @@ export default function ParayanamInviteCard({ invite: i, busy, onAccept, onDecli
           <span className="text-foreground/80">Mode:</span>{" "}
           {live ? "Live — scheduled online sessions" : "Self-paced — chant at your own time"}
         </div>
+        {live && i.first_session_at && (
+          <div>
+            <span className="text-foreground/80">First live session:</span>{" "}
+            {new Date(i.first_session_at).toLocaleString("en-IN", {
+              day: "numeric",
+              month: "short",
+              hour: "numeric",
+              minute: "2-digit",
+            })}
+          </div>
+        )}
         {paid && (
           <>
             <div>
