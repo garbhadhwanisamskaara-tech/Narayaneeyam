@@ -75,17 +75,31 @@ export default function ScriptPage() {
   useEffect(() => {
     let cancelled = false;
     (async () => {
-      const { data, error } = await supabase
-        .from("language_script")
-        .select("dashakam_no")
-        .in("language_code", Array.from(new Set(["sa", selectedLangCode, translationLang])));
-      if (cancelled || error || !data) return;
-      setScriptAvailable(new Set((data as any[]).map((r) => r.dashakam_no as number)));
+      setScriptAvailable(null);
+      const available = new Set<number>();
+      const pageSize = 1000;
+
+      for (let from = 0; ; from += pageSize) {
+        const { data, error } = await supabase
+          .from("language_script")
+          .select("dashakam_no")
+          .eq("language_code", selectedLangCode)
+          .order("dashakam_no")
+          .range(from, from + pageSize - 1);
+
+        if (cancelled || error || !data) return;
+        for (const row of data as Array<{ dashakam_no: number }>) {
+          available.add(row.dashakam_no);
+        }
+        if (data.length < pageSize) break;
+      }
+
+      if (!cancelled) setScriptAvailable(available);
     })();
     return () => {
       cancelled = true;
     };
-  }, [selectedLangCode, translationLang]);
+  }, [selectedLangCode]);
 
   const hasScript = (no: number) => (scriptAvailable ? scriptAvailable.has(no) : true);
 
