@@ -479,6 +479,21 @@ export default function GroupSchedulePage() {
 
 
 
+            {configured ? (
+              <div className="rounded-xl border border-border p-4">
+                <p className="font-sans text-xs uppercase tracking-wide text-muted-foreground">Distribution</p>
+                <p className="mt-1 font-sans text-sm text-foreground">
+                  {mode === "SAME_FOR_ALL"
+                    ? "Same dashakams for everyone"
+                    : mode === "REPEAT_SAME"
+                      ? "Everyone repeats the whole set"
+                      : "Relay — split among participants"}
+                </p>
+                <p className="mt-2 font-sans text-xs text-muted-foreground">
+                  This was chosen when the parayanam was created.
+                </p>
+              </div>
+            ) : (
             <TooltipProvider delayDuration={150}>
               <div>
                 <div className="flex items-center gap-2">
@@ -532,6 +547,8 @@ export default function GroupSchedulePage() {
                 </div>
               </div>
             </TooltipProvider>
+            )}
+
 
             <ParticipantPicker
               members={members}
