@@ -68,6 +68,27 @@ export default function ScriptPage() {
 
   const dropdownList = dashakamList;
 
+  // Script Library availability is decided by actual rows in language_script,
+  // not by the audio-driven is_published flag.
+  const [scriptAvailable, setScriptAvailable] = useState<Set<number> | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      const { data, error } = await supabase
+        .from("language_script")
+        .select("dashakam_no")
+        .in("language_code", Array.from(new Set(["sa", selectedLangCode, translationLang])));
+      if (cancelled || error || !data) return;
+      setScriptAvailable(new Set((data as any[]).map((r) => r.dashakam_no as number)));
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [selectedLangCode, translationLang]);
+
+  const hasScript = (no: number) => (scriptAvailable ? scriptAvailable.has(no) : true);
+
   return (
     <div className="container mx-auto px-4 py-8">
       <SEO path="/script" title="Script Library — Sriman Narayaneeyam" description="Read all 100 Dashakams of Sriman Narayaneeyam in your chosen script — Sanskrit, English, Tamil, Telugu, Malayalam, Kannada, Hindi or Marathi." />
@@ -93,9 +114,9 @@ export default function ScriptPage() {
               className="rounded-lg border border-border bg-background px-3 py-2 text-sm font-sans text-foreground"
             >
               {dropdownList.map((d) => (
-                <option key={d.dashakam_no} value={d.dashakam_no} disabled={!d.is_published}>
+                <option key={d.dashakam_no} value={d.dashakam_no} disabled={!hasScript(d.dashakam_no)}>
                   {d.dashakam_no}. {d.dashakam_name}
-                  {d.is_published ? "" : " — Coming soon"}
+                  {hasScript(d.dashakam_no) ? "" : " — Coming soon"}
                 </option>
               ))}
             </select>
