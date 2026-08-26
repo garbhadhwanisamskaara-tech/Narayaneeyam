@@ -39,7 +39,7 @@ const COLS = "id, challenge_session_id, user_id, status, invited_at, responded_a
 export async function inviteParticipants(
   sessionId: string,
   invitedUserIds: string[],
-  ownerUserId?: string | null
+  ownerUserId?: string | null,
 ): Promise<void> {
   const now = new Date().toISOString();
   const rows: Record<string, unknown>[] = [];
@@ -64,7 +64,10 @@ export async function inviteParticipants(
     .from("parayanam_participants")
     .delete()
     .eq("challenge_session_id", sessionId)
-    .in("user_id", rows.map((r) => r.user_id as string));
+    .in(
+      "user_id",
+      rows.map((r) => r.user_id as string),
+    );
 
   const { error } = await (supabase as any).from("parayanam_participants").insert(rows);
   if (error) throw new Error(error.message);
@@ -81,13 +84,13 @@ export async function removeParticipant(
   sessionId: string,
   userId: string,
   mode: RemovalMode = "distribute",
-  targetUserId?: string | null
+  targetUserId?: string | null,
 ): Promise<void> {
   const { error } = await (supabase as any).rpc("remove_participant_from_parayanam", {
     p_session_id: sessionId,
     p_user_id: userId,
     p_mode: mode,
-    p_target_user_id: mode === "assign_to" ? targetUserId ?? null : null,
+    p_target_user_id: mode === "assign_to" ? (targetUserId ?? null) : null,
   });
   if (error) throw new Error(error.message);
 }
@@ -98,7 +101,7 @@ export async function removeParticipant(
  */
 export async function countIncompleteAssignments(
   sessionId: string,
-  userId: string
+  userId: string,
 ): Promise<{ splitMode: boolean; incomplete: number }> {
   const { data: session } = await (supabase as any)
     .from("challenge_sessions")
@@ -125,8 +128,6 @@ export async function countIncompleteAssignments(
   return { splitMode: true, incomplete: ids.filter((id) => !done.has(id)).length };
 }
 
-
-
 /** Participants (and their invite status) for one parayanam. */
 export function useSessionParticipants(sessionId: string | null | undefined) {
   const [participants, setParticipants] = useState<Participant[]>([]);
@@ -152,9 +153,8 @@ export function useSessionParticipants(sessionId: string | null | undefined) {
   }, [refresh]);
 
   const statusFor = useCallback(
-    (userId: string): ParticipantStatus | null =>
-      participants.find((p) => p.user_id === userId)?.status ?? null,
-    [participants]
+    (userId: string): ParticipantStatus | null => participants.find((p) => p.user_id === userId)?.status ?? null,
+    [participants],
   );
 
   return { participants, loading, refresh, statusFor };
@@ -190,43 +190,37 @@ export function useMyPendingInvites() {
     const { data: sessions } = await (supabase as any)
       .from("challenge_sessions")
       .select(
-        "id, group_id, start_date, end_date, dashakams_target, parayanam_name, user_id, delivery_mode, participation_type, contribution_amount, payment_url, payment_note"
+        "id, group_id, start_date, end_date, dashakams_target, parayanam_name, user_id, delivery_mode, participation_type, contribution_amount, payment_url, payment_note",
       )
-      .in("id", rows.map((r) => r.challenge_session_id));
+      .in(
+        "id",
+        rows.map((r) => r.challenge_session_id),
+      );
 
     const sessionById = new Map<string, any>(((sessions ?? []) as any[]).map((s) => [s.id, s]));
     const groupIds = Array.from(
-      new Set(((sessions ?? []) as any[]).map((s) => s.group_id).filter(Boolean))
+      new Set(((sessions ?? []) as any[]).map((s) => s.group_id).filter(Boolean)),
     ) as string[];
 
-    const guruIds = Array.from(
-      new Set(((sessions ?? []) as any[]).map((s) => s.user_id).filter(Boolean))
-    ) as string[];
+    const guruIds = Array.from(new Set(((sessions ?? []) as any[]).map((s) => s.user_id).filter(Boolean))) as string[];
     let guruNameById = new Map<string, string>();
     if (guruIds.length) {
       const { data: gurus } = await (supabase as any)
         .from("profiles")
         .select("id, display_name, email")
         .in("id", guruIds);
-      guruNameById = new Map(
-        ((gurus ?? []) as any[]).map((g) => [g.id, g.display_name ?? g.email ?? "Guru"])
-      );
+      guruNameById = new Map(((gurus ?? []) as any[]).map((g) => [g.id, g.display_name ?? g.email ?? "Guru"]));
     }
 
     let nameById = new Map<string, string>();
     if (groupIds.length) {
-      const { data: groups } = await (supabase as any)
-        .from("groups")
-        .select("id, group_name")
-        .in("id", groupIds);
+      const { data: groups } = await (supabase as any).from("groups").select("id, group_name").in("id", groupIds);
       nameById = new Map(((groups ?? []) as any[]).map((g) => [g.id, g.group_name]));
     }
 
     // First live session per parayanam, so the invite can show when it begins.
     const firstSessionBySession = new Map<string, string>();
-    const liveIds = ((sessions ?? []) as any[])
-      .filter((s) => s.delivery_mode === "LIVE")
-      .map((s) => s.id);
+    const liveIds = ((sessions ?? []) as any[]).filter((s) => s.delivery_mode === "LIVE").map((s) => s.id);
     if (liveIds.length) {
       const { data: ls } = await (supabase as any)
         .from("live_sessions_public")
@@ -245,12 +239,12 @@ export function useMyPendingInvites() {
         return {
           ...r,
           group_id: s?.group_id ?? null,
-          group_name: s?.group_id ? nameById.get(s.group_id) ?? null : null,
+          group_name: s?.group_id ? (nameById.get(s.group_id) ?? null) : null,
           start_date: s?.start_date ?? null,
           end_date: s?.end_date ?? null,
           dashakams_target: s?.dashakams_target ?? null,
           parayanam_name: s?.parayanam_name ?? null,
-          guru_name: s?.user_id ? guruNameById.get(s.user_id) ?? null : null,
+          guru_name: s?.user_id ? (guruNameById.get(s.user_id) ?? null) : null,
           delivery_mode: s?.delivery_mode ?? null,
           first_session_at: firstSessionBySession.get(r.challenge_session_id) ?? null,
           participation_type: s?.participation_type ?? null,
@@ -258,7 +252,7 @@ export function useMyPendingInvites() {
           payment_url: s?.payment_url ?? null,
           payment_note: s?.payment_note ?? null,
         };
-      })
+      }),
     );
     setLoading(false);
   }, [user]);
@@ -270,15 +264,29 @@ export function useMyPendingInvites() {
   const respond = useCallback(
     async (inviteId: string, status: "confirmed" | "declined") => {
       setBusyId(inviteId);
-      const { error } = await (supabase as any)
-        .from("parayanam_participants")
-        .update({ status, responded_at: new Date().toISOString() })
-        .eq("id", inviteId);
-      setBusyId(null);
-      if (error) throw new Error(error.message);
-      setInvites((prev) => prev.filter((i) => i.id !== inviteId));
+
+      try {
+        const { data, error } = await (supabase as any).rpc("respond_to_parayanam_invite", {
+          p_participant_id: inviteId,
+          p_status: status,
+        });
+
+        if (error) {
+          throw new Error(error.message);
+        }
+
+        if (!data || data.length === 0) {
+          throw new Error("The invitation was not updated. Please refresh the page and try again.");
+        }
+
+        // Always reload from Supabase.
+        // Do not pretend locally that the invitation changed.
+        await refresh();
+      } finally {
+        setBusyId(null);
+      }
     },
-    []
+    [refresh],
   );
 
   return { invites, loading, busyId, respond, refresh };
