@@ -35,10 +35,6 @@ Yes. It is the safest option:
 
 ## 5. Minimum database changes
 
-```sql
-ALTER TABLE public.challenge_sessions
-## 5. Minimum database changes
-
 One additive migration, no destructive statements, no `challenge_type` value changes:
 
 ```sql
