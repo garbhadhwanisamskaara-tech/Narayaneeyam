@@ -17,6 +17,13 @@ import {
 } from "@/hooks/useParayanamParticipants";
 import ParticipantPicker from "@/components/ParticipantPicker";
 import SEO from "@/components/SEO";
+import {
+  dayCountLabel,
+  parayanamDates,
+  patternLabel,
+  shortDate,
+  type SchedulePattern,
+} from "@/lib/parayanamDays";
 
 const STATUS_LABEL: Record<ParticipantStatus, string> = {
   invited: "Invited",
@@ -139,6 +146,15 @@ export default function GroupSchedulePage() {
   const memberIds = members.map((m) => m.user_id);
   /** Relay runs over every parayanam day, like the other modes. */
   const isRelay = mode === "RELAY";
+  const configured = !!editingSessionId && !!session;
+  const schedulePattern: SchedulePattern =
+    (session?.schedule_pattern as SchedulePattern | undefined) ?? "DAILY";
+  const weekdays = session?.schedule_weekdays ?? [];
+  const dates = useMemo(
+    () => parayanamDates(startDate, endDate, schedulePattern, weekdays),
+    [startDate, endDate, schedulePattern, weekdays.join(",")]
+  );
+  const formatScheduleDate = shortDate;
   const effectiveEndDate = endDate;
 
 
