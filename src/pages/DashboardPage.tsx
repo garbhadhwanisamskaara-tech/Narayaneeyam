@@ -50,6 +50,9 @@ export default function DashboardPage() {
         description="Track your devotional journey through Sriman Narayaneeyam — streak, completed Dashakams and your current chanting position."
       />
       <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
+        <div className="mb-8">
+          <UpcomingLiveSessionCard />
+        </div>
         <ActiveChallengeCard />
 
         <div className="mb-8 rounded-xl border border-border bg-card p-5 shadow-md">
