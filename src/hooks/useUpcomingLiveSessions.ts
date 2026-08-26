@@ -9,6 +9,7 @@ export interface UpcomingLiveSession {
   challengeSessionId: string;
   parayanamName: string;
   groupName: string;
+  groupId: string | null;
   sessionDate: string;
   startDatetime: string;
   endDatetime: string;
@@ -123,6 +124,7 @@ export function useUpcomingLiveSessions() {
           challengeSessionId: ls.challenge_session_id,
           parayanamName: p?.name ?? "Parayanam",
           groupName: (p?.groupId && groupNames.get(p.groupId)) || "Personal",
+          groupId: p?.groupId ?? null,
           sessionDate: ls.session_date,
           startDatetime: ls.start_datetime,
           endDatetime: ls.end_datetime,

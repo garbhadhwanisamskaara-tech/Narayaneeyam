@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
-import { Calendar, Clock, Loader2, Users, Video } from "lucide-react";
+import { Calendar, Clock, Flower2, Loader2, Users, Video } from "lucide-react";
+import { Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import {
@@ -102,6 +103,15 @@ function SessionRow({ s, now }: { s: UpcomingLiveSession; now: number }) {
         {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <Video className="h-4 w-4" />}
         {canJoin ? "Join Parayanam" : `Opens at ${fmtTime(new Date(opensAt).toISOString())}`}
       </button>
+
+      {s.groupId && (
+        <Link
+          to={`/groups/${s.groupId}?session=${s.challengeSessionId}`}
+          className="mt-2 inline-flex w-full items-center justify-center gap-2 rounded-lg border border-border bg-background px-5 py-3 font-sans text-sm font-semibold text-foreground transition-colors hover:bg-muted"
+        >
+          <Flower2 className="h-4 w-4" /> View today's Dashakam
+        </Link>
+      )}
 
       {message && <p className="mt-2 font-sans text-xs text-muted-foreground">{message}</p>}
 
