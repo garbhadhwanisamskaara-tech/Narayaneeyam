@@ -68,6 +68,27 @@ export default function ScriptPage() {
 
   const dropdownList = dashakamList;
 
+  // Script Library availability is decided by actual rows in language_script,
+  // not by the audio-driven is_published flag.
+  const [scriptAvailable, setScriptAvailable] = useState<Set<number> | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      const { data, error } = await supabase
+        .from("language_script")
+        .select("dashakam_no")
+        .in("language_code", Array.from(new Set(["sa", selectedLangCode, translationLang])));
+      if (cancelled || error || !data) return;
+      setScriptAvailable(new Set((data as any[]).map((r) => r.dashakam_no as number)));
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [selectedLangCode, translationLang]);
+
+  const hasScript = (no: number) => (scriptAvailable ? scriptAvailable.has(no) : true);
+
   return (
     <div className="container mx-auto px-4 py-8">
       <SEO path="/script" title="Script Library — Sriman Narayaneeyam" description="Read all 100 Dashakams of Sriman Narayaneeyam in your chosen script — Sanskrit, English, Tamil, Telugu, Malayalam, Kannada, Hindi or Marathi." />
