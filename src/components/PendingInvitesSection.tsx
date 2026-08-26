@@ -11,6 +11,7 @@ const NUDGE_KEY = "push-nudge-shown";
 export default function PendingInvitesSection({ groupId }: { groupId?: string }) {
   const { invites, loading, busyId, respond } = useMyPendingInvites();
   const [error, setError] = useState<string | null>(null);
+  const [success, setSuccess] = useState<string | null>(null);
   const [showNudge, setShowNudge] = useState(false);
   const [awaiting, setAwaiting] = useState<PendingInvite[]>([]);
 
@@ -18,18 +19,30 @@ export default function PendingInvitesSection({ groupId }: { groupId?: string })
 
   const answer = async (id: string, status: "confirmed" | "declined") => {
     setError(null);
+    setSuccess(null);
+
     const invite = list.find((i) => i.id === id);
+
     try {
       await respond(id, status);
-      if (status === "confirmed" && invite?.participation_type === "PAID") {
-        setAwaiting((prev) => [...prev, invite]);
-      }
-      if (status === "confirmed") track("parayanam_joined");
-      // A one-time nudge the first time someone joins a parayanam — reminders are
-      // an account-level setting, so we never repeat this on every group page.
-      if (status === "confirmed" && localStorage.getItem(NUDGE_KEY) !== "1") {
-        localStorage.setItem(NUDGE_KEY, "1");
-        setShowNudge(true);
+
+      if (status === "confirmed") {
+        setSuccess(
+          `Invitation accepted${invite?.parayanam_name ? ` — you have joined "${invite.parayanam_name}".` : "."}`,
+        );
+
+        if (invite?.participation_type === "PAID") {
+          setAwaiting((prev) => [...prev.filter((x) => x.id !== invite.id), invite]);
+        }
+
+        track("parayanam_joined");
+
+        if (localStorage.getItem(NUDGE_KEY) !== "1") {
+          localStorage.setItem(NUDGE_KEY, "1");
+          setShowNudge(true);
+        }
+      } else {
+        setSuccess("Invitation declined.");
       }
     } catch (e: any) {
       setError(e?.message ?? "Could not save your answer. Please try again.");
@@ -63,7 +76,16 @@ export default function PendingInvitesSection({ groupId }: { groupId?: string })
           </li>
         ))}
       </ul>
-      {error && <p className="mt-3 font-sans text-sm text-destructive">{error}</p>}
+
+      {success && (
+        <p className="mt-3 rounded-lg bg-primary/10 px-3 py-2 font-sans text-sm font-semibold text-primary">
+          {success}
+        </p>
+      )}
+
+      {error && (
+        <p className="mt-3 rounded-lg bg-destructive/10 px-3 py-2 font-sans text-sm text-destructive">{error}</p>
+      )}
       {showNudge && <PushRemindersPrompt />}
     </section>
   );
