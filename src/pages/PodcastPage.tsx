@@ -49,6 +49,7 @@ export default function PodcastPage() {
   const pausedRef = useRef(false);
   const advanceRef = useRef<() => void>(() => {});
   const speedRef = useRef(1);
+  const podcastSpeedLoadedRef = useRef(false);
   speedRef.current = speed;
 
   /** Stop the shared engine and invalidate any in-flight podcast session. */
@@ -69,6 +70,39 @@ export default function PodcastPage() {
   const { saveProgress: savePlaylistProg } = usePlaylist("podcast");
 
   const inPlaylistMode = playlistItems !== null && playlistItems.length > 0;
+
+  // Load and persist the user's preferred podcast playback speed
+  useEffect(() => {
+    if (!user || podcastSpeedLoadedRef.current) return;
+    (async () => {
+      const { data, error } = await (supabase as any)
+        .from("profiles")
+        .select("podcast_speed")
+        .eq("id", user.id)
+        .single();
+      if (!error && data && typeof data.podcast_speed === "number") {
+        const saved = data.podcast_speed as number;
+        setSpeed(saved);
+        speedRef.current = saved;
+        engine.setSpeed(saved);
+      }
+      podcastSpeedLoadedRef.current = true;
+    })();
+  }, [user, engine]);
+
+  const persistPodcastSpeed = useCallback(
+    (s: number) => {
+      if (!user) return;
+      void (supabase as any)
+        .from("profiles")
+        .update({ podcast_speed: s })
+        .eq("id", user.id)
+        .then(({ error }: any) => {
+          if (error) console.warn("Failed to save podcast speed:", error.message);
+        });
+    },
+    [user],
+  );
 
   // Published dashakams so the dropdown only lists available ones
   const [namesReady, setNamesReady] = useState(false);
@@ -556,6 +590,7 @@ export default function PodcastPage() {
                   const s = Number(e.target.value);
                   setSpeed(s);
                   engine.setSpeed(s);
+                  persistPodcastSpeed(s);
                 }}
 
                 className="rounded-lg bg-primary-foreground/20 text-primary-foreground px-3 py-1.5 text-xs font-sans border border-primary-foreground/20 appearance-none cursor-pointer [&>option]:bg-card [&>option]:text-foreground"

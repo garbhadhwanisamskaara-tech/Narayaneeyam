@@ -39,6 +39,8 @@ import VerseSkeleton from "@/components/VerseSkeleton";
 import { getProgress, saveProgress } from "@/lib/progress";
 import { updateStreakSupabase } from "@/lib/supabaseProgress";
 import { useAudioEngine } from "@/contexts/AudioContext";
+import { useAuth } from "@/contexts/AuthContext";
+import { supabase } from "@/integrations/supabase/client";
 import { useGlobalMute } from "@/lib/globalMute";
 
 import VerseIcons from "@/components/VerseIcons";
@@ -70,6 +72,7 @@ export default function ChantPage() {
   const [highlightedVerse, setHighlightedVerse] = useState(0);
   const [speed, setSpeed] = useState(1);
   const speedRef = useRef(1);
+  const chantSpeedLoadedRef = useRef(false);
   speedRef.current = speed;
   const [loopCount, setLoopCount] = useState(1);
   const [currentLoopIteration, setCurrentLoopIteration] = useState(0);
@@ -85,6 +88,7 @@ export default function ChantPage() {
 
   // Global audio engine (singleton, survives navigation)
   const engine = useAudioEngine();
+  const { user } = useAuth();
   const [muted, toggleMuted] = useGlobalMute();
   const { scriptLang: translitLang, translationLang } = useLanguagePrefs();
   const activeLanguages = useActiveLanguages();
@@ -147,6 +151,39 @@ export default function ChantPage() {
     engine.stop();
     pausedRef.current = false;
   }, [engine]);
+
+  // Load and persist the user's preferred chant playback speed
+  useEffect(() => {
+    if (!user || chantSpeedLoadedRef.current) return;
+    (async () => {
+      const { data, error } = await (supabase as any)
+        .from("profiles")
+        .select("chant_speed")
+        .eq("id", user.id)
+        .single();
+      if (!error && data && typeof data.chant_speed === "number") {
+        const saved = data.chant_speed as number;
+        setSpeed(saved);
+        speedRef.current = saved;
+        engine.setSpeed(saved);
+      }
+      chantSpeedLoadedRef.current = true;
+    })();
+  }, [user, engine]);
+
+  const persistChantSpeed = useCallback(
+    (s: number) => {
+      if (!user) return;
+      void (supabase as any)
+        .from("profiles")
+        .update({ chant_speed: s })
+        .eq("id", user.id)
+        .then(({ error }: any) => {
+          if (error) console.warn("Failed to save chant speed:", error.message);
+        });
+    },
+    [user],
+  );
 
   const handleStartPlaylist = (
     items: PlaylistItem[],
@@ -957,6 +994,7 @@ export default function ChantPage() {
                       onClick={() => {
                         setSpeed(s);
                         engine.setSpeed(s);
+                        persistChantSpeed(s);
                       }}
                       className={`rounded-full px-2 py-0.5 text-[11px] font-sans transition-colors ${
                         speed === s
@@ -977,6 +1015,7 @@ export default function ChantPage() {
                     const newSpeed = Number(e.target.value);
                     setSpeed(newSpeed);
                     engine.setSpeed(newSpeed);
+                    persistChantSpeed(newSpeed);
                   }}
                   className="md:hidden h-7 rounded-full border border-primary-foreground/20 bg-primary-foreground/10 px-2 text-[11px] font-sans text-primary-foreground"
                 >
