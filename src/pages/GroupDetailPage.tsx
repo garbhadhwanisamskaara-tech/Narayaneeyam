@@ -26,6 +26,7 @@ import DashakamGarden from "@/components/DashakamGarden";
 import { useSessionGarden } from "@/hooks/useSessionGarden";
 import PendingInvitesSection from "@/components/PendingInvitesSection";
 import ManageParayanamDialog from "@/components/ManageParayanamDialog";
+import ParayanamParticipantManager from "@/components/ParayanamParticipantManager";
 import ParayanamScheduleViews from "@/components/ParayanamScheduleViews";
 import { toast } from "@/hooks/use-toast";
 import { useSessionParticipants, type ParticipantStatus } from "@/hooks/useParayanamParticipants";
@@ -641,6 +642,11 @@ export default function GroupDetailPage() {
                       ))}
                     </ul>
                   )}
+
+                  <ParayanamParticipantManager
+                    sessionId={selectedSessionId}
+                    isOwner={isOwner}
+                  />
 
                   <div className="mt-5 flex flex-wrap gap-3">
                     <ManageParayanamDialog
