@@ -19,6 +19,13 @@ export interface PendingInvite extends Participant {
   start_date: string | null;
   end_date: string | null;
   dashakams_target: number | null;
+  parayanam_name: string | null;
+  guru_name: string | null;
+  delivery_mode: "SELF_PACED" | "LIVE" | null;
+  participation_type: "FREE" | "PAID" | null;
+  contribution_amount: number | null;
+  payment_url: string | null;
+  payment_note: string | null;
 }
 
 const COLS = "id, challenge_session_id, user_id, status, invited_at, responded_at";
@@ -180,13 +187,29 @@ export function useMyPendingInvites() {
 
     const { data: sessions } = await (supabase as any)
       .from("challenge_sessions")
-      .select("id, group_id, start_date, end_date, dashakams_target")
+      .select(
+        "id, group_id, start_date, end_date, dashakams_target, parayanam_name, user_id, delivery_mode, participation_type, contribution_amount, payment_url, payment_note"
+      )
       .in("id", rows.map((r) => r.challenge_session_id));
 
     const sessionById = new Map<string, any>(((sessions ?? []) as any[]).map((s) => [s.id, s]));
     const groupIds = Array.from(
       new Set(((sessions ?? []) as any[]).map((s) => s.group_id).filter(Boolean))
     ) as string[];
+
+    const guruIds = Array.from(
+      new Set(((sessions ?? []) as any[]).map((s) => s.user_id).filter(Boolean))
+    ) as string[];
+    let guruNameById = new Map<string, string>();
+    if (guruIds.length) {
+      const { data: gurus } = await (supabase as any)
+        .from("profiles")
+        .select("id, display_name, email")
+        .in("id", guruIds);
+      guruNameById = new Map(
+        ((gurus ?? []) as any[]).map((g) => [g.id, g.display_name ?? g.email ?? "Guru"])
+      );
+    }
 
     let nameById = new Map<string, string>();
     if (groupIds.length) {
@@ -207,6 +230,13 @@ export function useMyPendingInvites() {
           start_date: s?.start_date ?? null,
           end_date: s?.end_date ?? null,
           dashakams_target: s?.dashakams_target ?? null,
+          parayanam_name: s?.parayanam_name ?? null,
+          guru_name: s?.user_id ? guruNameById.get(s.user_id) ?? null : null,
+          delivery_mode: s?.delivery_mode ?? null,
+          participation_type: s?.participation_type ?? null,
+          contribution_amount: s?.contribution_amount ?? null,
+          payment_url: s?.payment_url ?? null,
+          payment_note: s?.payment_note ?? null,
         };
       })
     );
