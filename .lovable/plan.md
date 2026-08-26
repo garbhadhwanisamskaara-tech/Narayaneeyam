@@ -35,73 +35,130 @@ Yes. It is the safest option:
 
 ## 5. Minimum database changes
 
+One additive migration, no destructive statements, no `challenge_type` value changes:
+
 ```sql
 ALTER TABLE public.challenge_sessions
-  ADD COLUMN IF NOT EXISTS distribution_mode text,      -- SAME_FOR_ALL | RELAY | REPEAT_SAME
-  ADD COLUMN IF NOT EXISTS schedule_pattern text,       -- DAILY | WEEKDAYS
-  ADD COLUMN IF NOT EXISTS schedule_weekdays smallint[];-- 0=Sun .. 6=Sat, used when WEEKDAYS
--- CHECK constraints allowing NULL, so legacy rows stay valid.
--- Backfill distribution_mode from challenge_type as described above.
+  ADD COLUMN IF NOT EXISTS distribution_mode  text,        -- SAME_FOR_ALL | RELAY | REPEAT_SAME
+  ADD COLUMN IF NOT EXISTS schedule_pattern   text,        -- DAILY | WEEKDAYS
+  ADD COLUMN IF NOT EXISTS schedule_weekdays  smallint[];  -- 0=Sun .. 6=Sat, only when WEEKDAYS
+
+ALTER TABLE public.challenge_sessions
+  ADD CONSTRAINT challenge_sessions_distribution_mode_check
+  CHECK (distribution_mode IS NULL
+         OR distribution_mode IN ('SAME_FOR_ALL','RELAY','REPEAT_SAME'));
+
+ALTER TABLE public.challenge_sessions
+  ADD CONSTRAINT challenge_sessions_schedule_pattern_check
+  CHECK (schedule_pattern IS NULL OR schedule_pattern IN ('DAILY','WEEKDAYS'));
+
+-- Weekdays must be present and valid only for WEEKDAYS
+ALTER TABLE public.challenge_sessions
+  ADD CONSTRAINT challenge_sessions_schedule_weekdays_check
+  CHECK (
+    schedule_pattern IS DISTINCT FROM 'WEEKDAYS'
+    OR (schedule_weekdays IS NOT NULL
+        AND array_length(schedule_weekdays,1) BETWEEN 1 AND 7
+        AND schedule_weekdays <@ ARRAY[0,1,2,3,4,5,6]::smallint[])
+  );
+
+-- Rule-based backfill (no heuristics, no data rewrite elsewhere)
+UPDATE public.challenge_sessions
+   SET distribution_mode = CASE WHEN challenge_type = 'group_relay'
+                                THEN 'RELAY' ELSE 'SAME_FOR_ALL' END,
+       schedule_pattern  = COALESCE(schedule_pattern, 'DAILY')
+ WHERE distribution_mode IS NULL;
 ```
 
-No new table: actual Parayanam dates stay derived (start/end + pattern) and are materialised where they already are — in `parayanam_schedule` and `live_sessions`. `challenge_type` keeps its current values so nothing existing breaks.
+No new table. Actual Parayanam dates stay derived and are materialised only where they already are: `parayanam_schedule.scheduled_date` and `live_sessions.session_date`. `parayanam_member_progress`, `parayanam_participants` and `groups` are untouched.
+
+Deliberately **not** doing: a `parayanam_days` table (redundant with `parayanam_schedule`), a new `challenge_type` value (would break every existing reader), or removing the REPEAT list-expansion data already written.
 
 ## 6. Backward compatibility
 
-- Every new column is nullable with a legacy-safe reading: `distribution_mode IS NULL` -> derive from `challenge_type`; `schedule_pattern IS NULL` -> DAILY.
-- Already-finalised parayanams keep their `parayanam_schedule` rows untouched; nothing is regenerated.
-- Old single-day relays remain valid (start = end, one Parayanam day).
+- All three columns are nullable; the backfill gives every existing row an explicit value, and the app still tolerates `NULL` (`distribution_mode ?? (challenge_type === 'group_relay' ? 'RELAY' : 'SAME_FOR_ALL')`, `schedule_pattern ?? 'DAILY'`).
+- Finalised parayanams: no `parayanam_schedule` rows are recomputed. Completion history in `parayanam_member_progress` keys off `schedule_id`, so it is unaffected.
+- Existing REPEAT parayanams (created with the duplicated `dashakam_list`) keep working as SAME_FOR_ALL over their expanded list — same allocation as today. Only newly created REPEAT_SAME parayanams store the list once.
+- Old single-day relays: start = end, one Parayanam day, identical output from the new algorithm.
+- `dashakams_target` semantics change only for new REPEAT_SAME rows (set = list length, not list length x days); progress percentages must therefore compute against generated schedule rows, which is already the case in `useParayanamReport`/`useSessionGarden` — to be re-verified during implementation.
 
-## 7. Algorithm changes
+## 7. `finalize_parayanam()`, `buildSchedule()`, `daysBetween()`
 
-New shared helper `src/lib/parayanamDays.ts`:
-- `parayanamDates(start, end, pattern, weekdays): string[]` — the actual Parayanam days, the single source of truth for previews, schedule generation and live sessions.
-- `daysBetween()` is demoted: it stays for calendar span display, but no allocation may use it. All three algorithms take `dates.length`, not calendar duration.
+Shared source of truth, new file `src/lib/parayanamDays.ts`:
 
-`buildSchedule(dashakams, dates, mode, memberIds)` (signature change from start/end to a date array):
-- `SAME_FOR_ALL`: split the set into `dates.length` contiguous chunks, one chunk per Parayanam day, `assigned_user_id = null`.
-- `RELAY`: for each Parayanam day, split the whole set into `memberIds.length` balanced contiguous blocks (first `remainder` members get one extra) and rotate block ownership by the day index — day *d* gives member *i* the block `(i - d) mod n`, matching your example.
-- `REPEAT_SAME`: the full set on every Parayanam day, `assigned_user_id = null`. The `dashakam_list` is stored once (no more duplication) and expansion happens at schedule-generation time.
+```ts
+parayanamDates(start, end, pattern, weekdays): string[]   // actual Parayanam days
+parayanamDayCount(...)                                    // = dates.length
+formatDayLine(i, date)                                    // "Day 1 · Thu 3 Sep"
+```
 
-`finalize_parayanam()` (server RPC — its SQL is not in this repo, so it must be re-read from the database before editing) must mirror the same three branches and iterate the derived date list rather than assuming one day or every calendar day. It stays the authority for group allocation, since it runs after invites are answered.
+`buildSchedule()` — signature changes from `(dashakams, startDate, endDate, mode, memberIds)` to `(dashakams, dates: string[], mode: DistributionMode, memberIds: string[])`, with `DistributionMode = "SAME_FOR_ALL" | "RELAY" | "REPEAT_SAME"`:
 
-## 8. Live sessions
+- **SAME_FOR_ALL** — chunk the set into `dates.length` contiguous blocks (`ceil` sizing as today), one block per Parayanam day, `assigned_user_id = null`.
+- **RELAY** — for each day index `d`: split the whole set into `n = memberIds.length` balanced contiguous blocks (first `remainder` blocks get one extra), then assign block `b` to member `(b + d) mod n`. This reproduces your Day 1 / Day 2 / Day 3 example exactly. Every day emits the full set.
+- **REPEAT_SAME** — the full set on every Parayanam day, `assigned_user_id = null`.
 
-`LiveScheduleEditor.generateSessions()` currently derives dates itself (`every_day` / `selected_days` / `individually`). That duplicates the new Parayanam-day logic. Change:
-- Drop the editor's own every-day/weekday choice; feed it the derived Parayanam dates from Screen 1.
-- The editor keeps times, meeting link, join window, per-session edits (single/future/all) and "add individually" for extra one-off sessions.
-- One live session per actual Parayanam date, never for the gap dates.
-- Insertion into `live_sessions` is unchanged.
+`daysBetween()` — kept only for calendar-span display; every allocation path switches to `dates.length`. Callers audited: `CreateParayanamPage` (REPEAT expansion — deleted), `GroupSchedulePage`, previews.
 
-## 9. Files to modify
+`finalize_parayanam()` (Postgres RPC; its body is not in this repo, so I will read it from the live database first) must be rewritten to:
+1. read `start_date`, `end_date`, `schedule_pattern`, `schedule_weekdays`, `distribution_mode` (with the same `NULL` fallbacks);
+2. generate the actual date list in SQL (`generate_series` filtered by `EXTRACT(DOW)` when WEEKDAYS);
+3. branch on `distribution_mode` with the three algorithms above, using confirmed participants ordered deterministically (by `invited_at, user_id`) so the rotation is stable;
+4. keep its existing delete-then-insert of `parayanam_schedule` and its `finalized_at` write, so re-running stays idempotent.
 
-- `src/lib/parayanamDays.ts` (new) — date derivation + labels.
-- `src/hooks/useParayanamSchedule.ts` — `buildSchedule` rewrite (date list + 3 modes + rotation), `generate()` callers.
-- `src/pages/CreateParayanamPage.tsx` — dates + "When will this take place?" on Screen 1, weekday chips, "N Parayanam days" summary, distribution screen preview with real dates, remove relay collapse and REPEAT expansion, persist the new columns.
-- `src/components/LiveScheduleEditor.tsx` — consume derived dates.
-- `src/components/ParayanamReview.tsx` — show pattern and Parayanam-day count.
-- `src/pages/GroupSchedulePage.tsx` — read-only summary + preview; keep editing only where the parayanam predates the wizard.
-- `src/pages/GroupDetailPage.tsx` — empty-state wording, remove duplicate card.
-- `src/hooks/useParayanamParticipants.ts` + `src/components/ParayanamInviteCard.tsx` — first live session date/time.
-- `src/hooks/useChallengeSessions.ts`, `ManageParayanamDialog.tsx` — read `distribution_mode` with legacy fallback.
+## 8. Live session generation
+
+Today `LiveScheduleEditor.generateSessions()` owns its own `every_day` / `selected_days` / `individually` date logic, and `CreateParayanamPage` batch-inserts the result into `live_sessions`. That is now a second, competing definition of "which days".
+
+Change:
+- The editor no longer asks for a day pattern. It receives `dates: string[]` (the actual Parayanam days) and generates exactly one session per date.
+- It keeps: default start/end time, meeting link, join-before window, per-session editing with Single / Future / All scope, and "add individually" for genuinely extra sessions.
+- Changing the range, the pattern or the weekday chips on Screen 1 regenerates the session list (existing per-session overrides are preserved by `session_date` key).
+- Gap dates never produce a `live_sessions` row.
+- `useUpcomingLiveSessions` and `get_live_session_access()` are unchanged.
+
+## 9. Files and functions to modify
+
+| File | Change |
+| --- | --- |
+| `src/lib/parayanamDays.ts` (new) | `parayanamDates`, day-count, "Day N · Thu 3 Sep" label |
+| `src/hooks/useParayanamSchedule.ts` | `buildSchedule` rewrite (date list, 3 modes, relay rotation), `generate()` signature, `DistributionMode` type; `daysBetween` display-only |
+| `src/pages/CreateParayanamPage.tsx` | Screen 1: start/end + "When will this Parayanam take place?" (Every day / Selected days of the week + Mon–Sun chips) + "N Parayanam days" summary with the first dates; Screen 2: dated allocation preview for all three modes; remove `isRelay` end-date collapse and the `submitDashakams` REPEAT expansion; persist `distribution_mode`, `schedule_pattern`, `schedule_weekdays`; success/error toast on Save & invite |
+| `src/components/ParayanamModeSelector.tsx` / distribution cards | Copy for the three modes; relay no longer "single day" |
+| `src/components/LiveScheduleEditor.tsx` | Consume derived dates; drop internal day-pattern UI |
+| `src/components/ParayanamReview.tsx` | Rows for schedule pattern, Parayanam-day count, distribution |
+| `src/pages/GroupSchedulePage.tsx` | Read-only summary (dates / pattern / distribution / day count) + preview; keep editable fields only for legacy parayanams missing the new columns |
+| `src/pages/GroupDetailPage.tsx` | Remove duplicate "No parayanam yet" card; explicit member wording |
+| `src/hooks/useParayanamParticipants.ts`, `src/components/ParayanamInviteCard.tsx` | First live session date/time from `live_sessions_public` |
+| `src/hooks/useChallengeSessions.ts`, `src/components/ManageParayanamDialog.tsx`, `src/hooks/useParayanamParticipants.ts` (`countIncompleteAssignments`) | Read `distribution_mode` with the legacy `challenge_type` fallback |
+| `supabase/migrations/<date>_parayanam_distribution_schedule.sql` (new) | Section 5 SQL |
+| `finalize_parayanam()` (database) | Section 7 rewrite |
 
 ## 10. RLS / policy implications
 
-- New columns inherit `challenge_sessions` policies; nothing to add.
-- The invite card needs the first session's date/time for a not-yet-confirmed member. If `live_sessions` policies only admit confirmed participants, this needs either the existing public/date-only view or a small RPC returning date/time only — never `meeting_url`. To be confirmed against the live policies before implementation.
-- `get_live_session_access()` remains the only path to the meeting URL.
+- The three new columns live on `challenge_sessions` and inherit its existing policies; no policy edit needed, and no new grant (the table is already exposed).
+- Invite card: `live_sessions_public` already exists as a `meeting_url`-free view and is used by `useUpcomingLiveSessions`. I will verify its policy admits an **invited-but-not-yet-confirmed** participant; if it only admits confirmed members, I will add a narrow read path (view policy extension or a date/time-only RPC) rather than widening `live_sessions`.
+- `meeting_url` continues to be reachable only through `get_live_session_access()`.
+- `finalize_parayanam()` stays `SECURITY DEFINER` with its current owner check; the rewrite must preserve that guard.
 
-## 11. Edge cases handled
+## 11. Edge cases
 
-- No selected weekday inside the range -> block "Next" with "This range has no <weekday> in it."
-- One weekday / several weekdays / start or end date not on a selected weekday -> pure filter over the range; boundaries are included only if they match.
-- Relay with more members than dashakams -> extra members get an empty block that day; rotation still moves the non-empty blocks, so nobody is permanently idle across days.
-- Uneven division -> first `remainder` members get one extra dashakam, same as the server rule.
-- Accept/decline after preview -> the preview is explicitly labelled provisional and based on currently invited members; `finalize_parayanam()` recomputes from confirmed participants on the start date.
-- Participant count changing before finalisation -> same as above; nothing is written until finalisation.
-- Legacy parayanams without the new fields -> DAILY + derived distribution.
-- Live sessions must equal the Parayanam dates -> both come from the same helper; a mismatch check runs when the date range or pattern changes and regenerates sessions.
+| Case | Handling |
+| --- | --- |
+| Range contains no selected weekday | Day count 0; "Next" blocked with "There are no Thursdays in this date range." |
+| One selected weekday | Plain filter; works for a single date too |
+| Multiple selected weekdays | Dates in chronological order regardless of chip order |
+| Start date is / isn't a selected weekday | Included only if it matches; the first Parayanam day may be after `start_date` |
+| End date is / isn't a selected weekday | Same; the last Parayanam day may be before `end_date` |
+| More members than dashakams (Relay) | Some blocks are empty that day; rotation still shifts them, so idleness moves round instead of sticking to one member |
+| Uneven division (Relay) | First `remainder` blocks get one extra dashakam — same rule client and server |
+| Member accepts / declines after preview | Preview is labelled provisional ("based on currently invited members"); `finalize_parayanam()` recomputes from confirmed participants |
+| Participant count changes before finalisation | Nothing is written until finalisation, so the final allocation is always correct |
+| Zero confirmed participants at finalisation | Relay falls back to unassigned rows (`assigned_user_id = null`) rather than erroring |
+| Legacy parayanam without new fields | DAILY + distribution derived from `challenge_type` |
+| Live session dates | Same helper as the schedule; regenerated whenever range or pattern changes, so they can never drift |
+| Timezone | All date maths stays on `YYYY-MM-DD` strings with `T00:00:00` local parsing, matching current code, so no off-by-one day |
 
-## Open item before coding
+## Open item
 
-`finalize_parayanam()` and the `live_sessions` RLS policies live only in the database. I will read both from the live schema first and adapt them, rather than assuming their current text.
+`finalize_parayanam()`'s body and the `live_sessions_public` policies exist only in the database. I will read both from the live schema as the first implementation step and adapt them, rather than assuming their current text.
