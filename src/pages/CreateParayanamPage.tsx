@@ -11,6 +11,8 @@ import { useGroupMembers } from "@/hooks/useGroups";
 import { buildSchedule, daysBetween } from "@/hooks/useParayanamSchedule";
 import { inviteParticipants } from "@/hooks/useParayanamParticipants";
 import ParticipantPicker from "@/components/ParticipantPicker";
+import ParayanamModeSelector, { type DeliveryMode } from "@/components/ParayanamModeSelector";
+import ParticipationTypeSelector, { type ParticipationType } from "@/components/ParticipationTypeSelector";
 import SEO from "@/components/SEO";
 
 const today = () => new Date().toISOString().slice(0, 10);
@@ -37,6 +39,8 @@ export default function CreateParayanamPage() {
   const [setId, setSetId] = useState<string>("");
   const [custom, setCustom] = useState<number[]>([]);
   const [selectedTemplateId, setSelectedTemplateId] = useState<string>("scratch");
+  const [deliveryMode, setDeliveryMode] = useState<DeliveryMode>("SELF_PACED");
+  const [participationType, setParticipationType] = useState<ParticipationType>("FREE");
   const [startDate, setStartDate] = useState(today());
   const [endDate, setEndDate] = useState(plusDays(99));
   const [distribution, setDistribution] = useState<"synchronized" | "repeat" | "split">("synchronized");
@@ -142,8 +146,10 @@ export default function CreateParayanamPage() {
     step === 1
       ? dashakams.length > 0
       : step === 2
-        ? !!startDate && (isRelay || (!!endDate && endDate >= startDate))
-        : true;
+        ? true
+        : step === 3
+          ? !!startDate && (isRelay || (!!endDate && endDate >= startDate))
+          : true;
 
 
 
@@ -167,6 +173,8 @@ export default function CreateParayanamPage() {
           group_id: groupId ?? null,
           parayanam_name: parayanamName.trim() || null,
           mode: "daily",
+          delivery_mode: deliveryMode,
+          participation_type: participationType,
           challenge_type: isGroup
             ? distribution === "split"
               ? "group_relay"
@@ -226,7 +234,7 @@ export default function CreateParayanamPage() {
     }
   };
 
-  const lastStep = isGroup ? 3 : 2;
+  const lastStep = isGroup ? 4 : 3;
 
   return (
     <div className="mx-auto w-full max-w-3xl px-4 py-6 pb-24">
@@ -397,6 +405,13 @@ export default function CreateParayanamPage() {
         )}
 
         {step === 2 && (
+          <div className="space-y-8">
+            <ParayanamModeSelector value={deliveryMode} onChange={setDeliveryMode} />
+            <ParticipationTypeSelector value={participationType} onChange={setParticipationType} />
+          </div>
+        )}
+
+        {step === 3 && (
           <div className="space-y-5">
             {isGroup && (
               <div>
@@ -478,7 +493,7 @@ export default function CreateParayanamPage() {
           </div>
         )}
 
-        {step === 3 && isGroup && (
+        {step === 4 && isGroup && (
           <div className="space-y-5">
 
 
