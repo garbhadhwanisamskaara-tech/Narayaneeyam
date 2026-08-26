@@ -8,7 +8,16 @@ import { useDashakamSets } from "@/hooks/useDashakamSets";
 import { useParayanamTemplates } from "@/hooks/useParayanamTemplates";
 import { prefetchDashakamList } from "@/hooks/useDashakam";
 import { useGroupMembers } from "@/hooks/useGroups";
-import { buildSchedule, daysBetween } from "@/hooks/useParayanamSchedule";
+import { buildSchedule, contiguousBlocks, type DistributionMode } from "@/hooks/useParayanamSchedule";
+import {
+  parayanamDates,
+  patternLabel,
+  dayCountLabel,
+  dayLine,
+  WEEKDAY_CHIP_ORDER,
+  WEEKDAY_LABELS,
+  type SchedulePattern,
+} from "@/lib/parayanamDays";
 import { inviteParticipants } from "@/hooks/useParayanamParticipants";
 import ParticipantPicker from "@/components/ParticipantPicker";
 import ParayanamModeSelector, { type DeliveryMode } from "@/components/ParayanamModeSelector";
@@ -62,7 +71,9 @@ export default function CreateParayanamPage() {
   const [groupName, setGroupName] = useState<string | null>(null);
   const [startDate, setStartDate] = useState(today());
   const [endDate, setEndDate] = useState(plusDays(99));
-  const [distribution, setDistribution] = useState<"synchronized" | "repeat" | "split">("synchronized");
+  const [distribution, setDistribution] = useState<DistributionMode>("SAME_FOR_ALL");
+  const [schedulePattern, setSchedulePattern] = useState<SchedulePattern>("DAILY");
+  const [weekdays, setWeekdays] = useState<number[]>([]);
   const [selectedParticipants, setSelectedParticipants] = useState<string[]>([]);
   const [includeSelf, setIncludeSelf] = useState(true);
   const [busy, setBusy] = useState(false);
@@ -115,28 +126,41 @@ export default function CreateParayanamPage() {
   const selectedSet = sets.find((s) => s.id === setId);
   const dashakams = setId === "custom" ? [...custom].sort((a, b) => a - b) : selectedSet?.dashakam_list ?? [];
   const templateLocked = selectedTemplateId !== "scratch";
-  /** Relay parayanams run on a single day, so they have no duration. */
-  const isRelay = isGroup && distribution === "split";
-  const isRepeat = isGroup && distribution === "repeat";
-  const effectiveEndDate = isRelay ? startDate : endDate;
+  const invitedCount = selectedParticipants.length + (includeSelf ? 1 : 0);
+  const mode: DistributionMode = isGroup ? distribution : "SAME_FOR_ALL";
 
-  /**
-   * REPEAT: the same set is read every day, so the list is repeated once per day.
-   * The expanded length always divides evenly by the day count.
-   */
-  const submitDashakams = useMemo(() => {
-    if (!isRepeat || !dashakams.length || effectiveEndDate < startDate) return dashakams;
-    const days = daysBetween(startDate, effectiveEndDate);
-    return Array.from({ length: days }, () => dashakams).flat();
-  }, [isRepeat, dashakams, startDate, effectiveEndDate]);
+  /** The days this parayanam is actually conducted on. */
+  const dates = useMemo(
+    () => parayanamDates(startDate, endDate, schedulePattern, weekdays),
+    [startDate, endDate, schedulePattern, weekdays]
+  );
 
-  // Date-spread preview (assignment resolved at submit time)
+  /** Allocation over the actual parayanam days (assignment resolved at finalisation). */
   const planned = useMemo(
+    () => buildSchedule(dashakams, dates, mode, []),
+    [dashakams, dates, mode]
+  );
+
+  /** Preview grouped by parayanam day. */
+  const previewDays = useMemo(
     () =>
-      submitDashakams.length && effectiveEndDate >= startDate
-        ? buildSchedule(submitDashakams, startDate, effectiveEndDate, "synchronized", [])
-        : [],
-    [submitDashakams, startDate, effectiveEndDate]
+      dates.map((date, i) => ({
+        date,
+        label: dayLine(i, date),
+        dashakams:
+          mode === "RELAY" || mode === "REPEAT_SAME"
+            ? dashakams
+            : planned.filter((r) => r.scheduled_date === date).map((r) => r.dashakam_no),
+        blocks:
+          mode === "RELAY" && invitedCount > 0
+            ? contiguousBlocks(dashakams, invitedCount).map((block, b) => ({
+                block,
+                memberIndex: (b + i) % invitedCount,
+              }))
+            : [],
+      })),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [dates, planned, dashakams, mode, selectedParticipants.length, includeSelf]
   );
 
 
@@ -180,7 +204,7 @@ export default function CreateParayanamPage() {
         "details",
         "mode",
         ...(participationType === "PAID" ? (["contribution"] as const) : []),
-        "dates",
+        ...(isGroup ? (["distribution"] as const) : []),
         ...(isLive ? (["live"] as const) : []),
         ...(isGroup ? (["participants"] as const) : []),
         "review",
@@ -199,24 +223,21 @@ export default function CreateParayanamPage() {
 
   const canNext =
     currentStep === "details"
-      ? dashakams.length > 0
+      ? dashakams.length > 0 && !!startDate && !!endDate && endDate >= startDate && dates.length > 0
       : currentStep === "contribution"
         ? contributionValid
-        : currentStep === "dates"
-          ? !!startDate && (isRelay || (!!endDate && endDate >= startDate))
-          : currentStep === "live"
-            ? isLiveScheduleValid(liveSchedule)
-            : true;
+        : currentStep === "live"
+          ? isLiveScheduleValid(liveSchedule)
+          : true;
 
   /** Keep generated sessions in step with the parayanam's date range. */
   useEffect(() => {
     if (!isLive) return;
     setLiveSchedule((prev) =>
-      prev.option === "individually"
-        ? prev
-        : { ...prev, sessions: generateSessions(prev, startDate, effectiveEndDate) }
+      prev.option === "individually" ? prev : { ...prev, sessions: generateSessions(prev, dates) }
     );
-  }, [isLive, startDate, effectiveEndDate]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isLive, dates.join(",")]);
 
 
 
@@ -246,18 +267,17 @@ export default function CreateParayanamPage() {
           payment_url: participationType === "PAID" ? contribution.paymentUrl.trim() : null,
           payment_note:
             participationType === "PAID" && contribution.note.trim() ? contribution.note.trim() : null,
-          challenge_type: isGroup
-            ? distribution === "split"
-              ? "group_relay"
-              : "group_standard"
-            : "personal",
+          challenge_type: isGroup ? (mode === "RELAY" ? "group_relay" : "group_standard") : "personal",
+          distribution_mode: mode,
+          schedule_pattern: schedulePattern,
+          schedule_weekdays: schedulePattern === "WEEKDAYS" ? weekdays : null,
           start_date: startDate,
-          end_date: effectiveEndDate,
+          end_date: endDate,
 
           technical_state: "ACTIVE",
           spiritual_state: "in_progress",
-          dashakams_target: submitDashakams.length,
-          dashakam_list: submitDashakams,
+          dashakams_target: dashakams.length,
+          dashakam_list: dashakams,
 
           dashakam_set_id: setId === "custom" ? null : setId,
         })
@@ -584,8 +604,7 @@ export default function CreateParayanamPage() {
           <LiveScheduleEditor
             value={liveSchedule}
             onChange={setLiveSchedule}
-            startDate={startDate}
-            endDate={effectiveEndDate}
+            dates={dates}
           />
         )}
 
