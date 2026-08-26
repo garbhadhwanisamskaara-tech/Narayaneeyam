@@ -504,65 +504,10 @@ export default function CreateParayanamPage() {
             </div>
             )}
 
-          </div>
-        )}
-
-        {currentStep === "mode" && (
-          <div className="space-y-8">
-            <ParayanamModeSelector value={deliveryMode} onChange={setDeliveryMode} />
-            <ParticipationTypeSelector value={participationType} onChange={setParticipationType} />
-          </div>
-        )}
-
-        {currentStep === "contribution" && (
-          <ContributionDetailsForm value={contribution} onChange={setContribution} />
-        )}
-
-        {currentStep === "dates" && (
-          <div className="space-y-5">
-            {isGroup && (
-              <div>
-                <p className="font-sans text-sm font-semibold text-foreground">How should dashakams be shared?</p>
-                <div className="mt-3 grid gap-3 sm:grid-cols-3">
-                  {(
-                    [
-                      [
-                        "synchronized",
-                        "Everyone reads together, a new dashakam each day",
-                        "All participants chant the same dashakam on the same day, moving to the next one the next day.",
-                      ],
-                      [
-                        "repeat",
-                        "Everyone reads the same dashakams, every day",
-                        "All participants chant the whole selected set every day of the parayanam.",
-                      ],
-                      [
-                        "split",
-                        "Dashakams split among participants",
-                        "All selected dashakams are split evenly among members and everyone reads their share on the same day.",
-                      ],
-                    ] as const
-
-                  ).map(([value, label, hint]) => (
-                    <button
-                      key={value}
-                      onClick={() => setDistribution(value)}
-                      className={`rounded-xl border p-4 text-left transition-colors ${
-                        distribution === value ? "border-primary bg-secondary/30" : "border-border hover:border-primary"
-                      }`}
-                    >
-                      <span className="font-sans text-sm font-semibold text-foreground">{label}</span>
-                      <span className="mt-1 block font-sans text-xs text-muted-foreground">{hint}</span>
-                    </button>
-                  ))}
-                </div>
-              </div>
-            )}
-
             <div className="grid gap-4 sm:grid-cols-2">
               <div>
                 <label htmlFor="start" className="font-sans text-sm font-semibold text-foreground">
-                  {isRelay ? "Date of the parayanam" : "Start date"}
+                  Start date
                 </label>
                 <input
                   id="start"
@@ -571,32 +516,97 @@ export default function CreateParayanamPage() {
                   onChange={(e) => setStartDate(e.target.value)}
                   className="mt-2 w-full rounded-lg border border-border bg-background px-3 py-2 font-sans text-sm text-foreground outline-none focus:ring-2 focus:ring-primary"
                 />
-                {isRelay && (
-                  <p className="mt-2 font-sans text-xs text-muted-foreground">
-                    A relay parayanam is completed on this single day.
-                  </p>
-                )}
               </div>
-              {!isRelay && (
-                <div>
-                  <label htmlFor="end" className="font-sans text-sm font-semibold text-foreground">
-                    End date
-                  </label>
-                  <input
-                    id="end"
-                    type="date"
-                    value={endDate}
-                    onChange={(e) => setEndDate(e.target.value)}
-                    className="mt-2 w-full rounded-lg border border-border bg-background px-3 py-2 font-sans text-sm text-foreground outline-none focus:ring-2 focus:ring-primary"
-                  />
-                </div>
-              )}
-              {!isRelay && endDate < startDate && (
+              <div>
+                <label htmlFor="end" className="font-sans text-sm font-semibold text-foreground">
+                  End date
+                </label>
+                <input
+                  id="end"
+                  type="date"
+                  value={endDate}
+                  onChange={(e) => setEndDate(e.target.value)}
+                  className="mt-2 w-full rounded-lg border border-border bg-background px-3 py-2 font-sans text-sm text-foreground outline-none focus:ring-2 focus:ring-primary"
+                />
+              </div>
+              {endDate < startDate && (
                 <p className="font-sans text-xs text-destructive sm:col-span-2">
                   The end date must be on or after the start date.
                 </p>
               )}
             </div>
+
+            <div>
+              <p className="font-sans text-sm font-semibold text-foreground">Parayanam days</p>
+              <p className="font-sans text-xs text-muted-foreground">
+                When will this parayanam take place?
+              </p>
+              <div className="mt-3 grid gap-3 sm:grid-cols-2">
+                {(
+                  [
+                    ["DAILY", "Every day", "Every date from the start date to the end date."],
+                    [
+                      "WEEKDAYS",
+                      "Selected days of the week",
+                      "Only the days of the week you choose, within your dates.",
+                    ],
+                  ] as const
+                ).map(([value, label, hint]) => (
+                  <button
+                    key={value}
+                    type="button"
+                    aria-pressed={schedulePattern === value}
+                    onClick={() => setSchedulePattern(value)}
+                    className={`rounded-xl border p-4 text-left transition-colors ${
+                      schedulePattern === value
+                        ? "border-primary bg-secondary/30"
+                        : "border-border hover:border-primary"
+                    }`}
+                  >
+                    <span className="font-sans text-sm font-semibold text-foreground">{label}</span>
+                    <span className="mt-1 block font-sans text-xs text-muted-foreground">{hint}</span>
+                  </button>
+                ))}
+              </div>
+
+              {schedulePattern === "WEEKDAYS" && (
+                <div className="mt-4 flex flex-wrap gap-2">
+                  {WEEKDAY_CHIP_ORDER.map((d) => (
+                    <button
+                      key={d}
+                      type="button"
+                      aria-pressed={weekdays.includes(d)}
+                      onClick={() =>
+                        setWeekdays((prev) =>
+                          prev.includes(d) ? prev.filter((x) => x !== d) : [...prev, d].sort()
+                        )
+                      }
+                      className={`min-w-[56px] rounded-xl border px-3 py-2 font-sans text-sm font-semibold transition-colors ${
+                        weekdays.includes(d)
+                          ? "border-primary bg-primary/15 text-primary"
+                          : "border-border text-muted-foreground hover:border-primary"
+                      }`}
+                    >
+                      {WEEKDAY_LABELS[d]}
+                    </button>
+                  ))}
+                </div>
+              )}
+
+              {dates.length > 0 ? (
+                <p className="mt-3 font-sans text-xs text-muted-foreground">
+                  {dayCountLabel(dates.length)} · {dates.slice(0, 6).map((d) => shortDate(d)).join(", ")}
+                  {dates.length > 6 ? ` … ${shortDate(dates[dates.length - 1])}` : ""}
+                </p>
+              ) : (
+                <p className="mt-3 font-sans text-xs text-destructive">
+                  {schedulePattern === "WEEKDAYS" && !weekdays.length
+                    ? "Please choose at least one day of the week."
+                    : "There are no such days inside these dates. Please widen the dates or choose other days."}
+                </p>
+              )}
+            </div>
+
           </div>
         )}
 
