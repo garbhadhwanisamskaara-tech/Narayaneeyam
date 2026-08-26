@@ -17,6 +17,7 @@ import {
 } from "@/hooks/useParayanamParticipants";
 import ParticipantPicker from "@/components/ParticipantPicker";
 import SEO from "@/components/SEO";
+import { toast } from "@/hooks/use-toast";
 import {
   dayCountLabel,
   parayanamDates,
@@ -252,6 +253,10 @@ export default function GroupSchedulePage() {
       setNotice(
         "Invites sent. The day-by-day schedule is prepared automatically when the parayanam begins."
       );
+      toast({
+        title: "Parayanam saved",
+        description: "Invitations have gone out to the members you chose.",
+      });
 
     } catch (e: any) {
       setError(e?.message ?? "Could not save the parayanam.");
