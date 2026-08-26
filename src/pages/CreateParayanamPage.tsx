@@ -45,7 +45,6 @@ const plusDays = (n: number) => {
   return d.toISOString().slice(0, 10);
 };
 
-
 export default function CreateParayanamPage() {
   const [params] = useSearchParams();
   const groupId = params.get("group") ?? undefined;
@@ -93,8 +92,8 @@ export default function CreateParayanamPage() {
             dashakam_no: d.dashakam_no,
             dashakam_name: d.dashakam_name,
             is_published: d.is_published,
-          }))
-        )
+          })),
+        ),
       )
       .catch(() => {});
   }, []);
@@ -116,17 +115,14 @@ export default function CreateParayanamPage() {
   useEffect(() => {
     if (!user) return;
     setSelectedParticipants((prev) =>
-      prev.length ? prev : members.map((m) => m.user_id).filter((id) => id !== user.id)
+      prev.length ? prev : members.map((m) => m.user_id).filter((id) => id !== user.id),
     );
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [members.length, user?.id]);
 
-  const orderedSets = useMemo(
-    () => [...sets].sort((a, b) => Number(b.is_official) - Number(a.is_official)),
-    [sets]
-  );
+  const orderedSets = useMemo(() => [...sets].sort((a, b) => Number(b.is_official) - Number(a.is_official)), [sets]);
   const selectedSet = sets.find((s) => s.id === setId);
-  const dashakams = setId === "custom" ? [...custom].sort((a, b) => a - b) : selectedSet?.dashakam_list ?? [];
+  const dashakams = setId === "custom" ? [...custom].sort((a, b) => a - b) : (selectedSet?.dashakam_list ?? []);
   const templateLocked = selectedTemplateId !== "scratch";
   const invitedCount = selectedParticipants.length + (includeSelf ? 1 : 0);
   const mode: DistributionMode = isGroup ? distribution : "SAME_FOR_ALL";
@@ -134,14 +130,11 @@ export default function CreateParayanamPage() {
   /** The days this parayanam is actually conducted on. */
   const dates = useMemo(
     () => parayanamDates(startDate, endDate, schedulePattern, weekdays),
-    [startDate, endDate, schedulePattern, weekdays]
+    [startDate, endDate, schedulePattern, weekdays],
   );
 
   /** Allocation over the actual parayanam days (assignment resolved at finalisation). */
-  const planned = useMemo(
-    () => buildSchedule(dashakams, dates, mode, []),
-    [dashakams, dates, mode]
-  );
+  const planned = useMemo(() => buildSchedule(dashakams, dates, mode, []), [dashakams, dates, mode]);
 
   /** Preview grouped by parayanam day. */
   const previewDays = useMemo(
@@ -162,10 +155,8 @@ export default function CreateParayanamPage() {
             : [],
       })),
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [dates, planned, dashakams, mode, selectedParticipants.length, includeSelf]
+    [dates, planned, dashakams, mode, selectedParticipants.length, includeSelf],
   );
-
-
 
   const toggleCustom = (n: number) =>
     setCustom((prev) => (prev.includes(n) ? prev.filter((x) => x !== n) : [...prev, n]));
@@ -185,10 +176,9 @@ export default function CreateParayanamPage() {
     setCustom([...t.dashakam_list]);
     // Suggest the template name — the user can rename it (e.g. "Marriage Chennai Group").
     setParayanamName((prev) =>
-      !prev.trim() || templates.some((tmpl) => tmpl.template_name === prev.trim()) ? t.template_name : prev
+      !prev.trim() || templates.some((tmpl) => tmpl.template_name === prev.trim()) ? t.template_name : prev,
     );
   };
-
 
   /** Picking a predefined set or Custom also clears any active template. */
   const chooseSet = (id: string) => {
@@ -211,7 +201,7 @@ export default function CreateParayanamPage() {
         ...(isGroup ? (["participants"] as const) : []),
         "review",
       ] as string[],
-    [participationType, isGroup, isLive]
+    [participationType, isGroup, isLive],
   );
   const lastStep = stepIds.length;
   const currentStep = stepIds[Math.min(step, lastStep) - 1];
@@ -236,12 +226,10 @@ export default function CreateParayanamPage() {
   useEffect(() => {
     if (!isLive) return;
     setLiveSchedule((prev) =>
-      prev.option === "individually" ? prev : { ...prev, sessions: generateSessions(prev, dates) }
+      prev.option === "individually" ? prev : { ...prev, sessions: generateSessions(prev, dates) },
     );
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isLive, dates.join(",")]);
-
-
 
   const handleBegin = () => {
     if (isGroup && members.length <= 1 && !soloWarning) {
@@ -267,8 +255,7 @@ export default function CreateParayanamPage() {
           participation_type: participationType,
           contribution_amount: participationType === "PAID" ? Number(contribution.amount) : null,
           payment_url: participationType === "PAID" ? contribution.paymentUrl.trim() : null,
-          payment_note:
-            participationType === "PAID" && contribution.note.trim() ? contribution.note.trim() : null,
+          payment_note: participationType === "PAID" && contribution.note.trim() ? contribution.note.trim() : null,
           challenge_type: isGroup ? (mode === "RELAY" ? "group_relay" : "group_standard") : "personal",
           distribution_mode: mode,
           schedule_pattern: schedulePattern,
@@ -318,17 +305,13 @@ export default function CreateParayanamPage() {
       }
 
       if (isGroup) {
-
         const { data: g } = await (supabase as any)
           .from("groups")
           .select("active_challenge_session_id")
           .eq("id", groupId)
           .maybeSingle();
         if (g && !g.active_challenge_session_id) {
-          await (supabase as any)
-            .from("groups")
-            .update({ active_challenge_session_id: session.id })
-            .eq("id", groupId);
+          await (supabase as any).from("groups").update({ active_challenge_session_id: session.id }).eq("id", groupId);
         }
         toast({
           title: "Parayanam created",
@@ -448,69 +431,66 @@ export default function CreateParayanamPage() {
                 </p>
               </div>
             ) : (
-            <div>
-              <p className="font-sans text-sm font-semibold text-foreground">Choose a dashakam set</p>
-              {loadingSets ? (
-                <Loader2 className="mt-3 h-5 w-5 animate-spin text-primary" />
-              ) : (
-                <div className="mt-3 space-y-2">
-                  {orderedSets.map((s) => (
-                    <button
-                      key={s.id}
-                      onClick={() => chooseSet(s.id)}
-                      className={`w-full rounded-xl border p-4 text-left transition-colors ${
-                        setId === s.id ? "border-primary bg-secondary/30" : "border-border hover:border-primary"
-                      }`}
-                    >
-                      <span className="font-sans text-sm font-semibold text-foreground">
-                        {s.set_name}{" "}
-                        <span className="font-normal text-muted-foreground">
-                          ({s.dashakam_list.length} dashakams{s.is_official ? "" : " · yours"})
-                        </span>
-                      </span>
-                      {s.description && (
-                        <span className="mt-1 block font-sans text-xs text-muted-foreground">{s.description}</span>
-                      )}
-                    </button>
-                  ))}
-                  <button
-                    onClick={() => chooseSet("custom")}
-                    className={`w-full rounded-xl border p-4 text-left transition-colors ${
-                      setId === "custom" ? "border-primary bg-secondary/30" : "border-border hover:border-primary"
-                    }`}
-                  >
-                    <span className="font-sans text-sm font-semibold text-foreground">Custom selection</span>
-                    <span className="mt-1 block font-sans text-xs text-muted-foreground">
-                      Pick the dashakams yourself.
-                    </span>
-                  </button>
-                </div>
-              )}
-
-              {setId === "custom" && (
-                <div className="mt-4 grid grid-cols-10 gap-1.5">
-                  {allDashakams.map((d) => {
-                    const picked = custom.includes(d.dashakam_no);
-                    return (
+              <div>
+                <p className="font-sans text-sm font-semibold text-foreground">Choose a dashakam set</p>
+                {loadingSets ? (
+                  <Loader2 className="mt-3 h-5 w-5 animate-spin text-primary" />
+                ) : (
+                  <div className="mt-3 space-y-2">
+                    {orderedSets.map((s) => (
                       <button
-                        key={d.dashakam_no}
-                        onClick={() => toggleCustom(d.dashakam_no)}
-                        title={d.dashakam_name}
-                        className={`aspect-square rounded-md border font-sans text-[11px] font-semibold transition-colors hover:border-primary ${
-                          picked
-                            ? "border-primary bg-primary/15 text-primary"
-                            : "border-border text-muted-foreground"
+                        key={s.id}
+                        onClick={() => chooseSet(s.id)}
+                        className={`w-full rounded-xl border p-4 text-left transition-colors ${
+                          setId === s.id ? "border-primary bg-secondary/30" : "border-border hover:border-primary"
                         }`}
                       >
-                        {d.dashakam_no}
+                        <span className="font-sans text-sm font-semibold text-foreground">
+                          {s.set_name}{" "}
+                          <span className="font-normal text-muted-foreground">
+                            ({s.dashakam_list.length} dashakams{s.is_official ? "" : " · yours"})
+                          </span>
+                        </span>
+                        {s.description && (
+                          <span className="mt-1 block font-sans text-xs text-muted-foreground">{s.description}</span>
+                        )}
                       </button>
-                    );
-                  })}
-                </div>
-              )}
-              <p className="mt-3 font-sans text-xs text-muted-foreground">{dashakams.length} dashakams selected</p>
+                    ))}
+                    <button
+                      onClick={() => chooseSet("custom")}
+                      className={`w-full rounded-xl border p-4 text-left transition-colors ${
+                        setId === "custom" ? "border-primary bg-secondary/30" : "border-border hover:border-primary"
+                      }`}
+                    >
+                      <span className="font-sans text-sm font-semibold text-foreground">Custom selection</span>
+                      <span className="mt-1 block font-sans text-xs text-muted-foreground">
+                        Pick the dashakams yourself.
+                      </span>
+                    </button>
+                  </div>
+                )}
 
-            </div>
+                {setId === "custom" && (
+                  <div className="mt-4 grid grid-cols-10 gap-1.5">
+                    {allDashakams.map((d) => {
+                      const picked = custom.includes(d.dashakam_no);
+                      return (
+                        <button
+                          key={d.dashakam_no}
+                          onClick={() => toggleCustom(d.dashakam_no)}
+                          title={d.dashakam_name}
+                          className={`aspect-square rounded-md border font-sans text-[11px] font-semibold transition-colors hover:border-primary ${
+                            picked ? "border-primary bg-primary/15 text-primary" : "border-border text-muted-foreground"
+                          }`}
+                        >
+                          {d.dashakam_no}
+                        </button>
+                      );
+                    })}
+                  </div>
+                )}
+                <p className="mt-3 font-sans text-xs text-muted-foreground">{dashakams.length} dashakams selected</p>
+              </div>
             )}
 
             <div className="grid gap-4 sm:grid-cols-2">
@@ -547,9 +527,7 @@ export default function CreateParayanamPage() {
 
             <div>
               <p className="font-sans text-sm font-semibold text-foreground">Parayanam days</p>
-              <p className="font-sans text-xs text-muted-foreground">
-                When will this parayanam take place?
-              </p>
+              <p className="font-sans text-xs text-muted-foreground">When will this parayanam take place?</p>
               <div className="mt-3 grid gap-3 sm:grid-cols-2">
                 {(
                   [
@@ -586,9 +564,7 @@ export default function CreateParayanamPage() {
                       type="button"
                       aria-pressed={weekdays.includes(d)}
                       onClick={() =>
-                        setWeekdays((prev) =>
-                          prev.includes(d) ? prev.filter((x) => x !== d) : [...prev, d].sort()
-                        )
+                        setWeekdays((prev) => (prev.includes(d) ? prev.filter((x) => x !== d) : [...prev, d].sort()))
                       }
                       className={`min-w-[56px] rounded-xl border px-3 py-2 font-sans text-sm font-semibold transition-colors ${
                         weekdays.includes(d)
@@ -604,7 +580,11 @@ export default function CreateParayanamPage() {
 
               {dates.length > 0 ? (
                 <p className="mt-3 font-sans text-xs text-muted-foreground">
-                  {dayCountLabel(dates.length)} · {dates.slice(0, 6).map((d) => shortDate(d)).join(", ")}
+                  {dayCountLabel(dates.length)} ·{" "}
+                  {dates
+                    .slice(0, 6)
+                    .map((d) => shortDate(d))
+                    .join(", ")}
                   {dates.length > 6 ? ` … ${shortDate(dates[dates.length - 1])}` : ""}
                 </p>
               ) : (
@@ -615,10 +595,17 @@ export default function CreateParayanamPage() {
                 </p>
               )}
             </div>
+          </div>
+        )}
+        {currentStep === "mode" && (
+          <div className="space-y-6">
+            <ParayanamModeSelector value={deliveryMode} onChange={setDeliveryMode} />
 
+            <ParticipationTypeSelector value={participationType} onChange={setParticipationType} />
           </div>
         )}
 
+        {currentStep === "contribution" && <ContributionDetailsForm value={contribution} onChange={setContribution} />}
         {currentStep === "distribution" && (
           <div className="space-y-5">
             <div>
@@ -681,9 +668,7 @@ export default function CreateParayanamPage() {
                         ))}
                       </ul>
                     ) : (
-                      <p className="mt-1 font-sans text-xs text-muted-foreground">
-                        {d.dashakams.join(", ") || "—"}
-                      </p>
+                      <p className="mt-1 font-sans text-xs text-muted-foreground">{d.dashakams.join(", ") || "—"}</p>
                     )}
                   </li>
                 ))}
@@ -697,26 +682,16 @@ export default function CreateParayanamPage() {
           </div>
         )}
 
-        {currentStep === "live" && (
-          <LiveScheduleEditor
-            value={liveSchedule}
-            onChange={setLiveSchedule}
-            dates={dates}
-          />
-        )}
+        {currentStep === "live" && <LiveScheduleEditor value={liveSchedule} onChange={setLiveSchedule} dates={dates} />}
 
         {currentStep === "participants" && (
           <div className="space-y-5">
-
-
             <ParticipantPicker
               members={members}
               ownerId={user?.id}
               selected={selectedParticipants}
               onToggle={(id) =>
-                setSelectedParticipants((prev) =>
-                  prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]
-                )
+                setSelectedParticipants((prev) => (prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]))
               }
               includeSelf={includeSelf}
               onIncludeSelfChange={setIncludeSelf}
@@ -748,10 +723,7 @@ export default function CreateParayanamPage() {
             live={
               isLive
                 ? {
-                    planLabel:
-                      liveSchedule.option === "scheduled"
-                        ? "On every parayanam day"
-                        : "Added individually",
+                    planLabel: liveSchedule.option === "scheduled" ? "On every parayanam day" : "Added individually",
                     startTime: liveSchedule.startTime,
                     endTime: liveSchedule.endTime,
                     sessionCount: liveSchedule.sessions.length,
@@ -771,7 +743,8 @@ export default function CreateParayanamPage() {
         {soloWarning && (
           <div className="rounded-xl border border-amber-200 bg-amber-50 p-4 dark:border-amber-900 dark:bg-amber-950/30">
             <p className="font-sans text-sm text-amber-900 dark:text-amber-100">
-              You're the only member in this group right now — this parayanam will run solo until others join. You can invite members from the group page.
+              You're the only member in this group right now — this parayanam will run solo until others join. You can
+              invite members from the group page.
             </p>
             <Link
               to={`/groups/${groupId}#invite`}
