@@ -610,6 +610,84 @@ export default function CreateParayanamPage() {
           </div>
         )}
 
+        {currentStep === "distribution" && (
+          <div className="space-y-5">
+            <div>
+              <p className="font-sans text-sm font-semibold text-foreground">How should dashakams be shared?</p>
+              <p className="font-sans text-xs text-muted-foreground">
+                {dayCountLabel(dates.length)} · {patternLabel(schedulePattern, weekdays)}
+              </p>
+              <div className="mt-3 grid gap-3 sm:grid-cols-3">
+                {(
+                  [
+                    [
+                      "SAME_FOR_ALL",
+                      "Same dashakams for everyone",
+                      "The selected dashakams are spread across the parayanam days, and everyone reads the same ones each day.",
+                    ],
+                    [
+                      "REPEAT_SAME",
+                      "Everyone repeats the whole set",
+                      "Every participant reads the entire selected set on every parayanam day.",
+                    ],
+                    [
+                      "RELAY",
+                      "Relay — split among participants",
+                      "Each parayanam day the whole set is completed together, split into blocks that rotate among participants.",
+                    ],
+                  ] as const
+                ).map(([value, label, hint]) => (
+                  <button
+                    key={value}
+                    onClick={() => setDistribution(value)}
+                    className={`rounded-xl border p-4 text-left transition-colors ${
+                      distribution === value ? "border-primary bg-secondary/30" : "border-border hover:border-primary"
+                    }`}
+                  >
+                    <span className="font-sans text-sm font-semibold text-foreground">{label}</span>
+                    <span className="mt-1 block font-sans text-xs text-muted-foreground">{hint}</span>
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <div>
+              <p className="font-sans text-sm font-semibold text-foreground">Schedule preview</p>
+              {mode === "RELAY" && (
+                <p className="font-sans text-xs text-muted-foreground">
+                  Based on the {invitedCount} {invitedCount === 1 ? "person" : "people"} you invite. The final
+                  allocation is prepared when the parayanam begins, from those who have confirmed.
+                </p>
+              )}
+              <ul className="mt-3 space-y-2">
+                {previewDays.slice(0, 8).map((d) => (
+                  <li key={d.date} className="rounded-xl border border-border p-3">
+                    <p className="font-sans text-xs font-semibold text-foreground">{d.label}</p>
+                    {mode === "RELAY" && d.blocks.length ? (
+                      <ul className="mt-1 space-y-0.5">
+                        {d.blocks.map((b) => (
+                          <li key={b.memberIndex} className="font-sans text-xs text-muted-foreground">
+                            Participant {b.memberIndex + 1} → {b.block.join(", ") || "—"}
+                          </li>
+                        ))}
+                      </ul>
+                    ) : (
+                      <p className="mt-1 font-sans text-xs text-muted-foreground">
+                        {d.dashakams.join(", ") || "—"}
+                      </p>
+                    )}
+                  </li>
+                ))}
+              </ul>
+              {previewDays.length > 8 && (
+                <p className="mt-2 font-sans text-xs text-muted-foreground">
+                  Showing the first 8 of {previewDays.length} parayanam days.
+                </p>
+              )}
+            </div>
+          </div>
+        )}
+
         {currentStep === "live" && (
           <LiveScheduleEditor
             value={liveSchedule}
