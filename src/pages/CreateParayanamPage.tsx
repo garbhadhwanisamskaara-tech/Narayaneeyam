@@ -18,6 +18,13 @@ import ContributionDetailsForm, {
   isValidPaymentUrl,
   type ContributionDetails,
 } from "@/components/ContributionDetailsForm";
+import LiveScheduleEditor, {
+  emptyLiveSchedule,
+  generateSessions,
+  isLiveScheduleValid,
+  type LiveScheduleValue,
+} from "@/components/LiveScheduleEditor";
+import ParayanamReview from "@/components/ParayanamReview";
 import SEO from "@/components/SEO";
 
 const today = () => new Date().toISOString().slice(0, 10);
@@ -51,6 +58,8 @@ export default function CreateParayanamPage() {
     paymentUrl: "",
     note: "",
   });
+  const [liveSchedule, setLiveSchedule] = useState<LiveScheduleValue>(emptyLiveSchedule());
+  const [groupName, setGroupName] = useState<string | null>(null);
   const [startDate, setStartDate] = useState(today());
   const [endDate, setEndDate] = useState(plusDays(99));
   const [distribution, setDistribution] = useState<"synchronized" | "repeat" | "split">("synchronized");
@@ -76,6 +85,16 @@ export default function CreateParayanamPage() {
       )
       .catch(() => {});
   }, []);
+
+  useEffect(() => {
+    if (!groupId) return;
+    (supabase as any)
+      .from("groups")
+      .select("group_name")
+      .eq("id", groupId)
+      .maybeSingle()
+      .then(({ data }: any) => setGroupName(data?.group_name ?? null));
+  }, [groupId]);
 
   useEffect(() => {
     if (!setId && sets.length) setSetId(sets[0].id);
@@ -152,7 +171,9 @@ export default function CreateParayanamPage() {
     if (id === "custom") setCustom([]);
   };
 
-  /** Steps are dynamic: Contribution only for PAID, Participants only for groups. */
+  const isLive = deliveryMode === "LIVE";
+
+  /** Steps are dynamic: Contribution only for PAID, Live Schedule only for LIVE. */
   const stepIds = useMemo(
     () =>
       [
@@ -160,9 +181,11 @@ export default function CreateParayanamPage() {
         "mode",
         ...(participationType === "PAID" ? (["contribution"] as const) : []),
         "dates",
+        ...(isLive ? (["live"] as const) : []),
         ...(isGroup ? (["participants"] as const) : []),
+        "review",
       ] as string[],
-    [participationType, isGroup]
+    [participationType, isGroup, isLive]
   );
   const lastStep = stepIds.length;
   const currentStep = stepIds[Math.min(step, lastStep) - 1];
@@ -181,7 +204,19 @@ export default function CreateParayanamPage() {
         ? contributionValid
         : currentStep === "dates"
           ? !!startDate && (isRelay || (!!endDate && endDate >= startDate))
-          : true;
+          : currentStep === "live"
+            ? isLiveScheduleValid(liveSchedule)
+            : true;
+
+  /** Keep generated sessions in step with the parayanam's date range. */
+  useEffect(() => {
+    if (!isLive) return;
+    setLiveSchedule((prev) =>
+      prev.option === "individually"
+        ? prev
+        : { ...prev, sessions: generateSessions(prev, startDate, effectiveEndDate) }
+    );
+  }, [isLive, startDate, effectiveEndDate]);
 
 
 
@@ -244,6 +279,20 @@ export default function CreateParayanamPage() {
         }));
         const { error: schErr } = await (supabase as any).from("parayanam_schedule").insert(rows);
         if (schErr) throw new Error(schErr.message);
+      }
+
+      if (isLive && liveSchedule.sessions.length) {
+        const toIso = (date: string, time: string) => new Date(`${date}T${time}:00`).toISOString();
+        const liveRows = liveSchedule.sessions.map((ls) => ({
+          challenge_session_id: session.id,
+          session_date: ls.session_date,
+          start_datetime: toIso(ls.session_date, ls.start_time),
+          end_datetime: toIso(ls.session_date, ls.end_time),
+          meeting_url: ls.meeting_url,
+          join_before_mins: ls.join_before_mins,
+        }));
+        const { error: lsErr } = await (supabase as any).from("live_sessions").insert(liveRows);
+        if (lsErr) throw new Error(lsErr.message);
       }
 
       if (isGroup) {
@@ -531,6 +580,15 @@ export default function CreateParayanamPage() {
           </div>
         )}
 
+        {currentStep === "live" && (
+          <LiveScheduleEditor
+            value={liveSchedule}
+            onChange={setLiveSchedule}
+            startDate={startDate}
+            endDate={effectiveEndDate}
+          />
+        )}
+
         {currentStep === "participants" && (
           <div className="space-y-5">
 
@@ -548,6 +606,41 @@ export default function CreateParayanamPage() {
               onIncludeSelfChange={setIncludeSelf}
             />
           </div>
+        )}
+
+        {currentStep === "review" && (
+          <ParayanamReview
+            parayanamName={parayanamName}
+            groupName={groupName}
+            startDate={startDate}
+            endDate={effectiveEndDate}
+            isSingleDay={isRelay || effectiveEndDate === startDate}
+            deliveryMode={deliveryMode}
+            isGroup={isGroup}
+            invitedCount={selectedParticipants.length + (includeSelf ? 1 : 0)}
+            live={
+              isLive
+                ? {
+                    planLabel:
+                      liveSchedule.option === "every_day"
+                        ? "Every day"
+                        : liveSchedule.option === "selected_days"
+                          ? "On selected days"
+                          : "Added individually",
+                    startTime: liveSchedule.startTime,
+                    endTime: liveSchedule.endTime,
+                    sessionCount: liveSchedule.sessions.length,
+                    hasMeetingLink: isLiveScheduleValid(liveSchedule),
+                    joinBeforeMins: liveSchedule.joinBeforeMins,
+                  }
+                : undefined
+            }
+            contribution={
+              participationType === "PAID"
+                ? { amount: contribution.amount, hasPaymentLink: isValidPaymentUrl(contribution.paymentUrl) }
+                : null
+            }
+          />
         )}
 
         {soloWarning && (
@@ -572,7 +665,7 @@ export default function CreateParayanamPage() {
             disabled={step === 1 || busy}
             className="rounded-lg border border-border px-4 py-2 font-sans text-sm font-semibold text-foreground disabled:opacity-40"
           >
-            Back
+            {currentStep === "review" ? "Edit" : "Back"}
           </button>
           {step < lastStep ? (
             <button
@@ -586,10 +679,10 @@ export default function CreateParayanamPage() {
             <button
               onClick={soloWarning ? () => void handleSubmit() : handleBegin}
               disabled={busy || !canNext || dashakams.length === 0}
-              className="inline-flex items-center gap-2 rounded-lg bg-gradient-gold px-5 py-2 font-sans text-sm font-semibold text-primary shadow-gold disabled:opacity-50"
+              className="inline-flex items-center gap-2 rounded-xl bg-gradient-gold px-6 py-3 font-sans text-base font-semibold text-primary shadow-gold disabled:opacity-50"
             >
-              {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4" />}
-              {soloWarning ? "Continue anyway" : isGroup ? "Save & invite" : "Begin Parayanam"}
+              {busy ? <Loader2 className="h-5 w-5 animate-spin" /> : <Sparkles className="h-5 w-5" />}
+              {soloWarning ? "Continue anyway" : "Create Parayanam"}
             </button>
           )}
         </div>
