@@ -414,25 +414,38 @@ export default function GroupSchedulePage() {
               )}
             </div>
 
-            <div className="grid gap-4 sm:grid-cols-2">
-              <div>
-                <label htmlFor="start" className="font-sans text-sm font-semibold text-foreground">
-                  {isRelay ? "Date of the parayanam" : "Start date"}
-                </label>
-                <input
-                  id="start"
-                  type="date"
-                  value={startDate}
-                  onChange={(e) => setStartDate(e.target.value)}
-                  className="mt-2 w-full rounded-lg border border-border bg-background px-3 py-2 font-sans text-sm text-foreground outline-none focus:ring-2 focus:ring-primary"
-                />
-                {isRelay && (
-                  <p className="mt-2 font-sans text-xs text-muted-foreground">
-                    A relay parayanam is completed on this single day.
-                  </p>
-                )}
+            {configured ? (
+              <div className="rounded-xl border border-border p-4">
+                <p className="font-sans text-xs uppercase tracking-wide text-muted-foreground">
+                  Parayanam dates
+                </p>
+                <p className="mt-1 font-sans text-sm text-foreground">
+                  {formatScheduleDate(startDate)} – {formatScheduleDate(endDate)}
+                </p>
+                <p className="mt-3 font-sans text-xs uppercase tracking-wide text-muted-foreground">
+                  Schedule
+                </p>
+                <p className="mt-1 font-sans text-sm text-foreground">
+                  {patternLabel(schedulePattern, weekdays)} · {dayCountLabel(dates.length)}
+                </p>
+                <p className="mt-3 font-sans text-xs text-muted-foreground">
+                  These were chosen when the parayanam was created.
+                </p>
               </div>
-              {!isRelay && (
+            ) : (
+              <div className="grid gap-4 sm:grid-cols-2">
+                <div>
+                  <label htmlFor="start" className="font-sans text-sm font-semibold text-foreground">
+                    Start date
+                  </label>
+                  <input
+                    id="start"
+                    type="date"
+                    value={startDate}
+                    onChange={(e) => setStartDate(e.target.value)}
+                    className="mt-2 w-full rounded-lg border border-border bg-background px-3 py-2 font-sans text-sm text-foreground outline-none focus:ring-2 focus:ring-primary"
+                  />
+                </div>
                 <div>
                   <label htmlFor="end" className="font-sans text-sm font-semibold text-foreground">
                     End date
@@ -445,8 +458,9 @@ export default function GroupSchedulePage() {
                     className="mt-2 w-full rounded-lg border border-border bg-background px-3 py-2 font-sans text-sm text-foreground outline-none focus:ring-2 focus:ring-primary"
                   />
                 </div>
-              )}
-            </div>
+              </div>
+            )}
+
 
 
             <TooltipProvider delayDuration={150}>
