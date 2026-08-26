@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useParams, Link, useNavigate } from "react-router-dom";
+import { useParams, Link, useNavigate, useSearchParams } from "react-router-dom";
 import {
   ArrowLeft,
   Copy,
@@ -104,8 +104,10 @@ export default function GroupDetailPage() {
   const [membersOpen, setMembersOpen] = useState(true);
   const [helpOpen, setHelpOpen] = useState(false);
 
-  const [selectedSessionId, setSelectedSessionId] = useState<string | null>(null);
-  const [pickerTouched, setPickerTouched] = useState(false);
+  const [searchParams] = useSearchParams();
+  const sessionParam = searchParams.get("session");
+  const [selectedSessionId, setSelectedSessionId] = useState<string | null>(sessionParam);
+  const [pickerTouched, setPickerTouched] = useState(!!sessionParam);
 
   const { invite, loading, generateInvite, revokeInvite, regenerateInvite } = useGroupInvite(groupId);
   const { parayanams, loading: loadingParayanams, refresh: refreshParayanams } =
@@ -145,6 +147,11 @@ export default function GroupDetailPage() {
       !!selectedSessionId && parayanams.some((p) => p.session_id === selectedSessionId);
     if (pickerTouched && stillThere) return;
 
+    if (sessionParam && parayanams.some((p) => p.session_id === sessionParam)) {
+      setSelectedSessionId(sessionParam);
+      return;
+    }
+
     const active = group?.active_challenge_session_id;
     const fallback = parayanams[0].session_id;
     setSelectedSessionId(
@@ -156,6 +163,7 @@ export default function GroupDetailPage() {
     group?.active_challenge_session_id,
     pickerTouched,
     selectedSessionId,
+    sessionParam,
   ]);
 
 
