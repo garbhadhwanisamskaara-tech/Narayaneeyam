@@ -8,7 +8,17 @@ import { useDashakamSets } from "@/hooks/useDashakamSets";
 import { useParayanamTemplates } from "@/hooks/useParayanamTemplates";
 import { prefetchDashakamList } from "@/hooks/useDashakam";
 import { useGroupMembers } from "@/hooks/useGroups";
-import { buildSchedule, daysBetween } from "@/hooks/useParayanamSchedule";
+import { buildSchedule, contiguousBlocks, type DistributionMode } from "@/hooks/useParayanamSchedule";
+import {
+  parayanamDates,
+  patternLabel,
+  dayCountLabel,
+  dayLine,
+  shortDate,
+  WEEKDAY_CHIP_ORDER,
+  WEEKDAY_LABELS,
+  type SchedulePattern,
+} from "@/lib/parayanamDays";
 import { inviteParticipants } from "@/hooks/useParayanamParticipants";
 import ParticipantPicker from "@/components/ParticipantPicker";
 import ParayanamModeSelector, { type DeliveryMode } from "@/components/ParayanamModeSelector";
@@ -26,6 +36,7 @@ import LiveScheduleEditor, {
 } from "@/components/LiveScheduleEditor";
 import ParayanamReview from "@/components/ParayanamReview";
 import SEO from "@/components/SEO";
+import { toast } from "@/hooks/use-toast";
 
 const today = () => new Date().toISOString().slice(0, 10);
 const plusDays = (n: number) => {
@@ -62,7 +73,9 @@ export default function CreateParayanamPage() {
   const [groupName, setGroupName] = useState<string | null>(null);
   const [startDate, setStartDate] = useState(today());
   const [endDate, setEndDate] = useState(plusDays(99));
-  const [distribution, setDistribution] = useState<"synchronized" | "repeat" | "split">("synchronized");
+  const [distribution, setDistribution] = useState<DistributionMode>("SAME_FOR_ALL");
+  const [schedulePattern, setSchedulePattern] = useState<SchedulePattern>("DAILY");
+  const [weekdays, setWeekdays] = useState<number[]>([]);
   const [selectedParticipants, setSelectedParticipants] = useState<string[]>([]);
   const [includeSelf, setIncludeSelf] = useState(true);
   const [busy, setBusy] = useState(false);
@@ -115,28 +128,41 @@ export default function CreateParayanamPage() {
   const selectedSet = sets.find((s) => s.id === setId);
   const dashakams = setId === "custom" ? [...custom].sort((a, b) => a - b) : selectedSet?.dashakam_list ?? [];
   const templateLocked = selectedTemplateId !== "scratch";
-  /** Relay parayanams run on a single day, so they have no duration. */
-  const isRelay = isGroup && distribution === "split";
-  const isRepeat = isGroup && distribution === "repeat";
-  const effectiveEndDate = isRelay ? startDate : endDate;
+  const invitedCount = selectedParticipants.length + (includeSelf ? 1 : 0);
+  const mode: DistributionMode = isGroup ? distribution : "SAME_FOR_ALL";
 
-  /**
-   * REPEAT: the same set is read every day, so the list is repeated once per day.
-   * The expanded length always divides evenly by the day count.
-   */
-  const submitDashakams = useMemo(() => {
-    if (!isRepeat || !dashakams.length || effectiveEndDate < startDate) return dashakams;
-    const days = daysBetween(startDate, effectiveEndDate);
-    return Array.from({ length: days }, () => dashakams).flat();
-  }, [isRepeat, dashakams, startDate, effectiveEndDate]);
+  /** The days this parayanam is actually conducted on. */
+  const dates = useMemo(
+    () => parayanamDates(startDate, endDate, schedulePattern, weekdays),
+    [startDate, endDate, schedulePattern, weekdays]
+  );
 
-  // Date-spread preview (assignment resolved at submit time)
+  /** Allocation over the actual parayanam days (assignment resolved at finalisation). */
   const planned = useMemo(
+    () => buildSchedule(dashakams, dates, mode, []),
+    [dashakams, dates, mode]
+  );
+
+  /** Preview grouped by parayanam day. */
+  const previewDays = useMemo(
     () =>
-      submitDashakams.length && effectiveEndDate >= startDate
-        ? buildSchedule(submitDashakams, startDate, effectiveEndDate, "synchronized", [])
-        : [],
-    [submitDashakams, startDate, effectiveEndDate]
+      dates.map((date, i) => ({
+        date,
+        label: dayLine(i, date),
+        dashakams:
+          mode === "RELAY" || mode === "REPEAT_SAME"
+            ? dashakams
+            : planned.filter((r) => r.scheduled_date === date).map((r) => r.dashakam_no),
+        blocks:
+          mode === "RELAY" && invitedCount > 0
+            ? contiguousBlocks(dashakams, invitedCount).map((block, b) => ({
+                block,
+                memberIndex: (b + i) % invitedCount,
+              }))
+            : [],
+      })),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [dates, planned, dashakams, mode, selectedParticipants.length, includeSelf]
   );
 
 
@@ -180,7 +206,7 @@ export default function CreateParayanamPage() {
         "details",
         "mode",
         ...(participationType === "PAID" ? (["contribution"] as const) : []),
-        "dates",
+        ...(isGroup ? (["distribution"] as const) : []),
         ...(isLive ? (["live"] as const) : []),
         ...(isGroup ? (["participants"] as const) : []),
         "review",
@@ -199,24 +225,21 @@ export default function CreateParayanamPage() {
 
   const canNext =
     currentStep === "details"
-      ? dashakams.length > 0
+      ? dashakams.length > 0 && !!startDate && !!endDate && endDate >= startDate && dates.length > 0
       : currentStep === "contribution"
         ? contributionValid
-        : currentStep === "dates"
-          ? !!startDate && (isRelay || (!!endDate && endDate >= startDate))
-          : currentStep === "live"
-            ? isLiveScheduleValid(liveSchedule)
-            : true;
+        : currentStep === "live"
+          ? isLiveScheduleValid(liveSchedule)
+          : true;
 
   /** Keep generated sessions in step with the parayanam's date range. */
   useEffect(() => {
     if (!isLive) return;
     setLiveSchedule((prev) =>
-      prev.option === "individually"
-        ? prev
-        : { ...prev, sessions: generateSessions(prev, startDate, effectiveEndDate) }
+      prev.option === "individually" ? prev : { ...prev, sessions: generateSessions(prev, dates) }
     );
-  }, [isLive, startDate, effectiveEndDate]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isLive, dates.join(",")]);
 
 
 
@@ -246,18 +269,17 @@ export default function CreateParayanamPage() {
           payment_url: participationType === "PAID" ? contribution.paymentUrl.trim() : null,
           payment_note:
             participationType === "PAID" && contribution.note.trim() ? contribution.note.trim() : null,
-          challenge_type: isGroup
-            ? distribution === "split"
-              ? "group_relay"
-              : "group_standard"
-            : "personal",
+          challenge_type: isGroup ? (mode === "RELAY" ? "group_relay" : "group_standard") : "personal",
+          distribution_mode: mode,
+          schedule_pattern: schedulePattern,
+          schedule_weekdays: schedulePattern === "WEEKDAYS" ? weekdays : null,
           start_date: startDate,
-          end_date: effectiveEndDate,
+          end_date: endDate,
 
           technical_state: "ACTIVE",
           spiritual_state: "in_progress",
-          dashakams_target: submitDashakams.length,
-          dashakam_list: submitDashakams,
+          dashakams_target: dashakams.length,
+          dashakam_list: dashakams,
 
           dashakam_set_id: setId === "custom" ? null : setId,
         })
@@ -308,8 +330,15 @@ export default function CreateParayanamPage() {
             .update({ active_challenge_session_id: session.id })
             .eq("id", groupId);
         }
-        navigate(`/groups/${groupId}`);
+        toast({
+          title: "Parayanam created",
+          description: invitedCount
+            ? "Invitations have gone out to the people you chose."
+            : "You can invite people to it from the group page.",
+        });
+        navigate(`/groups/${groupId}?session=${session.id}`);
       } else {
+        toast({ title: "Parayanam created", description: "Your parayanam is ready." });
         navigate("/progress");
       }
     } catch (e: any) {
@@ -484,65 +513,10 @@ export default function CreateParayanamPage() {
             </div>
             )}
 
-          </div>
-        )}
-
-        {currentStep === "mode" && (
-          <div className="space-y-8">
-            <ParayanamModeSelector value={deliveryMode} onChange={setDeliveryMode} />
-            <ParticipationTypeSelector value={participationType} onChange={setParticipationType} />
-          </div>
-        )}
-
-        {currentStep === "contribution" && (
-          <ContributionDetailsForm value={contribution} onChange={setContribution} />
-        )}
-
-        {currentStep === "dates" && (
-          <div className="space-y-5">
-            {isGroup && (
-              <div>
-                <p className="font-sans text-sm font-semibold text-foreground">How should dashakams be shared?</p>
-                <div className="mt-3 grid gap-3 sm:grid-cols-3">
-                  {(
-                    [
-                      [
-                        "synchronized",
-                        "Everyone reads together, a new dashakam each day",
-                        "All participants chant the same dashakam on the same day, moving to the next one the next day.",
-                      ],
-                      [
-                        "repeat",
-                        "Everyone reads the same dashakams, every day",
-                        "All participants chant the whole selected set every day of the parayanam.",
-                      ],
-                      [
-                        "split",
-                        "Dashakams split among participants",
-                        "All selected dashakams are split evenly among members and everyone reads their share on the same day.",
-                      ],
-                    ] as const
-
-                  ).map(([value, label, hint]) => (
-                    <button
-                      key={value}
-                      onClick={() => setDistribution(value)}
-                      className={`rounded-xl border p-4 text-left transition-colors ${
-                        distribution === value ? "border-primary bg-secondary/30" : "border-border hover:border-primary"
-                      }`}
-                    >
-                      <span className="font-sans text-sm font-semibold text-foreground">{label}</span>
-                      <span className="mt-1 block font-sans text-xs text-muted-foreground">{hint}</span>
-                    </button>
-                  ))}
-                </div>
-              </div>
-            )}
-
             <div className="grid gap-4 sm:grid-cols-2">
               <div>
                 <label htmlFor="start" className="font-sans text-sm font-semibold text-foreground">
-                  {isRelay ? "Date of the parayanam" : "Start date"}
+                  Start date
                 </label>
                 <input
                   id="start"
@@ -551,29 +525,172 @@ export default function CreateParayanamPage() {
                   onChange={(e) => setStartDate(e.target.value)}
                   className="mt-2 w-full rounded-lg border border-border bg-background px-3 py-2 font-sans text-sm text-foreground outline-none focus:ring-2 focus:ring-primary"
                 />
-                {isRelay && (
-                  <p className="mt-2 font-sans text-xs text-muted-foreground">
-                    A relay parayanam is completed on this single day.
-                  </p>
-                )}
               </div>
-              {!isRelay && (
-                <div>
-                  <label htmlFor="end" className="font-sans text-sm font-semibold text-foreground">
-                    End date
-                  </label>
-                  <input
-                    id="end"
-                    type="date"
-                    value={endDate}
-                    onChange={(e) => setEndDate(e.target.value)}
-                    className="mt-2 w-full rounded-lg border border-border bg-background px-3 py-2 font-sans text-sm text-foreground outline-none focus:ring-2 focus:ring-primary"
-                  />
-                </div>
-              )}
-              {!isRelay && endDate < startDate && (
+              <div>
+                <label htmlFor="end" className="font-sans text-sm font-semibold text-foreground">
+                  End date
+                </label>
+                <input
+                  id="end"
+                  type="date"
+                  value={endDate}
+                  onChange={(e) => setEndDate(e.target.value)}
+                  className="mt-2 w-full rounded-lg border border-border bg-background px-3 py-2 font-sans text-sm text-foreground outline-none focus:ring-2 focus:ring-primary"
+                />
+              </div>
+              {endDate < startDate && (
                 <p className="font-sans text-xs text-destructive sm:col-span-2">
                   The end date must be on or after the start date.
+                </p>
+              )}
+            </div>
+
+            <div>
+              <p className="font-sans text-sm font-semibold text-foreground">Parayanam days</p>
+              <p className="font-sans text-xs text-muted-foreground">
+                When will this parayanam take place?
+              </p>
+              <div className="mt-3 grid gap-3 sm:grid-cols-2">
+                {(
+                  [
+                    ["DAILY", "Every day", "Every date from the start date to the end date."],
+                    [
+                      "WEEKDAYS",
+                      "Selected days of the week",
+                      "Only the days of the week you choose, within your dates.",
+                    ],
+                  ] as const
+                ).map(([value, label, hint]) => (
+                  <button
+                    key={value}
+                    type="button"
+                    aria-pressed={schedulePattern === value}
+                    onClick={() => setSchedulePattern(value)}
+                    className={`rounded-xl border p-4 text-left transition-colors ${
+                      schedulePattern === value
+                        ? "border-primary bg-secondary/30"
+                        : "border-border hover:border-primary"
+                    }`}
+                  >
+                    <span className="font-sans text-sm font-semibold text-foreground">{label}</span>
+                    <span className="mt-1 block font-sans text-xs text-muted-foreground">{hint}</span>
+                  </button>
+                ))}
+              </div>
+
+              {schedulePattern === "WEEKDAYS" && (
+                <div className="mt-4 flex flex-wrap gap-2">
+                  {WEEKDAY_CHIP_ORDER.map((d) => (
+                    <button
+                      key={d}
+                      type="button"
+                      aria-pressed={weekdays.includes(d)}
+                      onClick={() =>
+                        setWeekdays((prev) =>
+                          prev.includes(d) ? prev.filter((x) => x !== d) : [...prev, d].sort()
+                        )
+                      }
+                      className={`min-w-[56px] rounded-xl border px-3 py-2 font-sans text-sm font-semibold transition-colors ${
+                        weekdays.includes(d)
+                          ? "border-primary bg-primary/15 text-primary"
+                          : "border-border text-muted-foreground hover:border-primary"
+                      }`}
+                    >
+                      {WEEKDAY_LABELS[d]}
+                    </button>
+                  ))}
+                </div>
+              )}
+
+              {dates.length > 0 ? (
+                <p className="mt-3 font-sans text-xs text-muted-foreground">
+                  {dayCountLabel(dates.length)} · {dates.slice(0, 6).map((d) => shortDate(d)).join(", ")}
+                  {dates.length > 6 ? ` … ${shortDate(dates[dates.length - 1])}` : ""}
+                </p>
+              ) : (
+                <p className="mt-3 font-sans text-xs text-destructive">
+                  {schedulePattern === "WEEKDAYS" && !weekdays.length
+                    ? "Please choose at least one day of the week."
+                    : "There are no such days inside these dates. Please widen the dates or choose other days."}
+                </p>
+              )}
+            </div>
+
+          </div>
+        )}
+
+        {currentStep === "distribution" && (
+          <div className="space-y-5">
+            <div>
+              <p className="font-sans text-sm font-semibold text-foreground">How should dashakams be shared?</p>
+              <p className="font-sans text-xs text-muted-foreground">
+                {dayCountLabel(dates.length)} · {patternLabel(schedulePattern, weekdays)}
+              </p>
+              <div className="mt-3 grid gap-3 sm:grid-cols-3">
+                {(
+                  [
+                    [
+                      "SAME_FOR_ALL",
+                      "Same dashakams for everyone",
+                      "The selected dashakams are spread across the parayanam days, and everyone reads the same ones each day.",
+                    ],
+                    [
+                      "REPEAT_SAME",
+                      "Everyone repeats the whole set",
+                      "Every participant reads the entire selected set on every parayanam day.",
+                    ],
+                    [
+                      "RELAY",
+                      "Relay — split among participants",
+                      "Each parayanam day the whole set is completed together, split into blocks that rotate among participants.",
+                    ],
+                  ] as const
+                ).map(([value, label, hint]) => (
+                  <button
+                    key={value}
+                    onClick={() => setDistribution(value)}
+                    className={`rounded-xl border p-4 text-left transition-colors ${
+                      distribution === value ? "border-primary bg-secondary/30" : "border-border hover:border-primary"
+                    }`}
+                  >
+                    <span className="font-sans text-sm font-semibold text-foreground">{label}</span>
+                    <span className="mt-1 block font-sans text-xs text-muted-foreground">{hint}</span>
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <div>
+              <p className="font-sans text-sm font-semibold text-foreground">Schedule preview</p>
+              {mode === "RELAY" && (
+                <p className="font-sans text-xs text-muted-foreground">
+                  Based on the {invitedCount} {invitedCount === 1 ? "person" : "people"} you invite. The final
+                  allocation is prepared when the parayanam begins, from those who have confirmed.
+                </p>
+              )}
+              <ul className="mt-3 space-y-2">
+                {previewDays.slice(0, 8).map((d) => (
+                  <li key={d.date} className="rounded-xl border border-border p-3">
+                    <p className="font-sans text-xs font-semibold text-foreground">{d.label}</p>
+                    {mode === "RELAY" && d.blocks.length ? (
+                      <ul className="mt-1 space-y-0.5">
+                        {d.blocks.map((b) => (
+                          <li key={b.memberIndex} className="font-sans text-xs text-muted-foreground">
+                            Participant {b.memberIndex + 1} → {b.block.join(", ") || "—"}
+                          </li>
+                        ))}
+                      </ul>
+                    ) : (
+                      <p className="mt-1 font-sans text-xs text-muted-foreground">
+                        {d.dashakams.join(", ") || "—"}
+                      </p>
+                    )}
+                  </li>
+                ))}
+              </ul>
+              {previewDays.length > 8 && (
+                <p className="mt-2 font-sans text-xs text-muted-foreground">
+                  Showing the first 8 of {previewDays.length} parayanam days.
                 </p>
               )}
             </div>
@@ -584,8 +701,7 @@ export default function CreateParayanamPage() {
           <LiveScheduleEditor
             value={liveSchedule}
             onChange={setLiveSchedule}
-            startDate={startDate}
-            endDate={effectiveEndDate}
+            dates={dates}
           />
         )}
 
@@ -613,8 +729,19 @@ export default function CreateParayanamPage() {
             parayanamName={parayanamName}
             groupName={groupName}
             startDate={startDate}
-            endDate={effectiveEndDate}
-            isSingleDay={isRelay || effectiveEndDate === startDate}
+            endDate={endDate}
+            isSingleDay={dates.length === 1}
+            scheduleLabel={patternLabel(schedulePattern, weekdays)}
+            dayCount={dates.length}
+            distributionLabel={
+              isGroup
+                ? mode === "SAME_FOR_ALL"
+                  ? "Same dashakams for everyone"
+                  : mode === "REPEAT_SAME"
+                    ? "Everyone repeats the whole set"
+                    : "Relay — split among participants"
+                : undefined
+            }
             deliveryMode={deliveryMode}
             isGroup={isGroup}
             invitedCount={selectedParticipants.length + (includeSelf ? 1 : 0)}
@@ -622,11 +749,9 @@ export default function CreateParayanamPage() {
               isLive
                 ? {
                     planLabel:
-                      liveSchedule.option === "every_day"
-                        ? "Every day"
-                        : liveSchedule.option === "selected_days"
-                          ? "On selected days"
-                          : "Added individually",
+                      liveSchedule.option === "scheduled"
+                        ? "On every parayanam day"
+                        : "Added individually",
                     startTime: liveSchedule.startTime,
                     endTime: liveSchedule.endTime,
                     sessionCount: liveSchedule.sessions.length,

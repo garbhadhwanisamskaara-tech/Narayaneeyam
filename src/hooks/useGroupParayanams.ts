@@ -10,6 +10,8 @@ export interface GroupParayanam {
   finalized_at: string | null;
   /** The current user's invite status for this parayanam, if any. */
   my_status: string | null;
+  distribution_mode?: string | null;
+  challenge_type?: string | null;
 }
 
 /**
@@ -48,17 +50,28 @@ export function useGroupParayanams(groupId: string | undefined) {
       if (rows.length) {
         const { data: stateRows } = await (supabase as any)
           .from("challenge_sessions")
-          .select("id, technical_state")
+          .select("id, technical_state, distribution_mode, challenge_type")
           .in(
             "id",
             rows.map((r) => r.session_id)
           );
+        type StateRow = {
+          id: string;
+          technical_state: string | null;
+          distribution_mode: string | null;
+          challenge_type: string | null;
+        };
+        const stateList = (stateRows ?? []) as StateRow[];
         const hidden = new Set(
-          ((stateRows ?? []) as { id: string; technical_state: string | null }[])
-            .filter((s) => isHiddenSessionState(s.technical_state))
-            .map((s) => s.id)
+          stateList.filter((s) => isHiddenSessionState(s.technical_state)).map((s) => s.id)
         );
         if (hidden.size) rows = rows.filter((r) => !hidden.has(r.session_id));
+        const byId = new Map(stateList.map((s) => [s.id, s]));
+        rows = rows.map((r) => ({
+          ...r,
+          distribution_mode: byId.get(r.session_id)?.distribution_mode ?? null,
+          challenge_type: byId.get(r.session_id)?.challenge_type ?? null,
+        }));
       }
 
       setParayanams(rows);

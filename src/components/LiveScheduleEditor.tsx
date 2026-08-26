@@ -10,11 +10,11 @@ export type LiveSession = {
   join_before_mins: number;
 };
 
-export type ScheduleOption = "every_day" | "selected_days" | "individually";
+/** Sessions follow the parayanam days ("scheduled"), or are added by hand. */
+export type ScheduleOption = "scheduled" | "individually";
 
 export type LiveScheduleValue = {
   option: ScheduleOption;
-  weekdays: number[]; // 0 = Sunday
   startTime: string;
   endTime: string;
   meetingUrl: string;
@@ -25,8 +25,7 @@ export type LiveScheduleValue = {
 export const JOIN_WINDOWS = [5, 10, 15, 30];
 
 export const emptyLiveSchedule = (): LiveScheduleValue => ({
-  option: "every_day",
-  weekdays: [0, 1, 2, 3, 4, 5, 6],
+  option: "scheduled",
   startTime: "06:00",
   endTime: "07:00",
   meetingUrl: "",
@@ -49,34 +48,24 @@ export const isLiveScheduleValid = (v: LiveScheduleValue) =>
     (s) => s.session_date && s.start_time && s.end_time && s.end_time > s.start_time && isValidMeetingUrl(s.meeting_url)
   );
 
-const DAY_LABELS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
-
-const eachDate = (start: string, end: string) => {
-  const out: string[] = [];
-  if (!start || !end || end < start) return out;
-  const d = new Date(`${start}T00:00:00`);
-  const last = new Date(`${end}T00:00:00`);
-  let guard = 0;
-  while (d <= last && guard++ < 1000) {
-    out.push(d.toISOString().slice(0, 10));
-    d.setDate(d.getDate() + 1);
-  }
-  return out;
-};
-
-export const generateSessions = (v: LiveScheduleValue, start: string, end: string): LiveSession[] => {
+/**
+ * One session per ACTUAL parayanam day — never for the dates in between.
+ * Per-session edits already made are kept, matched on the date.
+ */
+export const generateSessions = (v: LiveScheduleValue, dates: string[]): LiveSession[] => {
   if (v.option === "individually") return v.sessions;
-  const dates = eachDate(start, end).filter((d) =>
-    v.option === "every_day" ? true : v.weekdays.includes(new Date(`${d}T00:00:00`).getDay())
-  );
-  return dates.map((d) => ({
-    key: d,
-    session_date: d,
-    start_time: v.startTime,
-    end_time: v.endTime,
-    meeting_url: v.meetingUrl.trim(),
-    join_before_mins: v.joinBeforeMins,
-  }));
+  const existing = new Map(v.sessions.map((s) => [s.session_date, s]));
+  return dates.map((d) => {
+    const prev = existing.get(d);
+    return {
+      key: d,
+      session_date: d,
+      start_time: prev?.start_time ?? v.startTime,
+      end_time: prev?.end_time ?? v.endTime,
+      meeting_url: (prev?.meeting_url ?? v.meetingUrl).trim(),
+      join_before_mins: prev?.join_before_mins ?? v.joinBeforeMins,
+    };
+  });
 };
 
 const prettyDate = (d: string) =>
@@ -98,13 +87,12 @@ const cardClass = (active: boolean) =>
 export default function LiveScheduleEditor({
   value,
   onChange,
-  startDate,
-  endDate,
+  dates,
 }: {
   value: LiveScheduleValue;
   onChange: (v: LiveScheduleValue) => void;
-  startDate: string;
-  endDate: string;
+  /** The actual parayanam days, decided on the first screen. */
+  dates: string[];
 }) {
   const [showAll, setShowAll] = useState(false);
   const [editingKey, setEditingKey] = useState<string | null>(null);
@@ -112,26 +100,20 @@ export default function LiveScheduleEditor({
   /** Any change to the plan or the shared defaults rebuilds every session. */
   const apply = (patch: Partial<LiveScheduleValue>) => {
     const next = { ...value, ...patch };
-    next.sessions = generateSessions(next, startDate, endDate);
+    next.sessions = generateSessions(next, dates);
     onChange(next);
     setEditingKey(null);
   };
 
   const setSessions = (sessions: LiveSession[]) => onChange({ ...value, sessions });
 
-  const toggleWeekday = (d: number) => {
-    const weekdays = value.weekdays.includes(d)
-      ? value.weekdays.filter((x) => x !== d)
-      : [...value.weekdays, d].sort();
-    apply({ weekdays });
-  };
 
   const addSession = () =>
     setSessions([
       ...value.sessions,
       {
         key: `manual-${Date.now()}`,
-        session_date: value.sessions.at(-1)?.session_date ?? startDate,
+        session_date: value.sessions.at(-1)?.session_date ?? dates[0] ?? "",
         start_time: value.startTime,
         end_time: value.endTime,
         meeting_url: value.meetingUrl.trim(),
@@ -165,11 +147,14 @@ export default function LiveScheduleEditor({
     <div className="space-y-7">
       <div>
         <p className="font-sans text-base font-semibold text-foreground">When will you meet?</p>
-        <div className="mt-3 grid gap-3 sm:grid-cols-3">
+        <p className="mt-1 font-sans text-sm text-muted-foreground">
+          Your parayanam days were chosen on the first screen — {dates.length}{" "}
+          {dates.length === 1 ? "day" : "days"} in all.
+        </p>
+        <div className="mt-3 grid gap-3 sm:grid-cols-2">
           {(
             [
-              ["every_day", "Every day", "One session on each day of the parayanam."],
-              ["selected_days", "Selected days", "Only on the days of the week you choose."],
+              ["scheduled", "On every parayanam day", "One session on each of your parayanam days."],
               ["individually", "Add sessions individually", "Add each session yourself."],
             ] as const
           ).map(([opt, label, hint]) => (
@@ -186,29 +171,6 @@ export default function LiveScheduleEditor({
           ))}
         </div>
       </div>
-
-      {value.option === "selected_days" && (
-        <div>
-          <p className="font-sans text-base font-semibold text-foreground">Which days of the week?</p>
-          <div className="mt-3 flex flex-wrap gap-2">
-            {DAY_LABELS.map((label, d) => (
-              <button
-                key={d}
-                type="button"
-                aria-pressed={value.weekdays.includes(d)}
-                onClick={() => toggleWeekday(d)}
-                className={`min-w-[64px] rounded-xl border-2 px-4 py-3 font-sans text-base font-semibold transition-colors ${
-                  value.weekdays.includes(d)
-                    ? "border-primary bg-secondary/40 text-foreground"
-                    : "border-border text-muted-foreground hover:border-primary"
-                }`}
-              >
-                {label}
-              </button>
-            ))}
-          </div>
-        </div>
-      )}
 
       <div className="space-y-5">
         <p className="font-sans text-base font-semibold text-foreground">Timings for every session</p>

@@ -18,6 +18,7 @@ import {
   BarChart3,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import { deriveDistributionMode } from "@/hooks/useParayanamSchedule";
 import { useAuth } from "@/contexts/AuthContext";
 import { useGroupInvite, useGroupMembers, useGroups, inviteLink, type Group } from "@/hooks/useGroups";
 import { useGroupParayanams, parayanamLabel } from "@/hooks/useGroupParayanams";
@@ -276,12 +277,21 @@ export default function GroupDetailPage() {
     }
   };
 
+  const isRelaySession =
+    deriveDistributionMode(
+      selectedParayanam?.distribution_mode,
+      selectedParayanam?.challenge_type
+    ) === "RELAY";
+  const confirmedParticipantCount = participants.filter((p) => p.status === "confirmed").length;
+  /** A relay needs at least one confirmed reader before blocks can be handed out. */
+  const relayNeedsConfirmation = isRelaySession && confirmedParticipantCount === 0;
+
   const todayISO = new Date().toISOString().slice(0, 10);
   const canStartNow =
     isOwner && !!selectedSessionId && !!sessionStartDate && sessionStartDate <= todayISO && !sessionFinalizedAt;
 
   const handleStartNow = async () => {
-    if (!selectedSessionId) return;
+    if (!selectedSessionId || relayNeedsConfirmation) return;
     setStarting(true);
     const { error } = await (supabase as any).rpc("finalize_parayanam", {
       p_session_id: selectedSessionId,
@@ -676,7 +686,7 @@ export default function GroupDetailPage() {
                     {canStartNow && (
                       <button
                         onClick={handleStartNow}
-                        disabled={starting}
+                        disabled={starting || relayNeedsConfirmation}
                         className="inline-flex items-center gap-2 rounded-lg border border-primary px-4 py-2 font-sans text-sm font-semibold text-primary hover:bg-primary/10 disabled:opacity-60"
                       >
                         {starting ? <Loader2 className="h-4 w-4 animate-spin" /> : <PlayCircle className="h-4 w-4" />}
@@ -684,21 +694,26 @@ export default function GroupDetailPage() {
                       </button>
                     )}
                   </div>
+                  {canStartNow && relayNeedsConfirmation && (
+                    <p className="mt-2 font-sans text-sm text-muted-foreground">
+                      Waiting for at least one participant to confirm — a relay parayanam can only be
+                      started once someone has accepted their invitation.
+                    </p>
+                  )}
                 </>
               )}
             </section>
           )}
 
-          {!selectedSessionId && !loadingParayanams && (
+          {!selectedSessionId && !loadingParayanams && isOwner && (
             <section className="mt-6 rounded-2xl border border-border bg-card p-5 shadow-peacock">
               <h2 className="font-display text-lg font-semibold text-foreground">No parayanam yet</h2>
               <p className="mt-1 font-sans text-sm text-muted-foreground">
-                {isOwner
-                  ? "Add a parayanam to plan the dashakams, invite members and watch the garden bloom."
-                  : "You're not confirmed in any parayanam in this group yet. Once you accept an invite, its garden and schedule will appear here."}
+                Add a parayanam to plan the dashakams, invite members and watch the garden bloom.
               </p>
             </section>
           )}
+
 
           {selectedSessionId && (
             <>

@@ -10,15 +10,28 @@ export interface ScheduleRow {
   is_manual_override: boolean;
 }
 
-export type DistributionMode = "synchronized" | "split";
+/**
+ * SAME_FOR_ALL — everyone reads the same block on a given parayanam day.
+ * RELAY        — the whole set is completed collectively each parayanam day,
+ *                split into contiguous blocks that rotate among members.
+ * REPEAT_SAME  — everyone reads the entire set on every parayanam day.
+ */
+export type DistributionMode = "SAME_FOR_ALL" | "RELAY" | "REPEAT_SAME";
+
+/** Legacy rows have no distribution_mode; fall back to challenge_type. */
+export function deriveDistributionMode(
+  distributionMode: string | null | undefined,
+  challengeType: string | null | undefined
+): DistributionMode {
+  if (distributionMode === "RELAY" || distributionMode === "REPEAT_SAME" || distributionMode === "SAME_FOR_ALL")
+    return distributionMode;
+  return challengeType === "group_relay" ? "RELAY" : "SAME_FOR_ALL";
+}
 
 const ROW_COLS =
   "id, challenge_session_id, dashakam_no, scheduled_date, assigned_user_id, is_manual_override";
 
-function isoDate(d: Date) {
-  return d.toISOString().slice(0, 10);
-}
-
+/** Calendar span in days — for display only, never for allocation. */
 export function daysBetween(start: string, end: string) {
   const a = new Date(`${start}T00:00:00Z`).getTime();
   const b = new Date(`${end}T00:00:00Z`).getTime();
@@ -26,53 +39,76 @@ export function daysBetween(start: string, end: string) {
 }
 
 /**
- * Spread `dashakams` over the date range, then assign owners.
- * Synchronized → assigned_user_id = null (everyone chants the same dashakam).
- * Split (relay) → single day (startDate only); dashakams are cut into contiguous
- *                 blocks, one per member, evenly (first `remainder` members get one extra).
- *                 Mirrors the server-side finalize_parayanam() allocation.
+ * Cut `dashakams` into `n` reasonably balanced contiguous blocks — the first
+ * `remainder` blocks get one extra. Mirrors the server-side allocation.
+ */
+export function contiguousBlocks(dashakams: number[], n: number): number[][] {
+  if (n <= 0) return [];
+  const base = Math.floor(dashakams.length / n);
+  const remainder = dashakams.length % n;
+  const blocks: number[][] = [];
+  let cursor = 0;
+  for (let i = 0; i < n; i++) {
+    const size = base + (i < remainder ? 1 : 0);
+    blocks.push(dashakams.slice(cursor, cursor + size));
+    cursor += size;
+  }
+  return blocks;
+}
+
+/**
+ * Build the allocation over the ACTUAL parayanam days (not every calendar day).
+ * `dates` comes from parayanamDates() in src/lib/parayanamDays.ts.
  */
 export function buildSchedule(
   dashakams: number[],
-  startDate: string,
-  endDate: string,
+  dates: string[],
   mode: DistributionMode,
   memberIds: string[]
 ): Omit<ScheduleRow, "id" | "challenge_session_id">[] {
-  if (mode === "split") {
+  if (!dashakams.length || !dates.length) return [];
+
+  if (mode === "RELAY") {
     const n = memberIds.length;
-    const base = n ? Math.floor(dashakams.length / n) : 0;
-    const remainder = n ? dashakams.length % n : 0;
-    const owners: (string | null)[] = [];
-    memberIds.forEach((id, idx) => {
-      const count = base + (idx < remainder ? 1 : 0);
-      for (let k = 0; k < count; k++) owners.push(id);
+    const out: Omit<ScheduleRow, "id" | "challenge_session_id">[] = [];
+    dates.forEach((scheduled_date, dayIndex) => {
+      if (!n) {
+        // No confirmed members yet — the preview still shows the day's set.
+        dashakams.forEach((dashakam_no) =>
+          out.push({ dashakam_no, scheduled_date, assigned_user_id: null, is_manual_override: false })
+        );
+        return;
+      }
+      contiguousBlocks(dashakams, n).forEach((block, blockIndex) => {
+        const owner = memberIds[(blockIndex + dayIndex) % n];
+        block.forEach((dashakam_no) =>
+          out.push({ dashakam_no, scheduled_date, assigned_user_id: owner, is_manual_override: false })
+        );
+      });
     });
-    return dashakams.map((dashakam_no, i) => ({
-      dashakam_no,
-      scheduled_date: startDate,
-      assigned_user_id: owners[i] ?? null,
-      is_manual_override: false,
-    }));
+    return out;
   }
 
-  const totalDays = daysBetween(startDate, endDate);
-  const perDay = Math.ceil(dashakams.length / totalDays);
-  const start = new Date(`${startDate}T00:00:00Z`);
+  if (mode === "REPEAT_SAME") {
+    return dates.flatMap((scheduled_date) =>
+      dashakams.map((dashakam_no) => ({
+        dashakam_no,
+        scheduled_date,
+        assigned_user_id: null,
+        is_manual_override: false,
+      }))
+    );
+  }
 
-  return dashakams.map((dashakam_no, i) => {
-    const dayOffset = Math.min(totalDays - 1, Math.floor(i / perDay));
-    const date = new Date(start);
-    date.setUTCDate(date.getUTCDate() + dayOffset);
-    return {
-      dashakam_no,
-      scheduled_date: isoDate(date),
-      assigned_user_id: null,
-      is_manual_override: false,
-    };
-  });
+  // SAME_FOR_ALL — one contiguous block per parayanam day, read by everyone.
+  const perDay = Math.ceil(dashakams.length / dates.length);
+  return dashakams.map((dashakam_no, i) => ({
+    dashakam_no,
+    scheduled_date: dates[Math.min(dates.length - 1, Math.floor(i / perDay))],
+    assigned_user_id: null,
+    is_manual_override: false,
+  }));
 }
-
 
 export function useParayanamSchedule(sessionId: string | null | undefined) {
   const [rows, setRows] = useState<ScheduleRow[]>([]);
@@ -109,12 +145,11 @@ export function useParayanamSchedule(sessionId: string | null | undefined) {
     async (
       targetSessionId: string,
       dashakams: number[],
-      startDate: string,
-      endDate: string,
+      dates: string[],
       mode: DistributionMode,
       memberIds: string[]
     ) => {
-      const planned = buildSchedule(dashakams, startDate, endDate, mode, memberIds);
+      const planned = buildSchedule(dashakams, dates, mode, memberIds);
       await (supabase as any)
         .from("parayanam_schedule")
         .delete()
