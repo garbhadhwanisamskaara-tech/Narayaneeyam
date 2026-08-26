@@ -13,6 +13,11 @@ import { inviteParticipants } from "@/hooks/useParayanamParticipants";
 import ParticipantPicker from "@/components/ParticipantPicker";
 import ParayanamModeSelector, { type DeliveryMode } from "@/components/ParayanamModeSelector";
 import ParticipationTypeSelector, { type ParticipationType } from "@/components/ParticipationTypeSelector";
+import ContributionDetailsForm, {
+  isValidContributionAmount,
+  isValidPaymentUrl,
+  type ContributionDetails,
+} from "@/components/ContributionDetailsForm";
 import SEO from "@/components/SEO";
 
 const today = () => new Date().toISOString().slice(0, 10);
@@ -41,6 +46,11 @@ export default function CreateParayanamPage() {
   const [selectedTemplateId, setSelectedTemplateId] = useState<string>("scratch");
   const [deliveryMode, setDeliveryMode] = useState<DeliveryMode>("SELF_PACED");
   const [participationType, setParticipationType] = useState<ParticipationType>("FREE");
+  const [contribution, setContribution] = useState<ContributionDetails>({
+    amount: "",
+    paymentUrl: "",
+    note: "",
+  });
   const [startDate, setStartDate] = useState(today());
   const [endDate, setEndDate] = useState(plusDays(99));
   const [distribution, setDistribution] = useState<"synchronized" | "repeat" | "split">("synchronized");
@@ -142,12 +152,34 @@ export default function CreateParayanamPage() {
     if (id === "custom") setCustom([]);
   };
 
+  /** Steps are dynamic: Contribution only for PAID, Participants only for groups. */
+  const stepIds = useMemo(
+    () =>
+      [
+        "details",
+        "mode",
+        ...(participationType === "PAID" ? (["contribution"] as const) : []),
+        "dates",
+        ...(isGroup ? (["participants"] as const) : []),
+      ] as string[],
+    [participationType, isGroup]
+  );
+  const lastStep = stepIds.length;
+  const currentStep = stepIds[Math.min(step, lastStep) - 1];
+
+  useEffect(() => {
+    if (step > lastStep) setStep(lastStep);
+  }, [step, lastStep]);
+
+  const contributionValid =
+    isValidContributionAmount(contribution.amount) && isValidPaymentUrl(contribution.paymentUrl);
+
   const canNext =
-    step === 1
+    currentStep === "details"
       ? dashakams.length > 0
-      : step === 2
-        ? true
-        : step === 3
+      : currentStep === "contribution"
+        ? contributionValid
+        : currentStep === "dates"
           ? !!startDate && (isRelay || (!!endDate && endDate >= startDate))
           : true;
 
@@ -175,6 +207,10 @@ export default function CreateParayanamPage() {
           mode: "daily",
           delivery_mode: deliveryMode,
           participation_type: participationType,
+          contribution_amount: participationType === "PAID" ? Number(contribution.amount) : null,
+          payment_url: participationType === "PAID" ? contribution.paymentUrl.trim() : null,
+          payment_note:
+            participationType === "PAID" && contribution.note.trim() ? contribution.note.trim() : null,
           challenge_type: isGroup
             ? distribution === "split"
               ? "group_relay"
@@ -234,8 +270,6 @@ export default function CreateParayanamPage() {
     }
   };
 
-  const lastStep = isGroup ? 4 : 3;
-
   return (
     <div className="mx-auto w-full max-w-3xl px-4 py-6 pb-24">
       <SEO
@@ -256,7 +290,7 @@ export default function CreateParayanamPage() {
       </p>
 
       <section className="mt-6 space-y-5 rounded-2xl border border-border bg-card p-5">
-        {step === 1 && (
+        {currentStep === "details" && (
           <div>
             <label htmlFor="parayanam-name" className="font-sans text-sm font-semibold text-foreground">
               Parayanam name <span className="font-normal text-muted-foreground">(optional)</span>
@@ -273,7 +307,7 @@ export default function CreateParayanamPage() {
           </div>
         )}
 
-        {step === 1 && (
+        {currentStep === "details" && (
           <div className="space-y-5">
             <div>
               <p className="font-sans text-sm font-semibold text-foreground">Start from a template</p>
@@ -404,14 +438,18 @@ export default function CreateParayanamPage() {
           </div>
         )}
 
-        {step === 2 && (
+        {currentStep === "mode" && (
           <div className="space-y-8">
             <ParayanamModeSelector value={deliveryMode} onChange={setDeliveryMode} />
             <ParticipationTypeSelector value={participationType} onChange={setParticipationType} />
           </div>
         )}
 
-        {step === 3 && (
+        {currentStep === "contribution" && (
+          <ContributionDetailsForm value={contribution} onChange={setContribution} />
+        )}
+
+        {currentStep === "dates" && (
           <div className="space-y-5">
             {isGroup && (
               <div>
@@ -493,7 +531,7 @@ export default function CreateParayanamPage() {
           </div>
         )}
 
-        {step === 4 && isGroup && (
+        {currentStep === "participants" && (
           <div className="space-y-5">
 
 
