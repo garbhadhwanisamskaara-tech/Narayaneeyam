@@ -107,12 +107,6 @@ export default function LiveScheduleEditor({
 
   const setSessions = (sessions: LiveSession[]) => onChange({ ...value, sessions });
 
-  const toggleWeekday = (d: number) => {
-    const weekdays = value.weekdays.includes(d)
-      ? value.weekdays.filter((x) => x !== d)
-      : [...value.weekdays, d].sort();
-    apply({ weekdays });
-  };
 
   const addSession = () =>
     setSessions([
