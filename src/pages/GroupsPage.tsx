@@ -2,11 +2,13 @@ import { useState } from "react";
 import { Link } from "react-router-dom";
 import { Loader2, Plus, Users } from "lucide-react";
 import { useGroups } from "@/hooks/useGroups";
+import { useAuth } from "@/contexts/AuthContext";
 import SEO from "@/components/SEO";
 import DashakamQueueList from "@/components/DashakamQueueList";
 
 export default function GroupsPage() {
   const { groups, loading, error, createGroup } = useGroups();
+  const { user } = useAuth();
   const [name, setName] = useState("");
   const [creating, setCreating] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
@@ -78,7 +80,12 @@ export default function GroupsPage() {
                   className="flex items-center gap-3 rounded-xl border border-border bg-card p-4 hover:border-primary"
                 >
                   <Users className="h-5 w-5 text-primary" />
-                  <span className="font-sans text-sm font-semibold text-foreground">{g.group_name}</span>
+                  <span className="font-sans text-sm font-semibold text-foreground">
+                    {g.group_name}
+                    <span className="ml-1 text-xs text-muted-foreground">
+                      ({g.owner_id === user?.id ? "Owner" : "Member"})
+                    </span>
+                  </span>
                 </Link>
               </li>
             ))}
