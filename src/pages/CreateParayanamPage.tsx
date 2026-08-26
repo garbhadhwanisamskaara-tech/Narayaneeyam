@@ -36,6 +36,7 @@ import LiveScheduleEditor, {
 } from "@/components/LiveScheduleEditor";
 import ParayanamReview from "@/components/ParayanamReview";
 import SEO from "@/components/SEO";
+import { toast } from "@/hooks/use-toast";
 
 const today = () => new Date().toISOString().slice(0, 10);
 const plusDays = (n: number) => {
@@ -329,8 +330,15 @@ export default function CreateParayanamPage() {
             .update({ active_challenge_session_id: session.id })
             .eq("id", groupId);
         }
-        navigate(`/groups/${groupId}`);
+        toast({
+          title: "Parayanam created",
+          description: invitedCount
+            ? "Invitations have gone out to the people you chose."
+            : "You can invite people to it from the group page.",
+        });
+        navigate(`/groups/${groupId}?session=${session.id}`);
       } else {
+        toast({ title: "Parayanam created", description: "Your parayanam is ready." });
         navigate("/progress");
       }
     } catch (e: any) {
