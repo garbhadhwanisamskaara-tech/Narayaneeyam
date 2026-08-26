@@ -276,7 +276,9 @@ export default function LiveScheduleEditor({
                     </p>
                     <p className="font-sans text-sm text-muted-foreground">
                       {s.start_time} – {s.end_time} ·{" "}
-                      {isValidMeetingUrl(s.meeting_url) ? "Meeting link added" : "Meeting link missing"}
+                      {isValidMeetingUrl(s.meeting_url || value.meetingUrl)
+                        ? "Meeting link added"
+                        : "Meeting link missing"}
                     </p>
                   </div>
                   <div className="flex items-center gap-2">
