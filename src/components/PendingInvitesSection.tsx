@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Check, Loader2, MailQuestion, X } from "lucide-react";
-import { useMyPendingInvites } from "@/hooks/useParayanamParticipants";
+import { useMyPendingInvites, type PendingInvite } from "@/hooks/useParayanamParticipants";
+import ParayanamInviteCard, { AwaitingContributionCard } from "@/components/ParayanamInviteCard";
 import PushRemindersPrompt from "@/components/PushRemindersPrompt";
 import { track } from "@/lib/analytics";
 
@@ -11,13 +12,18 @@ export default function PendingInvitesSection({ groupId }: { groupId?: string })
   const { invites, loading, busyId, respond } = useMyPendingInvites();
   const [error, setError] = useState<string | null>(null);
   const [showNudge, setShowNudge] = useState(false);
+  const [awaiting, setAwaiting] = useState<PendingInvite[]>([]);
 
   const list = groupId ? invites.filter((i) => i.group_id === groupId) : invites;
 
   const answer = async (id: string, status: "confirmed" | "declined") => {
     setError(null);
+    const invite = list.find((i) => i.id === id);
     try {
       await respond(id, status);
+      if (status === "confirmed" && invite?.participation_type === "PAID") {
+        setAwaiting((prev) => [...prev, invite]);
+      }
       if (status === "confirmed") track("parayanam_joined");
       // A one-time nudge the first time someone joins a parayanam — reminders are
       // an account-level setting, so we never repeat this on every group page.
@@ -30,8 +36,10 @@ export default function PendingInvitesSection({ groupId }: { groupId?: string })
     }
   };
 
-  if (loading || (list.length === 0 && !showNudge)) return null;
-  if (list.length === 0) return <PushRemindersPrompt />;
+  const awaitingList = groupId ? awaiting.filter((i) => i.group_id === groupId) : awaiting;
+
+  if (loading || (list.length === 0 && awaitingList.length === 0 && !showNudge)) return null;
+  if (list.length === 0 && awaitingList.length === 0) return <PushRemindersPrompt />;
 
   return (
     <section className="mt-6 rounded-2xl border border-border bg-card p-5 shadow-peacock">
@@ -40,37 +48,18 @@ export default function PendingInvitesSection({ groupId }: { groupId?: string })
       </h2>
       <ul className="mt-4 space-y-3">
         {list.map((i) => (
-          <li
-            key={i.id}
-            className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-border p-4"
-          >
-            <div className="min-w-0">
-              <p className="font-sans text-sm font-semibold text-foreground">
-                {i.group_name ?? "A parayanam"}
-              </p>
-              <p className="font-sans text-xs text-muted-foreground">
-                {i.dashakams_target ? `${i.dashakams_target} dashakams` : "Parayanam"}
-                {i.start_date ? ` · from ${i.start_date}` : ""}
-                {i.end_date ? ` to ${i.end_date}` : ""}
-              </p>
-            </div>
-            <div className="flex gap-2">
-              <button
-                onClick={() => void answer(i.id, "confirmed")}
-                disabled={busyId === i.id}
-                className="inline-flex items-center gap-1.5 rounded-lg bg-gradient-peacock px-3 py-1.5 font-sans text-xs font-semibold text-primary-foreground hover:opacity-90 disabled:opacity-60"
-              >
-                {busyId === i.id ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Check className="h-3.5 w-3.5" />}
-                Accept
-              </button>
-              <button
-                onClick={() => void answer(i.id, "declined")}
-                disabled={busyId === i.id}
-                className="inline-flex items-center gap-1.5 rounded-lg border border-border px-3 py-1.5 font-sans text-xs font-semibold text-muted-foreground hover:border-destructive hover:text-destructive disabled:opacity-60"
-              >
-                <X className="h-3.5 w-3.5" /> Decline
-              </button>
-            </div>
+          <li key={i.id}>
+            <ParayanamInviteCard
+              invite={i}
+              busy={busyId === i.id}
+              onAccept={() => void answer(i.id, "confirmed")}
+              onDecline={() => void answer(i.id, "declined")}
+            />
+          </li>
+        ))}
+        {awaitingList.map((i) => (
+          <li key={`awaiting-${i.id}`}>
+            <AwaitingContributionCard invite={i} />
           </li>
         ))}
       </ul>
