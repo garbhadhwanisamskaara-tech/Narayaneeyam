@@ -41,11 +41,15 @@ export const isValidMeetingUrl = (url: string) => {
     return false;
   }
 };
-
 export const isLiveScheduleValid = (v: LiveScheduleValue) =>
   v.sessions.length > 0 &&
   v.sessions.every(
-    (s) => s.session_date && s.start_time && s.end_time && s.end_time > s.start_time && isValidMeetingUrl(s.meeting_url)
+    (s) =>
+      s.session_date &&
+      s.start_time &&
+      s.end_time &&
+      s.end_time > s.start_time &&
+      isValidMeetingUrl(s.meeting_url || v.meetingUrl),
   );
 
 /**
@@ -107,7 +111,6 @@ export default function LiveScheduleEditor({
 
   const setSessions = (sessions: LiveSession[]) => onChange({ ...value, sessions });
 
-
   const addSession = () =>
     setSessions([
       ...value.sessions,
@@ -122,11 +125,7 @@ export default function LiveScheduleEditor({
     ]);
 
   /** Scoped edit: this session, this and future ones, or all of them. */
-  const applyScoped = (
-    index: number,
-    patch: Partial<LiveSession>,
-    scope: "one" | "future" | "all"
-  ) => {
+  const applyScoped = (index: number, patch: Partial<LiveSession>, scope: "one" | "future" | "all") => {
     setSessions(
       value.sessions.map((s, i) => {
         const inScope = scope === "all" || (scope === "future" ? i >= index : i === index);
@@ -134,7 +133,7 @@ export default function LiveScheduleEditor({
         // Date only ever changes for the session being edited.
         const { session_date, ...shared } = patch;
         return { ...s, ...(i === index ? patch : shared) };
-      })
+      }),
     );
     setEditingKey(null);
   };
@@ -148,8 +147,8 @@ export default function LiveScheduleEditor({
       <div>
         <p className="font-sans text-base font-semibold text-foreground">When will you meet?</p>
         <p className="mt-1 font-sans text-sm text-muted-foreground">
-          Your parayanam days were chosen on the first screen — {dates.length}{" "}
-          {dates.length === 1 ? "day" : "days"} in all.
+          Your parayanam days were chosen on the first screen — {dates.length} {dates.length === 1 ? "day" : "days"} in
+          all.
         </p>
         <div className="mt-3 grid gap-3 sm:grid-cols-2">
           {(
@@ -225,9 +224,7 @@ export default function LiveScheduleEditor({
         </div>
 
         <div>
-          <p className="font-sans text-base font-semibold text-foreground">
-            When should the join button appear?
-          </p>
+          <p className="font-sans text-base font-semibold text-foreground">When should the join button appear?</p>
           <div className="mt-3 flex flex-wrap gap-2">
             {JOIN_WINDOWS.map((m) => (
               <button
@@ -264,11 +261,7 @@ export default function LiveScheduleEditor({
           )}
         </div>
 
-        {sessions.length === 0 && (
-          <p className="mt-2 font-sans text-sm text-muted-foreground">
-            No sessions yet.
-          </p>
-        )}
+        {sessions.length === 0 && <p className="mt-2 font-sans text-sm text-muted-foreground">No sessions yet.</p>}
 
         <ul className="mt-3 space-y-2">
           {visible.map((s) => {
