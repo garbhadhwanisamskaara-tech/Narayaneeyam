@@ -48,12 +48,15 @@ export default function GroupSchedulePage() {
     start_date: string;
     end_date: string;
     challenge_type: string;
+    distribution_mode?: string | null;
+    schedule_pattern?: string | null;
+    schedule_weekdays?: number[] | null;
   } | null>(null);
   const [parayanamName, setParayanamName] = useState("");
   const [setId, setSetId] = useState<string>("");
   const [startDate, setStartDate] = useState(today());
   const [endDate, setEndDate] = useState(plusDays(99));
-  const [mode, setMode] = useState<DistributionMode>("synchronized");
+  const [mode, setMode] = useState<DistributionMode>("SAME_FOR_ALL");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [soloWarning, setSoloWarning] = useState(false);
@@ -95,7 +98,7 @@ export default function GroupSchedulePage() {
       const { data } = await (supabase as any)
         .from("challenge_sessions")
         .select(
-          "id, parayanam_name, finalized_at, dashakam_set_id, dashakam_list, start_date, end_date, challenge_type"
+          "id, parayanam_name, finalized_at, dashakam_set_id, dashakam_list, start_date, end_date, challenge_type, distribution_mode, schedule_pattern, schedule_weekdays"
         )
         .eq("id", sessionId)
         .maybeSingle();
@@ -106,8 +109,7 @@ export default function GroupSchedulePage() {
         if (s.parayanam_name) setParayanamName(s.parayanam_name);
         if (s.start_date) setStartDate(s.start_date);
         if (s.end_date) setEndDate(s.end_date);
-        if (s.challenge_type === "group_relay") setMode("split");
-        if (s.challenge_type === "group_standard") setMode("synchronized");
+        setMode(deriveDistributionMode((s as any).distribution_mode, s.challenge_type));
       }
     })();
     return () => {
@@ -131,9 +133,9 @@ export default function GroupSchedulePage() {
 
   const isOwner = !!user && !!group && group.owner_id === user.id;
   const memberIds = members.map((m) => m.user_id);
-  /** Relay parayanams run on a single day, so they have no duration. */
-  const isRelay = mode === "split";
-  const effectiveEndDate = isRelay ? startDate : endDate;
+  /** Relay runs over every parayanam day, like the other modes. */
+  const isRelay = mode === "RELAY";
+  const effectiveEndDate = endDate;
 
 
   useEffect(() => {
@@ -163,7 +165,7 @@ export default function GroupSchedulePage() {
 
   const handleGenerate = async () => {
     if (!group || !selectedSet) return;
-    if (!isRelay && endDate < startDate) {
+    if (endDate < startDate) {
       setError("The end date must be on or after the start date.");
       return;
     }
@@ -185,7 +187,8 @@ export default function GroupSchedulePage() {
         group_id: group.id,
         parayanam_name: parayanamName.trim() || null,
         mode: "daily",
-        challenge_type: mode === "synchronized" ? "group_standard" : "group_relay",
+        challenge_type: mode === "RELAY" ? "group_relay" : "group_standard",
+        distribution_mode: mode,
         start_date: startDate,
         end_date: effectiveEndDate,
 
@@ -300,7 +303,11 @@ export default function GroupSchedulePage() {
               <div>
                 <p className="font-sans text-xs uppercase tracking-wide text-muted-foreground">Distribution</p>
                 <p className="mt-1 font-sans text-sm text-foreground">
-                  {mode === "synchronized" ? "Same Dashakam for everyone" : "Relay — split among members"}
+                  {mode === "SAME_FOR_ALL"
+                    ? "Same dashakams for everyone"
+                    : mode === "REPEAT_SAME"
+                      ? "Everyone repeats the whole set"
+                      : "Relay — split among members"}
                 </p>
               </div>
               <div>
@@ -465,14 +472,14 @@ export default function GroupSchedulePage() {
                   {(
                     [
                       [
-                        "synchronized",
-                        "Same Dashakam for everyone",
-                        "All participants chant the same dashakam on the same day.",
+                        "SAME_FOR_ALL",
+                        "Same dashakams for everyone",
+                        "All participants chant the same dashakams on a given parayanam day.",
                       ],
                       [
-                        "split",
+                        "RELAY",
                         "Relay — split among members",
-                        "All selected dashakams are split evenly among members and everyone reads their share on the same day.",
+                        "Every parayanam day the whole set is completed together, and the blocks rotate among members.",
                       ],
                     ] as const
                   ).map(([value, label, hint]) => (
