@@ -28,6 +28,7 @@ import FestivalReminder from "@/components/FestivalReminder";
 import { supabase } from "@/integrations/supabase/client";
 import SEO from "@/components/SEO";
 import TrialStatusLine from "@/components/TrialStatusLine";
+import UpcomingLiveSessionCard from "@/components/UpcomingLiveSessionCard";
 import { SUBSCRIPTION_ENABLED } from "@/config/features";
 
 export default function Index() {
@@ -49,7 +50,12 @@ export default function Index() {
       title: "Script Library",
       desc: "View slokas in multiple scripts with transliteration",
     },
-    { path: "/festivals", icon: Sparkles, title: "Festival Parayanams", desc: "Recommended Dashakams for each sacred day" },
+    {
+      path: "/festivals",
+      icon: Sparkles,
+      title: "Festival Parayanams",
+      desc: "Recommended Dashakams for each sacred day",
+    },
     { path: "/prasadam", icon: Flower2, title: "Prasadam Guide", desc: "Offerings mentioned in the verses" },
     { path: "/saved-places", icon: Bookmark, title: "Bookmarks", desc: "Your saved verses for quick access" },
     { path: "/heart-shelf", icon: Heart, title: "Favourites", desc: "Slokas close to your heart" },
@@ -64,7 +70,6 @@ export default function Index() {
     { path: "/faq", icon: HelpCircle, title: "FAQ", desc: "Answers to common questions" },
     { path: "/user-guide", icon: Settings, title: "Settings & Guide", desc: "App guide and preferences" },
   ];
-
 
   const progress = getProgress();
   const [showAbout, setShowAbout] = useState(false);
@@ -169,7 +174,9 @@ export default function Index() {
         <FestivalBanner />
       </section>
 
-
+      <section className="container mx-auto px-4 mt-4 relative z-20">
+        <UpcomingLiveSessionCard />
+      </section>
 
       <section className="container mx-auto px-4 -mt-4 relative z-10 pb-8">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
