@@ -238,7 +238,7 @@ export default function GroupDetailPage() {
   }, [selectedSessionId, refreshKey]);
 
   const isOwner = !!user && !!group && group.owner_id === user.id;
-  const { canCreateParayanam, canManageParayanam } = useCapabilities();
+  const { canCreateParayanam, canManageParayanam, canManageGroup } = useCapabilities();
   const ownerMember = members.find((m) => m.user_id === group?.owner_id);
   const ownerName = ownerMember?.display_name ?? null;
 
@@ -627,7 +627,7 @@ export default function GroupDetailPage() {
                   : "Dates will appear once this parayanam is planned."}
               </p>
 
-              {isOwner && canManageParayanam &&  (
+              {isOwner && canManageParayanam && (
                 <>
                   {loadingMembers || loadingParticipants ? (
                     <Loader2 className="mt-4 h-5 w-5 animate-spin text-primary" />
