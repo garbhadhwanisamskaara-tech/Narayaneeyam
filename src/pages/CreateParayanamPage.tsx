@@ -155,10 +155,15 @@ export default function CreateParayanamPage() {
             : planned.filter((r) => r.scheduled_date === date).map((r) => r.dashakam_no),
         blocks:
           mode === "RELAY" && invitedCount > 0
-            ? contiguousBlocks(dashakams, invitedCount).map((block, b) => ({
-                block,
-                memberIndex: (b + i) % invitedCount,
-              }))
+            ? invitedCount <= dashakams.length
+              ? contiguousBlocks(dashakams, invitedCount).map((block, b) => ({
+                  block,
+                  memberIndex: (b + i) % invitedCount,
+                }))
+              : Array.from({ length: invitedCount }, (_, memberIndex) => ({
+                  block: [dashakams[(memberIndex + i) % dashakams.length]],
+                  memberIndex,
+                }))
             : [],
       })),
     // eslint-disable-next-line react-hooks/exhaustive-deps
