@@ -73,6 +73,11 @@ export default function CreateParayanamPage() {
   const [startDate, setStartDate] = useState(today());
   const [endDate, setEndDate] = useState(plusDays(99));
   const [distribution, setDistribution] = useState<DistributionMode>("SAME_FOR_ALL");
+  const [sameForAllPerDay, setSameForAllPerDay] = useState(1);
+  const [scheduleOverrides, setScheduleOverrides] = useState<Record<string, number[]>>({});
+  const [editingScheduleDate, setEditingScheduleDate] = useState<string | null>(null);
+  const [scheduleEditText, setScheduleEditText] = useState("");
+  const [scheduleEditError, setScheduleEditError] = useState<string | null>(null);
   const [schedulePattern, setSchedulePattern] = useState<SchedulePattern>("DAILY");
   const [weekdays, setWeekdays] = useState<number[]>([]);
   const [selectedParticipants, setSelectedParticipants] = useState<string[]>([]);
@@ -134,8 +139,10 @@ export default function CreateParayanamPage() {
   );
 
   /** Allocation over the actual parayanam days (assignment resolved at finalisation). */
-  const planned = useMemo(() => buildSchedule(dashakams, dates, mode, []), [dashakams, dates, mode]);
-
+  const planned = useMemo(
+    () => buildSchedule(dashakams, dates, mode, [], sameForAllPerDay, scheduleOverrides),
+    [dashakams, dates, mode, sameForAllPerDay, scheduleOverrides],
+  );
   /** Preview grouped by parayanam day. */
   const previewDays = useMemo(
     () =>
@@ -157,7 +164,59 @@ export default function CreateParayanamPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [dates, planned, dashakams, mode, selectedParticipants.length, includeSelf],
   );
+  const beginScheduleEdit = (date: string, currentDashakams: number[]) => {
+    setEditingScheduleDate(date);
+    setScheduleEditText(currentDashakams.join(", "));
+    setScheduleEditError(null);
+  };
 
+  const cancelScheduleEdit = () => {
+    setEditingScheduleDate(null);
+    setScheduleEditText("");
+    setScheduleEditError(null);
+  };
+
+  const saveScheduleOverride = (date: string) => {
+    const parsed = scheduleEditText
+      .split(",")
+      .map((value) => Number(value.trim()))
+      .filter((value) => Number.isInteger(value));
+
+    if (!parsed.length) {
+      setScheduleEditError("Enter at least one Dashakam number.");
+      return;
+    }
+
+    const invalid = parsed.find((n) => n < 1 || n > 100 || !dashakams.includes(n));
+
+    if (invalid !== undefined) {
+      setScheduleEditError(`Dashakam ${invalid} is not part of the selected Dashakam set.`);
+      return;
+    }
+
+    setScheduleOverrides((prev) => ({
+      ...prev,
+      [date]: parsed,
+    }));
+
+    setEditingScheduleDate(null);
+    setScheduleEditText("");
+    setScheduleEditError(null);
+  };
+
+  const resetScheduleOverride = (date: string) => {
+    setScheduleOverrides((prev) => {
+      const next = { ...prev };
+      delete next[date];
+      return next;
+    });
+
+    if (editingScheduleDate === date) {
+      setEditingScheduleDate(null);
+      setScheduleEditText("");
+      setScheduleEditError(null);
+    }
+  };
   const toggleCustom = (n: number) =>
     setCustom((prev) => (prev.includes(n) ? prev.filter((x) => x !== n) : [...prev, n]));
 
@@ -260,6 +319,8 @@ export default function CreateParayanamPage() {
           distribution_mode: mode,
           schedule_pattern: schedulePattern,
           schedule_weekdays: schedulePattern === "WEEKDAYS" ? weekdays : null,
+          same_for_all_per_day: mode === "SAME_FOR_ALL" ? sameForAllPerDay : 1,
+          schedule_overrides: mode === "SAME_FOR_ALL" ? scheduleOverrides : {},
           start_date: startDate,
           end_date: endDate,
 
@@ -284,7 +345,7 @@ export default function CreateParayanamPage() {
           dashakam_no: p.dashakam_no,
           scheduled_date: p.scheduled_date,
           assigned_user_id: user.id,
-          is_manual_override: false,
+          is_manual_override: !!scheduleOverrides[p.scheduled_date]?.length,
         }));
         const { error: schErr } = await (supabase as any).from("parayanam_schedule").insert(rows);
         if (schErr) throw new Error(schErr.message);
@@ -350,7 +411,10 @@ export default function CreateParayanamPage() {
         Step {step} of {lastStep}
       </p>
       <p className="mt-1 font-sans text-xs text-muted-foreground">
-        <span className="text-destructive" aria-hidden="true">*</span> Required fields
+        <span className="text-destructive" aria-hidden="true">
+          *
+        </span>{" "}
+        Required fields
       </p>
 
       <section className="mt-6 space-y-5 rounded-2xl border border-border bg-card p-5">
@@ -415,7 +479,10 @@ export default function CreateParayanamPage() {
             {templateLocked ? (
               <div>
                 <p className="font-sans text-sm font-semibold text-foreground">
-                  Dashakams in this template <span className="text-destructive" aria-hidden="true">*</span>
+                  Dashakams in this template{" "}
+                  <span className="text-destructive" aria-hidden="true">
+                    *
+                  </span>
                 </p>
                 <p className="font-sans text-xs text-muted-foreground">
                   These are fixed. Choose “Start from scratch” above to pick your own.
@@ -438,7 +505,10 @@ export default function CreateParayanamPage() {
             ) : (
               <div>
                 <p className="font-sans text-sm font-semibold text-foreground">
-                  Choose a dashakam set <span className="text-destructive" aria-hidden="true">*</span>
+                  Choose a dashakam set{" "}
+                  <span className="text-destructive" aria-hidden="true">
+                    *
+                  </span>
                 </p>
                 {loadingSets ? (
                   <Loader2 className="mt-3 h-5 w-5 animate-spin text-primary" />
@@ -503,7 +573,10 @@ export default function CreateParayanamPage() {
             <div className="grid gap-4 sm:grid-cols-2">
               <div>
                 <label htmlFor="start" className="font-sans text-sm font-semibold text-foreground">
-                  Start date <span className="text-destructive" aria-hidden="true">*</span>
+                  Start date{" "}
+                  <span className="text-destructive" aria-hidden="true">
+                    *
+                  </span>
                 </label>
                 <input
                   id="start"
@@ -515,7 +588,10 @@ export default function CreateParayanamPage() {
               </div>
               <div>
                 <label htmlFor="end" className="font-sans text-sm font-semibold text-foreground">
-                  End date <span className="text-destructive" aria-hidden="true">*</span>
+                  End date{" "}
+                  <span className="text-destructive" aria-hidden="true">
+                    *
+                  </span>
                 </label>
                 <input
                   id="end"
@@ -534,7 +610,10 @@ export default function CreateParayanamPage() {
 
             <div>
               <p className="font-sans text-sm font-semibold text-foreground">
-                Parayanam days <span className="text-destructive" aria-hidden="true">*</span>
+                Parayanam days{" "}
+                <span className="text-destructive" aria-hidden="true">
+                  *
+                </span>
               </p>
               <p className="font-sans text-xs text-muted-foreground">When will this parayanam take place?</p>
               <div className="mt-3 grid gap-3 sm:grid-cols-2">
@@ -619,7 +698,10 @@ export default function CreateParayanamPage() {
           <div className="space-y-5">
             <div>
               <p className="font-sans text-sm font-semibold text-foreground">
-                How should dashakams be shared? <span className="text-destructive" aria-hidden="true">*</span>
+                How should dashakams be shared?{" "}
+                <span className="text-destructive" aria-hidden="true">
+                  *
+                </span>
               </p>
               <p className="font-sans text-xs text-muted-foreground">
                 {dayCountLabel(dates.length)} · {patternLabel(schedulePattern, weekdays)}
@@ -656,6 +738,40 @@ export default function CreateParayanamPage() {
                   </button>
                 ))}
               </div>
+              {mode === "SAME_FOR_ALL" && (
+                <div className="mt-4 rounded-xl border border-border p-4">
+                  <label className="font-sans text-sm font-semibold text-foreground">Dashakams per Parayanam day</label>
+
+                  <p className="mt-1 font-sans text-xs text-muted-foreground">
+                    The selected Dashakams will repeat in order for the full Parayanam.
+                  </p>
+
+                  <div className="mt-3 flex flex-wrap gap-2">
+                    {[1, 2, 3].map((count) => (
+                      <button
+                        key={count}
+                        type="button"
+                        onClick={() => setSameForAllPerDay(count)}
+                        className={`rounded-lg border px-4 py-2 font-sans text-sm ${
+                          sameForAllPerDay === count ? "border-primary bg-secondary/30 font-semibold" : "border-border"
+                        }`}
+                      >
+                        {count}
+                      </button>
+                    ))}
+
+                    <input
+                      type="number"
+                      min={1}
+                      max={100}
+                      value={sameForAllPerDay}
+                      onChange={(e) => setSameForAllPerDay(Math.max(1, Math.min(100, Number(e.target.value) || 1)))}
+                      className="w-24 rounded-lg border border-border bg-background px-3 py-2 font-sans text-sm"
+                      aria-label="Custom Dashakams per day"
+                    />
+                  </div>
+                </div>
+              )}
             </div>
 
             <div>
@@ -679,7 +795,76 @@ export default function CreateParayanamPage() {
                         ))}
                       </ul>
                     ) : (
-                      <p className="mt-1 font-sans text-xs text-muted-foreground">{d.dashakams.join(", ") || "—"}</p>
+                      <div className="mt-1">
+                        {editingScheduleDate === d.date && mode === "SAME_FOR_ALL" ? (
+                          <div className="space-y-2">
+                            <input
+                              type="text"
+                              value={scheduleEditText}
+                              onChange={(e) => {
+                                setScheduleEditText(e.target.value);
+                                setScheduleEditError(null);
+                              }}
+                              placeholder="e.g. 18, 60, 78"
+                              className="w-full rounded-lg border border-border bg-background px-3 py-2 font-sans text-sm"
+                            />
+
+                            {scheduleEditError && (
+                              <p className="font-sans text-xs text-destructive">{scheduleEditError}</p>
+                            )}
+
+                            <div className="flex gap-2">
+                              <button
+                                type="button"
+                                onClick={() => saveScheduleOverride(d.date)}
+                                className="rounded-lg bg-primary px-3 py-1.5 font-sans text-xs font-semibold text-primary-foreground"
+                              >
+                                Save
+                              </button>
+
+                              <button
+                                type="button"
+                                onClick={cancelScheduleEdit}
+                                className="rounded-lg border border-border px-3 py-1.5 font-sans text-xs"
+                              >
+                                Cancel
+                              </button>
+                            </div>
+                          </div>
+                        ) : (
+                          <div className="flex items-center justify-between gap-3">
+                            <div>
+                              <p className="font-sans text-xs text-muted-foreground">{d.dashakams.join(", ")}</p>
+
+                              {mode === "SAME_FOR_ALL" && scheduleOverrides[d.date]?.length > 0 && (
+                                <p className="mt-0.5 font-sans text-[11px] font-medium text-primary">Customized</p>
+                              )}
+                            </div>
+
+                            {mode === "SAME_FOR_ALL" && (
+                              <div className="flex shrink-0 gap-2">
+                                <button
+                                  type="button"
+                                  onClick={() => beginScheduleEdit(d.date, d.dashakams)}
+                                  className="font-sans text-xs font-semibold text-primary hover:underline"
+                                >
+                                  Edit
+                                </button>
+
+                                {scheduleOverrides[d.date]?.length > 0 && (
+                                  <button
+                                    type="button"
+                                    onClick={() => resetScheduleOverride(d.date)}
+                                    className="font-sans text-xs text-muted-foreground hover:underline"
+                                  >
+                                    Reset
+                                  </button>
+                                )}
+                              </div>
+                            )}
+                          </div>
+                        )}
+                      </div>
                     )}
                   </li>
                 ))}
