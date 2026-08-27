@@ -143,7 +143,7 @@ export default function ParayanamParticipantManager({ sessionId, isOwner }: Prop
                 ) : (
                   <CheckCircle2 className="h-3.5 w-3.5" />
                 )}
-                Confirm Contribution
+                 Approve for Parayanam
               </button>
             )}
             {canRevert && (
@@ -152,7 +152,7 @@ export default function ParayanamParticipantManager({ sessionId, isOwner }: Prop
                 disabled={busyId === r.id}
                 className="inline-flex items-center gap-1.5 rounded-lg border border-border px-3 py-1.5 font-sans text-xs font-semibold text-muted-foreground hover:border-primary hover:text-primary disabled:opacity-60"
               >
-                <RotateCcw className="h-3.5 w-3.5" /> Mark as pending
+              <RotateCcw className="h-3.5 w-3.5" /> Awaiting Approval
               </button>
             )}
           </div>
