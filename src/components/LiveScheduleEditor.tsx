@@ -150,6 +150,9 @@ export default function LiveScheduleEditor({
           Your parayanam days were chosen on the first screen — {dates.length} {dates.length === 1 ? "day" : "days"} in
           all.
         </p>
+        <p className="mt-2 font-sans text-xs text-muted-foreground">
+          <span className="text-destructive" aria-hidden="true">*</span> Required fields
+        </p>
         <div className="mt-3 grid gap-3 sm:grid-cols-2">
           {(
             [
@@ -176,7 +179,7 @@ export default function LiveScheduleEditor({
         <div className="grid gap-4 sm:grid-cols-2">
           <div>
             <label htmlFor="live-start" className="font-sans text-base font-semibold text-foreground">
-              Start time
+              Start time <span className="text-destructive" aria-hidden="true">*</span>
             </label>
             <input
               id="live-start"
@@ -188,7 +191,7 @@ export default function LiveScheduleEditor({
           </div>
           <div>
             <label htmlFor="live-end" className="font-sans text-base font-semibold text-foreground">
-              End time
+              End time <span className="text-destructive" aria-hidden="true">*</span>
             </label>
             <input
               id="live-end"
@@ -202,7 +205,7 @@ export default function LiveScheduleEditor({
 
         <div>
           <label htmlFor="live-url" className="font-sans text-base font-semibold text-foreground">
-            Joining link
+            Joining link <span className="text-destructive" aria-hidden="true">*</span>
           </label>
           <input
             id="live-url"
@@ -360,21 +363,29 @@ function SessionEditor({
       <div className="grid gap-4 sm:grid-cols-3">
         {allowDate && (
           <div>
-            <label className="font-sans text-sm font-semibold text-foreground">Date</label>
+            <label className="font-sans text-sm font-semibold text-foreground">
+              Date <span className="text-destructive" aria-hidden="true">*</span>
+            </label>
             <input type="date" value={date} onChange={(e) => setDate(e.target.value)} className={inputClass} />
           </div>
         )}
         <div>
-          <label className="font-sans text-sm font-semibold text-foreground">Start time</label>
+          <label className="font-sans text-sm font-semibold text-foreground">
+            Start time <span className="text-destructive" aria-hidden="true">*</span>
+          </label>
           <input type="time" value={start} onChange={(e) => setStart(e.target.value)} className={inputClass} />
         </div>
         <div>
-          <label className="font-sans text-sm font-semibold text-foreground">End time</label>
+          <label className="font-sans text-sm font-semibold text-foreground">
+            End time <span className="text-destructive" aria-hidden="true">*</span>
+          </label>
           <input type="time" value={end} onChange={(e) => setEnd(e.target.value)} className={inputClass} />
         </div>
       </div>
       <div>
-        <label className="font-sans text-sm font-semibold text-foreground">Joining link</label>
+        <label className="font-sans text-sm font-semibold text-foreground">
+          Joining link <span className="text-destructive" aria-hidden="true">*</span>
+        </label>
         <input
           type="url"
           value={url}

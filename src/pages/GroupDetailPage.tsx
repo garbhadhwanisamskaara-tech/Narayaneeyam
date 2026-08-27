@@ -724,7 +724,7 @@ export default function GroupDetailPage() {
                   </div>
                 ) : !canSeeParayanamData ? (
                   <div className="rounded-2xl border border-border bg-card p-5 shadow-peacock">
-                    <h2 className="font-display text-xl font-bold text-foreground">Group Dashakam Garden</h2>
+                    <h2 className="font-display text-xl font-bold text-foreground">Parayanam Dashakam Garden</h2>
                     <p className="mt-1 font-sans text-sm text-muted-foreground">
                       You're not part of this parayanam. The garden will bloom for you once you're invited
                       to join one.
@@ -737,12 +737,13 @@ export default function GroupDetailPage() {
                     tiles={gardenTiles}
                     onTapDashakam={handleTapDashakam}
                     pendingDashakam={gardenPending}
-                    title={`${parayanamName || "Parayanam"} — Dashakam Garden`}
+                    title="Parayanam Dashakam Garden"
+                    subtitle={parayanamName || undefined}
                     loading={gardenLoading}
                   />
                 ) : (
                   <div className="rounded-2xl border border-border bg-card p-5 shadow-peacock">
-                    <h2 className="font-display text-xl font-bold text-foreground">Group Dashakam Garden</h2>
+                    <h2 className="font-display text-xl font-bold text-foreground">Parayanam Dashakam Garden</h2>
                     <p className="mt-1 font-sans text-sm text-muted-foreground">
                       The day-by-day schedule is prepared automatically when this parayanam begins.
                     </p>

@@ -349,6 +349,9 @@ export default function CreateParayanamPage() {
       <p className="font-sans text-sm text-muted-foreground">
         Step {step} of {lastStep}
       </p>
+      <p className="mt-1 font-sans text-xs text-muted-foreground">
+        <span className="text-destructive" aria-hidden="true">*</span> Required fields
+      </p>
 
       <section className="mt-6 space-y-5 rounded-2xl border border-border bg-card p-5">
         {currentStep === "details" && (
@@ -411,7 +414,9 @@ export default function CreateParayanamPage() {
 
             {templateLocked ? (
               <div>
-                <p className="font-sans text-sm font-semibold text-foreground">Dashakams in this template</p>
+                <p className="font-sans text-sm font-semibold text-foreground">
+                  Dashakams in this template <span className="text-destructive" aria-hidden="true">*</span>
+                </p>
                 <p className="font-sans text-xs text-muted-foreground">
                   These are fixed. Choose “Start from scratch” above to pick your own.
                 </p>
@@ -432,7 +437,9 @@ export default function CreateParayanamPage() {
               </div>
             ) : (
               <div>
-                <p className="font-sans text-sm font-semibold text-foreground">Choose a dashakam set</p>
+                <p className="font-sans text-sm font-semibold text-foreground">
+                  Choose a dashakam set <span className="text-destructive" aria-hidden="true">*</span>
+                </p>
                 {loadingSets ? (
                   <Loader2 className="mt-3 h-5 w-5 animate-spin text-primary" />
                 ) : (
@@ -496,7 +503,7 @@ export default function CreateParayanamPage() {
             <div className="grid gap-4 sm:grid-cols-2">
               <div>
                 <label htmlFor="start" className="font-sans text-sm font-semibold text-foreground">
-                  Start date
+                  Start date <span className="text-destructive" aria-hidden="true">*</span>
                 </label>
                 <input
                   id="start"
@@ -508,7 +515,7 @@ export default function CreateParayanamPage() {
               </div>
               <div>
                 <label htmlFor="end" className="font-sans text-sm font-semibold text-foreground">
-                  End date
+                  End date <span className="text-destructive" aria-hidden="true">*</span>
                 </label>
                 <input
                   id="end"
@@ -526,7 +533,9 @@ export default function CreateParayanamPage() {
             </div>
 
             <div>
-              <p className="font-sans text-sm font-semibold text-foreground">Parayanam days</p>
+              <p className="font-sans text-sm font-semibold text-foreground">
+                Parayanam days <span className="text-destructive" aria-hidden="true">*</span>
+              </p>
               <p className="font-sans text-xs text-muted-foreground">When will this parayanam take place?</p>
               <div className="mt-3 grid gap-3 sm:grid-cols-2">
                 {(
@@ -609,7 +618,9 @@ export default function CreateParayanamPage() {
         {currentStep === "distribution" && (
           <div className="space-y-5">
             <div>
-              <p className="font-sans text-sm font-semibold text-foreground">How should dashakams be shared?</p>
+              <p className="font-sans text-sm font-semibold text-foreground">
+                How should dashakams be shared? <span className="text-destructive" aria-hidden="true">*</span>
+              </p>
               <p className="font-sans text-xs text-muted-foreground">
                 {dayCountLabel(dates.length)} · {patternLabel(schedulePattern, weekdays)}
               </p>
