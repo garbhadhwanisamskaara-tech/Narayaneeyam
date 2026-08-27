@@ -12,13 +12,19 @@ export const isValidContributionAmount = (amount: string) => {
 export const isValidPaymentInstructions = (value: string) => {
   return value.trim().length > 0;
 };
+export default function ContributionDetailsForm({
+  value,
+  onChange,
+}: {
+  value: ContributionDetails;
+  onChange: (v: ContributionDetails) => void;
+}) {
   const set = (patch: Partial<ContributionDetails>) => onChange({ ...value, ...patch });
 
   const amountTouched = value.amount.trim().length > 0;
   const paymentInstructionsTouched = value.paymentUrl.trim().length > 0;
   const amountBad = amountTouched && !isValidContributionAmount(value.amount);
-  const paymentInstructionsBad =
-    paymentInstructionsTouched && !isValidPaymentInstructions(value.paymentUrl);
+  const paymentInstructionsBad = paymentInstructionsTouched && !isValidPaymentInstructions(value.paymentUrl);
 
   const inputClass =
     "mt-2 w-full rounded-xl border-2 border-border bg-background px-4 py-3.5 font-sans text-base text-foreground outline-none focus:border-primary focus:ring-2 focus:ring-primary";
@@ -28,17 +34,23 @@ export const isValidPaymentInstructions = (value: string) => {
       <div>
         <p className="font-sans text-base font-semibold text-foreground">Contribution details</p>
         <p className="mt-1 font-sans text-sm text-muted-foreground">
-          Tell members how much to offer and where to send it. You will confirm each contribution
-          yourself once you receive it.
+          Tell members how much to offer and where to send it. You will confirm each contribution yourself once you
+          receive it.
         </p>
         <p className="mt-2 font-sans text-xs text-muted-foreground">
-          <span className="text-destructive" aria-hidden="true">*</span> Required fields
+          <span className="text-destructive" aria-hidden="true">
+            *
+          </span>{" "}
+          Required fields
         </p>
       </div>
 
       <div>
         <label htmlFor="contribution-amount" className="font-sans text-base font-semibold text-foreground">
-          Contribution amount <span className="text-destructive" aria-hidden="true">*</span>
+          Contribution amount{" "}
+          <span className="text-destructive" aria-hidden="true">
+            *
+          </span>
         </label>
         <input
           id="contribution-amount"
@@ -52,21 +64,18 @@ export const isValidPaymentInstructions = (value: string) => {
           className={inputClass}
         />
         {amountBad && (
-          <p className="mt-2 font-sans text-sm text-destructive">
-            Please enter an amount greater than zero.
-          </p>
+          <p className="mt-2 font-sans text-sm text-destructive">Please enter an amount greater than zero.</p>
         )}
       </div>
 
       <div>
-        <label
-          htmlFor="payment-instructions"
-          className="font-sans text-base font-semibold text-foreground"
-        >
+        <label htmlFor="payment-instructions" className="font-sans text-base font-semibold text-foreground">
           Payment instructions{" "}
-          <span className="text-destructive" aria-hidden="true">*</span>
+          <span className="text-destructive" aria-hidden="true">
+            *
+          </span>
         </label>
-      
+
         <textarea
           id="payment-instructions"
           rows={2}
@@ -76,22 +85,19 @@ export const isValidPaymentInstructions = (value: string) => {
           placeholder="e.g. GPay 9876543210, UPI name@okaxis, or https://rzp.io/..."
           className={inputClass}
         />
-      
+
         <p className="mt-2 font-sans text-sm text-muted-foreground">
           Enter a GPay number, UPI ID, bank-transfer instruction, or payment link.
         </p>
 
         {paymentInstructionsBad && (
-          <p className="mt-1 font-sans text-sm text-destructive">
-            Please enter payment instructions.
-          </p>
+          <p className="mt-1 font-sans text-sm text-destructive">Please enter payment instructions.</p>
         )}
       </div>
 
       <div>
         <label htmlFor="payment-note" className="font-sans text-base font-semibold text-foreground">
-          A note for members{" "}
-          <span className="font-normal text-muted-foreground">(optional)</span>
+          A note for members <span className="font-normal text-muted-foreground">(optional)</span>
         </label>
         <textarea
           id="payment-note"
