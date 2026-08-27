@@ -1,5 +1,6 @@
 import { Check, Clock, ExternalLink, HandCoins, Loader2, Users, X } from "lucide-react";
 import type { PendingInvite } from "@/hooks/useParayanamParticipants";
+import { useCapabilities } from "@/hooks/useCapabilities";
 
 const fmt = (d: string | null) => {
   if (!d) return null;
@@ -22,6 +23,7 @@ interface Props {
 export default function ParayanamInviteCard({ invite: i, busy, onAccept, onDecline }: Props) {
   const paid = i.participation_type === "PAID";
   const live = i.delivery_mode === "LIVE";
+  const { canViewExternalPaymentLinks } = useCapabilities();
 
   return (
     <div className="rounded-xl border border-border bg-background p-4">
@@ -60,7 +62,7 @@ export default function ParayanamInviteCard({ invite: i, busy, onAccept, onDecli
             })}
           </div>
         )}
-        {paid && (
+        {paid && canViewExternalPaymentLinks && (
           <>
             <div>
               <span className="text-foreground/80">Contribution:</span>{" "}
@@ -68,7 +70,7 @@ export default function ParayanamInviteCard({ invite: i, busy, onAccept, onDecli
             </div>
             {i.payment_url && (
               <div>
-                <a
+                
                   href={i.payment_url}
                   target="_blank"
                   rel="noopener noreferrer"
@@ -107,6 +109,21 @@ export default function ParayanamInviteCard({ invite: i, busy, onAccept, onDecli
 
 /** Shown after a member accepts a contribution-based parayanam. */
 export function AwaitingContributionCard({ invite: i }: { invite: PendingInvite }) {
+  const { canViewExternalPaymentLinks } = useCapabilities();
+
+  if (!canViewExternalPaymentLinks) {
+    return (
+      <div className="rounded-xl border border-primary/40 bg-primary/5 p-4">
+        <p className="flex items-center gap-2 font-display text-base font-semibold text-foreground">
+          <Clock className="h-4 w-4 text-primary" /> Awaiting Guru approval
+        </p>
+        <p className="mt-1 font-sans text-xs text-muted-foreground">
+          Your participation in {i.parayanam_name ?? "this parayanam"} is awaiting approval from the Guru.
+        </p>
+      </div>
+    );
+  }
+
   return (
     <div className="rounded-xl border border-primary/40 bg-primary/5 p-4">
       <p className="flex items-center gap-2 font-display text-base font-semibold text-foreground">
@@ -122,7 +139,7 @@ export function AwaitingContributionCard({ invite: i }: { invite: PendingInvite 
         </p>
       )}
       {i.payment_url && (
-        <a
+        
           href={i.payment_url}
           target="_blank"
           rel="noopener noreferrer"
