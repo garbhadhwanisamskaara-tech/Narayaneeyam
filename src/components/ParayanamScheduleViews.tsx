@@ -49,7 +49,7 @@ function SectionShell({
 
 export default function ParayanamScheduleViews({ challengeSessionId, refreshKey = 0 }: Props) {
   const [fullOpen, setFullOpen] = useState(false);
-  const [mineOpen, setMineOpen] = useState(true);
+  const [mineOpen, setMineOpen] = useState(false);
 
   const key = `${challengeSessionId ?? ""}-${refreshKey}`;
 
@@ -63,15 +63,7 @@ export default function ParayanamScheduleViews({ challengeSessionId, refreshKey 
   );
 }
 
-function MySchedule({
-  sessionId,
-  open,
-  onToggle,
-}: {
-  sessionId: string;
-  open: boolean;
-  onToggle: () => void;
-}) {
+function MySchedule({ sessionId, open, onToggle }: { sessionId: string; open: boolean; onToggle: () => void }) {
   const { rows, loading, error } = useMyParayanamSchedule(sessionId);
 
   return (
@@ -85,7 +77,7 @@ function MySchedule({
           Nothing assigned to you yet — your dashakams appear here once the parayanam begins.
         </p>
       ) : (
-        <div className="overflow-x-auto rounded-xl border border-border">
+        <div className="max-h-52 overflow-auto rounded-xl border border-border">
           <table className="w-full font-sans text-sm">
             <thead>
               <tr className="border-b border-border text-left text-xs uppercase tracking-wide text-muted-foreground">
@@ -119,15 +111,7 @@ function MySchedule({
   );
 }
 
-function FullSchedule({
-  sessionId,
-  open,
-  onToggle,
-}: {
-  sessionId: string;
-  open: boolean;
-  onToggle: () => void;
-}) {
+function FullSchedule({ sessionId, open, onToggle }: { sessionId: string; open: boolean; onToggle: () => void }) {
   const { rows, loading, error } = useParayanamScheduleView(sessionId);
 
   return (
@@ -146,7 +130,7 @@ function FullSchedule({
           The day-by-day schedule is prepared automatically when the parayanam begins.
         </p>
       ) : (
-        <div className="overflow-x-auto rounded-xl border border-border">
+        <div className="max-h-52 overflow-auto rounded-xl border border-border">
           <table className="w-full font-sans text-sm">
             <thead>
               <tr className="border-b border-border text-left text-xs uppercase tracking-wide text-muted-foreground">
