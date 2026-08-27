@@ -27,9 +27,7 @@ export default function ParayanamInviteCard({ invite: i, busy, onAccept, onDecli
 
   return (
     <div className="rounded-xl border border-border bg-background p-4">
-      <p className="font-display text-base font-semibold text-foreground">
-        {i.parayanam_name ?? "Parayanam"}
-      </p>
+      <p className="font-display text-base font-semibold text-foreground">{i.parayanam_name ?? "Parayanam"}</p>
       <p className="mt-0.5 font-sans text-xs text-muted-foreground">
         Invited by {i.guru_name ?? "your Guru"}
         {i.group_name ? (
@@ -70,7 +68,7 @@ export default function ParayanamInviteCard({ invite: i, busy, onAccept, onDecli
             </div>
             {i.payment_url && (
               <div>
-                 <a
+                <a
                   href={i.payment_url}
                   target="_blank"
                   rel="noopener noreferrer"
@@ -134,12 +132,10 @@ export function AwaitingContributionCard({ invite: i }: { invite: PendingInvite 
         {i.guru_name ? ` ${i.guru_name}` : " your Guru"} confirms your contribution.
       </p>
       {i.contribution_amount != null && (
-        <p className="mt-2 font-sans text-xs text-foreground/80">
-          Contribution: ₹{i.contribution_amount}
-        </p>
+        <p className="mt-2 font-sans text-xs text-foreground/80">Contribution: ₹{i.contribution_amount}</p>
       )}
       {i.payment_url && (
-        
+        <a
           href={i.payment_url}
           target="_blank"
           rel="noopener noreferrer"
@@ -149,9 +145,7 @@ export function AwaitingContributionCard({ invite: i }: { invite: PendingInvite 
           <ExternalLink className="h-3 w-3" />
         </a>
       )}
-      {i.payment_note && (
-        <p className="mt-2 font-sans text-xs italic text-muted-foreground">{i.payment_note}</p>
-      )}
+      {i.payment_note && <p className="mt-2 font-sans text-xs italic text-muted-foreground">{i.payment_note}</p>}
     </div>
   );
 }
