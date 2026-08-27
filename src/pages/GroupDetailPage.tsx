@@ -31,6 +31,7 @@ import ParayanamParticipantManager from "@/components/ParayanamParticipantManage
 import ParayanamScheduleViews from "@/components/ParayanamScheduleViews";
 import { toast } from "@/hooks/use-toast";
 import { useSessionParticipants, type ParticipantStatus } from "@/hooks/useParayanamParticipants";
+import { useCapabilities } from "@/hooks/useCapabilities";
 import {
   Dialog,
   DialogContent,
@@ -237,6 +238,7 @@ export default function GroupDetailPage() {
   }, [selectedSessionId, refreshKey]);
 
   const isOwner = !!user && !!group && group.owner_id === user.id;
+  const { canCreateParayanam, canManageParayanam } = useCapabilities();
   const ownerMember = members.find((m) => m.user_id === group?.owner_id);
   const ownerName = ownerMember?.display_name ?? null;
 
@@ -486,7 +488,7 @@ export default function GroupDetailPage() {
             )}
           </section>
 
-          {isOwner && (
+          {isOwner && canManageGroup && (
             <section className="mt-6 rounded-2xl border border-border bg-card p-5 shadow-peacock">
               <h2 className="font-display text-lg font-semibold text-foreground">Invite to group</h2>
               <p className="mt-1 font-sans text-sm text-muted-foreground">
@@ -603,7 +605,7 @@ export default function GroupDetailPage() {
                   </div>
                 )}
               </div>
-              {isOwner && (
+              {isOwner && canCreateParayanam && (
                 <Link
                   to={`/parayanam/new?group=${group.id}`}
                   className="inline-flex items-center gap-2 rounded-lg bg-gradient-peacock px-4 py-2 font-sans text-sm font-semibold text-primary-foreground hover:opacity-90"
@@ -625,7 +627,7 @@ export default function GroupDetailPage() {
                   : "Dates will appear once this parayanam is planned."}
               </p>
 
-              {isOwner && (
+              {isOwner && canManageParayanam &&  (
                 <>
                   {loadingMembers || loadingParticipants ? (
                     <Loader2 className="mt-4 h-5 w-5 animate-spin text-primary" />
