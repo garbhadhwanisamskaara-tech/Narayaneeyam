@@ -45,11 +45,14 @@ export default function ContributionDetailsForm({
           Tell members how much to offer and where to send it. You will confirm each contribution
           yourself once you receive it.
         </p>
+        <p className="mt-2 font-sans text-xs text-muted-foreground">
+          <span className="text-destructive" aria-hidden="true">*</span> Required fields
+        </p>
       </div>
 
       <div>
         <label htmlFor="contribution-amount" className="font-sans text-base font-semibold text-foreground">
-          Contribution amount
+          Contribution amount <span className="text-destructive" aria-hidden="true">*</span>
         </label>
         <input
           id="contribution-amount"
@@ -71,7 +74,7 @@ export default function ContributionDetailsForm({
 
       <div>
         <label htmlFor="payment-url" className="font-sans text-base font-semibold text-foreground">
-          Payment link
+          Payment link <span className="text-destructive" aria-hidden="true">*</span>
         </label>
         <input
           id="payment-url"
