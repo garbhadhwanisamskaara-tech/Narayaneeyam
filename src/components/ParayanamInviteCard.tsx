@@ -70,7 +70,7 @@ export default function ParayanamInviteCard({ invite: i, busy, onAccept, onDecli
             </div>
             {i.payment_url && (
               <div>
-                
+                 <a
                   href={i.payment_url}
                   target="_blank"
                   rel="noopener noreferrer"
