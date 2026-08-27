@@ -64,6 +64,8 @@ export function buildSchedule(
   dates: string[],
   mode: DistributionMode,
   memberIds: string[],
+  sameForAllPerDay = 1,
+  scheduleOverrides: Record<string, number[]> = {},
 ): Omit<ScheduleRow, "id" | "challenge_session_id">[] {
   if (!dashakams.length || !dates.length) return [];
 
@@ -137,33 +139,39 @@ export function buildSchedule(
     );
   }
 
-  // SAME_FOR_ALL — spread the selected dashakams as evenly as possible
-  // across the actual parayanam days.
+  // SAME_FOR_ALL
   //
-  // Example:
-  // 7 dashakams / 6 days
-  // Day 1 -> 2 dashakams
-  // Day 2 -> 1
-  // Day 3 -> 1
-  // Day 4 -> 1
-  // Day 5 -> 1
-  // Day 6 -> 1
+  // Everyone reads the same dashakams on a given day.
+  // The selected list cycles continuously for the full duration.
+  //
+  // Example: [18,60,78,79], 2 per day
+  // Day 1 -> 18,60
+  // Day 2 -> 78,79
+  // Day 3 -> 18,60
+  //
+  // A Guru can override an individual day's list.
   const out: Omit<ScheduleRow, "id" | "challenge_session_id">[] = [];
 
-  const dayCount = dates.length;
-
-  if (!dayCount) return out;
-
-  const base = Math.floor(dashakams.length / dayCount);
-  const remainder = dashakams.length % dayCount;
-
-  let dashakamIndex = 0;
+  const perDay = Math.max(1, sameForAllPerDay);
 
   dates.forEach((scheduled_date, dayIndex) => {
-    const blockSize = base + (dayIndex < remainder ? 1 : 0);
+    const override = scheduleOverrides[scheduled_date];
 
-    for (let j = 0; j < blockSize; j += 1) {
-      if (dashakamIndex >= dashakams.length) break;
+    if (override?.length) {
+      override.forEach((dashakam_no) => {
+        out.push({
+          dashakam_no,
+          scheduled_date,
+          assigned_user_id: null,
+          is_manual_override: true,
+        });
+      });
+
+      return;
+    }
+
+    for (let j = 0; j < perDay; j += 1) {
+      const dashakamIndex = (dayIndex * perDay + j) % dashakams.length;
 
       out.push({
         dashakam_no: dashakams[dashakamIndex],
@@ -171,8 +179,6 @@ export function buildSchedule(
         assigned_user_id: null,
         is_manual_override: false,
       });
-
-      dashakamIndex += 1;
     }
   });
 
@@ -217,8 +223,10 @@ export function useParayanamSchedule(sessionId: string | null | undefined) {
       dates: string[],
       mode: DistributionMode,
       memberIds: string[],
+      sameForAllPerDay = 1,
+      scheduleOverrides: Record<string, number[]> = {},
     ) => {
-      const planned = buildSchedule(dashakams, dates, mode, memberIds);
+      const planned = buildSchedule(dashakams, dates, mode, memberIds, sameForAllPerDay, scheduleOverrides);
       await (supabase as any).from("parayanam_schedule").delete().eq("challenge_session_id", targetSessionId);
       const { error: err } = await (supabase as any)
         .from("parayanam_schedule")
