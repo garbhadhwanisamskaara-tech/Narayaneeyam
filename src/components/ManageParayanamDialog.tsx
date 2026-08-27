@@ -248,7 +248,16 @@ export default function ManageParayanamDialog({
 
   return (
     <>
-      <Dialog open={open} onOpenChange={setOpen}>
+      <Dialog
+        open={open}
+        onOpenChange={(nextOpen) => {
+          setOpen(nextOpen);
+
+          if (!nextOpen) {
+            setParticipantsOpen(false);
+          }
+        }}
+      >
         <DialogTrigger asChild>
           <button
             type="button"
