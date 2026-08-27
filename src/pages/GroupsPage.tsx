@@ -3,12 +3,14 @@ import { Link } from "react-router-dom";
 import { Loader2, Plus, Users } from "lucide-react";
 import { useGroups } from "@/hooks/useGroups";
 import { useAuth } from "@/contexts/AuthContext";
+import { useCapabilities } from "@/hooks/useCapabilities";
 import SEO from "@/components/SEO";
 import DashakamQueueList from "@/components/DashakamQueueList";
 
 export default function GroupsPage() {
   const { groups, loading, error, createGroup } = useGroups();
   const { user } = useAuth();
+  const { canCreateGroup } = useCapabilities();
   const [name, setName] = useState("");
   const [creating, setCreating] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
@@ -39,29 +41,31 @@ export default function GroupsPage() {
         <DashakamQueueList showGroupsLink={false} card />
       </div>
 
-      <form onSubmit={handleCreate} className="mt-6 rounded-2xl border border-border bg-card p-5 shadow-peacock">
-        <label htmlFor="group_name" className="font-sans text-sm font-semibold text-foreground">
-          Group name
-        </label>
-        <input
-          id="group_name"
-          name="group_name"
-          value={name}
-          onChange={(e) => setName(e.target.value)}
-          maxLength={60}
-          placeholder="e.g. Family Parayanam"
-          className="mt-2 w-full rounded-lg border border-border bg-background px-3 py-2 font-sans text-sm text-foreground outline-none focus:ring-2 focus:ring-primary"
-        />
-        {formError && <p className="mt-2 font-sans text-sm text-destructive">{formError}</p>}
-        <button
-          type="submit"
-          disabled={creating || !name.trim()}
-          className="mt-4 inline-flex items-center gap-2 rounded-lg bg-gradient-peacock px-4 py-2 font-sans text-sm font-semibold text-primary-foreground hover:opacity-90 disabled:opacity-60"
-        >
-          {creating ? <Loader2 className="h-4 w-4 animate-spin" /> : <Plus className="h-4 w-4" />}
-          Create Group
-        </button>
-      </form>
+      {canCreateGroup && (
+        <form onSubmit={handleCreate} className="mt-6 rounded-2xl border border-border bg-card p-5 shadow-peacock">
+          <label htmlFor="group_name" className="font-sans text-sm font-semibold text-foreground">
+            Group name
+          </label>
+          <input
+            id="group_name"
+            name="group_name"
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            maxLength={60}
+            placeholder="e.g. Family Parayanam"
+            className="mt-2 w-full rounded-lg border border-border bg-background px-3 py-2 font-sans text-sm text-foreground outline-none focus:ring-2 focus:ring-primary"
+          />
+          {formError && <p className="mt-2 font-sans text-sm text-destructive">{formError}</p>}
+          <button
+            type="submit"
+            disabled={creating || !name.trim()}
+            className="mt-4 inline-flex items-center gap-2 rounded-lg bg-gradient-peacock px-4 py-2 font-sans text-sm font-semibold text-primary-foreground hover:opacity-90 disabled:opacity-60"
+          >
+            {creating ? <Loader2 className="h-4 w-4 animate-spin" /> : <Plus className="h-4 w-4" />}
+            Create Group
+          </button>
+        </form>
+      )}
 
       <div className="mt-8">
         <h2 className="font-display text-lg font-semibold text-foreground">Your groups</h2>
