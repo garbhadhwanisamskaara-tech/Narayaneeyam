@@ -25,7 +25,7 @@ import ParayanamModeSelector, { type DeliveryMode } from "@/components/Parayanam
 import ParticipationTypeSelector, { type ParticipationType } from "@/components/ParticipationTypeSelector";
 import ContributionDetailsForm, {
   isValidContributionAmount,
-  isValidPaymentUrl,
+  isValidPaymentInstructions,
   type ContributionDetails,
 } from "@/components/ContributionDetailsForm";
 import LiveScheduleEditor, {
@@ -270,7 +270,7 @@ export default function CreateParayanamPage() {
   }, [step, lastStep]);
 
   const contributionValid =
-    isValidContributionAmount(contribution.amount) && isValidPaymentUrl(contribution.paymentUrl);
+    isValidContributionAmount(contribution.amount) && isValidPaymentInstructions(contribution.paymentUrl);
 
   const canNext =
     currentStep === "details"
@@ -930,7 +930,7 @@ export default function CreateParayanamPage() {
             }
             contribution={
               participationType === "PAID"
-                ? { amount: contribution.amount, hasPaymentLink: isValidPaymentUrl(contribution.paymentUrl) }
+                ? { amount: contribution.amount, hasPaymentLink: isValidPaymentInstructions(contribution.paymentUrl) }
                 : null
             }
           />
