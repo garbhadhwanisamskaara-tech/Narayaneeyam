@@ -24,6 +24,7 @@ import AuthPage from "./pages/AuthPage";
 import AdminFestivalsPage from "./pages/AdminFestivalsPage";
 import AdminContentPage from "./pages/AdminContentPage";
 import AdminRoute from "./components/AdminRoute";
+import RequireCapability from "@/components/RequireCapability";
 import ResetPasswordPage from "./pages/ResetPasswordPage";
 import JoinGroupPage from "./pages/JoinGroupPage";
 import GroupsPage from "./pages/GroupsPage";
@@ -95,13 +96,13 @@ const App = () => {
                   <Route path="/dashboard" element={<DashboardPage />} />
                   <Route path="/podcast" element={<PodcastPage />} />
                   
-                  <Route path="/parayanam/new" element={<CreateParayanamPage />} />
+                  <Route path="/parayanam/new" element={<RequireCapability capability="canCreateParayanam"><CreateParayanamPage /></RequireCapability>} />
 
                   <Route path="/my-parayanams" element={<MyParayanamsPage />} />
                   <Route path="/groups" element={<GroupsPage />} />
                   <Route path="/groups/:groupId" element={<GroupDetailPage />} />
-                  <Route path="/groups/:groupId/schedule" element={<GroupSchedulePage />} />
-                  <Route path="/groups/:groupId/settings" element={<GroupSettingsPage />} />
+                  <Route path="/groups/:groupId/schedule" element={<RequireCapability capability="canManageParayanam"><GroupSchedulePage /></RequireCapability>} />
+                  <Route path="/groups/:groupId/settings" element={<RequireCapability capability="canManageGroup"><GroupSettingsPage /></RequireCapability>} />
 
 
                   <Route path="/devotion-pathways" element={<DevotionPathwaysPage />} />
