@@ -9,30 +9,16 @@ export const isValidContributionAmount = (amount: string) => {
   return Number.isFinite(n) && n > 0;
 };
 
-export const isValidPaymentUrl = (url: string) => {
-  const trimmed = url.trim();
-  if (!trimmed) return false;
-  try {
-    const u = new URL(trimmed);
-    return u.protocol === "https:" && !!u.hostname.includes(".");
-  } catch {
-    return false;
-  }
+export const isValidPaymentInstructions = (value: string) => {
+  return value.trim().length > 0;
 };
-
-export default function ContributionDetailsForm({
-  value,
-  onChange,
-}: {
-  value: ContributionDetails;
-  onChange: (v: ContributionDetails) => void;
-}) {
   const set = (patch: Partial<ContributionDetails>) => onChange({ ...value, ...patch });
 
   const amountTouched = value.amount.trim().length > 0;
-  const urlTouched = value.paymentUrl.trim().length > 0;
+  const paymentInstructionsTouched = value.paymentUrl.trim().length > 0;
   const amountBad = amountTouched && !isValidContributionAmount(value.amount);
-  const urlBad = urlTouched && !isValidPaymentUrl(value.paymentUrl);
+  const paymentInstructionsBad =
+    paymentInstructionsTouched && !isValidPaymentInstructions(value.paymentUrl);
 
   const inputClass =
     "mt-2 w-full rounded-xl border-2 border-border bg-background px-4 py-3.5 font-sans text-base text-foreground outline-none focus:border-primary focus:ring-2 focus:ring-primary";
@@ -73,25 +59,31 @@ export default function ContributionDetailsForm({
       </div>
 
       <div>
-        <label htmlFor="payment-url" className="font-sans text-base font-semibold text-foreground">
-          Payment link <span className="text-destructive" aria-hidden="true">*</span>
+        <label
+          htmlFor="payment-instructions"
+          className="font-sans text-base font-semibold text-foreground"
+        >
+          Payment instructions{" "}
+          <span className="text-destructive" aria-hidden="true">*</span>
         </label>
-        <input
-          id="payment-url"
-          type="url"
-          inputMode="url"
+      
+        <textarea
+          id="payment-instructions"
+          rows={2}
           maxLength={500}
           value={value.paymentUrl}
           onChange={(e) => set({ paymentUrl: e.target.value })}
-          placeholder="https://..."
+          placeholder="e.g. GPay 9876543210, UPI name@okaxis, or https://rzp.io/..."
           className={inputClass}
         />
+      
         <p className="mt-2 font-sans text-sm text-muted-foreground">
-          The link members will open to send their contribution.
+          Enter a GPay number, UPI ID, bank-transfer instruction, or payment link.
         </p>
-        {urlBad && (
+
+        {paymentInstructionsBad && (
           <p className="mt-1 font-sans text-sm text-destructive">
-            Please enter a complete link starting with https://
+            Please enter payment instructions.
           </p>
         )}
       </div>
