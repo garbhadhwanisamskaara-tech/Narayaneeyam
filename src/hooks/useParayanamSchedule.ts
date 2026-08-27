@@ -70,21 +70,59 @@ export function buildSchedule(
   if (mode === "RELAY") {
     const n = memberIds.length;
     const out: Omit<ScheduleRow, "id" | "challenge_session_id">[] = [];
+
     dates.forEach((scheduled_date, dayIndex) => {
       if (!n) {
-        // No confirmed members yet — the preview still shows the day's set.
+        // No confirmed members yet — preview the selected set only.
         dashakams.forEach((dashakam_no) =>
-          out.push({ dashakam_no, scheduled_date, assigned_user_id: null, is_manual_override: false }),
+          out.push({
+            dashakam_no,
+            scheduled_date,
+            assigned_user_id: null,
+            is_manual_override: false,
+          }),
         );
         return;
       }
-      contiguousBlocks(dashakams, n).forEach((block, blockIndex) => {
-        const owner = memberIds[(blockIndex + dayIndex) % n];
-        block.forEach((dashakam_no) =>
-          out.push({ dashakam_no, scheduled_date, assigned_user_id: owner, is_manual_override: false }),
-        );
+
+      // CASE 1:
+      // Members <= dashakams
+      // Keep the existing balanced contiguous-block Relay logic.
+      if (n <= dashakams.length) {
+        contiguousBlocks(dashakams, n).forEach((block, blockIndex) => {
+          const owner = memberIds[(blockIndex + dayIndex) % n];
+
+          block.forEach((dashakam_no) =>
+            out.push({
+              dashakam_no,
+              scheduled_date,
+              assigned_user_id: owner,
+              is_manual_override: false,
+            }),
+          );
+        });
+
+        return;
+      }
+
+      // CASE 2:
+      // Members > dashakams
+      // Every member gets one dashakam.
+      // Dashakams repeat round-robin, and the starting dashakam
+      // shifts each parayanam day so the same people do not keep
+      // receiving the same dashakam.
+      memberIds.forEach((memberId, memberIndex) => {
+        const dashakamIndex = (memberIndex + dayIndex) % dashakams.length;
+
+        out.push({
+          dashakam_no: dashakams[dashakamIndex],
+          scheduled_date,
+          assigned_user_id: memberId,
+          is_manual_override: false,
+        });
       });
     });
+
     return out;
   }
 
