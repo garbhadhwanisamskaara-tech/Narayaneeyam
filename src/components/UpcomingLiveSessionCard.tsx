@@ -1,19 +1,16 @@
 import { useEffect, useState } from "react";
-import { Calendar, Clock, Flower2, Loader2, Users, Video } from "lucide-react";
+import { Calendar, ChevronDown, ChevronUp, Clock, Loader2, Lock, Users, Video } from "lucide-react";
 import { Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import {
-  useUpcomingLiveSessions,
-  type UpcomingLiveSession,
-} from "@/hooks/useUpcomingLiveSessions";
+import { useUpcomingLiveSessions, type UpcomingLiveSession } from "@/hooks/useUpcomingLiveSessions";
 
 const REASON_MESSAGES: Record<string, string> = {
-  ACCESS_LOCKED: "Your Guru hasn't confirmed your contribution yet",
-  NOT_CONFIRMED: "You are not confirmed for this parayanam yet",
+  ACCESS_LOCKED: "Your Guru has not approved your participation yet",
+  NOT_CONFIRMED: "You are not confirmed for this Parayanam yet",
   BEFORE_ACTIVATION_WINDOW: "This opens closer to the session time",
   SESSION_ENDED: "This session has already ended",
-  NO_MEETING_LINK: "Your Guru hasn't added the joining link yet",
+  NO_MEETING_LINK: "Your Guru has not added the joining link yet",
 };
 
 function fmtTime(iso: string) {
@@ -32,6 +29,15 @@ function fmtDate(d: string) {
   });
 }
 
+function fmtShortDate(d: string | null) {
+  if (!d) return null;
+
+  return new Date(`${d}T00:00:00`).toLocaleDateString("en-IN", {
+    day: "numeric",
+    month: "short",
+  });
+}
+
 function SessionRow({ s, now }: { s: UpcomingLiveSession; now: number }) {
   const { toast } = useToast();
   const [busy, setBusy] = useState(false);
@@ -40,23 +46,31 @@ function SessionRow({ s, now }: { s: UpcomingLiveSession; now: number }) {
   const start = new Date(s.startDatetime).getTime();
   const end = new Date(s.endDatetime).getTime();
   const opensAt = start - s.joinBeforeMins * 60_000;
+
   const canJoin = now >= opensAt && now < end;
+
+  const duration =
+    s.parayanamStartDate && s.parayanamEndDate
+      ? `${fmtShortDate(s.parayanamStartDate)} – ${fmtShortDate(s.parayanamEndDate)}`
+      : null;
 
   const handleJoin = async () => {
     setBusy(true);
     setMessage(null);
+
     try {
       const { data, error } = await (supabase as any).rpc("get_live_session_access", {
         p_session_id: s.liveSessionId,
       });
+
       if (error) throw error;
+
       const res = Array.isArray(data) ? data[0] : data;
+
       if (res?.can_join && res?.meeting_url) {
         window.open(res.meeting_url, "_blank", "noopener,noreferrer");
       } else {
-        setMessage(
-          REASON_MESSAGES[res?.reason as string] ?? "You can't join this session right now",
-        );
+        setMessage(REASON_MESSAGES[res?.reason as string] ?? "You cannot join this session right now");
       }
     } catch {
       toast({
@@ -65,80 +79,118 @@ function SessionRow({ s, now }: { s: UpcomingLiveSession; now: number }) {
         variant: "destructive",
       });
     }
+
     setBusy(false);
   };
 
   return (
-    <div className="rounded-xl border border-border bg-card p-4">
-      <p className="font-display text-base font-semibold text-foreground">{s.parayanamName}</p>
-      <p className="flex items-center gap-1.5 font-sans text-xs text-muted-foreground">
-        <Users className="h-3.5 w-3.5" /> {s.groupName}
-      </p>
+    <div className="rounded-2xl border border-border bg-card p-5 shadow-sm">
+      <div>
+        <p className="font-display text-lg font-semibold text-foreground">
+          {s.parayanamName}
+          {duration ? (
+            <span className="ml-2 font-sans text-sm font-normal text-muted-foreground">({duration})</span>
+          ) : null}
+        </p>
 
-      <div className="mt-2 flex flex-wrap gap-x-4 gap-y-1 font-sans text-sm text-muted-foreground">
+        <p className="mt-1 flex items-center gap-1.5 font-sans text-sm text-muted-foreground">
+          <Users className="h-4 w-4" />
+          {s.groupName}
+        </p>
+      </div>
+
+      <div className="mt-4 flex flex-wrap gap-x-5 gap-y-2 font-sans text-sm text-muted-foreground">
         <span className="flex items-center gap-1.5">
-          <Calendar className="h-4 w-4" /> {fmtDate(s.sessionDate)}
+          <Calendar className="h-4 w-4" />
+          {fmtDate(s.sessionDate)}
         </span>
+
         <span className="flex items-center gap-1.5">
-          <Clock className="h-4 w-4" /> {fmtTime(s.startDatetime)} – {fmtTime(s.endDatetime)}
+          <Clock className="h-4 w-4" />
+          {fmtTime(s.startDatetime)} – {fmtTime(s.endDatetime)}
         </span>
       </div>
 
-      <p className="mt-2 font-sans text-sm text-foreground">
-        {s.dashakams.length
-          ? `Today's Dashakam${s.dashakams.length > 1 ? "s" : ""}: ${s.dashakams.join(", ")}`
-          : "No Dashakam allocated for this day yet."}
-      </p>
+      {!canJoin ? (
+        <>
+          <button
+            type="button"
+            disabled
+            className="mt-5 inline-flex w-full cursor-not-allowed items-center justify-center gap-2 rounded-xl border border-border bg-muted px-5 py-3 font-sans text-sm font-semibold text-muted-foreground"
+          >
+            <Lock className="h-4 w-4" />
+            Join opens at {fmtTime(new Date(opensAt).toISOString())}
+          </button>
 
-      <button
-        type="button"
-        onClick={handleJoin}
-        disabled={!canJoin || busy}
-        className={`mt-3 inline-flex w-full items-center justify-center gap-2 rounded-lg px-5 py-3 font-sans text-sm font-semibold transition-transform ${
-          canJoin
-            ? "bg-gradient-peacock text-primary-foreground hover:scale-[1.02]"
-            : "cursor-not-allowed border border-border bg-muted text-muted-foreground"
-        }`}
-      >
-        {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <Video className="h-4 w-4" />}
-        {canJoin ? "Join Parayanam" : `Opens at ${fmtTime(new Date(opensAt).toISOString())}`}
-      </button>
+          <p className="mt-2 text-center font-sans text-xs text-muted-foreground">
+            The live-session link becomes available {s.joinBeforeMins} minutes before the session.
+          </p>
+        </>
+      ) : (
+        <button
+          type="button"
+          onClick={handleJoin}
+          disabled={busy}
+          className="mt-5 inline-flex w-full items-center justify-center gap-2 rounded-xl bg-gradient-peacock px-5 py-3 font-sans text-sm font-semibold text-primary-foreground transition-transform hover:scale-[1.01] disabled:opacity-60"
+        >
+          {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <Video className="h-4 w-4" />}
+          Join Live Session
+        </button>
+      )}
 
       {s.groupId && (
         <Link
           to={`/groups/${s.groupId}?session=${s.challengeSessionId}`}
-          className="mt-2 inline-flex w-full items-center justify-center gap-2 rounded-lg border border-border bg-background px-5 py-3 font-sans text-sm font-semibold text-foreground transition-colors hover:bg-muted"
+          className="mt-3 inline-flex w-full items-center justify-center rounded-xl border border-border bg-background px-5 py-3 font-sans text-sm font-semibold text-foreground transition-colors hover:bg-muted"
         >
-          <Flower2 className="h-4 w-4" /> View today's Dashakam
+          View Parayanam
         </Link>
       )}
 
-      {message && <p className="mt-2 font-sans text-xs text-muted-foreground">{message}</p>}
-
-      <p className="mt-2 font-sans text-xs text-muted-foreground">
-        Can't join live? You can still complete your Dashakam at your own time.
-      </p>
+      {message && <p className="mt-3 text-center font-sans text-xs text-muted-foreground">{message}</p>}
     </div>
   );
 }
 
 export default function UpcomingLiveSessionCard() {
   const { sessions, loading } = useUpcomingLiveSessions();
+
   const [now, setNow] = useState(() => Date.now());
+  const [expanded, setExpanded] = useState(true);
 
   useEffect(() => {
     const id = window.setInterval(() => setNow(Date.now()), 15_000);
+
     return () => window.clearInterval(id);
   }, []);
 
   if (loading || sessions.length === 0) return null;
 
   return (
-    <div className="space-y-3">
-      <h2 className="font-display text-lg font-semibold text-foreground">Upcoming live sessions</h2>
-      {sessions.map((s) => (
-        <SessionRow key={s.liveSessionId} s={s} now={now} />
-      ))}
+    <div className="mx-auto w-full max-w-3xl">
+      <button
+        type="button"
+        onClick={() => setExpanded((prev) => !prev)}
+        className="mb-3 flex w-full items-center justify-between rounded-xl px-1 py-2 text-left"
+      >
+        <h2 className="font-display text-lg font-semibold text-foreground">
+          Upcoming Live Sessions ({sessions.length})
+        </h2>
+
+        {expanded ? (
+          <ChevronUp className="h-5 w-5 text-muted-foreground" />
+        ) : (
+          <ChevronDown className="h-5 w-5 text-muted-foreground" />
+        )}
+      </button>
+
+      {expanded && (
+        <div className="space-y-4">
+          {sessions.map((s) => (
+            <SessionRow key={s.liveSessionId} s={s} now={now} />
+          ))}
+        </div>
+      )}
     </div>
   );
 }
