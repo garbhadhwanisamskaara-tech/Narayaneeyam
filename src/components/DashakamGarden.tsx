@@ -102,7 +102,7 @@ function GardenCell({
 export default function DashakamGarden({
   blooms,
   dashakamNumbers,
-  title = "Dashakam Garden",
+  title = "My Dashakam Garden",
   subtitle,
   loading,
   tiles,
