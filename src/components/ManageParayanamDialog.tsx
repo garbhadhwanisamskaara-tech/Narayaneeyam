@@ -60,7 +60,71 @@ export default function ManageParayanamDialog({
 }: Props) {
   const [open, setOpen] = useState(false);
   const [name, setName] = useState(parayanamName ?? "");
+  const [details, setDetails] = useState<any>(null);
+  const [liveSessions, setLiveSessions] = useState<any[]>([]);
+  const [loadingDetails, setLoadingDetails] = useState(false);
   useEffect(() => setName(parayanamName ?? ""), [parayanamName]);
+  useEffect(() => {
+    if (!open || !sessionId) return;
+
+    let cancelled = false;
+
+    const loadDetails = async () => {
+      setLoadingDetails(true);
+
+      const { data: sessionData } = await (supabase as any)
+        .from("challenge_sessions")
+        .select(
+          `
+        id,
+        parayanam_name,
+        start_date,
+        end_date,
+        dashakam_list,
+        delivery_mode,
+        participation_type,
+        contribution_amount,
+        payment_url,
+        payment_note,
+        distribution_mode,
+        schedule_pattern,
+        schedule_weekdays,
+        same_for_all_per_day,
+        finalized_at,
+        technical_state
+      `,
+        )
+        .eq("id", sessionId)
+        .maybeSingle();
+
+      const { data: liveData } = await (supabase as any)
+        .from("live_sessions_owner")
+        .select(
+          `
+        id,
+        session_date,
+        start_datetime,
+        end_datetime,
+        join_before_mins,
+        meeting_url
+      `,
+        )
+        .eq("challenge_session_id", sessionId)
+        .order("start_datetime", { ascending: true });
+
+      if (!cancelled) {
+        setDetails(sessionData ?? null);
+        setLiveSessions(liveData ?? []);
+        setLoadingDetails(false);
+      }
+    };
+
+    void loadDetails();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [open, sessionId]);
   const [busy, setBusy] = useState(false);
   const [selected, setSelected] = useState<string[]>([]);
   const [removeTarget, setRemoveTarget] = useState<{ userId: string; name: string } | null>(null);
@@ -201,7 +265,102 @@ export default function ManageParayanamDialog({
               These actions affect this parayanam only — not the group itself.
             </DialogDescription>
           </DialogHeader>
+          {loadingDetails ? (
+            <div className="py-4">
+              <Loader2 className="h-5 w-5 animate-spin text-primary" />
+            </div>
+          ) : details ? (
+            <div className="mt-4 rounded-xl border border-border bg-muted/30 p-4">
+              <h3 className="font-display text-base font-semibold text-foreground">Parayanam details</h3>
 
+              <div className="mt-4 grid gap-3 sm:grid-cols-2">
+                <div>
+                  <p className="font-sans text-xs uppercase text-muted-foreground">Group</p>
+                  <p className="font-sans text-sm text-foreground">
+                    {members.length ? `${members.length} group members` : "—"}
+                  </p>
+                </div>
+
+                <div>
+                  <p className="font-sans text-xs uppercase text-muted-foreground">Dates</p>
+                  <p className="font-sans text-sm text-foreground">
+                    {details.start_date} – {details.end_date}
+                  </p>
+                </div>
+
+                <div>
+                  <p className="font-sans text-xs uppercase text-muted-foreground">Dashakams</p>
+                  <p className="font-sans text-sm text-foreground">{(details.dashakam_list ?? []).join(", ") || "—"}</p>
+                </div>
+
+                <div>
+                  <p className="font-sans text-xs uppercase text-muted-foreground">Distribution</p>
+                  <p className="font-sans text-sm text-foreground">
+                    {details.distribution_mode === "RELAY"
+                      ? "Relay — split among members"
+                      : details.distribution_mode === "REPEAT_SAME"
+                        ? "Everyone repeats the whole set"
+                        : "Same dashakams for everyone"}
+                  </p>
+                </div>
+
+                <div>
+                  <p className="font-sans text-xs uppercase text-muted-foreground">How conducted</p>
+                  <p className="font-sans text-sm text-foreground">
+                    {details.delivery_mode === "LIVE" ? "Live" : "Self-paced"}
+                  </p>
+                </div>
+
+                <div>
+                  <p className="font-sans text-xs uppercase text-muted-foreground">Participation</p>
+                  <p className="font-sans text-sm text-foreground">
+                    {details.participation_type === "PAID"
+                      ? `Contribution required${
+                          details.contribution_amount ? ` · ₹${details.contribution_amount}` : ""
+                        }`
+                      : "Free"}
+                  </p>
+                </div>
+
+                <div>
+                  <p className="font-sans text-xs uppercase text-muted-foreground">Participants</p>
+                  <p className="font-sans text-sm text-foreground">
+                    {participants.filter((p) => p.status === "confirmed").length} confirmed
+                    {" · "}
+                    {participants.filter((p) => p.status === "invited").length} awaiting
+                  </p>
+                </div>
+
+                {details.delivery_mode === "LIVE" && (
+                  <div>
+                    <p className="font-sans text-xs uppercase text-muted-foreground">Live sessions</p>
+                    <p className="font-sans text-sm text-foreground">{liveSessions.length} scheduled</p>
+                  </div>
+                )}
+              </div>
+
+              {details.delivery_mode === "LIVE" && liveSessions.length > 0 && (
+                <div className="mt-4 rounded-lg border border-border bg-background p-3">
+                  <p className="font-sans text-xs uppercase text-muted-foreground">Next live session</p>
+
+                  <p className="mt-1 font-sans text-sm text-foreground">
+                    {new Date(liveSessions[0].start_datetime).toLocaleString("en-IN", {
+                      day: "numeric",
+                      month: "short",
+                      year: "numeric",
+                      hour: "numeric",
+                      minute: "2-digit",
+                      hour12: true,
+                    })}
+                  </p>
+
+                  <p className="mt-1 font-sans text-xs text-muted-foreground">
+                    Join opens {liveSessions[0].join_before_mins ?? 10} minutes before
+                  </p>
+                </div>
+              )}
+            </div>
+          ) : null}
           <div className="mt-2 space-y-6">
             <div>
               <h3 className="flex items-center gap-2 font-sans text-sm font-semibold text-foreground">
