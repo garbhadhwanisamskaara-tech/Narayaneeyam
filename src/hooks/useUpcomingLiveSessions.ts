@@ -78,7 +78,11 @@ export function useUpcomingLiveSessions() {
 
       const today = todayIso();
       const groupIds = Array.from(
-        new Set(Array.from(parayanams.values()).map((p) => p.groupId).filter(Boolean)),
+        new Set(
+          Array.from(parayanams.values())
+            .map((p) => p.groupId)
+            .filter(Boolean),
+        ),
       ) as string[];
 
       const [liveRes, groupRes, schedRes] = await Promise.all([
@@ -98,9 +102,7 @@ export function useUpcomingLiveSessions() {
           .gte("scheduled_date", today),
       ]);
 
-      const groupNames = new Map<string, string>(
-        ((groupRes.data ?? []) as any[]).map((g) => [g.id, g.group_name]),
-      );
+      const groupNames = new Map<string, string>(((groupRes.data ?? []) as any[]).map((g) => [g.id, g.group_name]));
       const sched = (schedRes.data ?? []) as {
         challenge_session_id: string;
         dashakam_no: number;
@@ -134,8 +136,24 @@ export function useUpcomingLiveSessions() {
       });
 
       // Drop sessions that already finished.
+      // Drop sessions that already finished.
       const now = Date.now();
-      setSessions(rows.filter((r) => new Date(r.endDatetime).getTime() > now));
+
+      const futureSessions = rows
+        .filter((r) => new Date(r.endDatetime).getTime() > now)
+        .sort((a, b) => new Date(a.startDatetime).getTime() - new Date(b.startDatetime).getTime());
+
+      // Keep only the NEXT upcoming live session
+      // for each Parayanam.
+      const nextByParayanam = new Map<string, UpcomingLiveSession>();
+
+      for (const session of futureSessions) {
+        if (!nextByParayanam.has(session.challengeSessionId)) {
+          nextByParayanam.set(session.challengeSessionId, session);
+        }
+      }
+
+      setSessions(Array.from(nextByParayanam.values()));
     } catch {
       setSessions([]);
     }
