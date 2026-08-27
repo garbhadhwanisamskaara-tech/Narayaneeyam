@@ -2,19 +2,18 @@ import { useCallback, useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { HIDDEN_SESSION_STATES_FILTER } from "@/lib/parayanamFilters";
-
 export interface UpcomingLiveSession {
-  /** live_sessions_public row id */
   liveSessionId: string;
   challengeSessionId: string;
   parayanamName: string;
+  parayanamStartDate: string | null;
+  parayanamEndDate: string | null;
   groupName: string;
   groupId: string | null;
   sessionDate: string;
   startDatetime: string;
   endDatetime: string;
   joinBeforeMins: number;
-  /** Today's allocated dashakams for this member in this parayanam. */
   dashakams: number[];
 }
 
@@ -58,15 +57,28 @@ export function useUpcomingLiveSessions() {
       // 2. Live parayanams among them.
       const { data: csData } = await (supabase as any)
         .from("challenge_sessions")
-        .select("id, parayanam_name, group_id, delivery_mode, technical_state")
+        .select("id, parayanam_name, group_id, start_date, end_date, delivery_mode, technical_state")
         .in("id", sessionIds)
         .eq("delivery_mode", "LIVE")
         .is("completed_at", null)
         .not("technical_state", "in", HIDDEN_SESSION_STATES_FILTER);
-      const parayanams = new Map<string, { name: string; groupId: string | null }>(
+      const parayanams = new Map<
+        string,
+        {
+          name: string;
+          groupId: string | null;
+          startDate: string | null;
+          endDate: string | null;
+        }
+      >(
         ((csData ?? []) as any[]).map((c) => [
           c.id,
-          { name: c.parayanam_name || "Parayanam", groupId: c.group_id ?? null },
+          {
+            name: c.parayanam_name || "Parayanam",
+            groupId: c.group_id ?? null,
+            startDate: c.start_date ?? null,
+            endDate: c.end_date ?? null,
+          },
         ]),
       );
       const liveIds = Array.from(parayanams.keys());
@@ -125,6 +137,8 @@ export function useUpcomingLiveSessions() {
           liveSessionId: ls.id,
           challengeSessionId: ls.challenge_session_id,
           parayanamName: p?.name ?? "Parayanam",
+          parayanamStartDate: p?.startDate ?? null,
+          parayanamEndDate: p?.endDate ?? null,
           groupName: (p?.groupId && groupNames.get(p.groupId)) || "Personal",
           groupId: p?.groupId ?? null,
           sessionDate: ls.session_date,
