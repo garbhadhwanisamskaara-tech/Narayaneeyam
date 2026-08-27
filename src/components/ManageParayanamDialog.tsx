@@ -134,6 +134,7 @@ export default function ManageParayanamDialog({
   const [redistributeOpen, setRedistributeOpen] = useState(false);
   const [removalMode, setRemovalMode] = useState<RemovalMode>("distribute");
   const [assignTo, setAssignTo] = useState("");
+  const [participantsOpen, setParticipantsOpen] = useState(false);
 
   const statusById = useMemo(() => new Map(participants.map((p) => [p.user_id, p.status])), [participants]);
 
@@ -426,35 +427,53 @@ export default function ManageParayanamDialog({
               )}
             </div>
 
-            <div>
-              <h3 className="font-sans text-sm font-semibold text-foreground">Participants</h3>
-              {current.length === 0 ? (
-                <p className="mt-2 font-sans text-xs text-muted-foreground">No one has been invited yet.</p>
-              ) : (
-                <ul className="mt-3 space-y-2">
-                  {current.map((m) => (
-                    <li
-                      key={m.user_id}
-                      className="flex flex-wrap items-center justify-between gap-2 rounded-xl border border-border px-3 py-2"
-                    >
-                      <span className="font-sans text-sm text-foreground">
-                        {m.display_name}
-                        <span className="ml-2 rounded-full bg-secondary px-2 py-0.5 font-sans text-[10px] uppercase tracking-wide text-secondary-foreground">
-                          {STATUS_LABEL[statusById.get(m.user_id) as ParticipantStatus]}
-                        </span>
-                      </span>
-                      {m.user_id !== ownerId && (
-                        <button
-                          onClick={() => void startRemove(m.user_id, m.display_name)}
-                          disabled={busy || checking}
-                          className="inline-flex items-center gap-1 rounded-lg border border-destructive/50 px-3 py-1.5 font-sans text-xs font-semibold text-destructive hover:bg-destructive/10 disabled:opacity-60"
-                        >
-                          <UserMinus className="h-3.5 w-3.5" /> Remove from this parayanam
-                        </button>
-                      )}
-                    </li>
-                  ))}
-                </ul>
+            <div className="rounded-xl border border-border">
+              <button
+                type="button"
+                onClick={() => setParticipantsOpen((prev) => !prev)}
+                className="flex w-full items-center justify-between px-4 py-3 text-left"
+              >
+                <span className="font-sans text-sm font-semibold text-foreground">Participants ({current.length})</span>
+
+                <span className="font-sans text-xs text-muted-foreground">{participantsOpen ? "Hide" : "Show"}</span>
+              </button>
+
+              {participantsOpen && (
+                <div className="border-t border-border px-3 py-3">
+                  {current.length === 0 ? (
+                    <p className="font-sans text-xs text-muted-foreground">No one has been invited yet.</p>
+                  ) : (
+                    <div className="max-h-64 overflow-y-auto pr-1">
+                      <ul className="space-y-2">
+                        {current.map((m) => (
+                          <li
+                            key={m.user_id}
+                            className="flex flex-wrap items-center justify-between gap-2 rounded-xl border border-border px-3 py-2"
+                          >
+                            <span className="font-sans text-sm text-foreground">
+                              {m.display_name}
+
+                              <span className="ml-2 rounded-full bg-secondary px-2 py-0.5 font-sans text-[10px] uppercase tracking-wide text-secondary-foreground">
+                                {STATUS_LABEL[statusById.get(m.user_id) as ParticipantStatus]}
+                              </span>
+                            </span>
+
+                            {m.user_id !== ownerId && (
+                              <button
+                                onClick={() => void startRemove(m.user_id, m.display_name)}
+                                disabled={busy || checking}
+                                className="inline-flex items-center gap-1 rounded-lg border border-destructive/50 px-3 py-1.5 font-sans text-xs font-semibold text-destructive hover:bg-destructive/10 disabled:opacity-60"
+                              >
+                                <UserMinus className="h-3.5 w-3.5" />
+                                Remove
+                              </button>
+                            )}
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+                </div>
               )}
             </div>
 
