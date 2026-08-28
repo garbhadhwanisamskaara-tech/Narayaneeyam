@@ -41,14 +41,7 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { Separator } from "@/components/ui/separator";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 // Copy for the "How group parayanam works" help panel. Kept in one place so it is easy to tweak after review.
 const STATUS_LABEL: Record<ParticipantStatus, string> = {
@@ -112,13 +105,8 @@ export default function GroupDetailPage() {
   const [pickerTouched, setPickerTouched] = useState(!!sessionParam);
 
   const { invite, loading, generateInvite, revokeInvite, regenerateInvite } = useGroupInvite(groupId);
-  const { parayanams, loading: loadingParayanams, refresh: refreshParayanams } =
-    useGroupParayanams(groupId);
-  const {
-    members,
-    loading: loadingMembers,
-    refresh: refreshMembers,
-  } = useGroupMembers(groupId, selectedSessionId);
+  const { parayanams, loading: loadingParayanams, refresh: refreshParayanams } = useGroupParayanams(groupId);
+  const { members, loading: loadingMembers, refresh: refreshMembers } = useGroupMembers(groupId, selectedSessionId);
   const {
     blooms: gardenBlooms,
     tiles: gardenTiles,
@@ -145,8 +133,7 @@ export default function GroupDetailPage() {
     }
     // A cancelled parayanam disappears from the list — fall back at once so
     // the page never keeps showing something that is no longer visible.
-    const stillThere =
-      !!selectedSessionId && parayanams.some((p) => p.session_id === selectedSessionId);
+    const stillThere = !!selectedSessionId && parayanams.some((p) => p.session_id === selectedSessionId);
     if (pickerTouched && stillThere) return;
 
     if (sessionParam && parayanams.some((p) => p.session_id === sessionParam)) {
@@ -156,9 +143,7 @@ export default function GroupDetailPage() {
 
     const active = group?.active_challenge_session_id;
     const fallback = parayanams[0].session_id;
-    setSelectedSessionId(
-      active && parayanams.some((p) => p.session_id === active) ? active : fallback
-    );
+    setSelectedSessionId(active && parayanams.some((p) => p.session_id === active) ? active : fallback);
   }, [
     parayanams,
     loadingParayanams,
@@ -167,9 +152,6 @@ export default function GroupDetailPage() {
     selectedSessionId,
     sessionParam,
   ]);
-
-
-
 
   useEffect(() => {
     if (!groupId) return;
@@ -226,7 +208,7 @@ export default function GroupDetailPage() {
           .eq("challenge_session_id", sessionId);
         if (cancelled) return;
         list = Array.from(
-          new Set(((rows ?? []) as any[]).map((r) => Number(r.dashakam_no)).filter((n) => Number.isFinite(n)))
+          new Set(((rows ?? []) as any[]).map((r) => Number(r.dashakam_no)).filter((n) => Number.isFinite(n))),
         ).sort((a, b) => a - b);
       }
 
@@ -245,8 +227,7 @@ export default function GroupDetailPage() {
   // Only people with a relationship to the selected parayanam (invited, confirmed
   // or declined) — plus the owner, who runs it — may see its progress.
   const hasSession = !!selectedSessionId;
-  const isParayanamParticipant =
-    isOwner || (!!user && participants.some((p) => p.user_id === user.id));
+  const isParayanamParticipant = isOwner || (!!user && participants.some((p) => p.user_id === user.id));
   const canSeeParayanamData = !hasSession || isParayanamParticipant;
 
   // Prefer the live schedule the garden loaded; fall back to the session's list.
@@ -280,10 +261,7 @@ export default function GroupDetailPage() {
   };
 
   const isRelaySession =
-    deriveDistributionMode(
-      selectedParayanam?.distribution_mode,
-      selectedParayanam?.challenge_type
-    ) === "RELAY";
+    deriveDistributionMode(selectedParayanam?.distribution_mode, selectedParayanam?.challenge_type) === "RELAY";
   const confirmedParticipantCount = participants.filter((p) => p.status === "confirmed").length;
   /** A relay needs at least one confirmed reader before blocks can be handed out. */
   const relayNeedsConfirmation = isRelaySession && confirmedParticipantCount === 0;
@@ -307,7 +285,6 @@ export default function GroupDetailPage() {
     setRefreshKey((k) => k + 1);
     await Promise.all([refreshGarden(), refreshParayanams()]);
   };
-
 
   const handleCopy = async () => {
     if (!invite) return;
@@ -363,9 +340,7 @@ export default function GroupDetailPage() {
         <>
           {myGroups.length > 1 && (
             <div className="mt-4 max-w-md">
-              <label className="font-sans text-xs uppercase tracking-wide text-muted-foreground">
-                Your groups
-              </label>
+              <label className="font-sans text-xs uppercase tracking-wide text-muted-foreground">Your groups</label>
               <Select value={group.id} onValueChange={(v) => navigate(`/groups/${v}`)}>
                 <SelectTrigger className="mt-1 font-sans text-sm">
                   <SelectValue placeholder="Choose a group" />
@@ -387,7 +362,6 @@ export default function GroupDetailPage() {
               <p className="font-sans text-sm text-muted-foreground">
                 {members.length} {members.length === 1 ? "member" : "members"}
               </p>
-
             </div>
             <Dialog open={helpOpen} onOpenChange={setHelpOpen}>
               <DialogTrigger asChild>
@@ -412,7 +386,10 @@ export default function GroupDetailPage() {
                       <div className="mt-3 space-y-3">
                         {column.rows.map((row, i) => (
                           <div key={i} className="flex items-start gap-3">
-                            <span className="flex h-5 w-5 shrink-0 items-center justify-center text-base leading-none" aria-hidden="true">
+                            <span
+                              className="flex h-5 w-5 shrink-0 items-center justify-center text-base leading-none"
+                              aria-hidden="true"
+                            >
                               {row.icon}
                             </span>
                             <div className="flex min-w-0 flex-col">
@@ -425,9 +402,7 @@ export default function GroupDetailPage() {
                     </div>
                   ))}
                 </div>
-                <p className="mt-5 text-center font-sans text-xs text-muted-foreground">
-                  {HELP_COPY.closing}
-                </p>
+                <p className="mt-5 text-center font-sans text-xs text-muted-foreground">{HELP_COPY.closing}</p>
               </DialogContent>
             </Dialog>
           </div>
@@ -435,10 +410,6 @@ export default function GroupDetailPage() {
           <PendingInvitesSection groupId={groupId} />
 
           {/* Parayanam-specific panels live below the divider further down. */}
-
-
-
-
 
           <section className="mt-6 rounded-2xl border border-border bg-card p-5 shadow-peacock">
             <button
@@ -463,7 +434,7 @@ export default function GroupDetailPage() {
                 No members yet — share the invite link below.
               </p>
             ) : (
-              <ul className="mt-4 space-y-3">
+              <ul className="mt-4 max-h-[260px] space-y-3 overflow-y-auto pr-2">
                 {members.map((m) => (
                   <li key={m.id} className="flex items-center gap-3">
                     <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-gradient-peacock font-sans text-xs font-bold text-primary-foreground">
@@ -479,7 +450,12 @@ export default function GroupDetailPage() {
                         )}
                       </p>
                       <p className="font-sans text-xs text-muted-foreground">
-                        Joined {new Date(m.joined_at).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" })}
+                        Joined{" "}
+                        {new Date(m.joined_at).toLocaleDateString("en-IN", {
+                          day: "numeric",
+                          month: "short",
+                          year: "numeric",
+                        })}
                       </p>
                     </div>
                   </li>
@@ -492,8 +468,8 @@ export default function GroupDetailPage() {
             <section className="mt-6 rounded-2xl border border-border bg-card p-5 shadow-peacock">
               <h2 className="font-display text-lg font-semibold text-foreground">Invite to group</h2>
               <p className="mt-1 font-sans text-sm text-muted-foreground">
-                Anyone with this link joins the group itself. Invitations to a specific parayanam are handled
-                under “Manage Parayanam” below.
+                Anyone with this link joins the group itself. Invitations to a specific parayanam are handled under
+                “Manage Parayanam” below.
               </p>
 
               {loading ? (
@@ -504,7 +480,11 @@ export default function GroupDetailPage() {
                     <code className="flex-1 truncate font-sans text-sm text-foreground">
                       {inviteLink(invite.token)}
                     </code>
-                    <button onClick={handleCopy} aria-label="Copy invite link" className="text-primary hover:opacity-80">
+                    <button
+                      onClick={handleCopy}
+                      aria-label="Copy invite link"
+                      className="text-primary hover:opacity-80"
+                    >
                       {copied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
                     </button>
                   </div>
@@ -558,18 +538,14 @@ export default function GroupDetailPage() {
           {/* ── Divider: everything below belongs to one chosen parayanam ── */}
           <div className="mt-8 flex items-center gap-3">
             <Separator className="flex-1" />
-            <span className="font-sans text-xs uppercase tracking-wide text-muted-foreground">
-              Parayanams
-            </span>
+            <span className="font-sans text-xs uppercase tracking-wide text-muted-foreground">Parayanams</span>
             <Separator className="flex-1" />
           </div>
 
           <section className="mt-4 rounded-2xl border border-border bg-card p-5 shadow-peacock">
             <div className="flex flex-wrap items-end justify-between gap-3">
               <div className="min-w-0 flex-1">
-                <h2 className="font-display text-lg font-semibold text-foreground">
-                  Choose a parayanam
-                </h2>
+                <h2 className="font-display text-lg font-semibold text-foreground">Choose a parayanam</h2>
                 <p className="mt-1 font-sans text-sm text-muted-foreground">
                   This group can run several parayanams at once. Pick one to see its garden and schedule.
                 </p>
@@ -639,9 +615,7 @@ export default function GroupDetailPage() {
                             {initials(m.display_name)}
                           </span>
                           <div className="min-w-0 flex-1">
-                            <p className="truncate font-sans text-sm font-semibold text-foreground">
-                              {m.display_name}
-                            </p>
+                            <p className="truncate font-sans text-sm font-semibold text-foreground">{m.display_name}</p>
                             <p className="flex flex-wrap items-center gap-2 font-sans text-xs text-muted-foreground">
                               <span>
                                 {m.completed}
@@ -663,10 +637,7 @@ export default function GroupDetailPage() {
                     </ul>
                   )}
 
-                  <ParayanamParticipantManager
-                    sessionId={selectedSessionId}
-                    isOwner={isOwner}
-                  />
+                  <ParayanamParticipantManager sessionId={selectedSessionId} isOwner={isOwner} />
 
                   <div className="mt-5 flex flex-wrap gap-3">
                     <ManageParayanamDialog
@@ -698,8 +669,8 @@ export default function GroupDetailPage() {
                   </div>
                   {canStartNow && relayNeedsConfirmation && (
                     <p className="mt-2 font-sans text-sm text-muted-foreground">
-                      Waiting for at least one participant to confirm — a relay parayanam can only be
-                      started once someone has accepted their invitation.
+                      Waiting for at least one participant to confirm — a relay parayanam can only be started once
+                      someone has accepted their invitation.
                     </p>
                   )}
                 </>
@@ -716,7 +687,6 @@ export default function GroupDetailPage() {
             </section>
           )}
 
-
           {selectedSessionId && (
             <>
               <div className="mt-6">
@@ -728,8 +698,7 @@ export default function GroupDetailPage() {
                   <div className="rounded-2xl border border-border bg-card p-5 shadow-peacock">
                     <h2 className="font-display text-xl font-bold text-foreground">Parayanam Dashakam Garden</h2>
                     <p className="mt-1 font-sans text-sm text-muted-foreground">
-                      You're not part of this parayanam. The garden will bloom for you once you're invited
-                      to join one.
+                      You're not part of this parayanam. The garden will bloom for you once you're invited to join one.
                     </p>
                   </div>
                 ) : gardenNumbers.length > 0 ? (
@@ -756,8 +725,6 @@ export default function GroupDetailPage() {
               <ParayanamScheduleViews challengeSessionId={selectedSessionId} refreshKey={refreshKey} />
             </>
           )}
-
-
         </>
       )}
     </div>
