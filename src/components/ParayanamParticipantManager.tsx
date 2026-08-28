@@ -170,9 +170,10 @@ export default function ParayanamParticipantManager({ sessionId, isOwner }: Prop
       {others.length > 0 && (
         <div>
           <h3 className="flex items-center gap-2 font-display text-sm font-semibold text-foreground">
-            <Users className="h-4 w-4 text-primary" /> Members
+            <Users className="h-4 w-4 text-primary" /> Members ({others.length})
           </h3>
-          <ul className="mt-3 space-y-2">{others.map(renderRow)}</ul>
+
+          <ul className="mt-3 max-h-[320px] space-y-2 overflow-y-auto pr-2">{others.map(renderRow)}</ul>
         </div>
       )}
 
