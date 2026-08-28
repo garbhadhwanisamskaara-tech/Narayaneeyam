@@ -6,8 +6,12 @@
  * Nothing is ever deleted — these lists just decide what is shown.
  */
 
-/** challenge_sessions.technical_state values that must never appear in the UI. */
-export const HIDDEN_SESSION_STATES = ["ARCHIVED", "CANCELLED"] as const;
+/**
+ * challenge_sessions.technical_state values that must never appear in the
+ * normal UI. DRAFT parayanams are still being set up — they are shown only to
+ * their own Guru, through useParayanamDrafts.
+ */
+export const HIDDEN_SESSION_STATES = ["ARCHIVED", "CANCELLED", "DRAFT"] as const;
 
 /** groups.status values that must never appear in the UI. */
 export const HIDDEN_GROUP_STATUSES = ["archived", "dissolved"] as const;
