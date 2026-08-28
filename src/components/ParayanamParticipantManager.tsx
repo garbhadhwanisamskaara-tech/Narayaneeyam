@@ -120,7 +120,7 @@ export default function ParayanamParticipantManager({ sessionId, isOwner }: Prop
           <p className="truncate font-sans text-sm font-semibold text-foreground">{r.name}</p>
           <p className="mt-0.5 flex flex-wrap gap-x-3 font-sans text-xs text-muted-foreground">
             <span>{INVITE_LABEL[r.status]}</span>
-            {paid && <span>Contribution: {CONTRIBUTION_LABEL[contribution]}</span>}
+            {paid && r.status !== "declined" && <span>Contribution: {CONTRIBUTION_LABEL[contribution]}</span>}
             <span>{accessLabel(r)}</span>
           </p>
         </div>
