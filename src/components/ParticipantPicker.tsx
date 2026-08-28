@@ -46,7 +46,7 @@ export default function ParticipantPicker({
           No other members yet — invite people to the group first.
         </p>
       ) : (
-        <ul className="mt-3 space-y-2">
+        <ul className="mt-3 max-h-[320px] space-y-2 overflow-y-auto pr-2">
           {others.map((m) => (
             <li key={m.user_id}>
               <label className="flex items-center gap-3 rounded-xl border border-border px-3 py-2">
