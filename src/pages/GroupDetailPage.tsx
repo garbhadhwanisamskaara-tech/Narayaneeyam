@@ -608,7 +608,7 @@ export default function GroupDetailPage() {
                   {loadingMembers || loadingParticipants ? (
                     <Loader2 className="mt-4 h-5 w-5 animate-spin text-primary" />
                   ) : (
-                    <ul className="mt-4 space-y-3">
+                    <ul className="mt-4 max-h-[320px] space-y-3 overflow-y-auto pr-2">
                       {members.map((m) => (
                         <li key={m.id} className="flex items-center gap-3">
                           <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-gradient-peacock font-sans text-xs font-bold text-primary-foreground">
