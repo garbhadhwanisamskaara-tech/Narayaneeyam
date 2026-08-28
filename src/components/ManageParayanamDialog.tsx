@@ -144,6 +144,16 @@ export default function ManageParayanamDialog({
   const toggle = (id: string) =>
     setSelected((prev) => (prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]));
 
+  const allInvitableSelected = invitable.length > 0 && invitable.every((m) => selected.includes(m.user_id));
+
+  const toggleSelectAll = () => {
+    if (allInvitableSelected) {
+      setSelected([]);
+    } else {
+      setSelected(invitable.map((m) => m.user_id));
+    }
+  };
+
   const handleInvite = async () => {
     if (!selected.length) return;
     setBusy(true);
@@ -400,16 +410,30 @@ export default function ManageParayanamDialog({
             </div>
 
             <div>
-              <h3 className="flex items-center gap-2 font-sans text-sm font-semibold text-foreground">
-                <UserPlus className="h-4 w-4 text-primary" /> Invite more members
-              </h3>
+              <div className="flex items-center justify-between gap-3">
+                <h3 className="flex items-center gap-2 font-sans text-sm font-semibold text-foreground">
+                  <UserPlus className="h-4 w-4 text-primary" />
+                  Invite more members ({invitable.length})
+                </h3>
+
+                {invitable.length > 0 && (
+                  <button
+                    type="button"
+                    onClick={toggleSelectAll}
+                    className="font-sans text-xs font-semibold text-primary hover:underline"
+                  >
+                    {allInvitableSelected ? "Clear all" : "Select all"}
+                  </button>
+                )}
+              </div>
+
               {invitable.length === 0 ? (
                 <p className="mt-2 font-sans text-xs text-muted-foreground">
                   Everyone in the group has already been invited to this parayanam.
                 </p>
               ) : (
                 <>
-                  <ul className="mt-3 space-y-2">
+                  <ul className="mt-3 max-h-[320px] space-y-2 overflow-y-auto pr-2">
                     {invitable.map((m) => (
                       <li key={m.user_id}>
                         <label className="flex items-center gap-3 rounded-xl border border-border px-3 py-2">
