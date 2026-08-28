@@ -518,7 +518,7 @@ export default function GroupSchedulePage() {
             )}
 
             <ParticipantPicker
-              members={members}
+              members={members.filter((m) => statusFor(m.user_id) !== "declined")}
               ownerId={group.owner_id}
               selected={selectedParticipants}
               onToggle={(id) =>
