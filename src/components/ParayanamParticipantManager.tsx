@@ -107,7 +107,7 @@ export default function ParayanamParticipantManager({ sessionId, isOwner }: Prop
   if (!rows.length) return null;
 
   const pendingInvitees = rows.filter((r) => r.status === "invited");
-  const others = rows.filter((r) => r.status !== "invited");
+  const others = rows.filter((r) => r.status !== "invited" && r.status !== "declined");
 
   const renderRow = (r: Row) => {
     const contribution = (r.contribution_status ?? "not_required") as ContributionStatus;
