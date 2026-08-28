@@ -5,26 +5,12 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useGroupMembers, type Group } from "@/hooks/useGroups";
 import { useDashakamSets, type DashakamSet } from "@/hooks/useDashakamSets";
-import {
-  useParayanamSchedule,
-  deriveDistributionMode,
-  type DistributionMode,
-} from "@/hooks/useParayanamSchedule";
-import {
-  inviteParticipants,
-  useSessionParticipants,
-  type ParticipantStatus,
-} from "@/hooks/useParayanamParticipants";
+import { useParayanamSchedule, deriveDistributionMode, type DistributionMode } from "@/hooks/useParayanamSchedule";
+import { inviteParticipants, useSessionParticipants, type ParticipantStatus } from "@/hooks/useParayanamParticipants";
 import ParticipantPicker from "@/components/ParticipantPicker";
 import SEO from "@/components/SEO";
 import { toast } from "@/hooks/use-toast";
-import {
-  dayCountLabel,
-  parayanamDates,
-  patternLabel,
-  shortDate,
-  type SchedulePattern,
-} from "@/lib/parayanamDays";
+import { dayCountLabel, parayanamDates, patternLabel, shortDate, type SchedulePattern } from "@/lib/parayanamDays";
 
 const STATUS_LABEL: Record<ParticipantStatus, string> = {
   invited: "Invited",
@@ -47,7 +33,6 @@ export default function GroupSchedulePage() {
   // session when ?session=… is given, and otherwise adds a brand new one.
   const editingSessionId = searchParams.get("session");
   const { user } = useAuth();
-
 
   const [group, setGroup] = useState<Group | null>(null);
   const [loadingGroup, setLoadingGroup] = useState(true);
@@ -80,8 +65,7 @@ export default function GroupSchedulePage() {
   const { sets, loading: loadingSets, forkSet } = useDashakamSets();
   const { members } = useGroupMembers(groupId, editingSessionId);
   const { rows, loading: loadingRows, updateRow, refresh } = useParayanamSchedule(editingSessionId);
-  const { participants, statusFor, refresh: refreshParticipants } =
-    useSessionParticipants(editingSessionId);
+  const { participants, statusFor, refresh: refreshParticipants } = useSessionParticipants(editingSessionId);
 
   useEffect(() => {
     if (!groupId) return;
@@ -110,7 +94,7 @@ export default function GroupSchedulePage() {
       const { data } = await (supabase as any)
         .from("challenge_sessions")
         .select(
-          "id, parayanam_name, finalized_at, dashakam_set_id, dashakam_list, start_date, end_date, challenge_type, distribution_mode, schedule_pattern, schedule_weekdays"
+          "id, parayanam_name, finalized_at, dashakam_set_id, dashakam_list, start_date, end_date, challenge_type, distribution_mode, schedule_pattern, schedule_weekdays",
         )
         .eq("id", sessionId)
         .maybeSingle();
@@ -129,7 +113,6 @@ export default function GroupSchedulePage() {
     };
   }, [editingSessionId]);
 
-
   useEffect(() => {
     if (session?.dashakam_set_id && sets.some((s) => s.id === session.dashakam_set_id)) {
       setSetId(session.dashakam_set_id);
@@ -138,36 +121,29 @@ export default function GroupSchedulePage() {
     }
   }, [sets, setId, session?.dashakam_set_id]);
 
-  const selectedSet: DashakamSet | undefined = useMemo(
-    () => sets.find((s) => s.id === setId),
-    [sets, setId]
-  );
+  const selectedSet: DashakamSet | undefined = useMemo(() => sets.find((s) => s.id === setId), [sets, setId]);
 
   const isOwner = !!user && !!group && group.owner_id === user.id;
   const memberIds = members.map((m) => m.user_id);
   /** Relay runs over every parayanam day, like the other modes. */
   const isRelay = mode === "RELAY";
   const configured = !!editingSessionId && !!session;
-  const schedulePattern: SchedulePattern =
-    (session?.schedule_pattern as SchedulePattern | undefined) ?? "DAILY";
+  const schedulePattern: SchedulePattern = (session?.schedule_pattern as SchedulePattern | undefined) ?? "DAILY";
   const weekdays = session?.schedule_weekdays ?? [];
   const dates = useMemo(
     () => parayanamDates(startDate, endDate, schedulePattern, weekdays),
-    [startDate, endDate, schedulePattern, weekdays.join(",")]
+    [startDate, endDate, schedulePattern, weekdays.join(",")],
   );
   const formatScheduleDate = shortDate;
   const effectiveEndDate = endDate;
 
-
   useEffect(() => {
     if (!user) return;
-    setSelectedParticipants((prev) =>
-      prev.length ? prev : memberIds.filter((id) => id !== user.id)
-    );
+    setSelectedParticipants((prev) => (prev.length ? prev : memberIds.filter((id) => id !== user.id)));
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [members.length, user?.id]);
   const nameFor = (id: string | null) =>
-    id ? members.find((m) => m.user_id === id)?.display_name ?? "Member" : "Everyone";
+    id ? (members.find((m) => m.user_id === id)?.display_name ?? "Member") : "Everyone";
 
   const handleFork = async () => {
     if (!selectedSet) return;
@@ -250,14 +226,11 @@ export default function GroupSchedulePage() {
       await refresh();
       await refreshParticipants();
       setSoloWarning(false);
-      setNotice(
-        "Invites sent. The day-by-day schedule is prepared automatically when the parayanam begins."
-      );
+      setNotice("Invites sent. The day-by-day schedule is prepared automatically when the parayanam begins.");
       toast({
         title: "Parayanam saved",
         description: "Invitations have gone out to the members you chose.",
       });
-
     } catch (e: any) {
       setError(e?.message ?? "Could not save the parayanam.");
     } finally {
@@ -276,9 +249,7 @@ export default function GroupSchedulePage() {
   if (!group || !isOwner) {
     return (
       <div className="mx-auto w-full max-w-3xl px-4 py-6">
-        <p className="font-sans text-sm text-muted-foreground">
-          Only the group owner can plan the parayanam schedule.
-        </p>
+        <p className="font-sans text-sm text-muted-foreground">Only the group owner can plan the parayanam schedule.</p>
         <Link to="/groups" className="mt-4 inline-block font-sans text-sm text-primary">
           Back to groups
         </Link>
@@ -319,7 +290,7 @@ export default function GroupSchedulePage() {
                 <p className="font-sans text-xs uppercase tracking-wide text-muted-foreground">Dashakam set</p>
                 <p className="mt-1 font-sans text-sm text-foreground">
                   {session?.dashakam_set_id
-                    ? sets.find((s) => s.id === session.dashakam_set_id)?.set_name ?? "Custom set"
+                    ? (sets.find((s) => s.id === session.dashakam_set_id)?.set_name ?? "Custom set")
                     : session?.dashakam_list?.length
                       ? `Custom selection (${session.dashakam_list.length} dashakams)`
                       : "—"}
@@ -361,12 +332,11 @@ export default function GroupSchedulePage() {
                   </p>
                 </div>
               )}
-
             </div>
 
             <div>
               <p className="font-sans text-xs uppercase tracking-wide text-muted-foreground">Confirmed participants</p>
-              <ul className="mt-2 space-y-1">
+              <ul className="mt-2 max-h-[280px] space-y-1 overflow-y-auto pr-2">
                 {participants.filter((p) => p.status === "confirmed").length === 0 ? (
                   <li className="font-sans text-sm text-muted-foreground">No confirmed participants yet.</li>
                 ) : (
@@ -437,15 +407,11 @@ export default function GroupSchedulePage() {
 
             {configured ? (
               <div className="rounded-xl border border-border p-4">
-                <p className="font-sans text-xs uppercase tracking-wide text-muted-foreground">
-                  Parayanam dates
-                </p>
+                <p className="font-sans text-xs uppercase tracking-wide text-muted-foreground">Parayanam dates</p>
                 <p className="mt-1 font-sans text-sm text-foreground">
                   {formatScheduleDate(startDate)} – {formatScheduleDate(endDate)}
                 </p>
-                <p className="mt-3 font-sans text-xs uppercase tracking-wide text-muted-foreground">
-                  Schedule
-                </p>
+                <p className="mt-3 font-sans text-xs uppercase tracking-wide text-muted-foreground">Schedule</p>
                 <p className="mt-1 font-sans text-sm text-foreground">
                   {patternLabel(schedulePattern, weekdays)} · {dayCountLabel(dates.length)}
                 </p>
@@ -482,8 +448,6 @@ export default function GroupSchedulePage() {
               </div>
             )}
 
-
-
             {configured ? (
               <div className="rounded-xl border border-border p-4">
                 <p className="font-sans text-xs uppercase tracking-wide text-muted-foreground">Distribution</p>
@@ -499,70 +463,66 @@ export default function GroupSchedulePage() {
                 </p>
               </div>
             ) : (
-            <TooltipProvider delayDuration={150}>
-              <div>
-                <div className="flex items-center gap-2">
-                  <p className="font-sans text-sm font-semibold text-foreground">Distribution</p>
-                  <Tooltip>
-                    <TooltipTrigger asChild>
+              <TooltipProvider delayDuration={150}>
+                <div>
+                  <div className="flex items-center gap-2">
+                    <p className="font-sans text-sm font-semibold text-foreground">Distribution</p>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <button
+                          type="button"
+                          aria-label="Distribution modes"
+                          className="text-muted-foreground hover:text-foreground focus:outline-none"
+                        >
+                          <Info className="h-4 w-4" />
+                        </button>
+                      </TooltipTrigger>
+                      <TooltipContent side="top" className="max-w-[260px]">
+                        <p className="font-sans text-xs text-popover-foreground">
+                          Same Dashakam for everyone: all participants chant the same dashakam on the same day. Relay:
+                          all selected dashakams are split evenly among members and everyone reads their share on the
+                          same day.
+                        </p>
+                      </TooltipContent>
+                    </Tooltip>
+                  </div>
+                  <div className="mt-2 grid gap-3 sm:grid-cols-2">
+                    {(
+                      [
+                        [
+                          "SAME_FOR_ALL",
+                          "Same dashakams for everyone",
+                          "All participants chant the same dashakams on a given parayanam day.",
+                        ],
+                        [
+                          "RELAY",
+                          "Relay — split among members",
+                          "Every parayanam day the whole set is completed together, and the blocks rotate among members.",
+                        ],
+                      ] as const
+                    ).map(([value, label, hint]) => (
                       <button
-                        type="button"
-                        aria-label="Distribution modes"
-                        className="text-muted-foreground hover:text-foreground focus:outline-none"
+                        key={value}
+                        onClick={() => setMode(value)}
+                        className={`rounded-xl border p-4 text-left transition-colors ${
+                          mode === value ? "border-primary bg-secondary/40" : "border-border hover:border-primary"
+                        }`}
                       >
-                        <Info className="h-4 w-4" />
+                        <span className="font-sans text-sm font-semibold text-foreground">{label}</span>
+                        <span className="mt-1 block font-sans text-xs text-muted-foreground">{hint}</span>
                       </button>
-                    </TooltipTrigger>
-                    <TooltipContent side="top" className="max-w-[260px]">
-                      <p className="font-sans text-xs text-popover-foreground">
-                        Same Dashakam for everyone: all participants chant the same dashakam on the same day. Relay:
-                        all selected dashakams are split evenly among members and everyone reads their share on the
-                        same day.
-                      </p>
-                    </TooltipContent>
-                  </Tooltip>
+                    ))}
+                  </div>
                 </div>
-                <div className="mt-2 grid gap-3 sm:grid-cols-2">
-                  {(
-                    [
-                      [
-                        "SAME_FOR_ALL",
-                        "Same dashakams for everyone",
-                        "All participants chant the same dashakams on a given parayanam day.",
-                      ],
-                      [
-                        "RELAY",
-                        "Relay — split among members",
-                        "Every parayanam day the whole set is completed together, and the blocks rotate among members.",
-                      ],
-                    ] as const
-                  ).map(([value, label, hint]) => (
-
-                    <button
-                      key={value}
-                      onClick={() => setMode(value)}
-                      className={`rounded-xl border p-4 text-left transition-colors ${
-                        mode === value ? "border-primary bg-secondary/40" : "border-border hover:border-primary"
-                      }`}
-                    >
-                      <span className="font-sans text-sm font-semibold text-foreground">{label}</span>
-                      <span className="mt-1 block font-sans text-xs text-muted-foreground">{hint}</span>
-                    </button>
-                  ))}
-                </div>
-              </div>
-            </TooltipProvider>
+              </TooltipProvider>
             )}
-
 
             <ParticipantPicker
               members={members}
               ownerId={group.owner_id}
               selected={selectedParticipants}
               onToggle={(id) =>
-                setSelectedParticipants((prev) =>
-                  prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]
-                )
+                setSelectedParticipants((prev) => (prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]))
               }
               includeSelf={includeSelf}
               onIncludeSelfChange={setIncludeSelf}
@@ -571,18 +531,20 @@ export default function GroupSchedulePage() {
             {participants.length > 0 && (
               <div>
                 <p className="font-sans text-sm font-semibold text-foreground">Invite status</p>
-                <ul className="mt-2 space-y-1">
-                  {members.map((m) => {
-                    const st = statusFor(m.user_id);
-                    return (
-                      <li key={m.user_id} className="flex items-center justify-between gap-3">
-                        <span className="font-sans text-sm text-foreground">{m.display_name}</span>
-                        <span className="rounded-full bg-secondary px-2 py-0.5 font-sans text-[10px] uppercase tracking-wide text-secondary-foreground">
-                          {st ? STATUS_LABEL[st] : "Not invited"}
-                        </span>
-                      </li>
-                    );
-                  })}
+                <ul className="mt-2 max-h-[280px] space-y-1 overflow-y-auto pr-2">
+                  {members
+                    .filter((m) => statusFor(m.user_id) !== "declined")
+                    .map((m) => {
+                      const st = statusFor(m.user_id);
+                      return (
+                        <li key={m.user_id} className="flex items-center justify-between gap-3">
+                          <span className="font-sans text-sm text-foreground">{m.display_name}</span>
+                          <span className="rounded-full bg-secondary px-2 py-0.5 font-sans text-[10px] uppercase tracking-wide text-secondary-foreground">
+                            {st ? STATUS_LABEL[st] : "Not invited"}
+                          </span>
+                        </li>
+                      );
+                    })}
                 </ul>
               </div>
             )}
@@ -590,7 +552,8 @@ export default function GroupSchedulePage() {
             {soloWarning && (
               <div className="rounded-xl border border-amber-200 bg-amber-50 p-4 dark:border-amber-900 dark:bg-amber-950/30">
                 <p className="font-sans text-sm text-amber-900 dark:text-amber-100">
-                  You're the only member in this group right now — this parayanam will run solo until others join. You can invite members from the group page.
+                  You're the only member in this group right now — this parayanam will run solo until others join. You
+                  can invite members from the group page.
                 </p>
                 <Link
                   to={`/groups/${group.id}#invite`}
@@ -660,9 +623,7 @@ export default function GroupSchedulePage() {
                       <select
                         aria-label={`Assignee for dashakam ${r.dashakam_no}`}
                         value={r.assigned_user_id ?? ""}
-                        onChange={(e) =>
-                          void updateRow(r.id, { assigned_user_id: e.target.value || null })
-                        }
+                        onChange={(e) => void updateRow(r.id, { assigned_user_id: e.target.value || null })}
                         className="rounded-lg border border-border bg-background px-2 py-1 text-foreground outline-none focus:ring-2 focus:ring-primary"
                       >
                         <option value="">Everyone</option>
