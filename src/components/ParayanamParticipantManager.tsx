@@ -56,11 +56,7 @@ export default function ParayanamParticipantManager({ sessionId, isOwner }: Prop
     setLoading(true);
 
     const [{ data: session }, { data: parts }] = await Promise.all([
-      (supabase as any)
-        .from("challenge_sessions")
-        .select("participation_type")
-        .eq("id", sessionId)
-        .maybeSingle(),
+      (supabase as any).from("challenge_sessions").select("participation_type").eq("id", sessionId).maybeSingle(),
       (supabase as any)
         .from("parayanam_participants")
         .select("id, user_id, status, contribution_status, access_status")
@@ -75,10 +71,11 @@ export default function ParayanamParticipantManager({ sessionId, isOwner }: Prop
       const { data: profiles } = await (supabase as any)
         .from("profiles")
         .select("id, display_name, email")
-        .in("id", list.map((p) => p.user_id));
-      nameById = new Map(
-        ((profiles ?? []) as any[]).map((p) => [p.id, p.display_name ?? p.email ?? "Member"])
-      );
+        .in(
+          "id",
+          list.map((p) => p.user_id),
+        );
+      nameById = new Map(((profiles ?? []) as any[]).map((p) => [p.id, p.display_name ?? p.email ?? "Member"]));
     }
 
     setRows(list.map((p) => ({ ...p, name: nameById.get(p.user_id) ?? "Member" })));
@@ -118,10 +115,7 @@ export default function ParayanamParticipantManager({ sessionId, isOwner }: Prop
     const canRevert = isOwner && paid && contribution === "confirmed";
 
     return (
-      <li
-        key={r.id}
-        className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-border p-3"
-      >
+      <li key={r.id} className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-border p-3">
         <div className="min-w-0">
           <p className="truncate font-sans text-sm font-semibold text-foreground">{r.name}</p>
           <p className="mt-0.5 flex flex-wrap gap-x-3 font-sans text-xs text-muted-foreground">
@@ -143,7 +137,7 @@ export default function ParayanamParticipantManager({ sessionId, isOwner }: Prop
                 ) : (
                   <CheckCircle2 className="h-3.5 w-3.5" />
                 )}
-                 Approve for Parayanam
+                Approve for Parayanam
               </button>
             )}
             {canRevert && (
@@ -152,7 +146,7 @@ export default function ParayanamParticipantManager({ sessionId, isOwner }: Prop
                 disabled={busyId === r.id}
                 className="inline-flex items-center gap-1.5 rounded-lg border border-border px-3 py-1.5 font-sans text-xs font-semibold text-muted-foreground hover:border-primary hover:text-primary disabled:opacity-60"
               >
-              <RotateCcw className="h-3.5 w-3.5" /> Awaiting Approval
+                <RotateCcw className="h-3.5 w-3.5" /> Awaiting Approval
               </button>
             )}
           </div>
@@ -169,7 +163,7 @@ export default function ParayanamParticipantManager({ sessionId, isOwner }: Prop
             <MailQuestion className="h-4 w-4 text-primary" /> Waiting to answer their invitation (
             {pendingInvitees.length})
           </h3>
-          <ul className="mt-3 space-y-2">{pendingInvitees.map(renderRow)}</ul>
+          <ul className="mt-3 max-h-[320px] space-y-2 overflow-y-auto pr-2">{pendingInvitees.map(renderRow)}</ul>
         </div>
       )}
 
