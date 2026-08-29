@@ -754,6 +754,7 @@ const handleSaveDetails = async () => {
               </button>
             </div>
           </div>
+          </div>
         </DialogContent>
       </Dialog>
 
