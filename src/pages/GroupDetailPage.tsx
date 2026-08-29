@@ -28,6 +28,7 @@ import { useSessionGarden } from "@/hooks/useSessionGarden";
 import PendingInvitesSection from "@/components/PendingInvitesSection";
 import ManageParayanamDialog from "@/components/ManageParayanamDialog";
 import ParayanamParticipantManager from "@/components/ParayanamParticipantManager";
+import ParayanamDraftsList from "@/components/ParayanamDraftsList";
 import ParayanamScheduleViews from "@/components/ParayanamScheduleViews";
 import { toast } from "@/hooks/use-toast";
 import { useSessionParticipants, type ParticipantStatus } from "@/hooks/useParayanamParticipants";
@@ -591,6 +592,8 @@ export default function GroupDetailPage() {
               )}
             </div>
           </section>
+
+          <ParayanamDraftsList groupId={group.id} enabled={isOwner} />
 
           {selectedSessionId && (
             <section className="mt-6 rounded-2xl border border-border bg-card p-5 shadow-peacock">

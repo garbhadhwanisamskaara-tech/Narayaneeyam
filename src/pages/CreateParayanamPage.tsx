@@ -82,6 +82,10 @@ export default function CreateParayanamPage() {
   const [weekdays, setWeekdays] = useState<number[]>([]);
   const [selectedParticipants, setSelectedParticipants] = useState<string[]>([]);
   const [includeSelf, setIncludeSelf] = useState(true);
+  const [draftId, setDraftId] = useState<string | null>(params.get("draft"));
+  const [savingDraft, setSavingDraft] = useState(false);
+  const [draftSaved, setDraftSaved] = useState(false);
+  const [loadingDraft, setLoadingDraft] = useState(!!params.get("draft"));
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [soloWarning, setSoloWarning] = useState(false);
@@ -113,17 +117,65 @@ export default function CreateParayanamPage() {
       .then(({ data }: any) => setGroupName(data?.group_name ?? null));
   }, [groupId]);
 
+  /** Continue Setup — restore every value the Guru had entered. */
   useEffect(() => {
-    if (!setId && sets.length) setSetId(sets[0].id);
-  }, [sets, setId]);
+    const id = params.get("draft");
+    if (!id || !user) return;
+    let cancelled = false;
+    (async () => {
+      const { data, error: dErr } = await (supabase as any)
+        .from("challenge_sessions")
+        .select("*")
+        .eq("id", id)
+        .eq("user_id", user.id)
+        .eq("technical_state", "DRAFT")
+        .maybeSingle();
+      if (cancelled) return;
+      if (dErr || !data) {
+        setLoadingDraft(false);
+        setError(dErr?.message ?? "That draft could not be found.");
+        return;
+      }
+      const d = (data.draft_state ?? {}) as any;
+      setParayanamName(data.parayanam_name ?? "");
+      setDeliveryMode((data.delivery_mode ?? "SELF_PACED") as DeliveryMode);
+      setParticipationType((data.participation_type ?? "FREE") as ParticipationType);
+      setDistribution((data.distribution_mode ?? "SAME_FOR_ALL") as DistributionMode);
+      setSchedulePattern((data.schedule_pattern ?? "DAILY") as SchedulePattern);
+      if (data.start_date) setStartDate(data.start_date);
+      if (data.end_date) setEndDate(data.end_date);
+      setWeekdays(d.weekdays ?? data.schedule_weekdays ?? []);
+      setSameForAllPerDay(d.sameForAllPerDay ?? data.same_for_all_per_day ?? 1);
+      setScheduleOverrides(d.scheduleOverrides ?? data.schedule_overrides ?? {});
+      if (d.setId) setSetId(d.setId);
+      else if (data.dashakam_set_id) setSetId(data.dashakam_set_id);
+      setCustom(d.custom ?? (data.dashakam_set_id ? [] : (data.dashakam_list ?? [])));
+      if (d.selectedTemplateId) setSelectedTemplateId(d.selectedTemplateId);
+      if (d.contribution) setContribution(d.contribution);
+      if (d.liveSchedule) setLiveSchedule(d.liveSchedule);
+      if (Array.isArray(d.selectedParticipants)) setSelectedParticipants(d.selectedParticipants);
+      if (typeof d.includeSelf === "boolean") setIncludeSelf(d.includeSelf);
+      if (d.step) setStep(d.step);
+      setDraftId(id);
+      setLoadingDraft(false);
+    })();
+    return () => {
+      cancelled = true;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [params, user?.id]);
 
   useEffect(() => {
-    if (!user) return;
+    if (!setId && sets.length && !loadingDraft) setSetId(sets[0].id);
+  }, [sets, setId, loadingDraft]);
+
+  useEffect(() => {
+    if (!user || loadingDraft) return;
     setSelectedParticipants((prev) =>
       prev.length ? prev : members.map((m) => m.user_id).filter((id) => id !== user.id),
     );
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [members.length, user?.id]);
+  }, [members.length, user?.id, loadingDraft]);
 
   const orderedSets = useMemo(() => [...sets].sort((a, b) => Number(b.is_official) - Number(a.is_official)), [sets]);
   const selectedSet = sets.find((s) => s.id === setId);
@@ -303,42 +355,122 @@ export default function CreateParayanamPage() {
     void handleSubmit();
   };
 
+  /**
+   * The columns a parayanam row carries. Identical for a draft and for the
+   * final creation — only technical_state and draft_state differ, so the
+   * activation path stays exactly what it always was.
+   */
+  const sessionPayload = (state: "DRAFT" | "ACTIVE") => ({
+    user_id: user!.id,
+    group_id: groupId ?? null,
+    parayanam_name: parayanamName.trim() || null,
+    mode: "daily",
+    delivery_mode: deliveryMode,
+    participation_type: participationType,
+    contribution_amount: participationType === "PAID" && contribution.amount ? Number(contribution.amount) : null,
+    payment_url: participationType === "PAID" ? contribution.paymentUrl.trim() || null : null,
+    payment_note: participationType === "PAID" && contribution.note.trim() ? contribution.note.trim() : null,
+    challenge_type: isGroup ? (mode === "RELAY" ? "group_relay" : "group_standard") : "personal",
+    distribution_mode: mode,
+    schedule_pattern: schedulePattern,
+    schedule_weekdays: schedulePattern === "WEEKDAYS" ? weekdays : null,
+    same_for_all_per_day: mode === "SAME_FOR_ALL" ? sameForAllPerDay : 1,
+    schedule_overrides: mode === "SAME_FOR_ALL" ? scheduleOverrides : {},
+    start_date: startDate,
+    end_date: endDate,
+
+    technical_state: state,
+    spiritual_state: "in_progress",
+    dashakams_target: dashakams.length,
+    dashakam_list: dashakams,
+
+    dashakam_set_id: setId === "custom" ? null : setId,
+    // Wizard-only values that have no column of their own; cleared on activation.
+    draft_state:
+      state === "DRAFT"
+        ? {
+            step,
+            setId,
+            custom,
+            selectedTemplateId,
+            contribution,
+            liveSchedule,
+            selectedParticipants,
+            includeSelf,
+            weekdays,
+            scheduleOverrides,
+            sameForAllPerDay,
+          }
+        : null,
+  });
+
+  /**
+   * Saves whatever has been entered so far. Never invites anyone, never builds
+   * a schedule and never creates live sessions — a draft activates nothing.
+   */
+  const handleSaveDraft = async () => {
+    if (!user) return;
+    setSavingDraft(true);
+    setError(null);
+    try {
+      const payload = sessionPayload("DRAFT");
+      if (draftId) {
+        const { error: uErr } = await (supabase as any)
+          .from("challenge_sessions")
+          .update(payload)
+          .eq("id", draftId)
+          .eq("user_id", user.id)
+          .eq("technical_state", "DRAFT");
+        if (uErr) throw new Error(uErr.message);
+      } else {
+        const { data, error: iErr } = await (supabase as any)
+          .from("challenge_sessions")
+          .insert(payload)
+          .select("id")
+          .single();
+        if (iErr) throw new Error(iErr.message);
+        setDraftId(data.id as string);
+      }
+      setDraftSaved(true);
+      toast({
+        title: "Parayanam saved as draft",
+        description: "You can continue setup later.",
+      });
+    } catch (e: any) {
+      setError(e?.message ?? "Could not save the draft.");
+    } finally {
+      setSavingDraft(false);
+    }
+  };
+
   const handleSubmit = async () => {
     if (!user || dashakams.length === 0) return;
     setBusy(true);
     setError(null);
     try {
-      const { data: session, error: sErr } = await (supabase as any)
-        .from("challenge_sessions")
-        .insert({
-          user_id: user.id,
-          group_id: groupId ?? null,
-          parayanam_name: parayanamName.trim() || null,
-          mode: "daily",
-          delivery_mode: deliveryMode,
-          participation_type: participationType,
-          contribution_amount: participationType === "PAID" ? Number(contribution.amount) : null,
-          payment_url: participationType === "PAID" ? contribution.paymentUrl.trim() : null,
-          payment_note: participationType === "PAID" && contribution.note.trim() ? contribution.note.trim() : null,
-          challenge_type: isGroup ? (mode === "RELAY" ? "group_relay" : "group_standard") : "personal",
-          distribution_mode: mode,
-          schedule_pattern: schedulePattern,
-          schedule_weekdays: schedulePattern === "WEEKDAYS" ? weekdays : null,
-          same_for_all_per_day: mode === "SAME_FOR_ALL" ? sameForAllPerDay : 1,
-          schedule_overrides: mode === "SAME_FOR_ALL" ? scheduleOverrides : {},
-          start_date: startDate,
-          end_date: endDate,
-
-          technical_state: "ACTIVE",
-          spiritual_state: "in_progress",
-          dashakams_target: dashakams.length,
-          dashakam_list: dashakams,
-
-          dashakam_set_id: setId === "custom" ? null : setId,
-        })
-        .select("id")
-        .single();
-      if (sErr) throw new Error(sErr.message);
+      // A draft becomes the real parayanam — never a second row.
+      const payload = sessionPayload("ACTIVE");
+      let session: { id: string };
+      if (draftId) {
+        const { data, error: uErr } = await (supabase as any)
+          .from("challenge_sessions")
+          .update(payload)
+          .eq("id", draftId)
+          .eq("user_id", user.id)
+          .eq("technical_state", "DRAFT")
+          .select("id")
+          .single();
+        if (uErr) throw new Error(uErr.message);
+        session = data;
+      } else {
+        const { data, error: sErr } = await (supabase as any)
+          .from("challenge_sessions")
+          .insert(payload)
+          .select("id")
+          .single();
+        if (sErr) throw new Error(sErr.message);
+        session = data;
+      }
       track("parayanam_created");
 
       if (isGroup) {
@@ -958,13 +1090,45 @@ export default function CreateParayanamPage() {
 
         {error && <p className="font-sans text-sm text-destructive">{error}</p>}
 
-        <div className="flex items-center justify-between pt-2">
+        {draftSaved && (
+          <div className="rounded-xl border border-border bg-muted/40 p-4">
+            <p className="font-sans text-sm text-foreground">
+              Parayanam saved as draft. You can continue setup later.
+            </p>
+            <div className="mt-3 flex flex-wrap items-center gap-2">
+              <button
+                type="button"
+                onClick={() => setDraftSaved(false)}
+                className="rounded-lg border border-border px-3 py-2 font-sans text-sm font-semibold text-foreground"
+              >
+                Continue editing
+              </button>
+              <Link
+                to={isGroup ? `/groups/${groupId}` : "/progress"}
+                className="rounded-lg bg-gradient-peacock px-3 py-2 font-sans text-sm font-semibold text-primary-foreground hover:opacity-90"
+              >
+                {isGroup ? "Return to Group" : "Return"}
+              </Link>
+            </div>
+          </div>
+        )}
+
+        <div className="flex flex-wrap items-center justify-between gap-3 pt-2">
           <button
             onClick={() => setStep((s) => Math.max(1, s - 1))}
             disabled={step === 1 || busy}
             className="rounded-lg border border-border px-4 py-2 font-sans text-sm font-semibold text-foreground disabled:opacity-40"
           >
             {currentStep === "review" ? "Edit" : "Back"}
+          </button>
+          <button
+            type="button"
+            onClick={() => void handleSaveDraft()}
+            disabled={busy || savingDraft}
+            className="inline-flex items-center gap-2 rounded-lg border border-border px-4 py-2 font-sans text-sm font-semibold text-foreground disabled:opacity-50"
+          >
+            {savingDraft && <Loader2 className="h-4 w-4 animate-spin" />}
+            Save as Draft
           </button>
           {step < lastStep ? (
             <button
