@@ -82,6 +82,10 @@ export default function CreateParayanamPage() {
   const [weekdays, setWeekdays] = useState<number[]>([]);
   const [selectedParticipants, setSelectedParticipants] = useState<string[]>([]);
   const [includeSelf, setIncludeSelf] = useState(true);
+  const [draftId, setDraftId] = useState<string | null>(params.get("draft"));
+  const [savingDraft, setSavingDraft] = useState(false);
+  const [draftSaved, setDraftSaved] = useState(false);
+  const [loadingDraft, setLoadingDraft] = useState(!!params.get("draft"));
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [soloWarning, setSoloWarning] = useState(false);
