@@ -1,11 +1,13 @@
 import { useEffect, useRef, useState, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { SkipForward, Volume2 } from "lucide-react";
+import { SkipForward, Volume2, VolumeX, Play, Pause } from "lucide-react";
 import type { RitualChant } from "@/hooks/useRitualChants";
 import { getStorageUrl } from "@/lib/storageUrl";
-import { registerAudioElement } from "@/lib/globalMute";
+import { registerAudioElement, isMuted as getGlobalMuted, setGlobalMuted } from "@/lib/globalMute";
 import { fadeOutElement } from "@/lib/audiofade";
 import heroBg from "@/assets/hero-bg.jpg";
+
+const SPEED_OPTIONS = [0.75, 1, 1.25, 1.5, 2];
 
 interface Props {
   /** Array of chants to play in sequence */
@@ -23,15 +25,54 @@ interface Props {
 export default function RitualChantOverlay({ chants, useLearnAudio = false, title, onComplete, speed = 1 }: Props) {
   const [currentIdx, setCurrentIdx] = useState(0);
   const audioRef = useRef<HTMLAudioElement | null>(null);
+  const [isPlaying, setIsPlaying] = useState(true);
+  const [muted, setMuted] = useState<boolean>(() => getGlobalMuted());
+  const [currentSpeed, setCurrentSpeed] = useState<number>(speed);
   const speedRef = useRef(speed);
-  speedRef.current = speed;
+  const mutedRef = useRef(muted);
+  speedRef.current = currentSpeed;
+  mutedRef.current = muted;
+
+  // Keep element in sync when speed changes via prop or the speed control
+  useEffect(() => {
+    setCurrentSpeed(speed);
+  }, [speed]);
 
   useEffect(() => {
     if (audioRef.current) {
-      audioRef.current.defaultPlaybackRate = speed;
-      audioRef.current.playbackRate = speed;
+      audioRef.current.defaultPlaybackRate = currentSpeed;
+      audioRef.current.playbackRate = currentSpeed;
     }
-  }, [speed]);
+  }, [currentSpeed]);
+
+  const togglePlayPause = useCallback(() => {
+    const audio = audioRef.current;
+    if (!audio) return;
+    if (audio.paused) {
+      audio.play().catch(() => {});
+      setIsPlaying(true);
+    } else {
+      audio.pause();
+      setIsPlaying(false);
+    }
+  }, []);
+
+  const toggleMute = useCallback(() => {
+    setMuted((prev) => {
+      const next = !prev;
+      // Sync with the global mute so other surfaces respect the same state
+      setGlobalMuted(next);
+      if (audioRef.current) audioRef.current.muted = next;
+      return next;
+    });
+  }, []);
+
+  const cycleSpeed = useCallback(() => {
+    setCurrentSpeed((prev) => {
+      const idx = SPEED_OPTIONS.indexOf(prev);
+      return SPEED_OPTIONS[(idx + 1) % SPEED_OPTIONS.length];
+    });
+  }, []);
 
   const current = chants[currentIdx];
 
