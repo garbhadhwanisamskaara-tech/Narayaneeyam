@@ -62,7 +62,7 @@ export default function ManageParayanamDialog({
   const [name, setName] = useState(parayanamName ?? "");
   const [details, setDetails] = useState<any>(null);
   const [liveSessions, setLiveSessions] = useState<any[]>([]);
-  
+
   const [participationType, setParticipationType] = useState<"FREE" | "PAID">("FREE");
   const [contributionAmount, setContributionAmount] = useState("");
   const [paymentDetails, setPaymentDetails] = useState("");
@@ -117,27 +117,21 @@ export default function ManageParayanamDialog({
         .eq("challenge_session_id", sessionId)
         .order("start_datetime", { ascending: true });
 
-          if (!cancelled) {
-      setDetails(sessionData ?? null);
-      setLiveSessions(liveData ?? []);
-    
-      if (sessionData) {
-        setParticipationType(
-          sessionData.participation_type === "PAID" ? "PAID" : "FREE"
-        );
-    
-        setContributionAmount(
-          sessionData.contribution_amount != null
-            ? String(sessionData.contribution_amount)
-            : ""
-        );
-    
-        setPaymentDetails(sessionData.payment_url ?? "");
-        setPaymentNote(sessionData.payment_note ?? "");
-  }
+      if (!cancelled) {
+        setDetails(sessionData ?? null);
+        setLiveSessions(liveData ?? []);
 
-  setLoadingDetails(false);
-}
+        if (sessionData) {
+          setParticipationType(sessionData.participation_type === "PAID" ? "PAID" : "FREE");
+
+          setContributionAmount(sessionData.contribution_amount != null ? String(sessionData.contribution_amount) : "");
+
+          setPaymentDetails(sessionData.payment_url ?? "");
+          setPaymentNote(sessionData.payment_note ?? "");
+        }
+
+        setLoadingDetails(false);
+      }
     };
 
     void loadDetails();
@@ -252,78 +246,70 @@ export default function ManageParayanamDialog({
     toast({ title: "Parayanam renamed", description: `Now called ${trimmed}.` });
     await onChanged();
   };
-const handleSaveDetails = async () => {
-  const amount =
-    participationType === "PAID" && contributionAmount.trim()
-      ? Number(contributionAmount)
-      : null;
+  const handleSaveDetails = async () => {
+    const amount = participationType === "PAID" && contributionAmount.trim() ? Number(contributionAmount) : null;
 
-  if (participationType === "PAID") {
-    if (!contributionAmount.trim() || Number.isNaN(amount) || Number(amount) <= 0) {
+    if (participationType === "PAID") {
+      if (!contributionAmount.trim() || Number.isNaN(amount) || Number(amount) <= 0) {
+        toast({
+          title: "Enter a valid contribution amount",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      if (!paymentDetails.trim()) {
+        toast({
+          title: "Add payment / contribution details",
+          description: "You can enter a payment link, GPay number, UPI ID or other payment instructions.",
+          variant: "destructive",
+        });
+        return;
+      }
+    }
+
+    setBusy(true);
+
+    const { error } = await (supabase as any)
+      .from("challenge_sessions")
+      .update({
+        participation_type: participationType,
+        contribution_amount: participationType === "PAID" ? Number(contributionAmount) : null,
+        payment_url: participationType === "PAID" ? paymentDetails.trim() || null : null,
+        payment_note: paymentNote.trim() || null,
+      })
+      .eq("id", sessionId);
+
+    setBusy(false);
+
+    if (error) {
       toast({
-        title: "Enter a valid contribution amount",
+        title: "Could not save details",
+        description: error.message,
         variant: "destructive",
       });
       return;
     }
 
-    if (!paymentDetails.trim()) {
-      toast({
-        title: "Add payment / contribution details",
-        description:
-          "You can enter a payment link, GPay number, UPI ID or other payment instructions.",
-        variant: "destructive",
-      });
-      return;
-    }
-  }
+    setDetails((prev: any) =>
+      prev
+        ? {
+            ...prev,
+            participation_type: participationType,
+            contribution_amount: participationType === "PAID" ? Number(contributionAmount) : null,
+            payment_url: participationType === "PAID" ? paymentDetails.trim() || null : null,
+            payment_note: paymentNote.trim() || null,
+          }
+        : prev,
+    );
 
-  setBusy(true);
-
-  const { error } = await (supabase as any)
-    .from("challenge_sessions")
-    .update({
-      participation_type: participationType,
-      contribution_amount:
-        participationType === "PAID" ? Number(contributionAmount) : null,
-      payment_url:
-        participationType === "PAID" ? paymentDetails.trim() || null : null,
-      payment_note: paymentNote.trim() || null,
-    })
-    .eq("id", sessionId);
-
-  setBusy(false);
-
-  if (error) {
     toast({
-      title: "Could not save details",
-      description: error.message,
-      variant: "destructive",
+      title: "Parayanam details updated",
+      description: "The contribution and participant instructions have been saved.",
     });
-    return;
-  }
 
-  setDetails((prev: any) =>
-    prev
-      ? {
-          ...prev,
-          participation_type: participationType,
-          contribution_amount:
-            participationType === "PAID" ? Number(contributionAmount) : null,
-          payment_url:
-            participationType === "PAID" ? paymentDetails.trim() || null : null,
-          payment_note: paymentNote.trim() || null,
-        }
-      : prev
-  );
-
-  toast({
-    title: "Parayanam details updated",
-    description: "The contribution and participant instructions have been saved.",
-  });
-
-  await onChanged();
-};
+    await onChanged();
+  };
   const handleCancel = async () => {
     setBusy(true);
     const { error } = await (supabase as any)
@@ -474,205 +460,191 @@ const handleSaveDetails = async () => {
             </div>
           ) : null}
           <div className="mt-2 space-y-6">
-           <div className="space-y-4">
-  <div>
-    <h3 className="flex items-center gap-2 font-sans text-sm font-semibold text-foreground">
-      <Pencil className="h-4 w-4 text-primary" /> Edit Parayanam details
-    </h3>
-
-    <p className="mt-1 font-sans text-xs text-muted-foreground">
-      Update the name, contribution details and instructions shown to participants.
-    </p>
-  </div>
-
-  {/* Parayanam name */}
-  <div>
-    <label className="font-sans text-xs font-semibold text-foreground">
-      Parayanam name
-    </label>
-
-    <div className="mt-2 flex flex-wrap items-center gap-2">
-      <input
-        type="text"
-        maxLength={80}
-        value={name}
-        onChange={(e) => setName(e.target.value)}
-        placeholder="Parayanam name"
-        className="min-w-0 flex-1 rounded-lg border border-border bg-background px-3 py-2 font-sans text-sm text-foreground outline-none focus:ring-2 focus:ring-primary"
-      />
-
-      <button
-        onClick={() => void handleRename()}
-        disabled={
-          busy ||
-          !name.trim() ||
-          name.trim() === (parayanamName ?? "")
-        }
-        className="rounded-lg border border-border px-4 py-2 font-sans text-sm font-semibold text-foreground hover:border-primary disabled:opacity-60"
-      >
-        Save name
-      </button>
-    </div>
-  </div>
-
-  {/* Participation type */}
-  <div>
-    <label className="font-sans text-xs font-semibold text-foreground">
-      Participation
-    </label>
-
-    <div className="mt-2 flex flex-wrap gap-4">
-      <label className="flex items-center gap-2 font-sans text-sm text-foreground">
-        <input
-          type="radio"
-          name="manage-participation-type"
-          value="FREE"
-          checked={participationType === "FREE"}
-          onChange={() => setParticipationType("FREE")}
-          className="accent-primary"
-        />
-        Free
-      </label>
-
-      <label className="flex items-center gap-2 font-sans text-sm text-foreground">
-        <input
-          type="radio"
-          name="manage-participation-type"
-          value="PAID"
-          checked={participationType === "PAID"}
-          onChange={() => setParticipationType("PAID")}
-          className="accent-primary"
-        />
-        Contribution required
-      </label>
-    </div>
-  </div>
-
-  {participationType === "PAID" && (
-    <>
-      {/* Contribution amount */}
-      <div>
-        <label className="font-sans text-xs font-semibold text-foreground">
-          Contribution amount (₹)
-        </label>
-
-        <input
-          type="number"
-          min="1"
-          value={contributionAmount}
-          onChange={(e) => setContributionAmount(e.target.value)}
-          placeholder="501"
-          className="mt-2 w-full rounded-lg border border-border bg-background px-3 py-2 font-sans text-sm text-foreground outline-none focus:ring-2 focus:ring-primary"
-        />
-      </div>
-
-      {/* Payment details */}
-      <div>
-        <label className="font-sans text-xs font-semibold text-foreground">
-          Payment / contribution details
-        </label>
-
-        <textarea
-          value={paymentDetails}
-          onChange={(e) => setPaymentDetails(e.target.value)}
-          rows={3}
-          placeholder="Razorpay link, GPay number, UPI ID or other payment instructions"
-          className="mt-2 w-full resize-y rounded-lg border border-border bg-background px-3 py-2 font-sans text-sm text-foreground outline-none focus:ring-2 focus:ring-primary"
-        />
-
-        <p className="mt-1 font-sans text-xs text-muted-foreground">
-          If you enter an http/https link, participants will see a clickable Make Payment link.
-          Other payment details will be shown as text.
-        </p>
-      </div>
-    </>
-  )}
-
-  {/* Remarks / instructions */}
-  <div>
-    <label className="font-sans text-xs font-semibold text-foreground">
-      Remarks / instructions
-    </label>
-
-    <textarea
-      value={paymentNote}
-      onChange={(e) => setPaymentNote(e.target.value)}
-      rows={3}
-      placeholder="Any instructions or information for participants"
-      className="mt-2 w-full resize-y rounded-lg border border-border bg-background px-3 py-2 font-sans text-sm text-foreground outline-none focus:ring-2 focus:ring-primary"
-    />
-  </div>
-
-  {participationType === "PAID" && (
-    <div className="rounded-lg border border-border bg-muted/40 p-3">
-      <p className="font-sans text-xs leading-relaxed text-muted-foreground">
-        Payment is arranged directly between you and the participant.
-        You are responsible for the payment instructions and for verifying
-        contributions received. narayaneeyam.app does not process, verify,
-        or hold these funds.
-      </p>
-    </div>
-  )}
-
-  <button
-    type="button"
-    onClick={() => void handleSaveDetails()}
-    disabled={busy}
-    className="inline-flex items-center gap-2 rounded-lg bg-gradient-peacock px-4 py-2 font-sans text-sm font-semibold text-primary-foreground hover:opacity-90 disabled:opacity-60"
-  >
-    {busy && <Loader2 className="h-4 w-4 animate-spin" />}
-    Save details
-  </button>
-</div>
-              <div className="flex items-center justify-between gap-3">
+            <div className="space-y-4">
+              <div>
                 <h3 className="flex items-center gap-2 font-sans text-sm font-semibold text-foreground">
-                  <UserPlus className="h-4 w-4 text-primary" />
-                  Invite more members ({invitable.length})
+                  <Pencil className="h-4 w-4 text-primary" /> Edit Parayanam details
                 </h3>
 
-                {invitable.length > 0 && (
-                  <button
-                    type="button"
-                    onClick={toggleSelectAll}
-                    className="font-sans text-xs font-semibold text-primary hover:underline"
-                  >
-                    {allInvitableSelected ? "Clear all" : "Select all"}
-                  </button>
-                )}
+                <p className="mt-1 font-sans text-xs text-muted-foreground">
+                  Update the name, contribution details and instructions shown to participants.
+                </p>
               </div>
 
-              {invitable.length === 0 ? (
-                <p className="mt-2 font-sans text-xs text-muted-foreground">
-                  Everyone in the group has already been invited to this parayanam.
-                </p>
-              ) : (
-                <>
-                  <ul className="mt-3 max-h-[320px] space-y-2 overflow-y-auto pr-2">
-                    {invitable.map((m) => (
-                      <li key={m.user_id}>
-                        <label className="flex items-center gap-3 rounded-xl border border-border px-3 py-2">
-                          <input
-                            type="checkbox"
-                            checked={selected.includes(m.user_id)}
-                            onChange={() => toggle(m.user_id)}
-                            className="h-4 w-4 accent-primary"
-                          />
-                          <span className="font-sans text-sm text-foreground">{m.display_name}</span>
-                        </label>
-                      </li>
-                    ))}
-                  </ul>
+              {/* Parayanam name */}
+              <div>
+                <label className="font-sans text-xs font-semibold text-foreground">Parayanam name</label>
+
+                <div className="mt-2 flex flex-wrap items-center gap-2">
+                  <input
+                    type="text"
+                    maxLength={80}
+                    value={name}
+                    onChange={(e) => setName(e.target.value)}
+                    placeholder="Parayanam name"
+                    className="min-w-0 flex-1 rounded-lg border border-border bg-background px-3 py-2 font-sans text-sm text-foreground outline-none focus:ring-2 focus:ring-primary"
+                  />
+
                   <button
-                    onClick={() => void handleInvite()}
-                    disabled={busy || !selected.length}
-                    className="mt-3 inline-flex items-center gap-2 rounded-lg bg-gradient-peacock px-4 py-2 font-sans text-sm font-semibold text-primary-foreground hover:opacity-90 disabled:opacity-60"
+                    onClick={() => void handleRename()}
+                    disabled={busy || !name.trim() || name.trim() === (parayanamName ?? "")}
+                    className="rounded-lg border border-border px-4 py-2 font-sans text-sm font-semibold text-foreground hover:border-primary disabled:opacity-60"
                   >
-                    {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <UserPlus className="h-4 w-4" />}
-                    Send invites
+                    Save name
                   </button>
+                </div>
+              </div>
+
+              {/* Participation type */}
+              <div>
+                <label className="font-sans text-xs font-semibold text-foreground">Participation</label>
+
+                <div className="mt-2 flex flex-wrap gap-4">
+                  <label className="flex items-center gap-2 font-sans text-sm text-foreground">
+                    <input
+                      type="radio"
+                      name="manage-participation-type"
+                      value="FREE"
+                      checked={participationType === "FREE"}
+                      onChange={() => setParticipationType("FREE")}
+                      className="accent-primary"
+                    />
+                    Free
+                  </label>
+
+                  <label className="flex items-center gap-2 font-sans text-sm text-foreground">
+                    <input
+                      type="radio"
+                      name="manage-participation-type"
+                      value="PAID"
+                      checked={participationType === "PAID"}
+                      onChange={() => setParticipationType("PAID")}
+                      className="accent-primary"
+                    />
+                    Contribution required
+                  </label>
+                </div>
+              </div>
+
+              {participationType === "PAID" && (
+                <>
+                  {/* Contribution amount */}
+                  <div>
+                    <label className="font-sans text-xs font-semibold text-foreground">Contribution amount (₹)</label>
+
+                    <input
+                      type="number"
+                      min="1"
+                      value={contributionAmount}
+                      onChange={(e) => setContributionAmount(e.target.value)}
+                      placeholder="501"
+                      className="mt-2 w-full rounded-lg border border-border bg-background px-3 py-2 font-sans text-sm text-foreground outline-none focus:ring-2 focus:ring-primary"
+                    />
+                  </div>
+
+                  {/* Payment details */}
+                  <div>
+                    <label className="font-sans text-xs font-semibold text-foreground">
+                      Payment / contribution details
+                    </label>
+
+                    <textarea
+                      value={paymentDetails}
+                      onChange={(e) => setPaymentDetails(e.target.value)}
+                      rows={3}
+                      placeholder="Razorpay link, GPay number, UPI ID or other payment instructions"
+                      className="mt-2 w-full resize-y rounded-lg border border-border bg-background px-3 py-2 font-sans text-sm text-foreground outline-none focus:ring-2 focus:ring-primary"
+                    />
+
+                    <p className="mt-1 font-sans text-xs text-muted-foreground">
+                      If you enter an http/https link, participants will see a clickable Make Payment link. Other
+                      payment details will be shown as text.
+                    </p>
+                  </div>
                 </>
               )}
+
+              {/* Remarks / instructions */}
+              <div>
+                <label className="font-sans text-xs font-semibold text-foreground">Remarks / instructions</label>
+
+                <textarea
+                  value={paymentNote}
+                  onChange={(e) => setPaymentNote(e.target.value)}
+                  rows={3}
+                  placeholder="Any instructions or information for participants"
+                  className="mt-2 w-full resize-y rounded-lg border border-border bg-background px-3 py-2 font-sans text-sm text-foreground outline-none focus:ring-2 focus:ring-primary"
+                />
+              </div>
+
+              {participationType === "PAID" && (
+                <div className="rounded-lg border border-border bg-muted/40 p-3">
+                  <p className="font-sans text-xs leading-relaxed text-muted-foreground">
+                    Payment is arranged directly between you and the participant. You are responsible for the payment
+                    instructions and for verifying contributions received. narayaneeyam.app does not process, verify, or
+                    hold these funds.
+                  </p>
+                </div>
+              )}
+
+              <button
+                type="button"
+                onClick={() => void handleSaveDetails()}
+                disabled={busy}
+                className="inline-flex items-center gap-2 rounded-lg bg-gradient-peacock px-4 py-2 font-sans text-sm font-semibold text-primary-foreground hover:opacity-90 disabled:opacity-60"
+              >
+                {busy && <Loader2 className="h-4 w-4 animate-spin" />}
+                Save details
+              </button>
             </div>
+            <div className="flex items-center justify-between gap-3">
+              <h3 className="flex items-center gap-2 font-sans text-sm font-semibold text-foreground">
+                <UserPlus className="h-4 w-4 text-primary" />
+                Invite more members ({invitable.length})
+              </h3>
+
+              {invitable.length > 0 && (
+                <button
+                  type="button"
+                  onClick={toggleSelectAll}
+                  className="font-sans text-xs font-semibold text-primary hover:underline"
+                >
+                  {allInvitableSelected ? "Clear all" : "Select all"}
+                </button>
+              )}
+            </div>
+
+            {invitable.length === 0 ? (
+              <p className="mt-2 font-sans text-xs text-muted-foreground">
+                Everyone in the group has already been invited to this parayanam.
+              </p>
+            ) : (
+              <>
+                <ul className="mt-3 max-h-[320px] space-y-2 overflow-y-auto pr-2">
+                  {invitable.map((m) => (
+                    <li key={m.user_id}>
+                      <label className="flex items-center gap-3 rounded-xl border border-border px-3 py-2">
+                        <input
+                          type="checkbox"
+                          checked={selected.includes(m.user_id)}
+                          onChange={() => toggle(m.user_id)}
+                          className="h-4 w-4 accent-primary"
+                        />
+                        <span className="font-sans text-sm text-foreground">{m.display_name}</span>
+                      </label>
+                    </li>
+                  ))}
+                </ul>
+                <button
+                  onClick={() => void handleInvite()}
+                  disabled={busy || !selected.length}
+                  className="mt-3 inline-flex items-center gap-2 rounded-lg bg-gradient-peacock px-4 py-2 font-sans text-sm font-semibold text-primary-foreground hover:opacity-90 disabled:opacity-60"
+                >
+                  {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <UserPlus className="h-4 w-4" />}
+                  Send invites
+                </button>
+              </>
+            )}
 
             <div className="rounded-xl border border-border">
               <button
@@ -753,7 +725,6 @@ const handleSaveDetails = async () => {
                 <Ban className="h-4 w-4" /> Cancel parayanam
               </button>
             </div>
-          </div>
           </div>
         </DialogContent>
       </Dialog>
