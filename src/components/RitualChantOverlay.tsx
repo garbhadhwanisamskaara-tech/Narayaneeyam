@@ -1,11 +1,13 @@
 import { useEffect, useRef, useState, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { SkipForward, Volume2 } from "lucide-react";
+import { SkipForward, Volume2, VolumeX, Play, Pause } from "lucide-react";
 import type { RitualChant } from "@/hooks/useRitualChants";
 import { getStorageUrl } from "@/lib/storageUrl";
-import { registerAudioElement } from "@/lib/globalMute";
+import { registerAudioElement, isMuted as getGlobalMuted, setGlobalMuted } from "@/lib/globalMute";
 import { fadeOutElement } from "@/lib/audiofade";
 import heroBg from "@/assets/hero-bg.jpg";
+
+const SPEED_OPTIONS = [0.75, 1, 1.25, 1.5, 2];
 
 interface Props {
   /** Array of chants to play in sequence */
@@ -23,15 +25,54 @@ interface Props {
 export default function RitualChantOverlay({ chants, useLearnAudio = false, title, onComplete, speed = 1 }: Props) {
   const [currentIdx, setCurrentIdx] = useState(0);
   const audioRef = useRef<HTMLAudioElement | null>(null);
+  const [isPlaying, setIsPlaying] = useState(true);
+  const [muted, setMuted] = useState<boolean>(() => getGlobalMuted());
+  const [currentSpeed, setCurrentSpeed] = useState<number>(speed);
   const speedRef = useRef(speed);
-  speedRef.current = speed;
+  const mutedRef = useRef(muted);
+  speedRef.current = currentSpeed;
+  mutedRef.current = muted;
+
+  // Keep element in sync when speed changes via prop or the speed control
+  useEffect(() => {
+    setCurrentSpeed(speed);
+  }, [speed]);
 
   useEffect(() => {
     if (audioRef.current) {
-      audioRef.current.defaultPlaybackRate = speed;
-      audioRef.current.playbackRate = speed;
+      audioRef.current.defaultPlaybackRate = currentSpeed;
+      audioRef.current.playbackRate = currentSpeed;
     }
-  }, [speed]);
+  }, [currentSpeed]);
+
+  const togglePlayPause = useCallback(() => {
+    const audio = audioRef.current;
+    if (!audio) return;
+    if (audio.paused) {
+      audio.play().catch(() => {});
+      setIsPlaying(true);
+    } else {
+      audio.pause();
+      setIsPlaying(false);
+    }
+  }, []);
+
+  const toggleMute = useCallback(() => {
+    setMuted((prev) => {
+      const next = !prev;
+      // Sync with the global mute so other surfaces respect the same state
+      setGlobalMuted(next);
+      if (audioRef.current) audioRef.current.muted = next;
+      return next;
+    });
+  }, []);
+
+  const cycleSpeed = useCallback(() => {
+    setCurrentSpeed((prev) => {
+      const idx = SPEED_OPTIONS.indexOf(prev);
+      return SPEED_OPTIONS[(idx + 1) % SPEED_OPTIONS.length];
+    });
+  }, []);
 
   const current = chants[currentIdx];
 
@@ -74,13 +115,19 @@ export default function RitualChantOverlay({ chants, useLearnAudio = false, titl
     if (audioFile) {
       const audio = new Audio(audioFile);
       audioRef.current = audio;
+      setIsPlaying(true);
       const unregisterMute = registerAudioElement(audio);
+      audio.muted = mutedRef.current;
       audio.defaultPlaybackRate = speedRef.current;
       audio.playbackRate = speedRef.current;
       const onLoadedMetadata = () => {
         audio.playbackRate = speedRef.current;
       };
       audio.addEventListener("loadedmetadata", onLoadedMetadata);
+      const onPlayEvent = () => setIsPlaying(true);
+      const onPauseEvent = () => setIsPlaying(false);
+      audio.addEventListener("play", onPlayEvent);
+      audio.addEventListener("pause", onPauseEvent);
       audio.onended = finishOnce;
       audio.onerror = finishOnce;
       audio.play().catch(() => finishOnce());
@@ -90,6 +137,8 @@ export default function RitualChantOverlay({ chants, useLearnAudio = false, titl
         audio.onerror = null;
         audio.onpause = null;
         audio.removeEventListener("loadedmetadata", onLoadedMetadata);
+        audio.removeEventListener("play", onPlayEvent);
+        audio.removeEventListener("pause", onPauseEvent);
         audio.pause();
         unregisterMute();
         if (audioRef.current === audio) audioRef.current = null;
@@ -172,7 +221,31 @@ export default function RitualChantOverlay({ chants, useLearnAudio = false, titl
 
         <div className="flex items-center justify-center gap-2 text-xs text-muted-foreground">
           <Volume2 className="h-3 w-3" />
-          <span className="font-sans">Playing…</span>
+          <span className="font-sans">{isPlaying ? "Playing…" : "Paused"}</span>
+        </div>
+
+        <div className="flex items-center justify-center gap-3">
+          <button
+            onClick={togglePlayPause}
+            aria-label={isPlaying ? "Pause" : "Play"}
+            className="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-border bg-card text-foreground hover:bg-muted transition-colors"
+          >
+            {isPlaying ? <Pause className="h-4 w-4" /> : <Play className="h-4 w-4" />}
+          </button>
+          <button
+            onClick={toggleMute}
+            aria-label={muted ? "Unmute" : "Mute"}
+            className="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-border bg-card text-foreground hover:bg-muted transition-colors"
+          >
+            {muted ? <VolumeX className="h-4 w-4" /> : <Volume2 className="h-4 w-4" />}
+          </button>
+          <button
+            onClick={cycleSpeed}
+            aria-label="Change playback speed"
+            className="inline-flex h-9 min-w-[3.25rem] items-center justify-center rounded-lg border border-border bg-card px-2 text-xs font-sans font-medium text-foreground hover:bg-muted transition-colors"
+          >
+            {currentSpeed}x
+          </button>
         </div>
 
         <button
