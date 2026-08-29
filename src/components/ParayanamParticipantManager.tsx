@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
-import { CheckCircle2, Loader2, MailQuestion, RotateCcw, Users } from "lucide-react";
+import { CheckCircle2, ChevronDown, ChevronUp, Loader2, MailQuestion, RotateCcw, Users } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 
 type InviteStatus = "invited" | "confirmed" | "declined";
@@ -46,7 +46,8 @@ export default function ParayanamParticipantManager({ sessionId, isOwner }: Prop
   const [loading, setLoading] = useState(true);
   const [busyId, setBusyId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
-
+  const [pendingOpen, setPendingOpen] = useState(false);
+  const [membersOpen, setMembersOpen] = useState(false);
   const load = useCallback(async () => {
     if (!sessionId) {
       setRows([]);
@@ -169,22 +170,57 @@ export default function ParayanamParticipantManager({ sessionId, isOwner }: Prop
   return (
     <div className="mt-5 space-y-5">
       {pendingInvitees.length > 0 && (
-        <div className="rounded-2xl border border-primary/40 bg-primary/5 p-4">
-          <h3 className="flex items-center gap-2 font-display text-sm font-semibold text-foreground">
-            <MailQuestion className="h-4 w-4 text-primary" /> Waiting to answer their invitation (
-            {pendingInvitees.length})
-          </h3>
-          <ul className="mt-3 max-h-[320px] space-y-2 overflow-y-auto pr-2">{pendingInvitees.map(renderRow)}</ul>
+        <div className="rounded-2xl border border-primary/40 bg-primary/5">
+          <button
+            type="button"
+            onClick={() => setPendingOpen((v) => !v)}
+            aria-expanded={pendingOpen}
+            className="flex w-full items-center justify-between gap-3 p-4 text-left"
+          >
+            <span className="flex items-center gap-2 font-display text-sm font-semibold text-foreground">
+              <MailQuestion className="h-4 w-4 text-primary" />
+              Waiting to answer their invitation ({pendingInvitees.length})
+            </span>
+
+            {pendingOpen ? (
+              <ChevronUp className="h-4 w-4 shrink-0 text-muted-foreground" />
+            ) : (
+              <ChevronDown className="h-4 w-4 shrink-0 text-muted-foreground" />
+            )}
+          </button>
+
+          {pendingOpen && (
+            <div className="border-t border-primary/20 px-4 pb-4">
+              <ul className="mt-3 max-h-[320px] space-y-2 overflow-y-auto pr-2">{pendingInvitees.map(renderRow)}</ul>
+            </div>
+          )}
         </div>
       )}
-
       {others.length > 0 && (
-        <div>
-          <h3 className="flex items-center gap-2 font-display text-sm font-semibold text-foreground">
-            <Users className="h-4 w-4 text-primary" /> Members ({others.length})
-          </h3>
+        <div className="rounded-2xl border border-border">
+          <button
+            type="button"
+            onClick={() => setMembersOpen((v) => !v)}
+            aria-expanded={membersOpen}
+            className="flex w-full items-center justify-between gap-3 p-4 text-left"
+          >
+            <span className="flex items-center gap-2 font-display text-sm font-semibold text-foreground">
+              <Users className="h-4 w-4 text-primary" />
+              Members ({others.length})
+            </span>
 
-          <ul className="mt-3 max-h-[320px] space-y-2 overflow-y-auto pr-2">{others.map(renderRow)}</ul>
+            {membersOpen ? (
+              <ChevronUp className="h-4 w-4 shrink-0 text-muted-foreground" />
+            ) : (
+              <ChevronDown className="h-4 w-4 shrink-0 text-muted-foreground" />
+            )}
+          </button>
+
+          {membersOpen && (
+            <div className="border-t border-border px-4 pb-4">
+              <ul className="mt-3 max-h-[320px] space-y-2 overflow-y-auto pr-2">{others.map(renderRow)}</ul>
+            </div>
+          )}
         </div>
       )}
 
