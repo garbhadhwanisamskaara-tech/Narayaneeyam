@@ -289,11 +289,17 @@ export function useParayanamReport(groupIdFilter?: string) {
               end_date: s.end_date,
               mine: iTookPart ? statsFor(user.id) : null,
               members: isOwner
-                ? confirmed.map((uid) => ({
-                    user_id: uid,
-                    display_name: nameById.get(uid) ?? "Member",
-                    stats: statsFor(uid),
-                  }))
+                ? confirmed
+                    .map((uid) => ({
+                      user_id: uid,
+                      display_name: nameById.get(uid) ?? "Member",
+                      stats: statsFor(uid),
+                    }))
+                    .sort((a, b) =>
+                      a.display_name.localeCompare(b.display_name, undefined, {
+                        sensitivity: "base",
+                      }),
+                    )
                 : [],
               aggregate,
             };
