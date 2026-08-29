@@ -79,6 +79,10 @@ export default function ParayanamInviteCard({ invite: i, busy, onAccept, onDecli
                 </a>
               </div>
             )}
+            <p className="font-sans text-[11px] leading-snug text-muted-foreground">
+              This contribution goes directly to the Guru — narayaneeyam.app does not process, verify, or hold this
+              payment.
+            </p>
             {i.payment_note && <div className="italic">{i.payment_note}</div>}
           </>
         )}
@@ -145,6 +149,9 @@ export function AwaitingContributionCard({ invite: i }: { invite: PendingInvite 
           <ExternalLink className="h-3 w-3" />
         </a>
       )}
+      <p className="mt-2 font-sans text-[11px] leading-snug text-muted-foreground">
+        This contribution goes directly to the Guru — narayaneeyam.app does not process, verify, or hold this payment.
+      </p>
       {i.payment_note && <p className="mt-2 font-sans text-xs italic text-muted-foreground">{i.payment_note}</p>}
     </div>
   );

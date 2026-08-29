@@ -45,6 +45,11 @@ export default function ContributionDetailsForm({
         </p>
       </div>
 
+      <p className="font-sans text-xs leading-snug text-muted-foreground">
+        You are responsible for this payment link and for verifying contributions received. narayaneeyam.app does not
+        process or hold any funds.
+      </p>
+
       <div>
         <label htmlFor="contribution-amount" className="font-sans text-base font-semibold text-foreground">
           Contribution amount{" "}
