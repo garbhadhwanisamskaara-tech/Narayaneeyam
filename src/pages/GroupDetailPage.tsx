@@ -489,6 +489,7 @@ export default function GroupDetailPage() {
                       {copied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
                     </button>
                   </div>
+
                   <div className="mt-4 flex flex-wrap gap-3">
                     <button
                       onClick={() => run(regenerateInvite)}
@@ -497,6 +498,7 @@ export default function GroupDetailPage() {
                     >
                       <RefreshCw className="h-4 w-4" /> Regenerate link
                     </button>
+
                     <button
                       onClick={() => run(revokeInvite)}
                       disabled={busy}
