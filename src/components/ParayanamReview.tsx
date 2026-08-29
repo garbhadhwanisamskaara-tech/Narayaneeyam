@@ -48,9 +48,7 @@ export default function ParayanamReview(props: ParayanamReviewProps) {
       ? { label: "Date", value: prettyDate(props.startDate) }
       : { label: "Dates", value: `${prettyDate(props.startDate)} to ${prettyDate(props.endDate)}` },
     { label: "Parayanam days", value: `${props.scheduleLabel} · ${props.dayCount} in all` },
-    ...(props.distributionLabel
-      ? [{ label: "How dashakams are shared", value: props.distributionLabel }]
-      : []),
+    ...(props.distributionLabel ? [{ label: "How dashakams are shared", value: props.distributionLabel }] : []),
     { label: "How it is conducted", value: props.deliveryMode === "LIVE" ? "Live" : "Self-paced" },
   ];
 
@@ -63,23 +61,22 @@ export default function ParayanamReview(props: ParayanamReviewProps) {
         value: live.hasMeetingLink ? "Meeting link added" : "Meeting link missing",
         ok: live.hasMeetingLink,
       },
-      { label: "Join button appears", value: `${live.joinBeforeMins} minutes before each session` }
+      { label: "Join button appears", value: `${live.joinBeforeMins} minutes before each session` },
     );
   }
 
   rows.push(
     contribution
       ? { label: "Contribution", value: `${contribution.amount} to join` }
-      : { label: "Contribution", value: "Free to join" }
+      : { label: "Contribution", value: "Free to join" },
   );
   if (contribution) {
     rows.push({
-      label: "Payment link",
-      value: contribution.hasPaymentLink ? "Payment link added" : "Payment link missing",
+      label: "Payment / contribution details",
+      value: contribution.hasPaymentLink ? "Payment details added" : "Payment details missing",
       ok: contribution.hasPaymentLink,
     });
   }
-
   if (props.isGroup) {
     rows.push({
       label: "Members invited",
