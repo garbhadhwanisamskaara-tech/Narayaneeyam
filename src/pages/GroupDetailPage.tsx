@@ -593,6 +593,8 @@ export default function GroupDetailPage() {
             </div>
           </section>
 
+          <ParayanamDraftsList groupId={group.id} enabled={isOwner} />
+
           {selectedSessionId && (
             <section className="mt-6 rounded-2xl border border-border bg-card p-5 shadow-peacock">
               <h2 className="font-display text-xl font-bold text-foreground">
