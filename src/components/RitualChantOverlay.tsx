@@ -221,7 +221,31 @@ export default function RitualChantOverlay({ chants, useLearnAudio = false, titl
 
         <div className="flex items-center justify-center gap-2 text-xs text-muted-foreground">
           <Volume2 className="h-3 w-3" />
-          <span className="font-sans">Playing…</span>
+          <span className="font-sans">{isPlaying ? "Playing…" : "Paused"}</span>
+        </div>
+
+        <div className="flex items-center justify-center gap-3">
+          <button
+            onClick={togglePlayPause}
+            aria-label={isPlaying ? "Pause" : "Play"}
+            className="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-border bg-card text-foreground hover:bg-muted transition-colors"
+          >
+            {isPlaying ? <Pause className="h-4 w-4" /> : <Play className="h-4 w-4" />}
+          </button>
+          <button
+            onClick={toggleMute}
+            aria-label={muted ? "Unmute" : "Mute"}
+            className="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-border bg-card text-foreground hover:bg-muted transition-colors"
+          >
+            {muted ? <VolumeX className="h-4 w-4" /> : <Volume2 className="h-4 w-4" />}
+          </button>
+          <button
+            onClick={cycleSpeed}
+            aria-label="Change playback speed"
+            className="inline-flex h-9 min-w-[3.25rem] items-center justify-center rounded-lg border border-border bg-card px-2 text-xs font-sans font-medium text-foreground hover:bg-muted transition-colors"
+          >
+            {currentSpeed}x
+          </button>
         </div>
 
         <button
