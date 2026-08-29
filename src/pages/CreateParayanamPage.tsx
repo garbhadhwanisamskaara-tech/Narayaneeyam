@@ -1090,13 +1090,45 @@ export default function CreateParayanamPage() {
 
         {error && <p className="font-sans text-sm text-destructive">{error}</p>}
 
-        <div className="flex items-center justify-between pt-2">
+        {draftSaved && (
+          <div className="rounded-xl border border-border bg-muted/40 p-4">
+            <p className="font-sans text-sm text-foreground">
+              Parayanam saved as draft. You can continue setup later.
+            </p>
+            <div className="mt-3 flex flex-wrap items-center gap-2">
+              <button
+                type="button"
+                onClick={() => setDraftSaved(false)}
+                className="rounded-lg border border-border px-3 py-2 font-sans text-sm font-semibold text-foreground"
+              >
+                Continue editing
+              </button>
+              <Link
+                to={isGroup ? `/groups/${groupId}` : "/progress"}
+                className="rounded-lg bg-gradient-peacock px-3 py-2 font-sans text-sm font-semibold text-primary-foreground hover:opacity-90"
+              >
+                {isGroup ? "Return to Group" : "Return"}
+              </Link>
+            </div>
+          </div>
+        )}
+
+        <div className="flex flex-wrap items-center justify-between gap-3 pt-2">
           <button
             onClick={() => setStep((s) => Math.max(1, s - 1))}
             disabled={step === 1 || busy}
             className="rounded-lg border border-border px-4 py-2 font-sans text-sm font-semibold text-foreground disabled:opacity-40"
           >
             {currentStep === "review" ? "Edit" : "Back"}
+          </button>
+          <button
+            type="button"
+            onClick={() => void handleSaveDraft()}
+            disabled={busy || savingDraft}
+            className="inline-flex items-center gap-2 rounded-lg border border-border px-4 py-2 font-sans text-sm font-semibold text-foreground disabled:opacity-50"
+          >
+            {savingDraft && <Loader2 className="h-4 w-4 animate-spin" />}
+            Save as Draft
           </button>
           {step < lastStep ? (
             <button
