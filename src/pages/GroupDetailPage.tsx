@@ -214,7 +214,8 @@ export default function GroupDetailPage() {
   }, [selectedSessionId, refreshKey]);
 
   const isOwner = !!user && !!group && group.owner_id === user.id;
-  const { canCreateParayanam, canManageParayanam, canManageGroup } = useCapabilities();
+  const { canCreateParayanam, canManageParayanam } = useCapabilities();
+
   const ownerMember = members.find((m) => m.user_id === group?.owner_id);
   const ownerName = ownerMember?.display_name ?? null;
 
