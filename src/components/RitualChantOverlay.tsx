@@ -137,6 +137,8 @@ export default function RitualChantOverlay({ chants, useLearnAudio = false, titl
         audio.onerror = null;
         audio.onpause = null;
         audio.removeEventListener("loadedmetadata", onLoadedMetadata);
+        audio.removeEventListener("play", onPlayEvent);
+        audio.removeEventListener("pause", onPauseEvent);
         audio.pause();
         unregisterMute();
         if (audioRef.current === audio) audioRef.current = null;
