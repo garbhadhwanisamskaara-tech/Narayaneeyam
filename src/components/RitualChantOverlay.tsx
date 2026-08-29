@@ -115,13 +115,19 @@ export default function RitualChantOverlay({ chants, useLearnAudio = false, titl
     if (audioFile) {
       const audio = new Audio(audioFile);
       audioRef.current = audio;
+      setIsPlaying(true);
       const unregisterMute = registerAudioElement(audio);
+      audio.muted = mutedRef.current;
       audio.defaultPlaybackRate = speedRef.current;
       audio.playbackRate = speedRef.current;
       const onLoadedMetadata = () => {
         audio.playbackRate = speedRef.current;
       };
       audio.addEventListener("loadedmetadata", onLoadedMetadata);
+      const onPlayEvent = () => setIsPlaying(true);
+      const onPauseEvent = () => setIsPlaying(false);
+      audio.addEventListener("play", onPlayEvent);
+      audio.addEventListener("pause", onPauseEvent);
       audio.onended = finishOnce;
       audio.onerror = finishOnce;
       audio.play().catch(() => finishOnce());
