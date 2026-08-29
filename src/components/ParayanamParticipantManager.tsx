@@ -78,7 +78,18 @@ export default function ParayanamParticipantManager({ sessionId, isOwner }: Prop
       nameById = new Map(((profiles ?? []) as any[]).map((p) => [p.id, p.display_name ?? p.email ?? "Member"]));
     }
 
-    setRows(list.map((p) => ({ ...p, name: nameById.get(p.user_id) ?? "Member" })));
+    setRows(
+      list
+        .map((p) => ({
+          ...p,
+          name: nameById.get(p.user_id) ?? "Member",
+        }))
+        .sort((a, b) =>
+          a.name.localeCompare(b.name, undefined, {
+            sensitivity: "base",
+          }),
+        ),
+    );
     setLoading(false);
   }, [sessionId]);
 
