@@ -95,6 +95,8 @@ export default function ParayanamParticipantManager({ sessionId, isOwner }: Prop
   }, [sessionId]);
 
   useEffect(() => {
+    setPendingOpen(false);
+    setMembersOpen(false);
     void load();
   }, [load]);
 
