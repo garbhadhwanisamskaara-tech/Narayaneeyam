@@ -44,9 +44,7 @@ function randomToken() {
 /** Absolute invite URL for the deployment the user is currently on. */
 export function inviteLink(token: string) {
   const origin =
-    typeof window !== "undefined" && window.location?.origin
-      ? window.location.origin
-      : "https://www.narayaneeyam.app";
+    typeof window !== "undefined" && window.location?.origin ? window.location.origin : "https://www.narayaneeyam.app";
   return `${origin}/join/${token}`;
 }
 
@@ -66,10 +64,7 @@ export function useGroups() {
 
     // Groups the user belongs to (via group_members) plus groups they own.
     const [memberRes, ownedRes] = await Promise.all([
-      (supabase as any)
-        .from("group_members")
-        .select("group_id, left_at")
-        .eq("user_id", user.id),
+      (supabase as any).from("group_members").select("group_id, left_at").eq("user_id", user.id),
       (supabase as any)
         .from("groups")
         .select(GROUP_COLS)
@@ -99,14 +94,12 @@ export function useGroups() {
     }
 
     // A former owner who has left (e.g. sole-member owner) should not see the group.
-    const owned = ((ownedRes.data ?? []) as Group[]).filter(
-      (g) => activeIds.has(g.id) || !leftIds.has(g.id)
-    );
+    const owned = ((ownedRes.data ?? []) as Group[]).filter((g) => activeIds.has(g.id) || !leftIds.has(g.id));
 
     const all = [...owned, ...joined];
 
     const unique = Array.from(new Map(all.map((g) => [g.id, g])).values()).sort((a, b) =>
-      a.created_at < b.created_at ? 1 : -1
+      a.created_at < b.created_at ? 1 : -1,
     );
 
     setError(null);
@@ -133,14 +126,12 @@ export function useGroups() {
       if (err) throw new Error(err.message);
 
       // Owner is a member too, so member lists and progress include them.
-      await (supabase as any)
-        .from("group_members")
-        .insert({ group_id: data.id, user_id: user.id, role: "owner" });
+      await (supabase as any).from("group_members").insert({ group_id: data.id, user_id: user.id, role: "owner" });
 
       await refresh();
       return data as Group;
     },
-    [user, refresh]
+    [user, refresh],
   );
 
   return { groups, loading, error, refresh, createGroup };
@@ -178,15 +169,12 @@ export function useGroupMembers(groupId: string | undefined, sessionId: string |
         ? (supabase as any).from("profiles").select("id, display_name, email").in("id", ids)
         : Promise.resolve({ data: [] }),
       sessionId && ids.length
-        ? (supabase as any)
-            .from("parayanam_schedule")
-            .select("id")
-            .eq("challenge_session_id", sessionId)
+        ? (supabase as any).from("parayanam_schedule").select("id").eq("challenge_session_id", sessionId)
         : Promise.resolve({ data: [] }),
     ]);
 
     const nameById = new Map<string, string>(
-      (profRes.data ?? []).map((p: any) => [p.id, p.display_name ?? p.email ?? "Member"])
+      (profRes.data ?? []).map((p: any) => [p.id, p.display_name ?? p.email ?? "Member"]),
     );
 
     const scheduleIds = ((scheduleRes.data ?? []) as any[]).map((r) => r.id as string);
@@ -204,11 +192,17 @@ export function useGroupMembers(groupId: string | undefined, sessionId: string |
 
     setError(null);
     setMembers(
-      rows.map((r) => ({
-        ...r,
-        display_name: nameById.get(r.user_id) ?? "Member",
-        completed: counts.get(r.user_id) ?? 0,
-      }))
+      rows
+        .map((r) => ({
+          ...r,
+          display_name: nameById.get(r.user_id) ?? "Member",
+          completed: counts.get(r.user_id) ?? 0,
+        }))
+        .sort((a, b) =>
+          a.display_name.localeCompare(b.display_name, undefined, {
+            sensitivity: "base",
+          }),
+        ),
     );
     setLoading(false);
   }, [groupId, sessionId]);
@@ -240,7 +234,7 @@ export function useGroupMembers(groupId: string | undefined, sessionId: string |
 
       await refresh();
     },
-    [members, groupId, refresh]
+    [members, groupId, refresh],
   );
 
   return { members, loading, error, refresh, removeMember };
@@ -290,10 +284,7 @@ export function useGroupInvite(groupId: string | undefined) {
 
   const revokeInvite = useCallback(async () => {
     if (!invite) return;
-    const { error: err } = await (supabase as any)
-      .from("group_invites")
-      .update({ revoked: true })
-      .eq("id", invite.id);
+    const { error: err } = await (supabase as any).from("group_invites").update({ revoked: true }).eq("id", invite.id);
     if (err) throw new Error(err.message);
     setInvite(null);
   }, [invite]);
