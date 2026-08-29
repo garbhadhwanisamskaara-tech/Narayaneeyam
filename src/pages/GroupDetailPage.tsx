@@ -431,9 +431,9 @@ export default function GroupDetailPage() {
             {!membersOpen ? null : loadingMembers ? (
               <Loader2 className="mt-4 h-5 w-5 animate-spin text-primary" />
             ) : members.length === 0 ? (
-              <p className="mt-3 font-sans text-sm text-muted-foreground">
-                No members yet — share the invite link below.
-              </p>
+              <p className="mt-3 font-sans text-sm text-muted-foreground">No members yet.</p>
+            ) : !isOwner ? (
+              <p className="mt-3 font-sans text-sm text-muted-foreground">{members.length} members in this group.</p>
             ) : (
               <ul className="mt-4 max-h-[260px] space-y-3 overflow-y-auto pr-2">
                 {members.map((m) => (
