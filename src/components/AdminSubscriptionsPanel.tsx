@@ -35,17 +35,20 @@ export default function AdminSubscriptionsPanel() {
         .select("id, user_id, tier, status, started_at, expires_at, notes")
         .order("started_at", { ascending: false });
 
-      if (!data) { setSubs([]); setLoading(false); return; }
+      if (!data) {
+        setSubs([]);
+        setLoading(false);
+        return;
+      }
 
       // Fetch emails for user_ids
       const userIds = [...new Set(data.map((d: any) => d.user_id))];
-      const { data: profiles } = await supabase
-        .from("profiles")
-        .select("id, email")
-        .in("id", userIds);
+      const { data: profiles } = await supabase.from("profiles").select("id, email").in("id", userIds);
 
       const emailMap: Record<string, string> = {};
-      (profiles ?? []).forEach((p: any) => { emailMap[p.id] = p.email || "unknown"; });
+      (profiles ?? []).forEach((p: any) => {
+        emailMap[p.id] = p.email || "unknown";
+      });
 
       const rows: SubRow[] = data.map((d: any) => ({
         ...d,
@@ -59,16 +62,24 @@ export default function AdminSubscriptionsPanel() {
     }
   }, []);
 
-  useEffect(() => { fetchSubs(); }, [fetchSubs]);
+  useEffect(() => {
+    fetchSubs();
+  }, [fetchSubs]);
 
   useEffect(() => {
     let result = subs;
-    if (statusFilter !== "all") result = result.filter(s => s.status === statusFilter);
+    if (statusFilter !== "all") result = result.filter((s) => s.status === statusFilter);
     if (search) {
       const q = search.toLowerCase();
-      result = result.filter(s => s.email.toLowerCase().includes(q));
+      result = result.filter((s) => s.email.toLowerCase().includes(q));
     }
-    setFiltered(result);
+    setFiltered(
+      [...result].sort((a, b) =>
+        a.email.localeCompare(b.email, undefined, {
+          sensitivity: "base",
+        }),
+      ),
+    );
   }, [subs, statusFilter, search]);
 
   const startEdit = (sub: SubRow) => {
@@ -110,9 +121,9 @@ export default function AdminSubscriptionsPanel() {
   };
 
   // Summary stats
-  const totalActive = subs.filter(s => s.status === "subscribed" || s.status === "trial").length;
-  const totalExpired = subs.filter(s => s.status === "expired").length;
-  const totalTrial = subs.filter(s => s.status === "trial").length;
+  const totalActive = subs.filter((s) => s.status === "subscribed" || s.status === "trial").length;
+  const totalExpired = subs.filter((s) => s.status === "expired").length;
+  const totalTrial = subs.filter((s) => s.status === "trial").length;
 
   return (
     <div>
@@ -142,18 +153,22 @@ export default function AdminSubscriptionsPanel() {
           <Search className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
           <input
             value={search}
-            onChange={e => setSearch(e.target.value)}
+            onChange={(e) => setSearch(e.target.value)}
             placeholder="Search by email..."
             className="w-full rounded-lg border border-border bg-background pl-10 pr-3 py-2 text-sm font-sans"
           />
         </div>
         <select
           value={statusFilter}
-          onChange={e => setStatusFilter(e.target.value)}
+          onChange={(e) => setStatusFilter(e.target.value)}
           className="rounded-lg border border-border bg-background px-3 py-2 text-sm font-sans"
         >
           <option value="all">All Status</option>
-          {STATUS_OPTIONS.map(s => <option key={s} value={s}>{s}</option>)}
+          {STATUS_OPTIONS.map((s) => (
+            <option key={s} value={s}>
+              {s}
+            </option>
+          ))}
         </select>
       </div>
 
@@ -175,33 +190,57 @@ export default function AdminSubscriptionsPanel() {
               </tr>
             </thead>
             <tbody>
-              {filtered.map(sub => (
+              {filtered.map((sub) => (
                 <tr key={sub.id} className="border-t border-border">
                   {editingId === sub.id ? (
                     <>
                       <td className="px-3 py-2 text-xs">{sub.email}</td>
                       <td className="px-3 py-2">
-                        <select value={editForm.tier} onChange={e => setEditForm(f => ({ ...f, tier: e.target.value }))}
-                          className="rounded border border-border bg-background px-2 py-1 text-xs">
-                          {TIER_OPTIONS.map(t => <option key={t} value={t}>{t}</option>)}
+                        <select
+                          value={editForm.tier}
+                          onChange={(e) => setEditForm((f) => ({ ...f, tier: e.target.value }))}
+                          className="rounded border border-border bg-background px-2 py-1 text-xs"
+                        >
+                          {TIER_OPTIONS.map((t) => (
+                            <option key={t} value={t}>
+                              {t}
+                            </option>
+                          ))}
                         </select>
                       </td>
                       <td className="px-3 py-2">
-                        <select value={editForm.status} onChange={e => setEditForm(f => ({ ...f, status: e.target.value }))}
-                          className="rounded border border-border bg-background px-2 py-1 text-xs">
-                          {STATUS_OPTIONS.map(s => <option key={s} value={s}>{s}</option>)}
+                        <select
+                          value={editForm.status}
+                          onChange={(e) => setEditForm((f) => ({ ...f, status: e.target.value }))}
+                          className="rounded border border-border bg-background px-2 py-1 text-xs"
+                        >
+                          {STATUS_OPTIONS.map((s) => (
+                            <option key={s} value={s}>
+                              {s}
+                            </option>
+                          ))}
                         </select>
                       </td>
                       <td className="px-3 py-2 text-xs">{new Date(sub.started_at).toLocaleDateString()}</td>
                       <td className="px-3 py-2">
-                        <input type="date" value={editForm.expires_at?.split("T")[0] || ""}
-                          onChange={e => setEditForm(f => ({ ...f, expires_at: e.target.value }))}
-                          className="rounded border border-border bg-background px-2 py-1 text-xs" />
+                        <input
+                          type="date"
+                          value={editForm.expires_at?.split("T")[0] || ""}
+                          onChange={(e) => setEditForm((f) => ({ ...f, expires_at: e.target.value }))}
+                          className="rounded border border-border bg-background px-2 py-1 text-xs"
+                        />
                       </td>
                       <td className="px-3 py-2 text-xs">{daysLeft(editForm.expires_at || sub.expires_at)}</td>
                       <td className="px-3 py-2 flex gap-1">
-                        <button onClick={saveEdit} className="p-1 text-green-600 hover:text-green-700"><Save className="h-4 w-4" /></button>
-                        <button onClick={() => setEditingId(null)} className="p-1 text-muted-foreground hover:text-foreground"><X className="h-4 w-4" /></button>
+                        <button onClick={saveEdit} className="p-1 text-green-600 hover:text-green-700">
+                          <Save className="h-4 w-4" />
+                        </button>
+                        <button
+                          onClick={() => setEditingId(null)}
+                          className="p-1 text-muted-foreground hover:text-foreground"
+                        >
+                          <X className="h-4 w-4" />
+                        </button>
                       </td>
                     </>
                   ) : (
@@ -209,7 +248,9 @@ export default function AdminSubscriptionsPanel() {
                       <td className="px-3 py-2 text-xs">{sub.email}</td>
                       <td className="px-3 py-2 text-xs capitalize">{sub.tier}</td>
                       <td className="px-3 py-2">
-                        <span className={`text-[11px] px-2 py-0.5 rounded-full font-semibold capitalize ${statusBadge(sub.status)}`}>
+                        <span
+                          className={`text-[11px] px-2 py-0.5 rounded-full font-semibold capitalize ${statusBadge(sub.status)}`}
+                        >
                           {sub.status}
                         </span>
                       </td>
@@ -217,7 +258,10 @@ export default function AdminSubscriptionsPanel() {
                       <td className="px-3 py-2 text-xs">{new Date(sub.expires_at).toLocaleDateString()}</td>
                       <td className="px-3 py-2 text-xs">{daysLeft(sub.expires_at)}</td>
                       <td className="px-3 py-2">
-                        <button onClick={() => startEdit(sub)} className="p-1 text-muted-foreground hover:text-foreground">
+                        <button
+                          onClick={() => startEdit(sub)}
+                          className="p-1 text-muted-foreground hover:text-foreground"
+                        >
                           <Edit2 className="h-4 w-4" />
                         </button>
                       </td>
@@ -226,7 +270,11 @@ export default function AdminSubscriptionsPanel() {
                 </tr>
               ))}
               {filtered.length === 0 && (
-                <tr><td colSpan={7} className="text-center py-8 text-muted-foreground text-xs">No subscriptions found</td></tr>
+                <tr>
+                  <td colSpan={7} className="text-center py-8 text-muted-foreground text-xs">
+                    No subscriptions found
+                  </td>
+                </tr>
               )}
             </tbody>
           </table>
