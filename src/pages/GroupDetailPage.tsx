@@ -99,7 +99,6 @@ export default function GroupDetailPage() {
   const [selectedSessionId, setSelectedSessionId] = useState<string | null>(sessionParam);
   const [pickerTouched, setPickerTouched] = useState(!!sessionParam);
 
-  const { invite, loading, generateInvite, revokeInvite, regenerateInvite } = useGroupInvite(groupId);
   const { parayanams, loading: loadingParayanams, refresh: refreshParayanams } = useGroupParayanams(groupId);
   const { members, loading: loadingMembers, refresh: refreshMembers } = useGroupMembers(groupId, selectedSessionId);
   const {
