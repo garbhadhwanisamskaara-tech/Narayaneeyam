@@ -1,13 +1,13 @@
 import { useEffect, useState } from "react";
 import { Link, useParams } from "react-router-dom";
-import { ArrowLeft, Loader2, Pencil } from "lucide-react";
+import { ArrowLeft, Ban, Check, Copy, Loader2, Pencil, RefreshCw, Share2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import SEO from "@/components/SEO";
 import GroupDangerZone from "@/components/GroupDangerZone";
 import { Input } from "@/components/ui/input";
 import { toast } from "@/hooks/use-toast";
-import type { Group } from "@/hooks/useGroups";
+import { inviteLink, useGroupInvite, type Group } from "@/hooks/useGroups";
 
 export default function GroupSettingsPage() {
   const { groupId } = useParams<{ groupId: string }>();
@@ -16,6 +16,9 @@ export default function GroupSettingsPage() {
   const [loading, setLoading] = useState(true);
   const [name, setName] = useState("");
   const [savingName, setSavingName] = useState(false);
+  const [copied, setCopied] = useState(false);
+  const [inviteBusy, setInviteBusy] = useState(false);
+  const [inviteError, setInviteError] = useState<string | null>(null);
 
   useEffect(() => {
     if (!groupId) return;
@@ -38,7 +41,7 @@ export default function GroupSettingsPage() {
   }, [groupId]);
 
   const isOwner = !!user && !!group && group.owner_id === user.id;
-
+  const { invite, loading: inviteLoading, generateInvite, revokeInvite, regenerateInvite } = useGroupInvite(groupId);
   const handleRename = async () => {
     const trimmed = name.trim();
     if (!group || !trimmed || trimmed === group.group_name) return;
@@ -47,10 +50,7 @@ export default function GroupSettingsPage() {
       return;
     }
     setSavingName(true);
-    const { error } = await (supabase as any)
-      .from("groups")
-      .update({ group_name: trimmed })
-      .eq("id", group.id);
+    const { error } = await (supabase as any).from("groups").update({ group_name: trimmed }).eq("id", group.id);
     setSavingName(false);
     if (error) {
       toast({ title: "Could not rename the group", description: error.message, variant: "destructive" });
@@ -59,7 +59,33 @@ export default function GroupSettingsPage() {
     setGroup({ ...group, group_name: trimmed });
     toast({ title: "Group renamed", description: `Now called ${trimmed}.` });
   };
+  const runInviteAction = async (action: () => Promise<any>) => {
+    setInviteBusy(true);
+    setInviteError(null);
 
+    try {
+      await action();
+    } catch (e: any) {
+      setInviteError(e?.message ?? "Something went wrong.");
+    } finally {
+      setInviteBusy(false);
+    }
+  };
+
+  const handleCopyInvite = async () => {
+    if (!invite) return;
+
+    try {
+      await navigator.clipboard.writeText(inviteLink(invite.token));
+      setCopied(true);
+
+      setTimeout(() => {
+        setCopied(false);
+      }, 2000);
+    } catch {
+      setInviteError("Could not copy — please copy the link manually.");
+    }
+  };
   return (
     <div className="mx-auto w-full max-w-2xl px-4 py-6">
       <SEO
@@ -82,7 +108,7 @@ export default function GroupSettingsPage() {
         <>
           <h1 className="mt-4 font-display text-2xl font-bold text-foreground">Manage {group.group_name}</h1>
           <p className="mt-1 font-sans text-sm text-muted-foreground">
-            Actions here affect your place in this group. Please read carefully before proceeding.
+            Manage the group name, invitation link and other group settings.
           </p>
           {isOwner && (
             <section className="mt-6 rounded-xl border border-border bg-card p-5">
@@ -110,7 +136,71 @@ export default function GroupSettingsPage() {
               </div>
             </section>
           )}
+          {isOwner && (
+            <section className="mt-6 rounded-xl border border-border bg-card p-5">
+              <h2 className="font-display text-base font-semibold text-foreground">Group invite link</h2>
 
+              <p className="mt-1 font-sans text-xs text-muted-foreground">
+                Anyone with this link can join this group. Invitations to individual Parayanams are managed separately
+                under Manage Parayanam.
+              </p>
+
+              {inviteLoading ? (
+                <Loader2 className="mt-4 h-5 w-5 animate-spin text-primary" />
+              ) : invite ? (
+                <>
+                  <div className="mt-4 flex items-center gap-2 rounded-lg border border-border bg-background px-3 py-2">
+                    <code className="flex-1 truncate font-sans text-sm text-foreground">
+                      {inviteLink(invite.token)}
+                    </code>
+
+                    <button
+                      type="button"
+                      onClick={() => void handleCopyInvite()}
+                      aria-label="Copy group invite link"
+                      className="text-primary hover:opacity-80"
+                    >
+                      {copied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
+                    </button>
+                  </div>
+
+                  <div className="mt-4 flex flex-wrap gap-3">
+                    <button
+                      type="button"
+                      onClick={() => void runInviteAction(regenerateInvite)}
+                      disabled={inviteBusy}
+                      className="inline-flex items-center gap-2 rounded-lg border border-border px-4 py-2 font-sans text-sm font-semibold text-foreground hover:border-primary disabled:opacity-60"
+                    >
+                      {inviteBusy ? <Loader2 className="h-4 w-4 animate-spin" /> : <RefreshCw className="h-4 w-4" />}
+                      Regenerate link
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => void runInviteAction(revokeInvite)}
+                      disabled={inviteBusy}
+                      className="inline-flex items-center gap-2 rounded-lg border border-destructive/50 px-4 py-2 font-sans text-sm font-semibold text-destructive hover:bg-destructive/10 disabled:opacity-60"
+                    >
+                      <Ban className="h-4 w-4" />
+                      Revoke link
+                    </button>
+                  </div>
+                </>
+              ) : (
+                <button
+                  type="button"
+                  onClick={() => void runInviteAction(generateInvite)}
+                  disabled={inviteBusy}
+                  className="mt-4 inline-flex items-center gap-2 rounded-lg bg-gradient-peacock px-4 py-2 font-sans text-sm font-semibold text-primary-foreground hover:opacity-90 disabled:opacity-60"
+                >
+                  {inviteBusy ? <Loader2 className="h-4 w-4 animate-spin" /> : <Share2 className="h-4 w-4" />}
+                  Create invite link
+                </button>
+              )}
+
+              {inviteError && <p className="mt-3 font-sans text-sm text-destructive">{inviteError}</p>}
+            </section>
+          )}
           <GroupDangerZone groupId={group.id} groupName={group.group_name} isOwner={isOwner} />
         </>
       )}
