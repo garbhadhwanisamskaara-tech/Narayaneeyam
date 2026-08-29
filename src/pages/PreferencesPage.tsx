@@ -38,7 +38,11 @@ export default function PreferencesPage() {
   const handleChangePassword = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!currentPassword) {
-      toast({ title: "Current password required", description: "Please enter your existing password.", variant: "destructive" });
+      toast({
+        title: "Current password required",
+        description: "Please enter your existing password.",
+        variant: "destructive",
+      });
       return;
     }
     if (newPassword.length < 6) {
@@ -46,11 +50,19 @@ export default function PreferencesPage() {
       return;
     }
     if (newPassword !== confirmPassword) {
-      toast({ title: "Passwords do not match", description: "Please re-enter the same password.", variant: "destructive" });
+      toast({
+        title: "Passwords do not match",
+        description: "Please re-enter the same password.",
+        variant: "destructive",
+      });
       return;
     }
     if (!user?.email) {
-      toast({ title: "Not available", description: "Password change needs an email-based account.", variant: "destructive" });
+      toast({
+        title: "Not available",
+        description: "Password change needs an email-based account.",
+        variant: "destructive",
+      });
       return;
     }
     setSavingPassword(true);
@@ -75,7 +87,6 @@ export default function PreferencesPage() {
       toast({ title: "Password updated", description: "Your new password is now active." });
     }
   };
-
 
   type TransferGroup = { id: string; group_name: string };
   type TransferMember = { user_id: string; display_name: string; email: string | null };
@@ -110,10 +121,7 @@ export default function PreferencesPage() {
     const ids = (rows ?? []).map((r: any) => r.user_id);
     let profilesById = new Map<string, { display_name: string | null; email: string | null }>();
     if (ids.length > 0) {
-      const { data: profiles } = await supabase
-        .from("profiles")
-        .select("id, display_name, email")
-        .in("id", ids);
+      const { data: profiles } = await supabase.from("profiles").select("id, display_name, email").in("id", ids);
       profilesById = new Map((profiles ?? []).map((p: any) => [p.id, p]));
     }
     setMembers(
@@ -132,7 +140,11 @@ export default function PreferencesPage() {
       const { error } = await supabase.functions.invoke("delete-account");
       if (error) {
         const payload = await parseInvokeError(error);
-        if (payload?.error === "OWNERSHIP_TRANSFER_REQUIRED" && Array.isArray(payload.groups) && payload.groups.length > 0) {
+        if (
+          payload?.error === "OWNERSHIP_TRANSFER_REQUIRED" &&
+          Array.isArray(payload.groups) &&
+          payload.groups.length > 0
+        ) {
           const nextGroup: TransferGroup = payload.groups[0];
           setDeleteDialogOpen(false);
           setTransferGroup(nextGroup);
@@ -194,12 +206,14 @@ export default function PreferencesPage() {
     setConfirmText("");
   };
 
-
   return (
     <div className="container mx-auto px-4 py-8 max-w-2xl">
       <Helmet>
         <title>My Preferences — Sriman Narayaneeyam</title>
-        <meta name="description" content="Adjust text size, languages and manage your Sriman Narayaneeyam account preferences." />
+        <meta
+          name="description"
+          content="Adjust text size, languages and manage your Sriman Narayaneeyam account preferences."
+        />
       </Helmet>
 
       <h1 className="font-display text-2xl font-semibold text-foreground mb-6">My Preferences</h1>
@@ -214,11 +228,7 @@ export default function PreferencesPage() {
         <p className="font-sans text-muted-foreground mb-4" style={{ fontSize: "12px" }}>
           Text Size — Medium is the default. Changes apply immediately across the app.
         </p>
-        <div
-          role="radiogroup"
-          aria-label="Text size"
-          className="flex flex-wrap gap-2 sm:gap-3"
-        >
+        <div role="radiogroup" aria-label="Text size" className="flex flex-wrap gap-2 sm:gap-3">
           {FONT_SIZES.map((f) => (
             <button
               key={f.value}
@@ -237,11 +247,8 @@ export default function PreferencesPage() {
             </button>
           ))}
         </div>
-        <p className="mt-4 text-foreground font-body overflow-wrap-anywhere">
-          The quick brown fox chants beautifully.
-        </p>
+        <p className="mt-4 text-foreground font-body overflow-wrap-anywhere">The quick brown fox chants beautifully.</p>
       </section>
-
 
       <LanguagePreferences />
 
@@ -303,7 +310,13 @@ export default function PreferencesPage() {
         <p className="text-xs text-muted-foreground font-sans mb-4">
           Removing your account will sign you out and permanently remove your personal data, progress and saved places.
         </p>
-        <AlertDialog open={deleteDialogOpen} onOpenChange={(open) => { setDeleteDialogOpen(open); if (!open) setConfirmText(""); }}>
+        <AlertDialog
+          open={deleteDialogOpen}
+          onOpenChange={(open) => {
+            setDeleteDialogOpen(open);
+            if (!open) setConfirmText("");
+          }}
+        >
           <AlertDialogTrigger asChild>
             <button
               onClick={() => setDeleteDialogOpen(true)}
@@ -346,7 +359,12 @@ export default function PreferencesPage() {
         </AlertDialog>
       </section>
 
-      <AlertDialog open={!!transferGroup} onOpenChange={(open) => { if (!open) cancelTransfer(); }}>
+      <AlertDialog
+        open={!!transferGroup}
+        onOpenChange={(open) => {
+          if (!open) cancelTransfer();
+        }}
+      >
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>Transfer Group Ownership</AlertDialogTitle>
@@ -360,27 +378,33 @@ export default function PreferencesPage() {
             <p className="text-sm text-muted-foreground font-sans">Loading members…</p>
           ) : (
             <div className="space-y-2 max-h-64 overflow-y-auto">
-              {members.map((m) => (
-                <label
-                  key={m.user_id}
-                  className="flex items-start gap-3 rounded-lg border border-border p-3 cursor-pointer hover:bg-muted"
-                >
-                  <input
-                    type="radio"
-                    name="new-owner"
-                    className="mt-1"
-                    value={m.user_id}
-                    checked={selectedMemberId === m.user_id}
-                    onChange={() => setSelectedMemberId(m.user_id)}
-                  />
-                  <span className="min-w-0">
-                    <span className="block text-sm font-sans text-foreground">{m.display_name}</span>
-                    <span className="block text-xs font-sans text-muted-foreground break-all">
-                      {m.email ?? "email not available"}
+              {[...members]
+                .sort((a, b) =>
+                  a.display_name.localeCompare(b.display_name, undefined, {
+                    sensitivity: "base",
+                  }),
+                )
+                .map((m) => (
+                  <label
+                    key={m.user_id}
+                    className="flex items-start gap-3 rounded-lg border border-border p-3 cursor-pointer hover:bg-muted"
+                  >
+                    <input
+                      type="radio"
+                      name="new-owner"
+                      className="mt-1"
+                      value={m.user_id}
+                      checked={selectedMemberId === m.user_id}
+                      onChange={() => setSelectedMemberId(m.user_id)}
+                    />
+                    <span className="min-w-0">
+                      <span className="block text-sm font-sans text-foreground">{m.display_name}</span>
+                      <span className="block text-xs font-sans text-muted-foreground break-all">
+                        {m.email ?? "email not available"}
+                      </span>
                     </span>
-                  </span>
-                </label>
-              ))}
+                  </label>
+                ))}
             </div>
           )}
 
@@ -409,6 +433,5 @@ export default function PreferencesPage() {
         </AlertDialogContent>
       </AlertDialog>
     </div>
-
   );
 }
