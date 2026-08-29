@@ -303,42 +303,122 @@ export default function CreateParayanamPage() {
     void handleSubmit();
   };
 
+  /**
+   * The columns a parayanam row carries. Identical for a draft and for the
+   * final creation — only technical_state and draft_state differ, so the
+   * activation path stays exactly what it always was.
+   */
+  const sessionPayload = (state: "DRAFT" | "ACTIVE") => ({
+    user_id: user!.id,
+    group_id: groupId ?? null,
+    parayanam_name: parayanamName.trim() || null,
+    mode: "daily",
+    delivery_mode: deliveryMode,
+    participation_type: participationType,
+    contribution_amount: participationType === "PAID" && contribution.amount ? Number(contribution.amount) : null,
+    payment_url: participationType === "PAID" ? contribution.paymentUrl.trim() || null : null,
+    payment_note: participationType === "PAID" && contribution.note.trim() ? contribution.note.trim() : null,
+    challenge_type: isGroup ? (mode === "RELAY" ? "group_relay" : "group_standard") : "personal",
+    distribution_mode: mode,
+    schedule_pattern: schedulePattern,
+    schedule_weekdays: schedulePattern === "WEEKDAYS" ? weekdays : null,
+    same_for_all_per_day: mode === "SAME_FOR_ALL" ? sameForAllPerDay : 1,
+    schedule_overrides: mode === "SAME_FOR_ALL" ? scheduleOverrides : {},
+    start_date: startDate,
+    end_date: endDate,
+
+    technical_state: state,
+    spiritual_state: "in_progress",
+    dashakams_target: dashakams.length,
+    dashakam_list: dashakams,
+
+    dashakam_set_id: setId === "custom" ? null : setId,
+    // Wizard-only values that have no column of their own; cleared on activation.
+    draft_state:
+      state === "DRAFT"
+        ? {
+            step,
+            setId,
+            custom,
+            selectedTemplateId,
+            contribution,
+            liveSchedule,
+            selectedParticipants,
+            includeSelf,
+            weekdays,
+            scheduleOverrides,
+            sameForAllPerDay,
+          }
+        : null,
+  });
+
+  /**
+   * Saves whatever has been entered so far. Never invites anyone, never builds
+   * a schedule and never creates live sessions — a draft activates nothing.
+   */
+  const handleSaveDraft = async () => {
+    if (!user) return;
+    setSavingDraft(true);
+    setError(null);
+    try {
+      const payload = sessionPayload("DRAFT");
+      if (draftId) {
+        const { error: uErr } = await (supabase as any)
+          .from("challenge_sessions")
+          .update(payload)
+          .eq("id", draftId)
+          .eq("user_id", user.id)
+          .eq("technical_state", "DRAFT");
+        if (uErr) throw new Error(uErr.message);
+      } else {
+        const { data, error: iErr } = await (supabase as any)
+          .from("challenge_sessions")
+          .insert(payload)
+          .select("id")
+          .single();
+        if (iErr) throw new Error(iErr.message);
+        setDraftId(data.id as string);
+      }
+      setDraftSaved(true);
+      toast({
+        title: "Parayanam saved as draft",
+        description: "You can continue setup later.",
+      });
+    } catch (e: any) {
+      setError(e?.message ?? "Could not save the draft.");
+    } finally {
+      setSavingDraft(false);
+    }
+  };
+
   const handleSubmit = async () => {
     if (!user || dashakams.length === 0) return;
     setBusy(true);
     setError(null);
     try {
-      const { data: session, error: sErr } = await (supabase as any)
-        .from("challenge_sessions")
-        .insert({
-          user_id: user.id,
-          group_id: groupId ?? null,
-          parayanam_name: parayanamName.trim() || null,
-          mode: "daily",
-          delivery_mode: deliveryMode,
-          participation_type: participationType,
-          contribution_amount: participationType === "PAID" ? Number(contribution.amount) : null,
-          payment_url: participationType === "PAID" ? contribution.paymentUrl.trim() : null,
-          payment_note: participationType === "PAID" && contribution.note.trim() ? contribution.note.trim() : null,
-          challenge_type: isGroup ? (mode === "RELAY" ? "group_relay" : "group_standard") : "personal",
-          distribution_mode: mode,
-          schedule_pattern: schedulePattern,
-          schedule_weekdays: schedulePattern === "WEEKDAYS" ? weekdays : null,
-          same_for_all_per_day: mode === "SAME_FOR_ALL" ? sameForAllPerDay : 1,
-          schedule_overrides: mode === "SAME_FOR_ALL" ? scheduleOverrides : {},
-          start_date: startDate,
-          end_date: endDate,
-
-          technical_state: "ACTIVE",
-          spiritual_state: "in_progress",
-          dashakams_target: dashakams.length,
-          dashakam_list: dashakams,
-
-          dashakam_set_id: setId === "custom" ? null : setId,
-        })
-        .select("id")
-        .single();
-      if (sErr) throw new Error(sErr.message);
+      // A draft becomes the real parayanam — never a second row.
+      const payload = sessionPayload("ACTIVE");
+      let session: { id: string };
+      if (draftId) {
+        const { data, error: uErr } = await (supabase as any)
+          .from("challenge_sessions")
+          .update(payload)
+          .eq("id", draftId)
+          .eq("user_id", user.id)
+          .eq("technical_state", "DRAFT")
+          .select("id")
+          .single();
+        if (uErr) throw new Error(uErr.message);
+        session = data;
+      } else {
+        const { data, error: sErr } = await (supabase as any)
+          .from("challenge_sessions")
+          .insert(payload)
+          .select("id")
+          .single();
+        if (sErr) throw new Error(sErr.message);
+        session = data;
+      }
       track("parayanam_created");
 
       if (isGroup) {
