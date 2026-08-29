@@ -480,6 +480,7 @@ export default function GroupDetailPage() {
                       onValueChange={(v) => {
                         setPickerTouched(true);
                         setSelectedSessionId(v);
+                        setParayanamMembersOpen(false);
                         setRefreshKey((k) => k + 1);
                       }}
                     >
