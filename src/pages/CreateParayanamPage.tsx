@@ -117,17 +117,65 @@ export default function CreateParayanamPage() {
       .then(({ data }: any) => setGroupName(data?.group_name ?? null));
   }, [groupId]);
 
+  /** Continue Setup — restore every value the Guru had entered. */
   useEffect(() => {
-    if (!setId && sets.length) setSetId(sets[0].id);
-  }, [sets, setId]);
+    const id = params.get("draft");
+    if (!id || !user) return;
+    let cancelled = false;
+    (async () => {
+      const { data, error: dErr } = await (supabase as any)
+        .from("challenge_sessions")
+        .select("*")
+        .eq("id", id)
+        .eq("user_id", user.id)
+        .eq("technical_state", "DRAFT")
+        .maybeSingle();
+      if (cancelled) return;
+      if (dErr || !data) {
+        setLoadingDraft(false);
+        setError(dErr?.message ?? "That draft could not be found.");
+        return;
+      }
+      const d = (data.draft_state ?? {}) as any;
+      setParayanamName(data.parayanam_name ?? "");
+      setDeliveryMode((data.delivery_mode ?? "SELF_PACED") as DeliveryMode);
+      setParticipationType((data.participation_type ?? "FREE") as ParticipationType);
+      setDistribution((data.distribution_mode ?? "SAME_FOR_ALL") as DistributionMode);
+      setSchedulePattern((data.schedule_pattern ?? "DAILY") as SchedulePattern);
+      if (data.start_date) setStartDate(data.start_date);
+      if (data.end_date) setEndDate(data.end_date);
+      setWeekdays(d.weekdays ?? data.schedule_weekdays ?? []);
+      setSameForAllPerDay(d.sameForAllPerDay ?? data.same_for_all_per_day ?? 1);
+      setScheduleOverrides(d.scheduleOverrides ?? data.schedule_overrides ?? {});
+      if (d.setId) setSetId(d.setId);
+      else if (data.dashakam_set_id) setSetId(data.dashakam_set_id);
+      setCustom(d.custom ?? (data.dashakam_set_id ? [] : (data.dashakam_list ?? [])));
+      if (d.selectedTemplateId) setSelectedTemplateId(d.selectedTemplateId);
+      if (d.contribution) setContribution(d.contribution);
+      if (d.liveSchedule) setLiveSchedule(d.liveSchedule);
+      if (Array.isArray(d.selectedParticipants)) setSelectedParticipants(d.selectedParticipants);
+      if (typeof d.includeSelf === "boolean") setIncludeSelf(d.includeSelf);
+      if (d.step) setStep(d.step);
+      setDraftId(id);
+      setLoadingDraft(false);
+    })();
+    return () => {
+      cancelled = true;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [params, user?.id]);
 
   useEffect(() => {
-    if (!user) return;
+    if (!setId && sets.length && !loadingDraft) setSetId(sets[0].id);
+  }, [sets, setId, loadingDraft]);
+
+  useEffect(() => {
+    if (!user || loadingDraft) return;
     setSelectedParticipants((prev) =>
       prev.length ? prev : members.map((m) => m.user_id).filter((id) => id !== user.id),
     );
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [members.length, user?.id]);
+  }, [members.length, user?.id, loadingDraft]);
 
   const orderedSets = useMemo(() => [...sets].sort((a, b) => Number(b.is_official) - Number(a.is_official)), [sets]);
   const selectedSet = sets.find((s) => s.id === setId);
