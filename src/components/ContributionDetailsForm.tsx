@@ -46,8 +46,8 @@ export default function ContributionDetailsForm({
       </div>
 
       <p className="font-sans text-xs leading-snug text-muted-foreground">
-        You are responsible for this payment link and for verifying contributions received. narayaneeyam.app does not
-        process or hold any funds.
+        Payment is arranged directly between you and the participant. You are responsible for the payment instructions
+        and for verifying contributions received. narayaneeyam.app does not process, verify, or hold these funds.
       </p>
 
       <div>
