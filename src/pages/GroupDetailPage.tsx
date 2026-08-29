@@ -93,7 +93,7 @@ export default function GroupDetailPage() {
   const [refreshKey, setRefreshKey] = useState(0);
   const [membersOpen, setMembersOpen] = useState(true);
   const [helpOpen, setHelpOpen] = useState(false);
-
+  const [parayanamMembersOpen, setParayanamMembersOpen] = useState(false);
   const [searchParams] = useSearchParams();
   const sessionParam = searchParams.get("session");
   const [selectedSessionId, setSelectedSessionId] = useState<string | null>(sessionParam);
@@ -526,33 +526,61 @@ export default function GroupDetailPage() {
                   {loadingMembers || loadingParticipants ? (
                     <Loader2 className="mt-4 h-5 w-5 animate-spin text-primary" />
                   ) : (
-                    <ul className="mt-4 max-h-[320px] space-y-3 overflow-y-auto pr-2">
-                      {members.map((m) => (
-                        <li key={m.id} className="flex items-center gap-3">
-                          <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-gradient-peacock font-sans text-xs font-bold text-primary-foreground">
-                            {initials(m.display_name)}
-                          </span>
-                          <div className="min-w-0 flex-1">
-                            <p className="truncate font-sans text-sm font-semibold text-foreground">{m.display_name}</p>
-                            <p className="flex flex-wrap items-center gap-2 font-sans text-xs text-muted-foreground">
-                              <span>
-                                {m.completed}
-                                {target ? ` / ${target}` : ""} dashakams completed
-                              </span>
-                              <span
-                                className={
-                                  statusFor(m.user_id) === "confirmed"
-                                    ? "rounded-full bg-secondary px-2 py-0.5 text-[10px] uppercase tracking-wide text-secondary-foreground"
-                                    : "rounded-full border border-primary/50 px-2 py-0.5 text-[10px] uppercase tracking-wide text-primary"
-                                }
-                              >
-                                {statusFor(m.user_id) ? STATUS_LABEL[statusFor(m.user_id)!] : "Not invited"}
-                              </span>
-                            </p>
-                          </div>
-                        </li>
-                      ))}
-                    </ul>
+                    <div className="mt-4 rounded-xl border border-border">
+                      <button
+                        type="button"
+                        onClick={() => setParayanamMembersOpen((v) => !v)}
+                        className="flex w-full items-center justify-between gap-3 px-4 py-3 text-left"
+                        aria-expanded={parayanamMembersOpen}
+                      >
+                        <span className="font-sans text-sm font-semibold text-foreground">
+                          Group members & Parayanam status ({members.length})
+                        </span>
+
+                        {parayanamMembersOpen ? (
+                          <ChevronUp className="h-4 w-4 text-muted-foreground" />
+                        ) : (
+                          <ChevronDown className="h-4 w-4 text-muted-foreground" />
+                        )}
+                      </button>
+
+                      {parayanamMembersOpen && (
+                        <div className="border-t border-border px-4 pb-4">
+                          <ul className="mt-3 max-h-[320px] space-y-3 overflow-y-auto pr-2">
+                            {members.map((m) => (
+                              <li key={m.id} className="flex items-center gap-3">
+                                <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-gradient-peacock font-sans text-xs font-bold text-primary-foreground">
+                                  {initials(m.display_name)}
+                                </span>
+
+                                <div className="min-w-0 flex-1">
+                                  <p className="truncate font-sans text-sm font-semibold text-foreground">
+                                    {m.display_name}
+                                  </p>
+
+                                  <p className="flex flex-wrap items-center gap-2 font-sans text-xs text-muted-foreground">
+                                    <span>
+                                      {m.completed}
+                                      {target ? ` / ${target}` : ""} dashakams completed
+                                    </span>
+
+                                    <span
+                                      className={
+                                        statusFor(m.user_id) === "confirmed"
+                                          ? "rounded-full bg-secondary px-2 py-0.5 text-[10px] uppercase tracking-wide text-secondary-foreground"
+                                          : "rounded-full border border-primary/50 px-2 py-0.5 text-[10px] uppercase tracking-wide text-primary"
+                                      }
+                                    >
+                                      {statusFor(m.user_id) ? STATUS_LABEL[statusFor(m.user_id)!] : "Not invited"}
+                                    </span>
+                                  </p>
+                                </div>
+                              </li>
+                            ))}
+                          </ul>
+                        </div>
+                      )}
+                    </div>
                   )}
 
                   <ParayanamParticipantManager sessionId={selectedSessionId} isOwner={isOwner} />
