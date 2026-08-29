@@ -8,6 +8,7 @@ const fmt = (d: string | null) => {
   if (Number.isNaN(dt.getTime())) return d;
   return dt.toLocaleDateString(undefined, { day: "numeric", month: "short", year: "numeric" });
 };
+const isPaymentLink = (value: string | null | undefined) => !!value && /^https?:\/\//i.test(value.trim());
 
 interface Props {
   invite: PendingInvite;
@@ -68,15 +69,19 @@ export default function ParayanamInviteCard({ invite: i, busy, onAccept, onDecli
             </div>
             {i.payment_url && (
               <div>
-                <a
-                  href={i.payment_url}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="inline-flex items-center gap-1 text-primary underline underline-offset-2"
-                >
-                  <HandCoins className="h-3.5 w-3.5" /> Contribution link
-                  <ExternalLink className="h-3 w-3" />
-                </a>
+                {isPaymentLink(i.payment_url) ? (
+                  <a
+                    href={i.payment_url.trim()}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-1 text-primary underline underline-offset-2"
+                  >
+                    <HandCoins className="h-3.5 w-3.5" /> Make Payment
+                    <ExternalLink className="h-3 w-3" />
+                  </a>
+                ) : (
+                  <p className="whitespace-pre-wrap font-sans text-xs text-foreground/80">{i.payment_url}</p>
+                )}
               </div>
             )}
             <p className="font-sans text-[11px] leading-snug text-muted-foreground">
@@ -138,17 +143,20 @@ export function AwaitingContributionCard({ invite: i }: { invite: PendingInvite 
       {i.contribution_amount != null && (
         <p className="mt-2 font-sans text-xs text-foreground/80">Contribution: ₹{i.contribution_amount}</p>
       )}
-      {i.payment_url && (
-        <a
-          href={i.payment_url}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="mt-2 inline-flex items-center gap-1 font-sans text-xs text-primary underline underline-offset-2"
-        >
-          <HandCoins className="h-3.5 w-3.5" /> Open contribution link
-          <ExternalLink className="h-3 w-3" />
-        </a>
-      )}
+      {i.payment_url &&
+        (isPaymentLink(i.payment_url) ? (
+          <a
+            href={i.payment_url.trim()}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="mt-2 inline-flex items-center gap-1 font-sans text-xs text-primary underline underline-offset-2"
+          >
+            <HandCoins className="h-3.5 w-3.5" /> Make Payment
+            <ExternalLink className="h-3 w-3" />
+          </a>
+        ) : (
+          <p className="mt-2 whitespace-pre-wrap font-sans text-xs text-foreground/80">{i.payment_url}</p>
+        ))}
       <p className="mt-2 font-sans text-[11px] leading-snug text-muted-foreground">
         This contribution goes directly to the Guru — narayaneeyam.app does not process, verify, or hold this payment.
       </p>
