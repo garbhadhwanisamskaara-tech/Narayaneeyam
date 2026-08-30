@@ -2,7 +2,7 @@ import { useCallback, useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 
-export type ParticipantStatus = "invited" | "confirmed" | "declined";
+export type ParticipantStatus = "invited" | "confirmed" | "declined" | "left";
 
 export interface Participant {
   id: string;
