@@ -219,8 +219,48 @@ export default function GroupDetailPage() {
   const isOwner = !!user && !!group && group.owner_id === user.id;
   const { canCreateParayanam, canManageParayanam } = useCapabilities();
 
-  const ownerMember = members.find((m) => m.user_id === group?.owner_id);
-  const ownerName = ownerMember?.display_name ?? null;
+  // Guru identity for the header and the group picker: profiles of this group's
+  // owner plus every owner across the user's groups (one batched query).
+  const [ownerProfiles, setOwnerProfiles] = useState<
+    Record<string, { display_name: string | null; email: string | null }>
+  >({});
+
+  useEffect(() => {
+    const ids = Array.from(
+      new Set([group?.owner_id, ...myGroups.map((g) => g.owner_id)].filter((v): v is string => !!v)),
+    );
+    if (!ids.length) return;
+    let cancelled = false;
+    (async () => {
+      const { data } = await (supabase as any)
+        .from("profiles")
+        .select("id, display_name, email")
+        .in("id", ids);
+      if (!cancelled && data) {
+        setOwnerProfiles(
+          Object.fromEntries(
+            (data as any[]).map((p) => [p.id, { display_name: p.display_name ?? null, email: p.email ?? null }]),
+          ),
+        );
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [group?.owner_id, myGroups]);
+
+  /** "Vidya" / falls back to email; never duplicated when the name is the email. */
+  const guruNameOf = (profile?: { display_name: string | null; email: string | null } | null) =>
+    profile?.display_name?.trim() || profile?.email || "Guru";
+  const guruEmailOf = (profile?: { display_name: string | null; email: string | null } | null) =>
+    profile?.email?.trim() || null;
+
+  const ownerProfile = group ? ownerProfiles[group.owner_id] : undefined;
+  const guruLabel = isOwner
+    ? `You${guruEmailOf(ownerProfile) ? ` — ${guruEmailOf(ownerProfile)}` : ""}`
+    : [guruNameOf(ownerProfile), guruEmailOf(ownerProfile) !== guruNameOf(ownerProfile) ? guruEmailOf(ownerProfile) : null]
+        .filter(Boolean)
+        .join(" — ");
 
   // Only people with a relationship to the selected parayanam (invited, confirmed
   // or declined) — plus the owner, who runs it — may see its progress.
@@ -321,11 +361,19 @@ export default function GroupDetailPage() {
                   <SelectValue placeholder="Choose a group" />
                 </SelectTrigger>
                 <SelectContent>
-                  {myGroups.map((g) => (
-                    <SelectItem key={g.id} value={g.id}>
-                      {g.group_name}
-                    </SelectItem>
-                  ))}
+                  {myGroups.map((g) => {
+                    const op = ownerProfiles[g.owner_id];
+                    const name = guruNameOf(op);
+                    const email = guruEmailOf(op);
+                    const label = [g.group_name, name, email && email !== name ? email : null]
+                      .filter(Boolean)
+                      .join(" — ");
+                    return (
+                      <SelectItem key={g.id} value={g.id} className="font-sans text-sm">
+                        <span className="block max-w-[46vw] truncate sm:max-w-[320px]">{label}</span>
+                      </SelectItem>
+                    );
+                  })}
                 </SelectContent>
               </Select>
             </div>
@@ -334,6 +382,7 @@ export default function GroupDetailPage() {
           <div className="mt-4 flex flex-wrap items-center justify-between gap-3">
             <div className="min-w-0">
               <h1 className="font-display text-2xl font-bold text-foreground">Group: {group.group_name}</h1>
+              <p className="font-sans text-xs text-muted-foreground">Guru: {guruLabel}</p>
               <p className="font-sans text-xs text-muted-foreground">
                 {isOwner ? "You are the Guru of this group." : "You are a member of this group."}
               </p>
