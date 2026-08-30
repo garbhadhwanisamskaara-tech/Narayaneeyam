@@ -39,6 +39,9 @@ interface Props {
   participants: Participant[];
   /** Called after any change so the page can refetch everything together. */
   onChanged: () => void | Promise<void>;
+  /** Optional controlled open state — lets a parent open the dialog itself. */
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
 }
 
 const STATUS_LABEL: Record<ParticipantStatus, string> = {
