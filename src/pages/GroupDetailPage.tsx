@@ -608,6 +608,8 @@ export default function GroupDetailPage() {
                       ownerId={group.owner_id}
                       participants={participants}
                       onChanged={handleParayanamChanged}
+                      open={manageParayanamOpen}
+                      onOpenChange={setManageParayanamOpen}
                     />
                     <Link
                       to={`/groups/${group.id}/schedule?session=${selectedSessionId}`}
