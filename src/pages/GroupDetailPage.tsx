@@ -536,128 +536,121 @@ export default function GroupDetailPage() {
                 />
               )}
 
-            {isOwner && (
-  <>
-    {loadingMembers || loadingParticipants ? (
-      <Loader2 className="mt-4 h-5 w-5 animate-spin text-primary" />
-    ) : (
-      <div className="mt-4 rounded-xl border border-border">
-        <button
-          type="button"
-          onClick={() => setParayanamMembersOpen((v) => !v)}
-          className="flex w-full items-center justify-between gap-3 px-4 py-3 text-left"
-          aria-expanded={parayanamMembersOpen}
-        >
-          <span className="font-sans text-sm font-semibold text-foreground">
-            Group members & Parayanam status ({members.length})
-          </span>
-
-          {parayanamMembersOpen ? (
-            <ChevronUp className="h-4 w-4 text-muted-foreground" />
-          ) : (
-            <ChevronDown className="h-4 w-4 text-muted-foreground" />
-          )}
-        </button>
-
-        {parayanamMembersOpen && (
-          <div className="border-t border-border px-4 pb-4">
-            <ul className="mt-3 max-h-[320px] space-y-3 overflow-y-auto pr-2">
-              {members.map((m) => (
-                <li key={m.id} className="flex items-center gap-3">
-                  <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-gradient-peacock font-sans text-xs font-bold text-primary-foreground">
-                    {initials(m.display_name)}
-                  </span>
-
-                  <div className="min-w-0 flex-1">
-                    <p className="truncate font-sans text-sm font-semibold text-foreground">
-                      {m.display_name}
-                    </p>
-
-                    <p className="flex flex-wrap items-center gap-2 font-sans text-xs text-muted-foreground">
-                      <span>
-                        {m.completed}
-                        {target ? ` / ${target}` : ""} dashakams completed
-                      </span>
-
-                      <span
-                        className={
-                          statusFor(m.user_id) === "confirmed"
-                            ? "rounded-full bg-secondary px-2 py-0.5 text-[10px] uppercase tracking-wide text-secondary-foreground"
-                            : "rounded-full border border-primary/50 px-2 py-0.5 text-[10px] uppercase tracking-wide text-primary"
-                        }
+              {isOwner && (
+                <>
+                  {loadingMembers || loadingParticipants ? (
+                    <Loader2 className="mt-4 h-5 w-5 animate-spin text-primary" />
+                  ) : (
+                    <div className="mt-4 rounded-xl border border-border">
+                      <button
+                        type="button"
+                        onClick={() => setParayanamMembersOpen((v) => !v)}
+                        className="flex w-full items-center justify-between gap-3 px-4 py-3 text-left"
+                        aria-expanded={parayanamMembersOpen}
                       >
-                        {statusFor(m.user_id)
-                          ? STATUS_LABEL[statusFor(m.user_id)!]
-                          : "Not invited"}
-                      </span>
+                        <span className="font-sans text-sm font-semibold text-foreground">
+                          Group members & Parayanam status ({members.length})
+                        </span>
+
+                        {parayanamMembersOpen ? (
+                          <ChevronUp className="h-4 w-4 text-muted-foreground" />
+                        ) : (
+                          <ChevronDown className="h-4 w-4 text-muted-foreground" />
+                        )}
+                      </button>
+
+                      {parayanamMembersOpen && (
+                        <div className="border-t border-border px-4 pb-4">
+                          <ul className="mt-3 max-h-[320px] space-y-3 overflow-y-auto pr-2">
+                            {members.map((m) => (
+                              <li key={m.id} className="flex items-center gap-3">
+                                <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-gradient-peacock font-sans text-xs font-bold text-primary-foreground">
+                                  {initials(m.display_name)}
+                                </span>
+
+                                <div className="min-w-0 flex-1">
+                                  <p className="truncate font-sans text-sm font-semibold text-foreground">
+                                    {m.display_name}
+                                  </p>
+
+                                  <p className="flex flex-wrap items-center gap-2 font-sans text-xs text-muted-foreground">
+                                    <span>
+                                      {m.completed}
+                                      {target ? ` / ${target}` : ""} dashakams completed
+                                    </span>
+
+                                    <span
+                                      className={
+                                        statusFor(m.user_id) === "confirmed"
+                                          ? "rounded-full bg-secondary px-2 py-0.5 text-[10px] uppercase tracking-wide text-secondary-foreground"
+                                          : "rounded-full border border-primary/50 px-2 py-0.5 text-[10px] uppercase tracking-wide text-primary"
+                                      }
+                                    >
+                                      {statusFor(m.user_id) ? STATUS_LABEL[statusFor(m.user_id)!] : "Not invited"}
+                                    </span>
+                                  </p>
+                                </div>
+                              </li>
+                            ))}
+                          </ul>
+                        </div>
+                      )}
+                    </div>
+                  )}
+
+                  {/* WEB + TWA: invite and manage participants */}
+                  <ParayanamParticipantManager sessionId={selectedSessionId} isOwner={isOwner} />
+
+                  {/* WEB ONLY: edit Parayanam and manage schedule */}
+                  {canManageParayanam && (
+                    <div className="mt-5 flex flex-wrap gap-3">
+                      <ManageParayanamDialog
+                        groupId={group.id}
+                        sessionId={selectedSessionId}
+                        parayanamName={parayanamName}
+                        finalized={!!sessionFinalizedAt}
+                        members={members}
+                        ownerId={group.owner_id}
+                        participants={participants}
+                        onChanged={handleParayanamChanged}
+                        open={manageParayanamOpen}
+                        onOpenChange={setManageParayanamOpen}
+                      />
+
+                      <Link
+                        to={`/groups/${group.id}/schedule?session=${selectedSessionId}`}
+                        className="inline-flex items-center gap-2 rounded-lg border border-border px-4 py-2 font-sans text-sm font-semibold text-foreground hover:border-primary"
+                      >
+                        <CalendarDays className="h-4 w-4" />
+                        Manage schedule
+                      </Link>
+                    </div>
+                  )}
+
+                  {/* WEB + TWA: start an existing Parayanam */}
+                  {canStartNow && (
+                    <div className="mt-5">
+                      <button
+                        onClick={handleStartNow}
+                        disabled={starting || relayNeedsConfirmation}
+                        className="inline-flex items-center gap-2 rounded-lg border border-primary px-4 py-2 font-sans text-sm font-semibold text-primary hover:bg-primary/10 disabled:opacity-60"
+                      >
+                        {starting ? <Loader2 className="h-4 w-4 animate-spin" /> : <PlayCircle className="h-4 w-4" />}
+                        Start parayanam now
+                      </button>
+                    </div>
+                  )}
+
+                  {canStartNow && relayNeedsConfirmation && (
+                    <p className="mt-2 font-sans text-sm text-muted-foreground">
+                      Waiting for at least one participant to confirm — a relay parayanam can only be started once
+                      someone has accepted their invitation.
                     </p>
-                  </div>
-                </li>
-              ))}
-            </ul>
-          </div>
-        )}
-      </div>
-    )}
-
-    {/* WEB + TWA: invite and manage participants */}
-    <ParayanamParticipantManager
-      sessionId={selectedSessionId}
-      isOwner={isOwner}
-    />
-
-    {/* WEB ONLY: edit Parayanam and manage schedule */}
-    {canManageParayanam && (
-      <div className="mt-5 flex flex-wrap gap-3">
-        <ManageParayanamDialog
-          groupId={group.id}
-          sessionId={selectedSessionId}
-          parayanamName={parayanamName}
-          finalized={!!sessionFinalizedAt}
-          members={members}
-          ownerId={group.owner_id}
-          participants={participants}
-          onChanged={handleParayanamChanged}
-          open={manageParayanamOpen}
-          onOpenChange={setManageParayanamOpen}
-        />
-
-        <Link
-          to={`/groups/${group.id}/schedule?session=${selectedSessionId}`}
-          className="inline-flex items-center gap-2 rounded-lg border border-border px-4 py-2 font-sans text-sm font-semibold text-foreground hover:border-primary"
-        >
-          <CalendarDays className="h-4 w-4" />
-          Manage schedule
-        </Link>
-      </div>
-    )}
-
-    {/* WEB + TWA: start an existing Parayanam */}
-    {canStartNow && (
-      <div className="mt-5">
-        <button
-          onClick={handleStartNow}
-          disabled={starting || relayNeedsConfirmation}
-          className="inline-flex items-center gap-2 rounded-lg border border-primary px-4 py-2 font-sans text-sm font-semibold text-primary hover:bg-primary/10 disabled:opacity-60"
-        >
-          {starting ? (
-            <Loader2 className="h-4 w-4 animate-spin" />
-          ) : (
-            <PlayCircle className="h-4 w-4" />
+                  )}
+                </>
+              )}
+            </section>
           )}
-          Start parayanam now
-        </button>
-      </div>
-    )}
-
-    {canStartNow && relayNeedsConfirmation && (
-      <p className="mt-2 font-sans text-sm text-muted-foreground">
-        Waiting for at least one participant to confirm — a relay parayanam
-        can only be started once someone has accepted their invitation.
-      </p>
-    )}
-  </>
-)}
 
           {!selectedSessionId && !loadingParayanams && isOwner && (
             <section className="mt-6 rounded-2xl border border-border bg-card p-5 shadow-peacock">
