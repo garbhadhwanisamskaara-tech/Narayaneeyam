@@ -333,6 +333,9 @@ export default function GroupDetailPage() {
           <div className="mt-4 flex flex-wrap items-center justify-between gap-3">
             <div className="min-w-0">
               <h1 className="font-display text-2xl font-bold text-foreground">Group: {group.group_name}</h1>
+              <p className="font-sans text-xs text-muted-foreground">
+                {isOwner ? "You are the Guru of this group." : "You are a member of this group."}
+              </p>
               <p className="font-sans text-sm text-muted-foreground">
                 {members.length} {members.length === 1 ? "member" : "members"}
               </p>
