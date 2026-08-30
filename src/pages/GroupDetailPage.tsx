@@ -361,11 +361,19 @@ export default function GroupDetailPage() {
                   <SelectValue placeholder="Choose a group" />
                 </SelectTrigger>
                 <SelectContent>
-                  {myGroups.map((g) => (
-                    <SelectItem key={g.id} value={g.id}>
-                      {g.group_name}
-                    </SelectItem>
-                  ))}
+                  {myGroups.map((g) => {
+                    const op = ownerProfiles[g.owner_id];
+                    const name = guruNameOf(op);
+                    const email = guruEmailOf(op);
+                    const label = [g.group_name, name, email && email !== name ? email : null]
+                      .filter(Boolean)
+                      .join(" — ");
+                    return (
+                      <SelectItem key={g.id} value={g.id} className="font-sans text-sm">
+                        <span className="block max-w-[46vw] truncate sm:max-w-[320px]">{label}</span>
+                      </SelectItem>
+                    );
+                  })}
                 </SelectContent>
               </Select>
             </div>
@@ -374,6 +382,7 @@ export default function GroupDetailPage() {
           <div className="mt-4 flex flex-wrap items-center justify-between gap-3">
             <div className="min-w-0">
               <h1 className="font-display text-2xl font-bold text-foreground">Group: {group.group_name}</h1>
+              <p className="font-sans text-xs text-muted-foreground">Guru: {guruLabel}</p>
               <p className="font-sans text-xs text-muted-foreground">
                 {isOwner ? "You are the Guru of this group." : "You are a member of this group."}
               </p>
