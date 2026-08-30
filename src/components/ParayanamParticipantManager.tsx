@@ -49,6 +49,7 @@ export default function ParayanamParticipantManager({ sessionId, isOwner }: Prop
   const [error, setError] = useState<string | null>(null);
   const [pendingOpen, setPendingOpen] = useState(false);
   const [membersOpen, setMembersOpen] = useState(false);
+  const [pastOpen, setPastOpen] = useState(false);
   const load = useCallback(async () => {
     if (!sessionId) {
       setRows([]);
@@ -98,6 +99,7 @@ export default function ParayanamParticipantManager({ sessionId, isOwner }: Prop
   useEffect(() => {
     setPendingOpen(false);
     setMembersOpen(false);
+    setPastOpen(false);
     void load();
   }, [load]);
 
@@ -122,7 +124,9 @@ export default function ParayanamParticipantManager({ sessionId, isOwner }: Prop
   if (!rows.length) return null;
 
   const pendingInvitees = rows.filter((r) => r.status === "invited");
-  const others = rows.filter((r) => r.status !== "invited");
+  const members = rows.filter((r) => r.status === "confirmed");
+
+  const pastParticipants = rows.filter((r) => r.status === "declined" || r.status === "left");
 
   const renderRow = (r: Row) => {
     const contribution = (r.contribution_status ?? "not_required") as ContributionStatus;
@@ -199,7 +203,7 @@ export default function ParayanamParticipantManager({ sessionId, isOwner }: Prop
           )}
         </div>
       )}
-      {others.length > 0 && (
+      {members.length > 0 && (
         <div className="rounded-2xl border border-border">
           <button
             type="button"
@@ -209,7 +213,7 @@ export default function ParayanamParticipantManager({ sessionId, isOwner }: Prop
           >
             <span className="flex items-center gap-2 font-display text-sm font-semibold text-foreground">
               <Users className="h-4 w-4 text-primary" />
-              Members ({others.length})
+              Members ({members.length})
             </span>
 
             {membersOpen ? (
@@ -221,12 +225,38 @@ export default function ParayanamParticipantManager({ sessionId, isOwner }: Prop
 
           {membersOpen && (
             <div className="border-t border-border px-4 pb-4">
-              <ul className="mt-3 max-h-[320px] space-y-2 overflow-y-auto pr-2">{others.map(renderRow)}</ul>
+              <ul className="mt-3 max-h-[320px] space-y-2 overflow-y-auto pr-2">{members.map(renderRow)} </ul>
             </div>
           )}
         </div>
       )}
+      {isOwner && pastParticipants.length > 0 && (
+        <div className="rounded-2xl border border-border">
+          <button
+            type="button"
+            onClick={() => setPastOpen((v) => !v)}
+            aria-expanded={pastOpen}
+            className="flex w-full items-center justify-between gap-3 p-4 text-left"
+          >
+            <span className="flex items-center gap-2 font-display text-sm font-semibold text-foreground">
+              <Users className="h-4 w-4 text-primary" />
+              Past / Not participating ({pastParticipants.length})
+            </span>
 
+            {pastOpen ? (
+              <ChevronUp className="h-4 w-4 shrink-0 text-muted-foreground" />
+            ) : (
+              <ChevronDown className="h-4 w-4 shrink-0 text-muted-foreground" />
+            )}
+          </button>
+
+          {pastOpen && (
+            <div className="border-t border-border px-4 pb-4">
+              <ul className="mt-3 max-h-[320px] space-y-2 overflow-y-auto pr-2">{pastParticipants.map(renderRow)}</ul>
+            </div>
+          )}
+        </div>
+      )}
       {error && <p className="font-sans text-sm text-destructive">{error}</p>}
     </div>
   );
