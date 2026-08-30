@@ -16,6 +16,7 @@ const STATUS_LABEL: Record<ParticipantStatus, string> = {
   invited: "Invited",
   confirmed: "Confirmed",
   declined: "Declined",
+  left: "Left",
 };
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
