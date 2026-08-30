@@ -532,13 +532,11 @@ export default function GroupDetailPage() {
                 <ParayanamLiveSessionsSection
                   challengeSessionId={selectedSessionId}
                   isOwner={isOwner}
-                  onManage={
-                    isOwner && canManageParayanam ? () => setManageParayanamOpen(true) : undefined
-                  }
+                  onManage={isOwner && canManageParayanam ? () => setManageParayanamOpen(true) : undefined}
                 />
               )}
 
-              {isOwner && canManageParayanam && (
+              {isOwner && (
                 <>
                   {loadingMembers || loadingParticipants ? (
                     <Loader2 className="mt-4 h-5 w-5 animate-spin text-primary" />
@@ -601,37 +599,38 @@ export default function GroupDetailPage() {
                   )}
 
                   <ParayanamParticipantManager sessionId={selectedSessionId} isOwner={isOwner} />
-
-                  <div className="mt-5 flex flex-wrap gap-3">
-                    <ManageParayanamDialog
-                      groupId={group.id}
-                      sessionId={selectedSessionId}
-                      parayanamName={parayanamName}
-                      finalized={!!sessionFinalizedAt}
-                      members={members}
-                      ownerId={group.owner_id}
-                      participants={participants}
-                      onChanged={handleParayanamChanged}
-                      open={manageParayanamOpen}
-                      onOpenChange={setManageParayanamOpen}
-                    />
-                    <Link
-                      to={`/groups/${group.id}/schedule?session=${selectedSessionId}`}
-                      className="inline-flex items-center gap-2 rounded-lg border border-border px-4 py-2 font-sans text-sm font-semibold text-foreground hover:border-primary"
-                    >
-                      <CalendarDays className="h-4 w-4" /> Manage schedule
-                    </Link>
-                    {canStartNow && (
-                      <button
-                        onClick={handleStartNow}
-                        disabled={starting || relayNeedsConfirmation}
-                        className="inline-flex items-center gap-2 rounded-lg border border-primary px-4 py-2 font-sans text-sm font-semibold text-primary hover:bg-primary/10 disabled:opacity-60"
+                  {canManageParayanam && (
+                    <div className="mt-5 flex flex-wrap gap-3">
+                      <ManageParayanamDialog
+                        groupId={group.id}
+                        sessionId={selectedSessionId}
+                        parayanamName={parayanamName}
+                        finalized={!!sessionFinalizedAt}
+                        members={members}
+                        ownerId={group.owner_id}
+                        participants={participants}
+                        onChanged={handleParayanamChanged}
+                        open={manageParayanamOpen}
+                        onOpenChange={setManageParayanamOpen}
+                      />
+                      <Link
+                        to={`/groups/${group.id}/schedule?session=${selectedSessionId}`}
+                        className="inline-flex items-center gap-2 rounded-lg border border-border px-4 py-2 font-sans text-sm font-semibold text-foreground hover:border-primary"
                       >
-                        {starting ? <Loader2 className="h-4 w-4 animate-spin" /> : <PlayCircle className="h-4 w-4" />}
-                        Start parayanam now
-                      </button>
-                    )}
-                  </div>
+                        <CalendarDays className="h-4 w-4" /> Manage schedule
+                      </Link>
+                      {canStartNow && (
+                        <button
+                          onClick={handleStartNow}
+                          disabled={starting || relayNeedsConfirmation}
+                          className="inline-flex items-center gap-2 rounded-lg border border-primary px-4 py-2 font-sans text-sm font-semibold text-primary hover:bg-primary/10 disabled:opacity-60"
+                        >
+                          {tsarting ? <Loader2 className="h-4 w-4 animate-spin" /> : <PlayCircle className="h-4 w-4" />}
+                          Start parayanam now
+                        </button>
+                      )}
+                    </div>
+                  )}
                   {canStartNow && relayNeedsConfirmation && (
                     <p className="mt-2 font-sans text-sm text-muted-foreground">
                       Waiting for at least one participant to confirm — a relay parayanam can only be started once
