@@ -2,7 +2,7 @@ import { useCallback, useEffect, useState } from "react";
 import { CheckCircle2, ChevronDown, ChevronUp, Loader2, MailQuestion, RotateCcw, Users } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 
-type InviteStatus = "invited" | "confirmed" | "declined";
+type InviteStatus = "invited" | "confirmed" | "declined" | "left";
 type ContributionStatus = "not_required" | "pending" | "confirmed";
 type AccessStatus = "active" | "locked";
 
@@ -19,6 +19,7 @@ const INVITE_LABEL: Record<InviteStatus, string> = {
   invited: "Invited",
   confirmed: "Confirmed",
   declined: "Declined",
+  left: "Left",
 };
 
 const CONTRIBUTION_LABEL: Record<ContributionStatus, string> = {
@@ -121,7 +122,7 @@ export default function ParayanamParticipantManager({ sessionId, isOwner }: Prop
   if (!rows.length) return null;
 
   const pendingInvitees = rows.filter((r) => r.status === "invited");
-  const others = rows.filter((r) => r.status !== "invited" && r.status !== "declined");
+  const others = rows.filter((r) => r.status !== "invited");
 
   const renderRow = (r: Row) => {
     const contribution = (r.contribution_status ?? "not_required") as ContributionStatus;
