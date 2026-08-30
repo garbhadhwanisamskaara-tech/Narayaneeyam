@@ -1,27 +1,13 @@
 import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import {
-  Bell,
-  Check,
-  ChevronDown,
-  ChevronRight,
-  Loader2,
-  MessageSquare,
-  X,
-} from "lucide-react";
+import { Bell, Check, ChevronDown, ChevronRight, Loader2, MessageSquare, X } from "lucide-react";
 import { useMyPendingInvites } from "@/hooks/useParayanamParticipants";
 import { useTicketReplyAlerts } from "@/hooks/useTicketReplyAlerts";
 import { useMyDashakamQueue } from "@/hooks/useMyDashakamQueue";
 import DashakamQueueList from "@/components/DashakamQueueList";
 import { track } from "@/lib/analytics";
 
-function CollapsibleItem({
-  summary,
-  children,
-}: {
-  summary: React.ReactNode;
-  children: React.ReactNode;
-}) {
+function CollapsibleItem({ summary, children }: { summary: React.ReactNode; children: React.ReactNode }) {
   const [open, setOpen] = useState(false);
   return (
     <div className="border-b border-border last:border-b-0">
@@ -52,10 +38,13 @@ export default function NotificationBell() {
 
   const { invites, busyId, respond } = useMyPendingInvites();
   const { alerts } = useTicketReplyAlerts();
-  const { todayRows, pendingRows, pendingCount } = useMyDashakamQueue();
+  const { todayRows, pendingRows } = useMyDashakamQueue();
 
   const todayCount = todayRows.reduce((n, r) => n + r.items.length, 0);
-  const count = invites.length + alerts.length + todayCount + pendingCount;
+
+  const pendingDisplayCount = pendingRows.reduce((n, r) => n + r.items.length, 0);
+
+  const count = invites.length + alerts.length + todayCount + pendingDisplayCount;
 
   useEffect(() => {
     if (!open) return;
@@ -107,16 +96,12 @@ export default function NotificationBell() {
           </div>
 
           {empty ? (
-            <p className="py-4 font-sans text-sm text-muted-foreground">
-              Nothing needs your attention right now.
-            </p>
+            <p className="py-4 font-sans text-sm text-muted-foreground">Nothing needs your attention right now.</p>
           ) : (
             <div className="space-y-4">
               {invites.length > 0 && (
                 <div>
-                  <h4 className="font-display text-sm font-semibold text-foreground">
-                    Parayanam confirmations
-                  </h4>
+                  <h4 className="font-display text-sm font-semibold text-foreground">Parayanam confirmations</h4>
                   <div className="mt-1">
                     {invites.map((i) => (
                       <CollapsibleItem
@@ -162,9 +147,7 @@ export default function NotificationBell() {
 
               {alerts.length > 0 && (
                 <div>
-                  <h4 className="font-display text-sm font-semibold text-foreground">
-                    Support ticket replies
-                  </h4>
+                  <h4 className="font-display text-sm font-semibold text-foreground">Support ticket replies</h4>
                   <div className="mt-1">
                     {alerts.map((a) => (
                       <CollapsibleItem
