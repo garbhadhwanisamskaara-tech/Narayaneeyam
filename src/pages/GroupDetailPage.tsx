@@ -23,6 +23,7 @@ import DashakamGarden from "@/components/DashakamGarden";
 import { useSessionGarden } from "@/hooks/useSessionGarden";
 import PendingInvitesSection from "@/components/PendingInvitesSection";
 import ManageParayanamDialog from "@/components/ManageParayanamDialog";
+import ParayanamLiveSessionsSection from "@/components/ParayanamLiveSessionsSection";
 import ParayanamParticipantManager from "@/components/ParayanamParticipantManager";
 import ParayanamDraftsList from "@/components/ParayanamDraftsList";
 import ParayanamScheduleViews from "@/components/ParayanamScheduleViews";
@@ -522,6 +523,16 @@ export default function GroupDetailPage() {
                   ? `${formatDate(selectedParayanam.start_date)} – ${formatDate(selectedParayanam.end_date)}`
                   : "Dates will appear once this parayanam is planned."}
               </p>
+
+              {(isOwner || canSeeParayanamData) && (
+                <ParayanamLiveSessionsSection
+                  challengeSessionId={selectedSessionId}
+                  isOwner={isOwner}
+                  onManage={
+                    isOwner && canManageParayanam ? () => setManageParayanamOpen(true) : undefined
+                  }
+                />
+              )}
 
               {isOwner && canManageParayanam && (
                 <>
