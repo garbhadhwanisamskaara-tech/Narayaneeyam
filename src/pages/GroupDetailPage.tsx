@@ -23,6 +23,7 @@ import DashakamGarden from "@/components/DashakamGarden";
 import { useSessionGarden } from "@/hooks/useSessionGarden";
 import PendingInvitesSection from "@/components/PendingInvitesSection";
 import ManageParayanamDialog from "@/components/ManageParayanamDialog";
+import ParayanamLiveSessionsSection from "@/components/ParayanamLiveSessionsSection";
 import ParayanamParticipantManager from "@/components/ParayanamParticipantManager";
 import ParayanamDraftsList from "@/components/ParayanamDraftsList";
 import ParayanamScheduleViews from "@/components/ParayanamScheduleViews";
@@ -94,6 +95,7 @@ export default function GroupDetailPage() {
   const [membersOpen, setMembersOpen] = useState(true);
   const [helpOpen, setHelpOpen] = useState(false);
   const [parayanamMembersOpen, setParayanamMembersOpen] = useState(false);
+  const [manageParayanamOpen, setManageParayanamOpen] = useState(false);
   const [searchParams] = useSearchParams();
   const sessionParam = searchParams.get("session");
   const [selectedSessionId, setSelectedSessionId] = useState<string | null>(sessionParam);
@@ -522,6 +524,16 @@ export default function GroupDetailPage() {
                   : "Dates will appear once this parayanam is planned."}
               </p>
 
+              {(isOwner || canSeeParayanamData) && (
+                <ParayanamLiveSessionsSection
+                  challengeSessionId={selectedSessionId}
+                  isOwner={isOwner}
+                  onManage={
+                    isOwner && canManageParayanam ? () => setManageParayanamOpen(true) : undefined
+                  }
+                />
+              )}
+
               {isOwner && canManageParayanam && (
                 <>
                   {loadingMembers || loadingParticipants ? (
@@ -596,6 +608,8 @@ export default function GroupDetailPage() {
                       ownerId={group.owner_id}
                       participants={participants}
                       onChanged={handleParayanamChanged}
+                      open={manageParayanamOpen}
+                      onOpenChange={setManageParayanamOpen}
                     />
                     <Link
                       to={`/groups/${group.id}/schedule?session=${selectedSessionId}`}

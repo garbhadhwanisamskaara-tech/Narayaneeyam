@@ -39,6 +39,9 @@ interface Props {
   participants: Participant[];
   /** Called after any change so the page can refetch everything together. */
   onChanged: () => void | Promise<void>;
+  /** Optional controlled open state — lets a parent open the dialog itself. */
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
 }
 
 const STATUS_LABEL: Record<ParticipantStatus, string> = {
@@ -57,8 +60,15 @@ export default function ManageParayanamDialog({
   ownerId,
   participants,
   onChanged,
+  open: controlledOpen,
+  onOpenChange,
 }: Props) {
-  const [open, setOpen] = useState(false);
+  const [internalOpen, setInternalOpen] = useState(false);
+  const open = controlledOpen ?? internalOpen;
+  const setOpen = (next: boolean) => {
+    setInternalOpen(next);
+    onOpenChange?.(next);
+  };
   const [name, setName] = useState(parayanamName ?? "");
   const [details, setDetails] = useState<any>(null);
   const [liveSessions, setLiveSessions] = useState<any[]>([]);
