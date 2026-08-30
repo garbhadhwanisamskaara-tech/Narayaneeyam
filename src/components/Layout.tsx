@@ -219,7 +219,6 @@ export default function Layout({ children }: { children: React.ReactNode }) {
                     <LogOut className="mr-2 h-4 w-4" />
                     Sign Out
                   </DropdownMenuItem>
-
                 </DropdownMenuContent>
               </DropdownMenu>
             ) : !loading ? (
@@ -253,7 +252,6 @@ export default function Layout({ children }: { children: React.ReactNode }) {
             animate={{ opacity: 1, y: 0 }}
             className="lg:hidden border-t border-primary-foreground/10 px-4 pb-4 max-h-[calc(100vh-3.5rem)] overflow-y-auto overscroll-contain"
           >
-
             <button
               type="button"
               onClick={toggleTheme}
@@ -288,13 +286,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
                       <CreditCard className="h-4 w-4" /> Subscription
                     </Link>
                   )}
-                  <Link
-                    to="/payment-history"
-                    onClick={() => setMobileOpen(false)}
-                    className="flex items-center gap-3 rounded-lg px-3 py-3 text-sm font-sans text-primary-foreground/70"
-                  >
-                    <Receipt className="h-4 w-4" /> Payment History
-                  </Link>
+
                   <div className="my-1 border-t border-primary-foreground/10" />
                   <Link
                     to="/support"
@@ -326,7 +318,6 @@ export default function Layout({ children }: { children: React.ReactNode }) {
                   >
                     <LogOut className="h-4 w-4" /> Sign Out
                   </button>
-
                 </>
               ) : (
                 <Link
