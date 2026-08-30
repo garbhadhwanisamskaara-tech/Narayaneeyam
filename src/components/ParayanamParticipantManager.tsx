@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { CheckCircle2, ChevronDown, ChevronUp, Loader2, MailQuestion, RotateCcw, Users } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
-
+import { useCapabilities } from "@/hooks/useCapabilities";
 type InviteStatus = "invited" | "confirmed" | "declined" | "left";
 type ContributionStatus = "not_required" | "pending" | "confirmed";
 type AccessStatus = "active" | "locked";
@@ -42,6 +42,7 @@ interface Props {
 
 /** The Guru's view of everyone invited to one parayanam. */
 export default function ParayanamParticipantManager({ sessionId, isOwner }: Props) {
+  const { canConfigurePayments } = useCapabilities();
   const [rows, setRows] = useState<Row[]>([]);
   const [paid, setPaid] = useState(false);
   const [loading, setLoading] = useState(true);
@@ -130,8 +131,10 @@ export default function ParayanamParticipantManager({ sessionId, isOwner }: Prop
 
   const renderRow = (r: Row) => {
     const contribution = (r.contribution_status ?? "not_required") as ContributionStatus;
-    const canConfirm = isOwner && paid && r.status === "confirmed" && contribution === "pending";
-    const canRevert = isOwner && paid && contribution === "confirmed";
+    const canConfirm =
+      canConfigurePayments && isOwner && paid && r.status === "confirmed" && contribution === "pending";
+
+    const canRevert = canConfigurePayments && isOwner && paid && contribution === "confirmed";
 
     return (
       <li key={r.id} className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-border p-3">
@@ -139,7 +142,9 @@ export default function ParayanamParticipantManager({ sessionId, isOwner }: Prop
           <p className="truncate font-sans text-sm font-semibold text-foreground">{r.name}</p>
           <p className="mt-0.5 flex flex-wrap gap-x-3 font-sans text-xs text-muted-foreground">
             <span>{INVITE_LABEL[r.status]}</span>
-            {paid && r.status !== "declined" && <span>Contribution: {CONTRIBUTION_LABEL[contribution]}</span>}
+            {canConfigurePayments && paid && r.status !== "declined" && (
+              <span>Contribution: {CONTRIBUTION_LABEL[contribution]}</span>
+            )}
             <span>{accessLabel(r)}</span>
           </p>
         </div>
