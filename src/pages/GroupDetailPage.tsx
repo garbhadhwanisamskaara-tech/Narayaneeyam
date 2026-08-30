@@ -46,6 +46,7 @@ const STATUS_LABEL: Record<ParticipantStatus, string> = {
   invited: "Invited",
   confirmed: "Confirmed",
   declined: "Declined",
+  left: "Left",
 };
 
 type HelpRow = { icon: string; title: string; subtitle: string };
