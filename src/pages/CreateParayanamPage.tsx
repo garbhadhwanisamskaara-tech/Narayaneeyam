@@ -474,8 +474,26 @@ export default function CreateParayanamPage() {
       track("parayanam_created");
 
       if (isGroup) {
-        // No schedule rows here — finalize_parayanam() builds them on the start date.
         await inviteParticipants(session.id, selectedParticipants, includeSelf ? user.id : null);
+
+        // SAME_FOR_ALL and REPEAT_SAME do not depend on participant confirmations,
+        // so materialise their schedules immediately.
+        // RELAY remains participant-dependent and is built at finalisation.
+        if (mode !== "RELAY") {
+          const rows = planned.map((p) => ({
+            challenge_session_id: session.id,
+            dashakam_no: p.dashakam_no,
+            scheduled_date: p.scheduled_date,
+            assigned_user_id: null,
+            is_manual_override: mode === "SAME_FOR_ALL" && !!scheduleOverrides[p.scheduled_date]?.length,
+          }));
+
+          if (rows.length) {
+            const { error: schErr } = await (supabase as any).from("parayanam_schedule").insert(rows);
+
+            if (schErr) throw new Error(schErr.message);
+          }
+        }
       } else {
         const rows = planned.map((p) => ({
           challenge_session_id: session.id,
@@ -484,7 +502,9 @@ export default function CreateParayanamPage() {
           assigned_user_id: user.id,
           is_manual_override: !!scheduleOverrides[p.scheduled_date]?.length,
         }));
+
         const { error: schErr } = await (supabase as any).from("parayanam_schedule").insert(rows);
+
         if (schErr) throw new Error(schErr.message);
       }
 
@@ -1092,9 +1112,7 @@ export default function CreateParayanamPage() {
 
         {draftSaved && (
           <div className="rounded-xl border border-border bg-muted/40 p-4">
-            <p className="font-sans text-sm text-foreground">
-              Parayanam saved as draft. You can continue setup later.
-            </p>
+            <p className="font-sans text-sm text-foreground">Parayanam saved as draft. You can continue setup later.</p>
             <div className="mt-3 flex flex-wrap items-center gap-2">
               <button
                 type="button"
