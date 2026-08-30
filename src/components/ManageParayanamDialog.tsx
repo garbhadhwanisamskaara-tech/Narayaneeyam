@@ -48,6 +48,7 @@ const STATUS_LABEL: Record<ParticipantStatus, string> = {
   invited: "Invited",
   confirmed: "Confirmed",
   declined: "Declined",
+  left: "Left",
 };
 
 /** Owner-only actions scoped to a single parayanam (not the group). */
