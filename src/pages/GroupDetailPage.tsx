@@ -94,6 +94,7 @@ export default function GroupDetailPage() {
   const [membersOpen, setMembersOpen] = useState(true);
   const [helpOpen, setHelpOpen] = useState(false);
   const [parayanamMembersOpen, setParayanamMembersOpen] = useState(false);
+  const [manageParayanamOpen, setManageParayanamOpen] = useState(false);
   const [searchParams] = useSearchParams();
   const sessionParam = searchParams.get("session");
   const [selectedSessionId, setSelectedSessionId] = useState<string | null>(sessionParam);
