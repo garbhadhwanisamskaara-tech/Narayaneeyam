@@ -50,11 +50,20 @@ export function useSessionGarden(sessionId: string | null | undefined) {
   const [loading, setLoading] = useState(true);
   const [pending, setPending] = useState<number | null>(null);
 
-  const confirmedCount = useMemo(() => participants.filter((p) => p.status === "confirmed").length, [participants]);
-  const isConfirmedParticipant = useMemo(
-    () => !!user && participants.some((p) => p.user_id === user.id && p.status === "confirmed"),
-    [participants, user],
+  const [participationType, setParticipationType] = useState<string | null>(null);
+
+  // FREE: accepted is enough. PAID: the Guru must have approved the
+  // contribution (contribution_status confirmed + access_status active).
+  const eligibleParticipants = useMemo(
+    () => participants.filter((p) => isParticipantEligible(p, participationType)),
+    [participants, participationType],
   );
+  const confirmedCount = eligibleParticipants.length;
+  const isConfirmedParticipant = useMemo(
+    () => !!user && eligibleParticipants.some((p) => p.user_id === user.id),
+    [eligibleParticipants, user],
+  );
+
 
   const refresh = useCallback(async () => {
     if (!sessionId) {
