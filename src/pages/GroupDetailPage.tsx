@@ -92,6 +92,7 @@ export default function GroupDetailPage() {
   const [sessionFinalizedAt, setSessionFinalizedAt] = useState<string | null>(null);
   const [parayanamName, setParayanamName] = useState<string | null>(null);
   const [starting, setStarting] = useState(false);
+  const [scheduleRowCount, setScheduleRowCount] = useState<number | null>(null);
   const [refreshKey, setRefreshKey] = useState(0);
   const [membersOpen, setMembersOpen] = useState(true);
   const [helpOpen, setHelpOpen] = useState(false);
@@ -196,14 +197,16 @@ export default function GroupDetailPage() {
         ? (data.dashakam_list as any[]).map(Number).filter((n) => Number.isFinite(n))
         : [];
 
-      // A finalized parayanam may store its dashakams only in the generated
-      // schedule (dashakam_list can be null when a saved set was used).
+      // The generated schedule is also the fallback source of the dashakam
+      // list (dashakam_list can be null when a saved set was used), and its
+      // row count tells us whether a schedule exists at all.
+      const { data: rows } = await (supabase as any)
+        .from("parayanam_schedule")
+        .select("dashakam_no")
+        .eq("challenge_session_id", sessionId);
+      if (cancelled) return;
+      setScheduleRowCount(((rows ?? []) as any[]).length);
       if (!list.length) {
-        const { data: rows } = await (supabase as any)
-          .from("parayanam_schedule")
-          .select("dashakam_no")
-          .eq("challenge_session_id", sessionId);
-        if (cancelled) return;
         list = Array.from(
           new Set(((rows ?? []) as any[]).map((r) => Number(r.dashakam_no)).filter((n) => Number.isFinite(n))),
         ).sort((a, b) => a - b);
@@ -311,6 +314,30 @@ export default function GroupDetailPage() {
     setRefreshKey((k) => k + 1);
     await Promise.all([refreshGarden(), refreshParayanams()]);
   };
+
+  /**
+   * A non-relay parayanam that somehow has no schedule rows (created before the
+   * schedule was generated) can be repaired with the same backend generator.
+   */
+  const canGenerateMissingSchedule = isOwner && !!selectedSessionId && !isRelaySession && scheduleRowCount === 0;
+
+  const handleGenerateMissingSchedule = async () => {
+    if (!selectedSessionId) return;
+    setStarting(true);
+    const { error } = await (supabase as any).rpc("finalize_parayanam", {
+      p_session_id: selectedSessionId,
+    });
+    setStarting(false);
+    if (error) {
+      toast({ title: "Could not generate the schedule", description: error.message, variant: "destructive" });
+      return;
+    }
+    toast({ title: "Schedule generated", description: "The day-by-day schedule is ready." });
+    setRefreshKey((k) => k + 1);
+    await Promise.all([refreshGarden(), refreshParayanams()]);
+  };
+
+
 
   const initials = (name: string) =>
     name
@@ -691,6 +718,26 @@ export default function GroupDetailPage() {
                       </button>
                     </div>
                   )}
+
+                  {/* Repair path: a non-relay parayanam with no schedule rows yet */}
+                  {canGenerateMissingSchedule && !canStartNow && (
+                    <div className="mt-5">
+                      <button
+                        onClick={handleGenerateMissingSchedule}
+                        disabled={starting}
+                        className="inline-flex items-center gap-2 rounded-lg border border-primary px-4 py-2 font-sans text-sm font-semibold text-primary hover:bg-primary/10 disabled:opacity-60"
+                      >
+                        {starting ? <Loader2 className="h-4 w-4 animate-spin" /> : <CalendarDays className="h-4 w-4" />}
+                        Generate schedule
+                      </button>
+                      <p className="mt-2 font-sans text-sm text-muted-foreground">
+                        This parayanam has no day-by-day schedule yet. Generating it makes My schedule available to
+                        everyone taking part.
+                      </p>
+                    </div>
+                  )}
+
+
 
                   {canStartNow && relayNeedsConfirmation && (
                     <p className="mt-2 font-sans text-sm text-muted-foreground">

@@ -498,23 +498,36 @@ export default function CreateParayanamPage() {
         }
 
         // SAME_FOR_ALL and REPEAT_SAME do not depend on participant confirmations,
-        // so materialise their schedules immediately.
+        // so their common schedule (assigned_user_id = NULL) is materialised now,
+        // by the same backend generator the "Start parayanam" action uses.
         // RELAY remains participant-dependent and is built at finalisation.
         if (mode !== "RELAY") {
-          const rows = planned.map((p) => ({
-            challenge_session_id: session.id,
-            dashakam_no: p.dashakam_no,
-            scheduled_date: p.scheduled_date,
-            assigned_user_id: null,
-            is_manual_override: mode === "SAME_FOR_ALL" && !!scheduleOverrides[p.scheduled_date]?.length,
-          }));
+          const { error: finErr } = await (supabase as any).rpc("finalize_parayanam", {
+            p_session_id: session.id,
+          });
 
-          if (rows.length) {
-            const { error: schErr } = await (supabase as any).from("parayanam_schedule").insert(rows);
+          const { count } = await (supabase as any)
+            .from("parayanam_schedule")
+            .select("id", { count: "exact", head: true })
+            .eq("challenge_session_id", session.id);
 
-            if (schErr) throw new Error(schErr.message);
+          // Fallback only if the backend generator produced nothing.
+          if (!count) {
+            const rows = planned.map((p) => ({
+              challenge_session_id: session.id,
+              dashakam_no: p.dashakam_no,
+              scheduled_date: p.scheduled_date,
+              assigned_user_id: null,
+              is_manual_override: mode === "SAME_FOR_ALL" && !!scheduleOverrides[p.scheduled_date]?.length,
+            }));
+
+            if (rows.length) {
+              const { error: schErr } = await (supabase as any).from("parayanam_schedule").insert(rows);
+              if (schErr) throw new Error(finErr?.message ?? schErr.message);
+            }
           }
         }
+
       } else {
         const rows = planned.map((p) => ({
           challenge_session_id: session.id,
