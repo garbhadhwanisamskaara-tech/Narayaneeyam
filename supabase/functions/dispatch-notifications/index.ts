@@ -215,7 +215,15 @@ async function drainQueue(): Promise<{ sent: number; failed: number; processed: 
       continue;
     }
     const payload = renderTemplate(template, item.template_vars ?? {});
-    const result = await sendToUser(supabase, item.user_id, item.notification_type, payload);
+    // reference_id (when present) makes the log row a permanent dedup marker,
+    // e.g. one parayanam_confirmed per participant row.
+    const result = await sendToUser(
+      supabase,
+      item.user_id,
+      item.notification_type,
+      payload,
+      item.reference_id ?? undefined,
+    );
     sent += result.sent;
     failed += result.failed;
     await supabase

@@ -31,7 +31,7 @@ export default function PendingInvitesSection({ groupId }: { groupId?: string })
           `Invitation accepted${invite?.parayanam_name ? ` — you have joined "${invite.parayanam_name}".` : "."}`,
         );
 
-        if (invite?.participation_type === "PAID") {
+        if (invite?.participation_type === "PAID" && invite.contribution_status === "pending") {
           setAwaiting((prev) => [...prev.filter((x) => x.id !== invite.id), invite]);
         }
 

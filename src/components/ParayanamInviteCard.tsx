@@ -22,7 +22,10 @@ interface Props {
  * shown here — even for Live parayanams — it only appears once access is active.
  */
 export default function ParayanamInviteCard({ invite: i, busy, onAccept, onDecline }: Props) {
-  const paid = i.participation_type === "PAID";
+  // Once the Guru has confirmed the contribution, the participant is never
+  // asked to pay again for this parayanam — Accept/Decline stay available.
+  const contributionSettled = i.contribution_status === "confirmed" || i.contribution_status === "not_required";
+  const paid = i.participation_type === "PAID" && !contributionSettled;
   const live = i.delivery_mode === "LIVE";
   const { canViewExternalPaymentLinks } = useCapabilities();
 
@@ -117,6 +120,9 @@ export default function ParayanamInviteCard({ invite: i, busy, onAccept, onDecli
 /** Shown after a member accepts a contribution-based parayanam. */
 export function AwaitingContributionCard({ invite: i }: { invite: PendingInvite }) {
   const { canViewExternalPaymentLinks } = useCapabilities();
+  const contributionSettled = i.contribution_status === "confirmed" || i.contribution_status === "not_required";
+
+  if (contributionSettled) return null;
 
   if (!canViewExternalPaymentLinks) {
     return (
