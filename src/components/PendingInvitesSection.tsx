@@ -27,9 +27,20 @@ export default function PendingInvitesSection({ groupId }: { groupId?: string })
       await respond(id, status);
 
       if (status === "confirmed") {
-        setSuccess(
-          `Invitation accepted${invite?.parayanam_name ? ` — you have joined "${invite.parayanam_name}".` : "."}`,
-        );
+        const name = invite?.parayanam_name;
+        if (invite?.participation_type === "PAID") {
+          setSuccess(
+            name
+              ? `Invitation accepted. Awaiting Guru approval for “${name}”.`
+              : "Invitation accepted. Awaiting Guru approval.",
+          );
+        } else {
+          setSuccess(
+            name
+              ? `Invitation accepted — you have joined “${name}”.`
+              : "Invitation accepted — you have joined.",
+          );
+        }
 
         if (invite?.participation_type === "PAID" && invite.contribution_status === "pending") {
           setAwaiting((prev) => [...prev.filter((x) => x.id !== invite.id), invite]);
