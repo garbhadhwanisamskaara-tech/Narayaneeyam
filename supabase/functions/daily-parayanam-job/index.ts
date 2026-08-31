@@ -130,3 +130,56 @@ async function sendStartingEmails(): Promise<number> {
   }
   return count;
 }
+
+/**
+ * Sends the existing PARAYANAM_INVITE email for any participant that is still
+ * 'invited' and has no successful invite email logged yet. This covers rows
+ * created server-side by the auto-invite trigger (group joins), where no React
+ * screen is open. It re-uses the deployed `send-app-email` function — no second
+ * email implementation — and `send-app-email`'s own app_email_log/event_key
+ * idempotency remains the final protection against duplicates.
+ */
+async function sweepInvites(): Promise<number> {
+  const { data: sessions } = await supabase.from("challenge_sessions").select("id, technical_state");
+  const liveIds = ((sessions ?? []) as { id: string; technical_state: string | null }[])
+    .filter((s) => !["ARCHIVED", "CANCELLED", "DRAFT"].includes(String(s.technical_state ?? "")))
+    .map((s) => s.id);
+  if (!liveIds.length) return 0;
+
+  const { data: participants } = await supabase
+    .from("parayanam_participants")
+    .select("id")
+    .in("challenge_session_id", liveIds)
+    .eq("status", "invited");
+  const ids = ((participants ?? []) as { id: string }[]).map((p) => p.id);
+  if (!ids.length) return 0;
+
+  const { data: logged } = await supabase
+    .from("app_email_log")
+    .select("participant_id")
+    .eq("event_type", "PARAYANAM_INVITE")
+    .eq("status", "sent")
+    .in("participant_id", ids);
+  const done = new Set(((logged ?? []) as { participant_id: string | null }[]).map((r) => r.participant_id));
+
+  let sent = 0;
+  for (const id of ids) {
+    if (done.has(id)) continue;
+    try {
+      const res = await fetch(`${supabaseUrl}/functions/v1/send-app-email`, {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${serviceRoleKey}`,
+          apikey: serviceRoleKey,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ event_type: "PARAYANAM_INVITE", participant_id: id }),
+      });
+      if (res.ok) sent++;
+      else console.error("send-app-email PARAYANAM_INVITE failed", id, res.status, await res.text());
+    } catch (e) {
+      console.error("send-app-email PARAYANAM_INVITE crashed", id, e);
+    }
+  }
+  return sent;
+}
