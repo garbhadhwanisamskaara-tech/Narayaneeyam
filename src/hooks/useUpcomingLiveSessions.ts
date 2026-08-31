@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { HIDDEN_SESSION_STATES_FILTER } from "@/lib/parayanamFilters";
+import { fetchEligibleSessionIds } from "@/lib/parayanamEligibility";
 export interface UpcomingLiveSession {
   liveSessionId: string;
   challengeSessionId: string;
@@ -41,13 +42,15 @@ export function useUpcomingLiveSessions() {
       // 1. Parayanams the member is confirmed + active in.
       const { data: partData } = await (supabase as any)
         .from("parayanam_participants")
-        .select("challenge_session_id, status, access_status")
+        .select("challenge_session_id, status, contribution_status, access_status")
         .eq("user_id", user.id)
-        .eq("status", "confirmed")
-        .eq("access_status", "active");
-      const sessionIds = Array.from(
+        .eq("status", "confirmed");
+      const candidateIds = Array.from(
         new Set(((partData ?? []) as any[]).map((p) => p.challenge_session_id).filter(Boolean)),
       ) as string[];
+      // FREE: accepted is enough. PAID: Guru-approved contribution + active access.
+      const eligible = await fetchEligibleSessionIds(user.id, candidateIds);
+      const sessionIds = candidateIds.filter((id) => eligible.has(id));
       if (!sessionIds.length) {
         setSessions([]);
         setLoading(false);

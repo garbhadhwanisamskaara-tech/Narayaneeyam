@@ -3,6 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useCompleteDashakam } from "@/hooks/useCompleteDashakam";
 import { useSessionParticipants } from "@/hooks/useParayanamParticipants";
+import { isParticipantEligible } from "@/lib/parayanamEligibility";
 
 interface ScheduleRow {
   id: string;
@@ -50,11 +51,20 @@ export function useSessionGarden(sessionId: string | null | undefined) {
   const [loading, setLoading] = useState(true);
   const [pending, setPending] = useState<number | null>(null);
 
-  const confirmedCount = useMemo(() => participants.filter((p) => p.status === "confirmed").length, [participants]);
-  const isConfirmedParticipant = useMemo(
-    () => !!user && participants.some((p) => p.user_id === user.id && p.status === "confirmed"),
-    [participants, user],
+  const [participationType, setParticipationType] = useState<string | null>(null);
+
+  // FREE: accepted is enough. PAID: the Guru must have approved the
+  // contribution (contribution_status confirmed + access_status active).
+  const eligibleParticipants = useMemo(
+    () => participants.filter((p) => isParticipantEligible(p, participationType)),
+    [participants, participationType],
   );
+  const confirmedCount = eligibleParticipants.length;
+  const isConfirmedParticipant = useMemo(
+    () => !!user && eligibleParticipants.some((p) => p.user_id === user.id),
+    [eligibleParticipants, user],
+  );
+
 
   const refresh = useCallback(async () => {
     if (!sessionId) {
@@ -64,6 +74,12 @@ export function useSessionGarden(sessionId: string | null | undefined) {
       return;
     }
     setLoading(true);
+    const { data: sess } = await (supabase as any)
+      .from("challenge_sessions")
+      .select("participation_type")
+      .eq("id", sessionId)
+      .maybeSingle();
+    setParticipationType((sess as any)?.participation_type ?? null);
     const { data } = await (supabase as any)
       .from("parayanam_schedule")
       .select("id, dashakam_no, scheduled_date, assigned_user_id")
@@ -110,7 +126,9 @@ export function useSessionGarden(sessionId: string | null | undefined) {
       const expectedPerRow = list.some((r) => r.assigned_user_id) ? 1 : Math.max(confirmedCount, 1);
       const total = list.length * expectedPerRow;
       const canTap =
-        !!user && list.some((r) => (r.assigned_user_id ? r.assigned_user_id === user.id : isConfirmedParticipant));
+        !!user &&
+        isConfirmedParticipant &&
+        list.some((r) => (r.assigned_user_id ? r.assigned_user_id === user.id : true));
       map.set(no, {
         dashakam_no: no,
         scheduleIds: list.map((r) => r.id),
@@ -141,7 +159,8 @@ export function useSessionGarden(sessionId: string | null | undefined) {
       const eligible = rows.filter(
         (r) =>
           r.dashakam_no === dashakamNo &&
-          (r.assigned_user_id ? r.assigned_user_id === user.id : isConfirmedParticipant),
+          isConfirmedParticipant &&
+          (r.assigned_user_id ? r.assigned_user_id === user.id : true),
       );
       if (!eligible.length) return;
       const undo = tile.mineDone >= eligible.length;

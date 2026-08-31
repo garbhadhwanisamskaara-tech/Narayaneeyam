@@ -5,6 +5,7 @@ import {
   HIDDEN_GROUP_STATUSES_FILTER,
   HIDDEN_SESSION_STATES_FILTER,
 } from "@/lib/parayanamFilters";
+import { fetchEligibleSessionIds } from "@/lib/parayanamEligibility";
 
 export interface QueueItem {
   /** parayanam_schedule row id — the unit of completion. */
@@ -133,15 +134,9 @@ export function useMyDashakamQueue() {
         return;
       }
 
-      // 3. Which group parayanams the user is confirmed in.
-      const { data: partData } = await (supabase as any)
-        .from("parayanam_participants")
-        .select("challenge_session_id, status")
-        .eq("user_id", user.id)
-        .in("challenge_session_id", sessionIds);
-      const confirmed = new Set(
-        ((partData ?? []) as any[]).filter((p) => p.status === "confirmed").map((p) => p.challenge_session_id),
-      );
+      // 3. Which group parayanams the user may actually take part in.
+      //    FREE: accepted. PAID: Guru-approved contribution + active access.
+      const confirmed = await fetchEligibleSessionIds(user.id, sessionIds);
 
       // 4. Schedule rows due today or earlier.
       const { data: schedData } = await (supabase as any)
@@ -160,10 +155,12 @@ export function useMyDashakamQueue() {
       const mine = sched.filter((r) => {
         const s = sessions.get(r.challenge_session_id);
         if (!s) return false;
+        if (!s.group_id) return r.assigned_user_id ? r.assigned_user_id === user.id : s.user_id === user.id;
+        // Group parayanam: an assigned row still needs eligible access.
+        const eligible = confirmed.has(s.id) || s.user_id === user.id;
+        if (!eligible) return false;
         if (r.assigned_user_id) return r.assigned_user_id === user.id;
-        // Synchronized rows: everyone taking part chants them.
-        if (!s.group_id) return s.user_id === user.id;
-        return confirmed.has(s.id) || s.user_id === user.id;
+        return true;
       });
       if (!mine.length) {
         setItems([]);

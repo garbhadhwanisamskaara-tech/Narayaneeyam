@@ -21,6 +21,7 @@ import { useGroupParayanams, parayanamLabel } from "@/hooks/useGroupParayanams";
 import SEO from "@/components/SEO";
 import DashakamGarden from "@/components/DashakamGarden";
 import { useSessionGarden } from "@/hooks/useSessionGarden";
+import { isParticipantEligible } from "@/lib/parayanamEligibility";
 import PendingInvitesSection from "@/components/PendingInvitesSection";
 import ManageParayanamDialog from "@/components/ManageParayanamDialog";
 import ParayanamLiveSessionsSection from "@/components/ParayanamLiveSessionsSection";
@@ -120,6 +121,27 @@ export default function GroupDetailPage() {
     statusFor,
     refresh: refreshParticipants,
   } = useSessionParticipants(selectedSessionId);
+
+  // FREE vs PAID decides how strict participation eligibility is.
+  const [selectedParticipationType, setSelectedParticipationType] = useState<string | null>(null);
+  useEffect(() => {
+    let cancelled = false;
+    if (!selectedSessionId) {
+      setSelectedParticipationType(null);
+      return;
+    }
+    void (async () => {
+      const { data } = await (supabase as any)
+        .from("challenge_sessions")
+        .select("participation_type")
+        .eq("id", selectedSessionId)
+        .maybeSingle();
+      if (!cancelled) setSelectedParticipationType((data as any)?.participation_type ?? null);
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [selectedSessionId]);
 
   // Default selection: the group's active pointer when it is in the list,
   // otherwise the most recent parayanam. Explicit picks always win afterwards.
@@ -268,7 +290,14 @@ export default function GroupDetailPage() {
   // Only people with a relationship to the selected parayanam (invited, confirmed
   // or declined) — plus the owner, who runs it — may see its progress.
   const hasSession = !!selectedSessionId;
-  const isParayanamParticipant = isOwner || (!!user && participants.some((p) => p.user_id === user.id));
+  // A participant row alone is not access: invited, declined, left or a PAID
+  // member awaiting the Guru's contribution approval must stay locked out.
+  const isParayanamParticipant =
+    isOwner ||
+    (!!user &&
+      participants.some((p) =>
+        isParticipantEligible(p, selectedParticipationType),
+      ));
   const canSeeParayanamData = !hasSession || isParayanamParticipant;
 
   // Prefer the live schedule the garden loaded; fall back to the session's list.
@@ -794,7 +823,9 @@ export default function GroupDetailPage() {
                 )}
               </div>
 
-              <ParayanamScheduleViews challengeSessionId={selectedSessionId} refreshKey={refreshKey} />
+              {canSeeParayanamData && (
+                <ParayanamScheduleViews challengeSessionId={selectedSessionId} refreshKey={refreshKey} />
+              )}
             </>
           )}
         </>
