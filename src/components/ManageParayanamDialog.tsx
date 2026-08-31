@@ -617,6 +617,12 @@ export default function ManageParayanamDialog({
                 Save details
               </button>
             </div>
+
+            {/* WEB + Guru + PAID only: reconcile contributions received outside the app. */}
+            {isOwner && canConfigurePayments && details?.participation_type === "PAID" && (
+              <BulkConfirmContributions sessionId={sessionId} onChanged={onChanged} />
+            )}
+
             <div className="flex items-center justify-between gap-3">
               <h3 className="flex items-center gap-2 font-sans text-sm font-semibold text-foreground">
                 <UserPlus className="h-4 w-4 text-primary" />
