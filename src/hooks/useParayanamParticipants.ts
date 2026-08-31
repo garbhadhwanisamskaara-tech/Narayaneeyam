@@ -103,7 +103,7 @@ export async function inviteParticipants(
  */
 export async function notifyParayanamConfirmed(participantId: string): Promise<void> {
   try {
-    const { error } = await supabase.functions.invoke("send-parayanam-emails", {
+    const { error } = await supabase.functions.invoke("send-app-email", {
       body: { event_type: "PARAYANAM_CONFIRMED", participant_id: participantId },
     });
     if (error) console.error("send-parayanam-emails failed for participant", participantId, error);
@@ -117,7 +117,7 @@ export async function notifyParayanamConfirmed(participantId: string): Promise<v
  */
 export async function notifyParayanamConfirmedForSession(sessionId: string): Promise<void> {
   try {
-    const { error } = await supabase.functions.invoke("send-parayanam-emails", {
+    const { error } = await supabase.functions.invoke("send-app-email", {
       body: { event_type: "PARAYANAM_CONFIRMED", session_id: sessionId },
     });
     if (error) console.error("send-parayanam-emails failed for session", sessionId, error);
