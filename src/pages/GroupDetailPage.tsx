@@ -315,6 +315,30 @@ export default function GroupDetailPage() {
     await Promise.all([refreshGarden(), refreshParayanams()]);
   };
 
+  /**
+   * A non-relay parayanam that somehow has no schedule rows (created before the
+   * schedule was generated) can be repaired with the same backend generator.
+   */
+  const canGenerateMissingSchedule = isOwner && !!selectedSessionId && !isRelaySession && scheduleRowCount === 0;
+
+  const handleGenerateMissingSchedule = async () => {
+    if (!selectedSessionId) return;
+    setStarting(true);
+    const { error } = await (supabase as any).rpc("finalize_parayanam", {
+      p_session_id: selectedSessionId,
+    });
+    setStarting(false);
+    if (error) {
+      toast({ title: "Could not generate the schedule", description: error.message, variant: "destructive" });
+      return;
+    }
+    toast({ title: "Schedule generated", description: "The day-by-day schedule is ready." });
+    setRefreshKey((k) => k + 1);
+    await Promise.all([refreshGarden(), refreshParayanams()]);
+  };
+
+
+
   const initials = (name: string) =>
     name
       .split(" ")
