@@ -254,6 +254,56 @@ export default function ManageParayanamDialog({
 
   const handleRemove = () => doRemove("distribute");
 
+  /**
+   * Toggles auto-invite for this parayanam. OFF → ON also asks the backend RPC
+   * to invite every group member who has no participant record yet.
+   * ON → OFF only flips the flag — existing participants and invites stay as
+   * they are.
+   */
+  const applyAutoInvite = async (next: boolean) => {
+    setBusy(true);
+    try {
+      const { error } = await (supabase as any)
+        .from("challenge_sessions")
+        .update({ auto_invite_group_members: next })
+        .eq("id", sessionId);
+      if (error) throw new Error(error.message);
+
+      if (next) {
+        const { data, error: rpcErr } = await (supabase as any).rpc("invite_group_members_to_parayanam", {
+          p_session_id: sessionId,
+        });
+        if (rpcErr) throw new Error(rpcErr.message);
+        toast({
+          title: "Automatic invitations enabled",
+          description: `${data ?? 0} group members were invited.`,
+        });
+      } else {
+        toast({
+          title: "Automatic invitations turned off",
+          description: "Existing invitations and participants are unchanged.",
+        });
+      }
+
+      setAutoInvite(next);
+      setDetails((prev: any) => (prev ? { ...prev, auto_invite_group_members: next } : prev));
+      await onChanged();
+    } catch (e: any) {
+      toast({ title: "Could not update automatic invitations", description: e?.message, variant: "destructive" });
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  /** OFF → ON on an existing parayanam first asks for confirmation. */
+  const handleAutoInviteToggle = (checked: boolean) => {
+    if (checked && !autoInvite) {
+      setAutoInviteConfirmOpen(true);
+      return;
+    }
+    if (!checked && autoInvite) void applyAutoInvite(false);
+  };
+
   const handleRename = async () => {
     const trimmed = name.trim();
     if (!trimmed || trimmed === (parayanamName ?? "")) return;
@@ -517,6 +567,28 @@ export default function ManageParayanamDialog({
                     Save name
                   </button>
                 </div>
+              </div>
+
+              {/* Automatic member invitations */}
+              <div>
+                <label className="flex cursor-pointer items-start gap-3 rounded-xl border border-border p-3 hover:border-primary">
+                  <input
+                    type="checkbox"
+                    checked={autoInvite}
+                    disabled={busy}
+                    onChange={(e) => handleAutoInviteToggle(e.target.checked)}
+                    className="mt-0.5 h-4 w-4 accent-primary"
+                  />
+                  <span>
+                    <span className="block font-sans text-sm font-semibold text-foreground">
+                      Automatically invite group members to this Parayanam
+                    </span>
+                    <span className="mt-1 block font-sans text-xs text-muted-foreground">
+                      All current group members, and members who join this group later, will receive a Parayanam
+                      invitation.
+                    </span>
+                  </span>
+                </label>
               </div>
 
               {/* Participation type */}
@@ -866,6 +938,36 @@ export default function ManageParayanamDialog({
               className="rounded-md bg-destructive px-4 py-2 font-sans text-sm font-semibold text-destructive-foreground hover:bg-destructive/90 disabled:opacity-50"
             >
               {busy ? "Removing…" : "Remove from this parayanam"}
+            </button>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      <AlertDialog open={autoInviteConfirmOpen} onOpenChange={setAutoInviteConfirmOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Automatically invite group members?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Existing group members who have not yet been invited will also receive a Parayanam invitation.
+              Continue?
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <button
+              onClick={() => setAutoInviteConfirmOpen(false)}
+              className="rounded-md border border-border px-4 py-2 font-sans text-sm font-semibold text-foreground hover:bg-muted"
+            >
+              Not now
+            </button>
+            <button
+              onClick={() => {
+                setAutoInviteConfirmOpen(false);
+                void applyAutoInvite(true);
+              }}
+              disabled={busy}
+              className="rounded-md bg-gradient-peacock px-4 py-2 font-sans text-sm font-semibold text-primary-foreground hover:opacity-90 disabled:opacity-50"
+            >
+              {busy ? "Enabling…" : "Yes, enable it"}
             </button>
           </AlertDialogFooter>
         </AlertDialogContent>
