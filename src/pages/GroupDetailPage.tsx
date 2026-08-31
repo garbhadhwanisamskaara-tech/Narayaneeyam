@@ -660,7 +660,9 @@ export default function GroupDetailPage() {
                         finalized={!!sessionFinalizedAt}
                         members={members}
                         ownerId={group.owner_id}
+                        isOwner={isOwner}
                         participants={participants}
+
                         onChanged={handleParayanamChanged}
                         open={manageParayanamOpen}
                         onOpenChange={setManageParayanamOpen}
