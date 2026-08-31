@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from "react";
 import { CheckCircle2, ChevronDown, ChevronUp, Loader2, MailQuestion, RotateCcw, Users } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useCapabilities } from "@/hooks/useCapabilities";
+import { notifyParayanamConfirmed } from "@/hooks/useParayanamParticipants";
 type InviteStatus = "invited" | "confirmed" | "declined" | "left";
 type ContributionStatus = "not_required" | "pending" | "confirmed";
 type AccessStatus = "active" | "locked";
@@ -117,6 +118,8 @@ export default function ParayanamParticipantManager({ sessionId, isOwner }: Prop
       setError(err.message);
       return;
     }
+    // Best-effort: the server decides whether the member is now fully confirmed.
+    if (next === "confirmed") void notifyParayanamConfirmed(id);
     await load();
   };
 

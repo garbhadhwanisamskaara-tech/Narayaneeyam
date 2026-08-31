@@ -2,6 +2,7 @@ import { useRef, useState } from "react";
 import { Download, Loader2, Upload, Users } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
+import { notifyParayanamConfirmedForSession } from "@/hooks/useParayanamParticipants";
 
 type BulkResult = "CONFIRMED_NOW" | "ALREADY_CONFIRMED" | "EMAIL_NOT_IN_APP" | "NOT_IN_PARAYANAM" | "DECLINED" | "LEFT";
 
@@ -141,6 +142,9 @@ export default function BulkConfirmContributions({ sessionId, onChanged }: Props
 
     setRows((data ?? []) as ResultRow[]);
     toast({ title: "Contributions processed", description: `${emails.length} email addresses were reconciled.` });
+    // Best-effort: the server sweeps this parayanam and emails anyone who has
+    // just become fully confirmed. Failures never affect the reconciliation.
+    void notifyParayanamConfirmedForSession(sessionId);
     await onChanged();
   };
 
