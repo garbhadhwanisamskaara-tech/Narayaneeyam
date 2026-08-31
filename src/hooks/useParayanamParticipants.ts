@@ -73,8 +73,27 @@ export async function inviteParticipants(
       rows.map((r) => r.user_id as string),
     );
 
-  const { error } = await (supabase as any).from("parayanam_participants").insert(rows);
+  const { data: inserted, error } = await (supabase as any)
+    .from("parayanam_participants")
+    .insert(rows)
+    .select("id, status");
   if (error) throw new Error(error.message);
+
+  // Invitation emails are best-effort: a failure here must never invalidate the
+  // invitation that was just created.
+  const invited = ((inserted ?? []) as { id: string; status: string }[]).filter((r) => r.status === "invited");
+  await Promise.all(
+    invited.map(async (participant) => {
+      try {
+        const { error: emailError } = await supabase.functions.invoke("send-app-email", {
+          body: { event_type: "PARAYANAM_INVITE", participant_id: participant.id },
+        });
+        if (emailError) console.error("send-app-email failed for participant", participant.id, emailError);
+      } catch (e) {
+        console.error("send-app-email failed for participant", participant.id, e);
+      }
+    }),
+  );
 }
 
 export type RemovalMode = "distribute" | "assign_to";
