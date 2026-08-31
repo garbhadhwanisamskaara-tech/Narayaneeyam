@@ -155,7 +155,7 @@ export function useMyDashakamQueue() {
       const mine = sched.filter((r) => {
         const s = sessions.get(r.challenge_session_id);
         if (!s) return false;
-        if (!s.group_id) return s.user_id === user.id && !r.assigned_user_id ? true : r.assigned_user_id ? r.assigned_user_id === user.id : false;
+        if (!s.group_id) return r.assigned_user_id ? r.assigned_user_id === user.id : s.user_id === user.id;
         // Group parayanam: an assigned row still needs eligible access.
         const eligible = confirmed.has(s.id) || s.user_id === user.id;
         if (!eligible) return false;
