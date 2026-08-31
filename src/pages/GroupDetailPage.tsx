@@ -92,6 +92,7 @@ export default function GroupDetailPage() {
   const [sessionFinalizedAt, setSessionFinalizedAt] = useState<string | null>(null);
   const [parayanamName, setParayanamName] = useState<string | null>(null);
   const [starting, setStarting] = useState(false);
+  const [scheduleRowCount, setScheduleRowCount] = useState<number | null>(null);
   const [refreshKey, setRefreshKey] = useState(0);
   const [membersOpen, setMembersOpen] = useState(true);
   const [helpOpen, setHelpOpen] = useState(false);
