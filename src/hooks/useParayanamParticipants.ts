@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 
@@ -316,22 +316,41 @@ export function useMyPendingInvites() {
 
   // Auto-invites are created server-side (group-join trigger), so listen for
   // any change to this user's participant rows and refetch the pending list.
+  // The channel name is unique per hook instance: supabase-js reuses a channel
+  // when the name matches, so two components using this hook (NotificationBell
+  // + PendingInvitesSection) would otherwise share one channel — and the first
+  // unmount's removeChannel() would silently kill the other's subscription.
+  const refreshRef = useRef(refresh);
   useEffect(() => {
-    if (!user) return;
+    refreshRef.current = refresh;
+  }, [refresh]);
+
+  const userId = user?.id ?? null;
+  useEffect(() => {
+    if (!userId) return;
     const channel = supabase
-      .channel(`parayanam-invites-${user.id}`)
+      .channel(`parayanam-invites-${userId}-${Math.random().toString(36).slice(2)}`)
       .on(
         "postgres_changes",
-        { event: "*", schema: "public", table: "parayanam_participants", filter: `user_id=eq.${user.id}` },
+        {
+          event: "*",
+          schema: "public",
+          table: "parayanam_participants",
+          filter: `user_id=eq.${userId}`,
+        },
         () => {
-          void refresh();
+          void refreshRef.current();
         },
       )
-      .subscribe();
+      .subscribe((status) => {
+        // Catch anything that happened while the socket was down or before the
+        // subscription was ready (e.g. an auto-invite created moments ago).
+        if (status === "SUBSCRIBED") void refreshRef.current();
+      });
     return () => {
       void supabase.removeChannel(channel);
     };
-  }, [user, refresh]);
+  }, [userId]);
 
   const respond = useCallback(
     async (inviteId: string, status: "confirmed" | "declined") => {
