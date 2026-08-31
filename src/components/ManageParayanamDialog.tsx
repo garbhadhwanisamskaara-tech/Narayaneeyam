@@ -37,12 +37,15 @@ interface Props {
   members: GroupMember[];
   ownerId: string;
   participants: Participant[];
+  /** True when the current user is the Guru/owner of this group. */
+  isOwner?: boolean;
   /** Called after any change so the page can refetch everything together. */
   onChanged: () => void | Promise<void>;
   /** Optional controlled open state — lets a parent open the dialog itself. */
   open?: boolean;
   onOpenChange?: (open: boolean) => void;
 }
+
 
 const STATUS_LABEL: Record<ParticipantStatus, string> = {
   invited: "Invited",
