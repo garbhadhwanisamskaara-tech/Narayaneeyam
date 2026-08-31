@@ -43,26 +43,120 @@ const faqJsonLd = {
   ),
 };
 
-const LOGO_URL = "https://znglsaxfyhkuzyrfbuhn.supabase.co/storage/v1/object/public/images/SNlogo.png";
+const LOGO_URL = "https://www.narayaneeyam.app/og-image.jpg";
 
 const features = [
-  { icon: "🎵", name: "Chant With Me", desc: "Follow along with synchronized text highlighting as an expert recites each sloka. Never lose your place in the chant again." },
-  { icon: "📜", name: "Script Library", desc: "Read the slokas in Sanskrit Devanagari or in Tamil, Telugu, Malayalam, Kannada, Hindi, Marathi and English transliteration — choose what feels natural to you." },
-  { icon: "🎙️", name: "Sacred Podcast", desc: "Listen to dashakams in the background while going about your day. Let the divine vibrations fill your space." },
-  { icon: "🔖", name: "Bookmarks", desc: "Save your place in any dashakam and return to it in a tap, from any device you sign in on." },
-  { icon: "❤️", name: "Favourites & Playlists", desc: "Mark the slokas closest to your heart and arrange them into your own playlist, with loop counts, for a personal daily session." },
-  { icon: "📊", name: "Practice Tracker", desc: "Track your streak days, minutes chanted, and sessions completed. Build a meaningful, consistent devotional practice." },
-  { icon: "🌐", name: "Group Parayanam", desc: "Create a private group with family or friends, invite them by link, and share a parayanam — dashakams together or split among participants, with a shared progress garden." },
-  { icon: "📖", name: "Meanings & Context", desc: "Verse meanings in your chosen language, along with each dashakam's traditional benefits, remarks and prasadam." },
+  {
+    icon: "🎵",
+    name: "Chant With Me",
+    desc: "Follow along with synchronized text highlighting as an expert recites each sloka. Never lose your place in the chant again.",
+  },
+  {
+    icon: "📜",
+    name: "Script Library",
+    desc: "Read the slokas in Sanskrit Devanagari or in Tamil, Telugu, Malayalam, Kannada, Hindi, Marathi and English transliteration — choose what feels natural to you.",
+  },
+  {
+    icon: "🎙️",
+    name: "Sacred Podcast",
+    desc: "Listen to dashakams in the background while going about your day. Let the divine vibrations fill your space.",
+  },
+  {
+    icon: "🔖",
+    name: "Bookmarks",
+    desc: "Save your place in any dashakam and return to it in a tap, from any device you sign in on.",
+  },
+  {
+    icon: "❤️",
+    name: "Favourites & Playlists",
+    desc: "Mark the slokas closest to your heart and arrange them into your own playlist, with loop counts, for a personal daily session.",
+  },
+  {
+    icon: "📊",
+    name: "Practice Tracker",
+    desc: "Track your streak days, minutes chanted, and sessions completed. Build a meaningful, consistent devotional practice.",
+  },
+  {
+    icon: "🌐",
+    name: "Group Parayanam",
+    desc: "Create a private group with family or friends, invite them by link, and share a parayanam — dashakams together or split among participants, with a shared progress garden.",
+  },
+  {
+    icon: "📖",
+    name: "Meanings & Context",
+    desc: "Verse meanings in your chosen language, along with each dashakam's traditional benefits, remarks and prasadam.",
+  },
 ];
 
 const stories = [
-  { icon: "💍", tag: "Marriage & Partnership", name: "Finding a Soulmate", quote: "After years of searching, my mother began the Narayaneeyam parayanam of certain dashakams with pure intent. Within six months, I met my husband at a Guruvayur pilgrimage. We are now happily married for three years.", initials: "DP", person: "Deepa Kailash", loc: "Chennai, TN", color: "#1a7a7a", featured: true },
-  { icon: "👶", tag: "Blessing of Children", name: "The Gift of Parenthood", quote: "We had been longing for a child for seven years. A dear aunt suggested we chant Krishnaavataaraha from Narayaneeyam for 41 days. Our son was born exactly one year later. His name is Narayanan.", initials: "SR", person: "Suresh & Rekha Nair", loc: "Trissur, Kerala", color: "#0d5c5c" },
-  { icon: "🌿", tag: "Health & Healing", name: "Recovery Against All Odds", quote: "My father was diagnosed with a serious illness. The doctors gave little hope. Our family began a group Narayaneeyam chanting every morning. He recovered fully and is now 78, vibrant and healthy.", initials: "KM", person: "Kavitha Menon", loc: "Chennai, Tamil Nadu", color: "#c9a84c", textColor: "#063d3d" },
-  { icon: "🕊️", tag: "Inner Peace", name: "Stillness in the Storm", quote: "I was going through a painful divorce and career collapse at the same time. Narayaneeyam became my anchor. That is when I learnt to chant and I am so grateful to my Guru. It gave me a peace I cannot describe in words.", initials: "RK", person: "Ramesh Kumar", loc: "Bengaluru, Karnataka", color: "#063d3d" },
-  { icon: "🌸", tag: "Grief & Loss", name: "Solace in Bereavement", quote: "When my mother passed away unexpectedly, I was inconsolable. A friend gently introduced me Narayaneeyam. It helped me accept that she is in His care. Narayaneeyam has become my life anchor.", initials: "PA", person: "Priya Anand", loc: "Coimbatore, Tamil Nadu", color: "#1a7a7a" },
-  { icon: "🫶", tag: "Community & Connection", name: "The Power of Group Chanting", quote: "Our WhatsApp group of 12 friends started an online Narayaneeyam parayanam during the pandemic lockdown. Three years on, we still meet every Sunday. It has become the most meaningful hour of our week.", initials: "VG", person: "Vijayalakshmi Gopalan", loc: "Singapore", color: "#0d5c5c" },
+  {
+    icon: "💍",
+    tag: "Marriage & Partnership",
+    name: "Finding a Soulmate",
+    quote:
+      "After years of searching, my mother began the Narayaneeyam parayanam of certain dashakams with pure intent. Within six months, I met my husband at a Guruvayur pilgrimage. We are now happily married for three years.",
+    initials: "DP",
+    person: "Deepa Kailash",
+    loc: "Chennai, TN",
+    color: "#1a7a7a",
+    featured: true,
+  },
+  {
+    icon: "👶",
+    tag: "Blessing of Children",
+    name: "The Gift of Parenthood",
+    quote:
+      "We had been longing for a child for seven years. A dear aunt suggested we chant Krishnaavataaraha from Narayaneeyam for 41 days. Our son was born exactly one year later. His name is Narayanan.",
+    initials: "SR",
+    person: "Suresh & Rekha Nair",
+    loc: "Trissur, Kerala",
+    color: "#0d5c5c",
+  },
+  {
+    icon: "🌿",
+    tag: "Health & Healing",
+    name: "Recovery Against All Odds",
+    quote:
+      "My father was diagnosed with a serious illness. The doctors gave little hope. Our family began a group Narayaneeyam chanting every morning. He recovered fully and is now 78, vibrant and healthy.",
+    initials: "KM",
+    person: "Kavitha Menon",
+    loc: "Chennai, Tamil Nadu",
+    color: "#c9a84c",
+    textColor: "#063d3d",
+  },
+  {
+    icon: "🕊️",
+    tag: "Inner Peace",
+    name: "Stillness in the Storm",
+    quote:
+      "I was going through a painful divorce and career collapse at the same time. Narayaneeyam became my anchor. That is when I learnt to chant and I am so grateful to my Guru. It gave me a peace I cannot describe in words.",
+    initials: "RK",
+    person: "Ramesh Kumar",
+    loc: "Bengaluru, Karnataka",
+    color: "#063d3d",
+  },
+  {
+    icon: "🌸",
+    tag: "Grief & Loss",
+    name: "Solace in Bereavement",
+    quote:
+      "When my mother passed away unexpectedly, I was inconsolable. A friend gently introduced me Narayaneeyam. It helped me accept that she is in His care. Narayaneeyam has become my life anchor.",
+    initials: "PA",
+    person: "Priya Anand",
+    loc: "Coimbatore, Tamil Nadu",
+    color: "#1a7a7a",
+  },
+  {
+    icon: "🫶",
+    tag: "Community & Connection",
+    name: "The Power of Group Chanting",
+    quote:
+      "Our WhatsApp group of 12 friends started an online Narayaneeyam parayanam during the pandemic lockdown. Three years on, we still meet every Sunday. It has become the most meaningful hour of our week.",
+    initials: "VG",
+    person: "Vijayalakshmi Gopalan",
+    loc: "Singapore",
+    color: "#0d5c5c",
+  },
 ];
 
 export default function LandingPage() {
@@ -77,7 +171,7 @@ export default function LandingPage() {
         // Get current date in IST
         const nowIST = new Date(new Date().toLocaleString("en-US", { timeZone: "Asia/Kolkata" }));
         const todayIST = nowIST.toISOString().split("T")[0];
-        
+
         // 3 days from now in IST
         const threeDaysAgo = new Date(nowIST);
         threeDaysAgo.setDate(threeDaysAgo.getDate() + 3);
@@ -116,7 +210,7 @@ export default function LandingPage() {
           }
         });
       },
-      { threshold: 0.1 }
+      { threshold: 0.1 },
     );
 
     document.querySelectorAll(".landing-animate-in").forEach((el) => {
@@ -145,8 +239,20 @@ export default function LandingPage() {
       />
       {/* NAV */}
       <nav className="landing-nav">
-        <a href="#" className="landing-nav-logo" onClick={(e) => { e.preventDefault(); scrollTo("hero"); }}>
-          <img src={LOGO_URL} alt="Sriman Narayaneeyam" className="landing-logo-img" style={{ background: "transparent" }} />
+        <a
+          href="#"
+          className="landing-nav-logo"
+          onClick={(e) => {
+            e.preventDefault();
+            scrollTo("hero");
+          }}
+        >
+          <img
+            src={LOGO_URL}
+            alt="Sriman Narayaneeyam"
+            className="landing-logo-img"
+            style={{ background: "transparent" }}
+          />
         </a>
         <div className="landing-nav-links">
           <button onClick={() => scrollTo("what")}>About</button>
@@ -161,9 +267,9 @@ export default function LandingPage() {
           <InstagramFollow variant="icon" />
         </div>
         <div className="landing-nav-links landing-nav-links--cta">
-
-          <button className="landing-nav-cta" onClick={goAuth}>Begin Journey</button>
-
+          <button className="landing-nav-cta" onClick={goAuth}>
+            Begin Journey
+          </button>
         </div>
       </nav>
 
@@ -171,28 +277,30 @@ export default function LandingPage() {
       <section className="landing-hero" id="hero">
         {/* Mobile: fixed top banner (yellow box, blinks, multi-line) */}
         {festivalMessage && (
-          <div className="landing-festival-flash landing-festival-flash--mobile-top">
-            {festivalMessage}
-          </div>
+          <div className="landing-festival-flash landing-festival-flash--mobile-top">{festivalMessage}</div>
         )}
         <div className="landing-hero-om">ॐ</div>
         {/* Desktop: below Om (yellow box, blinks, multi-line) */}
         {festivalMessage && (
-          <div className="landing-festival-flash landing-festival-flash--desktop">
-            {festivalMessage}
-          </div>
+          <div className="landing-festival-flash landing-festival-flash--desktop">{festivalMessage}</div>
         )}
         <span className="landing-hero-subtitle-top">A Sacred Digital Sanctuary</span>
-        <h1 className="landing-hero-title">Sriman <span className="golden">Narayaneeyam</span></h1>
+        <h1 className="landing-hero-title">
+          Sriman <span className="golden">Narayaneeyam</span>
+        </h1>
         <p className="landing-hero-tagline">Your Gateway to Divine Grace</p>
         <p className="landing-hero-desc">
-          A sacred journey through 100 Dashakams — chant, learn, and grow in devotion
-          with the divine grace of Guruvayurappan. Composed by Melpathur Narayana Bhattathiri
-          in the 16th century, now brought to your fingertips.
+          A sacred journey through 100 Dashakams — chant, learn, and grow in devotion with the divine grace of
+          Guruvayurappan. Composed by Melpathur Narayana Bhattathiri in the 16th century, now brought to your
+          fingertips.
         </p>
         <div className="landing-hero-btns">
-          <button className="landing-btn-primary" onClick={goAuth}>Begin Your Journey</button>
-          <button className="landing-btn-outline" onClick={() => scrollTo("sloka")}>Read a Sloka for Health benefits</button>
+          <button className="landing-btn-primary" onClick={goAuth}>
+            Begin Your Journey
+          </button>
+          <button className="landing-btn-outline" onClick={() => scrollTo("sloka")}>
+            Read a Sloka for Health benefits
+          </button>
         </div>
         <div className="landing-scroll-hint">
           <span>Explore</span>
@@ -209,10 +317,16 @@ export default function LandingPage() {
               <div className="landing-what-circle-num">100</div>
               <div className="landing-what-circle-label">Dashakams</div>
               <div className="landing-what-circle-divider" />
-              <div className="landing-what-circle-num" style={{ fontSize: "2.5rem" }}>1,033</div>
+              <div className="landing-what-circle-num" style={{ fontSize: "2.5rem" }}>
+                1,033
+              </div>
               <div className="landing-what-circle-label">Divine Slokas</div>
               <div className="landing-what-circle-divider" />
-              <div className="landing-what-circle-sub">Composed in 1586 CE<br />at Guruvayur Temple</div>
+              <div className="landing-what-circle-sub">
+                Composed in 1586 CE
+                <br />
+                at Guruvayur Temple
+              </div>
             </div>
           </div>
           <div className="landing-what-content">
@@ -220,20 +334,21 @@ export default function LandingPage() {
             <h2 className="landing-section-title">What is Narayaneeyam?</h2>
             <div className="landing-gold-line" />
             <p>
-              Narayaneeyam is a devotional Sanskrit work composed by the great poet-saint
-              Melpathur Narayana Bhattathiri in the 16th century at the sacred Guruvayur temple in Kerala.
-              Bhattathiri composed this masterpiece to seek the blessings of Lord Guruvayurappan
-              (Lord Krishna) to cure himself of a debilitating illness.
+              Narayaneeyam is a devotional Sanskrit work composed by the great poet-saint Melpathur Narayana Bhattathiri
+              in the 16th century at the sacred Guruvayur temple in Kerala. Bhattathiri composed this masterpiece to
+              seek the blessings of Lord Guruvayurappan (Lord Krishna) to cure himself of a debilitating illness.
             </p>
             <div className="landing-sanskrit">
               आयुरारोग्यसौख्यं देहि देव नमोऽस्तु ते ।<br />
-              <span className="landing-sanskrit-trans">"Grant me longevity, health and happiness, O Lord — I bow to Thee."</span>
+              <span className="landing-sanskrit-trans">
+                "Grant me longevity, health and happiness, O Lord — I bow to Thee."
+              </span>
             </div>
             <p>
-              Spanning 100 Dashakams (groups of 10 verses each), it beautifully narrates the
-              stories of the Lord from the Bhagavata Purana, culminating in a vision of the divine form
-              — and Bhattathiri's miraculous healing. It remains one of the most powerful devotional texts
-              in the Hindu tradition, chanted daily by thousands of devotees worldwide.
+              Spanning 100 Dashakams (groups of 10 verses each), it beautifully narrates the stories of the Lord from
+              the Bhagavata Purana, culminating in a vision of the divine form — and Bhattathiri's miraculous healing.
+              It remains one of the most powerful devotional texts in the Hindu tradition, chanted daily by thousands of
+              devotees worldwide.
             </p>
             <div className="landing-stats-row">
               {[
@@ -258,8 +373,8 @@ export default function LandingPage() {
           <span className="landing-section-label">The App</span>
           <h2 className="landing-section-title">Everything You Need on Your Sacred Path</h2>
           <p className="landing-features-intro">
-            The Narayaneeyam app brings the full richness of this ancient text into a modern,
-            beautifully crafted digital experience — for devotees at every stage of their journey.
+            The Narayaneeyam app brings the full richness of this ancient text into a modern, beautifully crafted
+            digital experience — for devotees at every stage of their journey.
           </p>
         </div>
         <div className="landing-features-grid">
@@ -277,12 +392,16 @@ export default function LandingPage() {
       <section className="landing-sloka-section" id="sloka">
         <div className="landing-sloka-wrapper">
           <div style={{ textAlign: "center", marginBottom: "2.5rem" }}>
-            <span className="landing-section-label" style={{ color: "#0d5c5c" }}>No Sign-up Required</span>
-            <h2 className="landing-section-title" style={{ color: "#063d3d" }}>Read a Sloka for Health &amp; Healing</h2>
+            <span className="landing-section-label" style={{ color: "#0d5c5c" }}>
+              No Sign-up Required
+            </span>
+            <h2 className="landing-section-title" style={{ color: "#063d3d" }}>
+              Read a Sloka for Health &amp; Healing
+            </h2>
             <div className="landing-gold-line center-line" />
             <p style={{ color: "#7a6845", fontSize: "1.05rem", lineHeight: 1.8, maxWidth: 560, margin: "0 auto" }}>
-              This sloka from Dashakam 8 is traditionally chanted for health,
-              healing, and physical wellbeing. Read it here — no account needed.
+              This sloka from Dashakam 8 is traditionally chanted for health, healing, and physical wellbeing. Read it
+              here — no account needed.
             </p>
           </div>
           <div className="landing-sloka-card landing-animate-in">
@@ -290,29 +409,56 @@ export default function LandingPage() {
             <div className="landing-sloka-dashakam">Sloka for Health &amp; Healing</div>
             <div className="landing-sloka-name">Arogya Slokam</div>
             <div className="landing-sloka-text">
-              अस्मिन् परात्मन् ननु पाद्मकल्पे<br />
+              अस्मिन् परात्मन् ननु पाद्मकल्पे
+              <br />
               त्वमित्थमुत्थापितपद्मयोनि: ।<br />
-              अनन्तभूमा मम रोगराशिं<br />
-              निरुन्धि वातालयवास विष्णो ॥<br /><br />
-              Asmin parathman nanu paathmakalpe<br />
+              अनन्तभूमा मम रोगराशिं
+              <br />
+              निरुन्धि वातालयवास विष्णो ॥<br />
+              <br />
+              Asmin parathman nanu paathmakalpe
+              <br />
               Thvamithamutthapitha padmayonihi ।<br />
-              Anantha bhooma mama roga raashim,<br />
-              Nirundhi vaathalaya vaasa vishno ॥<br /><br />
-              அஸ்மின் பராத்மன் நனு பாத்மகல்பே<br />
+              Anantha bhooma mama roga raashim,
+              <br />
+              Nirundhi vaathalaya vaasa vishno ॥<br />
+              <br />
+              அஸ்மின் பராத்மன் நனு பாத்மகல்பே
+              <br />
               த்வமிதமுத்தபித பத்மயோனிஹி ।<br />
-              அனந்த பூம மம ரோக ராஷிம்<br />
+              அனந்த பூம மம ரோக ராஷிம்
+              <br />
               நிருந்தி வாதலய வாச விஷ்ணோ ॥
             </div>
             <p className="landing-sloka-meaning">
-              "The slokam is a prayer to the Lord Guruvayuppan. Roughly translated it means:
-              Oh Lord Vishnu, enshrined in Guruvayur ! Oh Great Soul !
-              Oh The Lord of Eternal Glory, who thus awakened Brahma in Paadmakalpa !
-              May Thou remove all my afflictions."
+              "The slokam is a prayer to the Lord Guruvayuppan. Roughly translated it means: Oh Lord Vishnu, enshrined
+              in Guruvayur ! Oh Great Soul ! Oh The Lord of Eternal Glory, who thus awakened Brahma in Paadmakalpa ! May
+              Thou remove all my afflictions."
             </p>
-            <p className="landing-sloka-chapter">Dashakam 8, Sloka 13 · Narayaneeyam by Melpathur Narayana Bhattathiri</p>
-            <p style={{ textAlign: "center", fontSize: "0.85rem", color: "#7a6845", fontStyle: "italic", marginTop: "1rem" }}>
+            <p className="landing-sloka-chapter">
+              Dashakam 8, Sloka 13 · Narayaneeyam by Melpathur Narayana Bhattathiri
+            </p>
+            <p
+              style={{
+                textAlign: "center",
+                fontSize: "0.85rem",
+                color: "#7a6845",
+                fontStyle: "italic",
+                marginTop: "1rem",
+              }}
+            >
               🔓{" "}
-              <button onClick={goAuth} style={{ color: "#1a7a7a", textDecoration: "underline", background: "none", border: "none", cursor: "pointer", font: "inherit" }}>
+              <button
+                onClick={goAuth}
+                style={{
+                  color: "#1a7a7a",
+                  textDecoration: "underline",
+                  background: "none",
+                  border: "none",
+                  cursor: "pointer",
+                  font: "inherit",
+                }}
+              >
                 Create a free account
               </button>{" "}
               to chant along with synchronised audio across all 1,033 slokas as they are published.
@@ -325,11 +471,13 @@ export default function LandingPage() {
       <section className="landing-benefits-section" id="benefits">
         <div style={{ textAlign: "center", maxWidth: 700, margin: "0 auto 1rem" }}>
           <span className="landing-section-label">Devotee Stories</span>
-          <h2 className="landing-section-title" style={{ textAlign: "center" }}>How Narayaneeyam Has Transformed Lives</h2>
+          <h2 className="landing-section-title" style={{ textAlign: "center" }}>
+            How Narayaneeyam Has Transformed Lives
+          </h2>
           <div className="landing-gold-line center-line" />
           <p style={{ color: "#7a6845", fontSize: "1.05rem", lineHeight: 1.8 }}>
-            For centuries, devout chanting of Narayaneeyam has been associated with miraculous
-            blessings. Here are just a few of the many lives it has touched.
+            For centuries, devout chanting of Narayaneeyam has been associated with miraculous blessings. Here are just
+            a few of the many lives it has touched.
           </p>
         </div>
         <div className="landing-benefits-grid">
@@ -340,7 +488,9 @@ export default function LandingPage() {
               <div className="landing-benefit-name">{s.name}</div>
               <p className="landing-benefit-quote">"{s.quote}"</p>
               <div className="landing-benefit-person">
-                <div className="landing-avatar" style={{ background: s.color, color: s.textColor || "#fff" }}>{s.initials}</div>
+                <div className="landing-avatar" style={{ background: s.color, color: s.textColor || "#fff" }}>
+                  {s.initials}
+                </div>
                 <div>
                   <div className="landing-person-name">{s.person}</div>
                   <div className="landing-person-loc">{s.loc}</div>
@@ -355,17 +505,27 @@ export default function LandingPage() {
       <section className="landing-auth-section" id="auth">
         <div style={{ textAlign: "center", maxWidth: 600, margin: "0 auto 3rem", position: "relative" }}>
           <span className="landing-section-label">Begin Today</span>
-          <h2 className="landing-section-title" style={{ color: "#fff" }}>Start Your Sacred Journey</h2>
+          <h2 className="landing-section-title" style={{ color: "#fff" }}>
+            Start Your Sacred Journey
+          </h2>
           <div className="landing-gold-line center-line" style={{ marginBottom: 0 }} />
         </div>
         <div className="landing-auth-container">
           <div className="landing-auth-pitch">
-            <h3 style={{ fontFamily: "'Cinzel', serif", fontSize: "1.3rem", color: "#e8c96a", marginBottom: "1rem", fontWeight: 500 }}>
+            <h3
+              style={{
+                fontFamily: "'Cinzel', serif",
+                fontSize: "1.3rem",
+                color: "#e8c96a",
+                marginBottom: "1rem",
+                fontWeight: 500,
+              }}
+            >
               Access to the complete Narayaneeyam
             </h3>
             <p>
-              Join thousands of devotees across the world who have made Narayaneeyam
-              a daily practice. Your account gives you full access to everything.
+              Join thousands of devotees across the world who have made Narayaneeyam a daily practice. Your account
+              gives you full access to everything.
             </p>
             <ul className="landing-auth-benefits">
               <li>All 1,033 slokas with synchronized audio chanting, released dashakam by dashakam</li>
@@ -379,9 +539,13 @@ export default function LandingPage() {
             </ul>
           </div>
           <div className="landing-auth-form-card">
-            <button className="landing-form-submit" onClick={goAuth}>Create Account ✦</button>
+            <button className="landing-form-submit" onClick={goAuth}>
+              Create Account ✦
+            </button>
             <div style={{ height: "1rem" }} />
-            <button className="landing-form-submit" onClick={goAuth}>Sign In ✦</button>
+            <button className="landing-form-submit" onClick={goAuth}>
+              Sign In ✦
+            </button>
           </div>
         </div>
       </section>
@@ -396,7 +560,17 @@ export default function LandingPage() {
         <div style={{ maxWidth: 800, margin: "0 auto" }}>
           {faqSections.map((section) => (
             <div key={section.heading} style={{ marginBottom: "2rem" }}>
-              <h3 style={{ fontFamily: "'Cinzel', serif", fontSize: "1.1rem", fontWeight: 600, color: "#063d3d", marginBottom: "0.8rem", borderBottom: "1px solid rgba(201,168,76,0.3)", paddingBottom: "0.5rem" }}>
+              <h3
+                style={{
+                  fontFamily: "'Cinzel', serif",
+                  fontSize: "1.1rem",
+                  fontWeight: 600,
+                  color: "#063d3d",
+                  marginBottom: "0.8rem",
+                  borderBottom: "1px solid rgba(201,168,76,0.3)",
+                  paddingBottom: "0.5rem",
+                }}
+              >
                 {section.heading}
               </h3>
               <Accordion type="multiple" className="space-y-1">
@@ -407,10 +581,16 @@ export default function LandingPage() {
                     className="border rounded-lg px-4"
                     style={{ borderColor: "rgba(201,168,76,0.2)", background: "#fff" }}
                   >
-                    <AccordionTrigger className="text-left text-sm font-medium hover:no-underline" style={{ color: "#1a1208", fontFamily: "'Cormorant Garamond', Georgia, serif", fontSize: "1rem" }}>
+                    <AccordionTrigger
+                      className="text-left text-sm font-medium hover:no-underline"
+                      style={{ color: "#1a1208", fontFamily: "'Cormorant Garamond', Georgia, serif", fontSize: "1rem" }}
+                    >
                       {faq.q}
                     </AccordionTrigger>
-                    <AccordionContent className="text-sm leading-relaxed" style={{ color: "#4a3b20", fontFamily: "'Cormorant Garamond', Georgia, serif" }}>
+                    <AccordionContent
+                      className="text-sm leading-relaxed"
+                      style={{ color: "#4a3b20", fontFamily: "'Cormorant Garamond', Georgia, serif" }}
+                    >
                       {faq.a}
                     </AccordionContent>
                   </AccordionItem>
@@ -427,7 +607,12 @@ export default function LandingPage() {
       {/* FOOTER */}
       <footer className="landing-footer">
         <div className="landing-footer-logo">
-          <img src={LOGO_URL} alt="Sriman Narayaneeyam" className="landing-footer-logo-img" style={{ background: "transparent" }} />
+          <img
+            src={LOGO_URL}
+            alt="Sriman Narayaneeyam"
+            className="landing-footer-logo-img"
+            style={{ background: "transparent" }}
+          />
           Sriman Narayaneeyam
         </div>
         <p className="landing-footer-tagline">Chant · Learn · Grow · Experience Divine Grace</p>
@@ -445,7 +630,6 @@ export default function LandingPage() {
           <InstagramFollow variant="inline" />
         </div>
         <p className="landing-footer-copy">
-
           © 2026 Narayaneeyam App · narayaneeyam.app · Made with devotion for devotees everywhere
         </p>
       </footer>
