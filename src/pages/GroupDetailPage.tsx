@@ -719,6 +719,26 @@ export default function GroupDetailPage() {
                     </div>
                   )}
 
+                  {/* Repair path: a non-relay parayanam with no schedule rows yet */}
+                  {canGenerateMissingSchedule && !canStartNow && (
+                    <div className="mt-5">
+                      <button
+                        onClick={handleGenerateMissingSchedule}
+                        disabled={starting}
+                        className="inline-flex items-center gap-2 rounded-lg border border-primary px-4 py-2 font-sans text-sm font-semibold text-primary hover:bg-primary/10 disabled:opacity-60"
+                      >
+                        {starting ? <Loader2 className="h-4 w-4 animate-spin" /> : <CalendarDays className="h-4 w-4" />}
+                        Generate schedule
+                      </button>
+                      <p className="mt-2 font-sans text-sm text-muted-foreground">
+                        This parayanam has no day-by-day schedule yet. Generating it makes My schedule available to
+                        everyone taking part.
+                      </p>
+                    </div>
+                  )}
+
+
+
                   {canStartNow && relayNeedsConfirmation && (
                     <p className="mt-2 font-sans text-sm text-muted-foreground">
                       Waiting for at least one participant to confirm — a relay parayanam can only be started once
