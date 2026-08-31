@@ -140,11 +140,11 @@ export function AwaitingContributionCard({ invite: i }: { invite: PendingInvite 
   return (
     <div className="rounded-xl border border-primary/40 bg-primary/5 p-4">
       <p className="flex items-center gap-2 font-display text-base font-semibold text-foreground">
-        <Clock className="h-4 w-4 text-primary" /> Awaiting contribution confirmation
+        <Clock className="h-4 w-4 text-primary" /> Awaiting Guru approval
       </p>
       <p className="mt-1 font-sans text-xs text-muted-foreground">
-        You have joined {i.parayanam_name ?? "this parayanam"}. Your access opens once
-        {i.guru_name ? ` ${i.guru_name}` : " your Guru"} confirms your contribution.
+        You have accepted the invitation to {i.parayanam_name ?? "this parayanam"}. Your access opens once
+        {i.guru_name ? ` ${i.guru_name}` : " your Guru"} approves your contribution.
       </p>
       {i.contribution_amount != null && (
         <p className="mt-2 font-sans text-xs text-foreground/80">Contribution: ₹{i.contribution_amount}</p>
