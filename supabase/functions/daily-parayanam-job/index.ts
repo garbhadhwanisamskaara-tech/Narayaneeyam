@@ -87,8 +87,16 @@ Deno.serve(async (_req) => {
   } catch (e) {
     console.error("PARAYANAM_CONFIRMED sweep failed", e);
   }
+  let invitesSwept = 0;
+  try {
+    // Safety net for auto-invites created by the group_members database
+    // trigger, which has no browser to fire the invitation email.
+    invitesSwept = await sweepInvites();
+  } catch (e) {
+    console.error("PARAYANAM_INVITE sweep failed", e);
+  }
 
-  return new Response(JSON.stringify({ sent, failed, users: byUser.size, emails }), {
+  return new Response(JSON.stringify({ sent, failed, users: byUser.size, emails, invitesSwept }), {
     headers: { "Content-Type": "application/json" },
     status: 200,
   });
