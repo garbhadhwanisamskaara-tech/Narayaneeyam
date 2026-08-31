@@ -3,7 +3,10 @@ import { Link } from "react-router-dom";
 import { Ban, CalendarDays, Loader2, Pencil, Settings2, UserMinus, UserPlus } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
+import { useCapabilities } from "@/hooks/useCapabilities";
+import BulkConfirmContributions from "@/components/BulkConfirmContributions";
 import type { GroupMember } from "@/hooks/useGroups";
+
 import {
   countIncompleteAssignments,
   inviteParticipants,
@@ -37,12 +40,15 @@ interface Props {
   members: GroupMember[];
   ownerId: string;
   participants: Participant[];
+  /** True when the current user is the Guru/owner of this group. */
+  isOwner?: boolean;
   /** Called after any change so the page can refetch everything together. */
   onChanged: () => void | Promise<void>;
   /** Optional controlled open state — lets a parent open the dialog itself. */
   open?: boolean;
   onOpenChange?: (open: boolean) => void;
 }
+
 
 const STATUS_LABEL: Record<ParticipantStatus, string> = {
   invited: "Invited",
@@ -60,12 +66,15 @@ export default function ManageParayanamDialog({
   members,
   ownerId,
   participants,
+  isOwner = false,
   onChanged,
   open: controlledOpen,
   onOpenChange,
 }: Props) {
+  const { canConfigurePayments } = useCapabilities();
   const [internalOpen, setInternalOpen] = useState(false);
   const open = controlledOpen ?? internalOpen;
+
   const setOpen = (next: boolean) => {
     setInternalOpen(next);
     onOpenChange?.(next);
@@ -608,6 +617,12 @@ export default function ManageParayanamDialog({
                 Save details
               </button>
             </div>
+
+            {/* WEB + Guru + PAID only: reconcile contributions received outside the app. */}
+            {isOwner && canConfigurePayments && details?.participation_type === "PAID" && (
+              <BulkConfirmContributions sessionId={sessionId} onChanged={onChanged} />
+            )}
+
             <div className="flex items-center justify-between gap-3">
               <h3 className="flex items-center gap-2 font-sans text-sm font-semibold text-foreground">
                 <UserPlus className="h-4 w-4 text-primary" />
