@@ -823,7 +823,9 @@ export default function GroupDetailPage() {
                 )}
               </div>
 
-              <ParayanamScheduleViews challengeSessionId={selectedSessionId} refreshKey={refreshKey} />
+              {canSeeParayanamData && (
+                <ParayanamScheduleViews challengeSessionId={selectedSessionId} refreshKey={refreshKey} />
+              )}
             </>
           )}
         </>
