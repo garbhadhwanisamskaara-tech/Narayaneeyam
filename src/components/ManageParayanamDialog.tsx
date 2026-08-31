@@ -87,6 +87,8 @@ export default function ManageParayanamDialog({
   const [contributionAmount, setContributionAmount] = useState("");
   const [paymentDetails, setPaymentDetails] = useState("");
   const [paymentNote, setPaymentNote] = useState("");
+  const [autoInvite, setAutoInvite] = useState(false);
+  const [autoInviteConfirmOpen, setAutoInviteConfirmOpen] = useState(false);
   const [loadingDetails, setLoadingDetails] = useState(false);
   useEffect(() => setName(parayanamName ?? ""), [parayanamName]);
   useEffect(() => {
@@ -116,7 +118,8 @@ export default function ManageParayanamDialog({
         schedule_weekdays,
         same_for_all_per_day,
         finalized_at,
-        technical_state
+        technical_state,
+        auto_invite_group_members
       `,
         )
         .eq("id", sessionId)
@@ -148,6 +151,7 @@ export default function ManageParayanamDialog({
 
           setPaymentDetails(sessionData.payment_url ?? "");
           setPaymentNote(sessionData.payment_note ?? "");
+          setAutoInvite(sessionData.auto_invite_group_members === true);
         }
 
         setLoadingDetails(false);
