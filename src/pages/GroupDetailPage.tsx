@@ -21,6 +21,7 @@ import { useGroupParayanams, parayanamLabel } from "@/hooks/useGroupParayanams";
 import SEO from "@/components/SEO";
 import DashakamGarden from "@/components/DashakamGarden";
 import { useSessionGarden } from "@/hooks/useSessionGarden";
+import { isParticipantEligible } from "@/lib/parayanamEligibility";
 import PendingInvitesSection from "@/components/PendingInvitesSection";
 import ManageParayanamDialog from "@/components/ManageParayanamDialog";
 import ParayanamLiveSessionsSection from "@/components/ParayanamLiveSessionsSection";
@@ -268,7 +269,14 @@ export default function GroupDetailPage() {
   // Only people with a relationship to the selected parayanam (invited, confirmed
   // or declined) — plus the owner, who runs it — may see its progress.
   const hasSession = !!selectedSessionId;
-  const isParayanamParticipant = isOwner || (!!user && participants.some((p) => p.user_id === user.id));
+  // A participant row alone is not access: invited, declined, left or a PAID
+  // member awaiting the Guru's contribution approval must stay locked out.
+  const isParayanamParticipant =
+    isOwner ||
+    (!!user &&
+      participants.some((p) =>
+        isParticipantEligible(p, selectedParticipationType),
+      ));
   const canSeeParayanamData = !hasSession || isParayanamParticipant;
 
   // Prefer the live schedule the garden loaded; fall back to the session's list.
