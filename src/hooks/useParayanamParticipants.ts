@@ -11,6 +11,9 @@ export interface Participant {
   status: ParticipantStatus;
   invited_at: string | null;
   responded_at: string | null;
+  /** Server-owned; the source of truth for whether payment is still being asked for. */
+  contribution_status?: "not_required" | "pending" | "confirmed" | null;
+  access_status?: "active" | "locked" | null;
 }
 
 export interface PendingInvite extends Participant {
@@ -30,7 +33,8 @@ export interface PendingInvite extends Participant {
   payment_note: string | null;
 }
 
-const COLS = "id, challenge_session_id, user_id, status, invited_at, responded_at";
+const COLS =
+  "id, challenge_session_id, user_id, status, invited_at, responded_at, contribution_status, access_status";
 
 /**
  * Invites a set of members to a parayanam. The owner (when opted in) is written
