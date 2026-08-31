@@ -82,6 +82,7 @@ export default function CreateParayanamPage() {
   const [weekdays, setWeekdays] = useState<number[]>([]);
   const [selectedParticipants, setSelectedParticipants] = useState<string[]>([]);
   const [includeSelf, setIncludeSelf] = useState(true);
+  const [autoInvite, setAutoInvite] = useState(false);
   const [draftId, setDraftId] = useState<string | null>(params.get("draft"));
   const [savingDraft, setSavingDraft] = useState(false);
   const [draftSaved, setDraftSaved] = useState(false);
@@ -155,6 +156,7 @@ export default function CreateParayanamPage() {
       if (d.liveSchedule) setLiveSchedule(d.liveSchedule);
       if (Array.isArray(d.selectedParticipants)) setSelectedParticipants(d.selectedParticipants);
       if (typeof d.includeSelf === "boolean") setIncludeSelf(d.includeSelf);
+      if (typeof data.auto_invite_group_members === "boolean") setAutoInvite(data.auto_invite_group_members);
       if (d.step) setStep(d.step);
       setDraftId(id);
       setLoadingDraft(false);
@@ -371,6 +373,7 @@ export default function CreateParayanamPage() {
     payment_url: participationType === "PAID" ? contribution.paymentUrl.trim() || null : null,
     payment_note: participationType === "PAID" && contribution.note.trim() ? contribution.note.trim() : null,
     challenge_type: isGroup ? (mode === "RELAY" ? "group_relay" : "group_standard") : "personal",
+    auto_invite_group_members: isGroup ? autoInvite : false,
     distribution_mode: mode,
     schedule_pattern: schedulePattern,
     schedule_weekdays: schedulePattern === "WEEKDAYS" ? weekdays : null,
@@ -475,6 +478,24 @@ export default function CreateParayanamPage() {
 
       if (isGroup) {
         await inviteParticipants(session.id, selectedParticipants, includeSelf ? user.id : null);
+
+        // Auto-invite: the backend RPC invites every group member with no
+        // participant record. Best-effort — the parayanam itself stays valid
+        // even if invitations cannot be completed right now.
+        if (autoInvite) {
+          try {
+            const { error: aiErr } = await (supabase as any).rpc("invite_group_members_to_parayanam", {
+              p_session_id: session.id,
+            });
+            if (aiErr) throw new Error(aiErr.message);
+          } catch (e: any) {
+            toast({
+              title: "Parayanam created, but automatic invitations could not be completed",
+              description: e?.message ?? "You can invite members from the group page.",
+              variant: "destructive",
+            });
+          }
+        }
 
         // SAME_FOR_ALL and REPEAT_SAME do not depend on participant confirmations,
         // so materialise their schedules immediately.
@@ -1049,6 +1070,23 @@ export default function CreateParayanamPage() {
               includeSelf={includeSelf}
               onIncludeSelfChange={setIncludeSelf}
             />
+            <label className="flex cursor-pointer items-start gap-3 rounded-xl border border-border p-4 hover:border-primary">
+              <input
+                type="checkbox"
+                checked={autoInvite}
+                onChange={(e) => setAutoInvite(e.target.checked)}
+                className="mt-0.5 h-4 w-4 accent-primary"
+              />
+              <span>
+                <span className="block font-sans text-sm font-semibold text-foreground">
+                  Automatically invite group members to this Parayanam
+                </span>
+                <span className="mt-1 block font-sans text-xs text-muted-foreground">
+                  All current group members, and members who join this group later, will receive a Parayanam
+                  invitation.
+                </span>
+              </span>
+            </label>
           </div>
         )}
 
