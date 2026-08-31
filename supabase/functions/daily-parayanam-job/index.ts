@@ -7,6 +7,7 @@
 
 import { createClient } from "npm:@supabase/supabase-js@2";
 import webpush from "npm:web-push@3.6.7";
+import { sendParayanamEmail, sweepConfirmed } from "../_shared/parayanam-emails.ts";
 
 const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
 const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
@@ -72,8 +73,52 @@ Deno.serve(async (_req) => {
     failed += result.failed;
   }
 
-  return new Response(JSON.stringify({ sent, failed, users: byUser.size }), {
+  // ---- Transactional emails, riding on this existing daily schedule ----
+  // Email failures must never affect the reminder run above.
+  const emails = { starting: 0, confirmed: 0 };
+  try {
+    emails.starting = await sendStartingEmails();
+  } catch (e) {
+    console.error("PARAYANAM_STARTING pass failed", e);
+  }
+  try {
+    // Safety net: catches confirmations made by bulk CSV, RPCs or direct SQL.
+    emails.confirmed = await sweepConfirmed(supabase);
+  } catch (e) {
+    console.error("PARAYANAM_CONFIRMED sweep failed", e);
+  }
+
+  return new Response(JSON.stringify({ sent, failed, users: byUser.size, emails }), {
     headers: { "Content-Type": "application/json" },
     status: 200,
   });
 });
+
+/** Live (non-archived) sessions whose start_date is today or tomorrow. */
+async function sendStartingEmails(): Promise<number> {
+  const today = new Date();
+  const iso = (d: Date) => d.toISOString().slice(0, 10);
+  const tomorrow = new Date(today.getTime() + 86_400_000);
+
+  const { data: sessions } = await supabase
+    .from("challenge_sessions")
+    .select("id, technical_state")
+    .in("start_date", [iso(today), iso(tomorrow)]);
+
+  const ids = ((sessions ?? []) as { id: string; technical_state: string | null }[])
+    .filter((s) => !["ARCHIVED", "CANCELLED", "DRAFT"].includes(String(s.technical_state ?? "")))
+    .map((s) => s.id);
+  if (!ids.length) return 0;
+
+  const { data: participants } = await supabase
+    .from("parayanam_participants")
+    .select("id")
+    .in("challenge_session_id", ids)
+    .eq("status", "confirmed");
+
+  let count = 0;
+  for (const p of (participants ?? []) as { id: string }[]) {
+    if ((await sendParayanamEmail(supabase, "PARAYANAM_STARTING", p.id)) === "sent") count++;
+  }
+  return count;
+}

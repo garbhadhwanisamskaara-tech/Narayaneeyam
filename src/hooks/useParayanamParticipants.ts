@@ -96,6 +96,36 @@ export async function inviteParticipants(
   );
 }
 
+/**
+ * Asks the server to (re)evaluate whether a participant is now fully confirmed
+ * and, if so, send the PARAYANAM_CONFIRMED email. Eligibility and idempotency
+ * are decided entirely server-side; failures are logged and ignored.
+ */
+export async function notifyParayanamConfirmed(participantId: string): Promise<void> {
+  try {
+    const { error } = await supabase.functions.invoke("send-parayanam-emails", {
+      body: { event_type: "PARAYANAM_CONFIRMED", participant_id: participantId },
+    });
+    if (error) console.error("send-parayanam-emails failed for participant", participantId, error);
+  } catch (e) {
+    console.error("send-parayanam-emails failed for participant", participantId, e);
+  }
+}
+
+/**
+ * Same, for a whole parayanam — used after bulk contribution confirmation.
+ */
+export async function notifyParayanamConfirmedForSession(sessionId: string): Promise<void> {
+  try {
+    const { error } = await supabase.functions.invoke("send-parayanam-emails", {
+      body: { event_type: "PARAYANAM_CONFIRMED", session_id: sessionId },
+    });
+    if (error) console.error("send-parayanam-emails failed for session", sessionId, error);
+  } catch (e) {
+    console.error("send-parayanam-emails failed for session", sessionId, e);
+  }
+}
+
 export type RemovalMode = "distribute" | "assign_to";
 
 /**
@@ -301,6 +331,11 @@ export function useMyPendingInvites() {
         if (!data || data.length === 0) {
           throw new Error("The invitation was not updated. Please refresh the page and try again.");
         }
+
+        // Best-effort confirmation email. The Edge Function decides eligibility
+        // server-side (FREE vs PAID) and is idempotent; a failure here must never
+        // undo the accepted invitation.
+        if (status === "confirmed") void notifyParayanamConfirmed(inviteId);
 
         // Always reload from Supabase.
         // Do not pretend locally that the invitation changed.
