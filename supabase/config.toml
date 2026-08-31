@@ -27,3 +27,6 @@ verify_jwt = false
 
 [functions.send-daily-reminders]
 verify_jwt = false
+
+[functions.send-parayanam-emails]
+verify_jwt = false
