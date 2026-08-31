@@ -314,6 +314,25 @@ export function useMyPendingInvites() {
     void refresh();
   }, [refresh]);
 
+  // Auto-invites are created server-side (group-join trigger), so listen for
+  // any change to this user's participant rows and refetch the pending list.
+  useEffect(() => {
+    if (!user) return;
+    const channel = supabase
+      .channel(`parayanam-invites-${user.id}`)
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "parayanam_participants", filter: `user_id=eq.${user.id}` },
+        () => {
+          void refresh();
+        },
+      )
+      .subscribe();
+    return () => {
+      void supabase.removeChannel(channel);
+    };
+  }, [user, refresh]);
+
   const respond = useCallback(
     async (inviteId: string, status: "confirmed" | "declined") => {
       setBusyId(inviteId);
