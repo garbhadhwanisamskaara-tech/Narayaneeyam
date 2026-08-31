@@ -197,14 +197,16 @@ export default function GroupDetailPage() {
         ? (data.dashakam_list as any[]).map(Number).filter((n) => Number.isFinite(n))
         : [];
 
-      // A finalized parayanam may store its dashakams only in the generated
-      // schedule (dashakam_list can be null when a saved set was used).
+      // The generated schedule is also the fallback source of the dashakam
+      // list (dashakam_list can be null when a saved set was used), and its
+      // row count tells us whether a schedule exists at all.
+      const { data: rows } = await (supabase as any)
+        .from("parayanam_schedule")
+        .select("dashakam_no")
+        .eq("challenge_session_id", sessionId);
+      if (cancelled) return;
+      setScheduleRowCount(((rows ?? []) as any[]).length);
       if (!list.length) {
-        const { data: rows } = await (supabase as any)
-          .from("parayanam_schedule")
-          .select("dashakam_no")
-          .eq("challenge_session_id", sessionId);
-        if (cancelled) return;
         list = Array.from(
           new Set(((rows ?? []) as any[]).map((r) => Number(r.dashakam_no)).filter((n) => Number.isFinite(n))),
         ).sort((a, b) => a - b);
