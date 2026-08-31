@@ -8,8 +8,8 @@ import { createClient, type SupabaseClient } from "npm:@supabase/supabase-js@2";
 
 export type ParayanamEmailEvent = "PARAYANAM_CONFIRMED" | "PARAYANAM_STARTING";
 
-export const APP_URL = Deno.env.get("APP_PUBLIC_URL") ?? "https://www.narayaneeyam.app";
-const FROM = Deno.env.get("EMAIL_FROM") ?? "Narayaneeyam.app <noreply@narayaneeyam.app>";
+export const APP_URL = Deno.env.get("APP_BASE_URL") ?? "https://www.narayaneeyam.app";
+const FROM = Deno.env.get("APP_EMAIL_FROM") ?? "Narayaneeyam.app <noreply@narayaneeyam.app>";
 const RESEND_API_KEY = Deno.env.get("RESEND_API_KEY") ?? "";
 
 export function serviceClient(): SupabaseClient {
