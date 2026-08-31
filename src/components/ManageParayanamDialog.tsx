@@ -3,7 +3,10 @@ import { Link } from "react-router-dom";
 import { Ban, CalendarDays, Loader2, Pencil, Settings2, UserMinus, UserPlus } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
+import { useCapabilities } from "@/hooks/useCapabilities";
+import BulkConfirmContributions from "@/components/BulkConfirmContributions";
 import type { GroupMember } from "@/hooks/useGroups";
+
 import {
   countIncompleteAssignments,
   inviteParticipants,
