@@ -1,7 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { isHiddenSessionState } from "@/lib/parayanamFilters";
-import { fetchEligibleSessionIds } from "@/lib/parayanamEligibility";
 
 export interface GroupParayanam {
   session_id: string;

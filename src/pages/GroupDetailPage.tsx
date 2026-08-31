@@ -122,6 +122,27 @@ export default function GroupDetailPage() {
     refresh: refreshParticipants,
   } = useSessionParticipants(selectedSessionId);
 
+  // FREE vs PAID decides how strict participation eligibility is.
+  const [selectedParticipationType, setSelectedParticipationType] = useState<string | null>(null);
+  useEffect(() => {
+    let cancelled = false;
+    if (!selectedSessionId) {
+      setSelectedParticipationType(null);
+      return;
+    }
+    void (async () => {
+      const { data } = await (supabase as any)
+        .from("challenge_sessions")
+        .select("participation_type")
+        .eq("id", selectedSessionId)
+        .maybeSingle();
+      if (!cancelled) setSelectedParticipationType((data as any)?.participation_type ?? null);
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [selectedSessionId]);
+
   // Default selection: the group's active pointer when it is in the list,
   // otherwise the most recent parayanam. Explicit picks always win afterwards.
   useEffect(() => {
