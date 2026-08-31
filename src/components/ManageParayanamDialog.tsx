@@ -63,12 +63,15 @@ export default function ManageParayanamDialog({
   members,
   ownerId,
   participants,
+  isOwner = false,
   onChanged,
   open: controlledOpen,
   onOpenChange,
 }: Props) {
+  const { canConfigurePayments } = useCapabilities();
   const [internalOpen, setInternalOpen] = useState(false);
   const open = controlledOpen ?? internalOpen;
+
   const setOpen = (next: boolean) => {
     setInternalOpen(next);
     onOpenChange?.(next);
