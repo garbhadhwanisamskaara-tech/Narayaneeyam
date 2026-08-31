@@ -14,17 +14,9 @@ interface SEOProps {
 }
 
 const SITE = "https://www.narayaneeyam.app";
-const DEFAULT_IMAGE =
-  "https://znglsaxfyhkuzyrfbuhn.supabase.co/storage/v1/object/public/images/SNlogo.png";
+const DEFAULT_IMAGE = "https://www.narayaneeyam.app/og-image.jpg";
 
-export default function SEO({
-  path,
-  title,
-  description,
-  image,
-  jsonLd,
-  robots = "index, follow",
-}: SEOProps) {
+export default function SEO({ path, title, description, image, jsonLd, robots = "index, follow" }: SEOProps) {
   const url = `${SITE}${path === "/" ? "/" : path}`;
   const ogImage = image || DEFAULT_IMAGE;
   const ogTitle = title || "Sriman Narayaneeyam — Chant · Learn · Grow";
@@ -53,11 +45,7 @@ export default function SEO({
       <meta name="twitter:description" content={ogDesc} />
       <meta name="twitter:image" content={ogImage} />
 
-      {jsonLd && (
-        <script type="application/ld+json">
-          {JSON.stringify(jsonLd)}
-        </script>
-      )}
+      {jsonLd && <script type="application/ld+json">{JSON.stringify(jsonLd)}</script>}
     </Helmet>
   );
 }
