@@ -15,19 +15,23 @@ interface Props {
   busy?: boolean;
   onAccept: () => void;
   onDecline: () => void;
+  /** When provided, a PAID invite shows "Pay ₹… to Join" instead of Accept. */
+  onPay?: () => void;
 }
 
 /**
  * The member-facing invitation card for one parayanam. The meeting link is never
  * shown here — even for Live parayanams — it only appears once access is active.
  */
-export default function ParayanamInviteCard({ invite: i, busy, onAccept, onDecline }: Props) {
+export default function ParayanamInviteCard({ invite: i, busy, onAccept, onDecline, onPay }: Props) {
   // Once the Guru has confirmed the contribution, the participant is never
   // asked to pay again for this parayanam — Accept/Decline stay available.
   const contributionSettled = i.contribution_status === "confirmed" || i.contribution_status === "not_required";
   const paid = i.participation_type === "PAID" && !contributionSettled;
   const live = i.delivery_mode === "LIVE";
   const { canViewExternalPaymentLinks } = useCapabilities();
+  // In-app Razorpay payment is available when the parayanam has a set amount.
+  const canPayInApp = paid && !!onPay;
 
   return (
     <div className="rounded-xl border border-border bg-background p-4">
@@ -97,14 +101,25 @@ export default function ParayanamInviteCard({ invite: i, busy, onAccept, onDecli
       </dl>
 
       <div className="mt-4 flex gap-2">
-        <button
-          onClick={onAccept}
-          disabled={busy}
-          className="inline-flex items-center gap-1.5 rounded-lg bg-gradient-peacock px-4 py-2 font-sans text-xs font-semibold text-primary-foreground hover:opacity-90 disabled:opacity-60"
-        >
-          {busy ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Check className="h-3.5 w-3.5" />}
-          Accept Invitation
-        </button>
+        {canPayInApp ? (
+          <button
+            onClick={onPay}
+            disabled={busy}
+            className="inline-flex items-center gap-1.5 rounded-lg bg-gradient-peacock px-4 py-2 font-sans text-xs font-semibold text-primary-foreground hover:opacity-90 disabled:opacity-60"
+          >
+            {busy ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <HandCoins className="h-3.5 w-3.5" />}
+            {i.contribution_amount != null ? `Pay ₹${i.contribution_amount} to Join` : "Pay to Join"}
+          </button>
+        ) : (
+          <button
+            onClick={onAccept}
+            disabled={busy}
+            className="inline-flex items-center gap-1.5 rounded-lg bg-gradient-peacock px-4 py-2 font-sans text-xs font-semibold text-primary-foreground hover:opacity-90 disabled:opacity-60"
+          >
+            {busy ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Check className="h-3.5 w-3.5" />}
+            Accept Invitation
+          </button>
+        )}
         <button
           onClick={onDecline}
           disabled={busy}
