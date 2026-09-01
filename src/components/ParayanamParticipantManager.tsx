@@ -137,7 +137,7 @@ export default function ParayanamParticipantManager({ sessionId, isOwner }: Prop
     const canConfirm =
       canConfigurePayments && isOwner && paid && r.status === "confirmed" && contribution === "pending";
 
-    const canRevert = canConfigurePayments && isOwner && paid && contribution === "confirmed";
+    const canRevert = canConfigurePayments && isOwner && paid && contribution === "confirmed" && r.access_status !== "active";
 
     return (
       <li key={r.id} className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-border p-3">
