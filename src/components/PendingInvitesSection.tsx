@@ -62,6 +62,25 @@ export default function PendingInvitesSection({ groupId }: { groupId?: string })
     }
   };
 
+  const payToJoin = (invite: PendingInvite) => {
+    setError(null);
+    setSuccess(null);
+    void pay(invite.challenge_session_id, {
+      // Payment verified — the server (verify + webhook) confirms the
+      // participant; reflect it immediately, same as the free-accept flow.
+      onPaid: () => {
+        track("parayanam_joined");
+        setSuccess(
+          invite.parayanam_name
+            ? `Payment received — you have joined “${invite.parayanam_name}”.`
+            : "Payment received — you have joined.",
+        );
+        void refresh();
+      },
+      onError: (message) => setError(message),
+    });
+  };
+
   const awaitingList = groupId ? awaiting.filter((i) => i.group_id === groupId) : awaiting;
 
   if (loading || (list.length === 0 && awaitingList.length === 0 && !showNudge)) return null;
@@ -77,9 +96,10 @@ export default function PendingInvitesSection({ groupId }: { groupId?: string })
           <li key={i.id}>
             <ParayanamInviteCard
               invite={i}
-              busy={busyId === i.id}
+              busy={busyId === i.id || payingId === i.challenge_session_id}
               onAccept={() => void answer(i.id, "confirmed")}
               onDecline={() => void answer(i.id, "declined")}
+              onPay={i.contribution_amount != null ? () => payToJoin(i) : undefined}
             />
           </li>
         ))}
