@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Check, Loader2, MailQuestion, X } from "lucide-react";
 import { useMyPendingInvites, type PendingInvite } from "@/hooks/useParayanamParticipants";
+import { useParayanamPayment } from "@/hooks/useParayanamPayment";
 import ParayanamInviteCard, { AwaitingContributionCard } from "@/components/ParayanamInviteCard";
 import PushRemindersPrompt from "@/components/PushRemindersPrompt";
 import { track } from "@/lib/analytics";
@@ -9,7 +10,8 @@ const NUDGE_KEY = "push-nudge-shown";
 
 /** Invites to group parayanams that are waiting for the current user's answer. */
 export default function PendingInvitesSection({ groupId }: { groupId?: string }) {
-  const { invites, loading, busyId, respond } = useMyPendingInvites();
+  const { invites, loading, busyId, respond, refresh } = useMyPendingInvites();
+  const { pay, payingId } = useParayanamPayment();
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
   const [showNudge, setShowNudge] = useState(false);
