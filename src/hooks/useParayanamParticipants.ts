@@ -325,6 +325,13 @@ export function useMyPendingInvites() {
     refreshRef.current = refresh;
   }, [refresh]);
 
+  // Latest invites, readable inside respond() without making respond depend on
+  // the invites array (keeps its identity stable for callers).
+  const invitesRef = useRef<PendingInvite[]>([]);
+  useEffect(() => {
+    invitesRef.current = invites;
+  }, [invites]);
+
   const userId = user?.id ?? null;
   useEffect(() => {
     if (!userId) return;
@@ -370,10 +377,13 @@ export function useMyPendingInvites() {
           throw new Error("The invitation was not updated. Please refresh the page and try again.");
         }
 
-        // Best-effort confirmation email. The Edge Function decides eligibility
-        // server-side (FREE vs PAID) and is idempotent; a failure here must never
-        // undo the accepted invitation.
-        if (status === "confirmed") void notifyParayanamConfirmed(inviteId);
+        // Best-effort confirmation email — but only for FREE parayanams. For
+        // PAID ones, acceptance is not full confirmation: the email is sent
+        // later, when the Guru approves the contribution (server-side).
+        const invite = invitesRef.current.find((i) => i.id === inviteId);
+        if (status === "confirmed" && invite?.participation_type !== "PAID") {
+          void notifyParayanamConfirmed(inviteId);
+        }
 
         // Always reload from Supabase.
         // Do not pretend locally that the invitation changed.
