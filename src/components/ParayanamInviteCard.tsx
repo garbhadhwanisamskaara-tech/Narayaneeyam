@@ -74,7 +74,7 @@ export default function ParayanamInviteCard({ invite: i, busy, onAccept, onDecli
               <span className="text-foreground/80">Contribution:</span>{" "}
               {i.contribution_amount != null ? `₹${i.contribution_amount}` : "As advised by the Guru"}
             </div>
-            {i.payment_url && (
+            {!canPayInApp && i.payment_url && (
               <div>
                 {isPaymentLink(i.payment_url) ? (
                   <a
@@ -91,10 +91,12 @@ export default function ParayanamInviteCard({ invite: i, busy, onAccept, onDecli
                 )}
               </div>
             )}
-            <p className="font-sans text-[11px] leading-snug text-muted-foreground">
-              This contribution goes directly to the Guru — narayaneeyam.app does not process, verify, or hold this
-              payment.
-            </p>
+            {!canPayInApp && (
+              <p className="font-sans text-[11px] leading-snug text-muted-foreground">
+                This contribution goes directly to the Guru — narayaneeyam.app does not process, verify, or hold this
+                payment.
+              </p>
+            )}
             {i.payment_note && <div className="italic">{i.payment_note}</div>}
           </>
         )}
