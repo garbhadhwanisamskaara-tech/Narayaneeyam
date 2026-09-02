@@ -47,6 +47,7 @@ interface AuthContextType {
   displayName: string;
   isAdmin: boolean;
   isFounder: boolean;
+  isMonetizationApproved: boolean;
   isEmailVerified: boolean;
   isTrialActive: boolean;
   isTrialExpired: boolean;
@@ -76,18 +77,20 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-async function fetchRoles(userId: string): Promise<{ isAdmin: boolean; isFounder: boolean }> {
+async function fetchRoles(userId: string): Promise<{ isAdmin: boolean; isFounder: boolean; isMonetizationApproved: boolean }> {
   try {
-    const [{ data: adminData }, { data: founderData }] = await Promise.all([
+    const [{ data: adminData }, { data: founderData }, { data: monetizationData }] = await Promise.all([
       supabase.rpc("has_role", { _user_id: userId, _role: "admin" }),
       supabase.rpc("has_role", { _user_id: userId, _role: "founder" }),
+      supabase.rpc("has_role", { _user_id: userId, _role: "monetization_approved" }),
     ]);
     return {
       isAdmin: !!adminData,
       isFounder: !!founderData || !!adminData,
+      isMonetizationApproved: !!monetizationData,
     };
   } catch {
-    return { isAdmin: false, isFounder: false };
+    return { isAdmin: false, isFounder: false, isMonetizationApproved: false };
   }
 }
 
