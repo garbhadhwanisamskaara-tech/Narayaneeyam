@@ -314,10 +314,16 @@ export default function GroupDetailPage() {
 
   // Prefer the live schedule the garden loaded; fall back to the session's list.
   const gardenNumbers = gardenDashakams.length ? gardenDashakams : (dashakamNumbers ?? []);
+  const myGardenNumbers = myDashakams.length ? myDashakams : (dashakamNumbers ?? []);
 
   /** A completion write must refresh the garden, its header count, the schedule views and the member counts together. */
   const handleTapDashakam = async (dashakamNo: number) => {
     await toggleDashakam(dashakamNo);
+    setRefreshKey((k) => k + 1);
+    await refreshMembers();
+  };
+  const handleTapMyDashakam = async (dashakamNo: number) => {
+    await toggleMyDashakam(dashakamNo);
     setRefreshKey((k) => k + 1);
     await refreshMembers();
   };
@@ -815,16 +821,32 @@ export default function GroupDetailPage() {
                     </p>
                   </div>
                 ) : gardenNumbers.length > 0 ? (
-                  <DashakamGarden
-                    blooms={gardenBlooms}
-                    dashakamNumbers={gardenNumbers}
-                    tiles={gardenTiles}
-                    onTapDashakam={handleTapDashakam}
-                    pendingDashakam={gardenPending}
-                    title="Parayanam Dashakam Garden"
-                    subtitle={parayanamName || undefined}
-                    loading={gardenLoading}
-                  />
+                  isOwner ? (
+                    <DashakamGarden
+                      blooms={gardenBlooms}
+                      dashakamNumbers={gardenNumbers}
+                      tiles={gardenTiles}
+                      onTapDashakam={handleTapDashakam}
+                      pendingDashakam={gardenPending}
+                      title="Parayanam Dashakam Garden"
+                      subtitle={parayanamName || undefined}
+                      loading={gardenLoading}
+                    />
+                  ) : (
+                    <>
+                      <DashakamGarden
+                        blooms={myBlooms}
+                        dashakamNumbers={myGardenNumbers}
+                        tiles={myTiles}
+                        onTapDashakam={handleTapMyDashakam}
+                        pendingDashakam={myGardenPending}
+                        title="My Parayanam Garden"
+                        subtitle={parayanamName || undefined}
+                        loading={myGardenLoading}
+                      />
+                      <FeatherCollection tiles={myTiles} />
+                    </>
+                  )
                 ) : (
                   <div className="rounded-2xl border border-border bg-card p-5 shadow-peacock">
                     <h2 className="font-display text-xl font-bold text-foreground">Parayanam Dashakam Garden</h2>
