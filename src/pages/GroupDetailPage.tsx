@@ -43,6 +43,7 @@ import {
 } from "@/components/ui/dialog";
 import { Separator } from "@/components/ui/separator";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { cn } from "@/lib/utils";
 
 // Copy for the "How group parayanam works" help panel. Kept in one place so it is easy to tweak after review.
 const STATUS_LABEL: Record<ParticipantStatus, string> = {
@@ -105,6 +106,8 @@ export default function GroupDetailPage() {
   const sessionParam = searchParams.get("session");
   const [selectedSessionId, setSelectedSessionId] = useState<string | null>(sessionParam);
   const [pickerTouched, setPickerTouched] = useState(!!sessionParam);
+  // Owner-only garden view toggle: "mine" = personal garden, "group" = group-aggregate garden.
+  const [ownerGardenView, setOwnerGardenView] = useState<"mine" | "group">("mine");
 
   const { parayanams, loading: loadingParayanams, refresh: refreshParayanams } = useGroupParayanams(groupId);
   const { members, loading: loadingMembers, refresh: refreshMembers } = useGroupMembers(groupId, selectedSessionId);
