@@ -28,7 +28,7 @@ export default function ScriptPage() {
 
   const { dashakamList, verses, loading } = useDashakam(
     selectedDashakam,
-    selectedLangCode === "sa" ? "en" : selectedLangCode,
+    selectedLangCode,
     translationLang
   );
 
