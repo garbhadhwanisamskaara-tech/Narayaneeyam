@@ -49,7 +49,7 @@ export default function CreateParayanamPage() {
   const [params] = useSearchParams();
   const groupId = params.get("group") ?? undefined;
   const isGroup = !!groupId;
-  const { user } = useAuth();
+  const { user, isMonetizationApproved } = useAuth();
   const navigate = useNavigate();
 
   const { sets, loading: loadingSets } = useDashakamSets();
@@ -307,19 +307,26 @@ export default function CreateParayanamPage() {
 
   const isLive = deliveryMode === "LIVE";
 
+  /** Monetization gate: a Guru without the monetization_approved role can never use PAID. */
+  useEffect(() => {
+    if (!isMonetizationApproved && participationType === "PAID") {
+      setParticipationType("FREE");
+    }
+  }, [isMonetizationApproved, participationType]);
+
   /** Steps are dynamic: Contribution only for PAID, Live Schedule only for LIVE. */
   const stepIds = useMemo(
     () =>
       [
         "details",
         "mode",
-        ...(participationType === "PAID" ? (["contribution"] as const) : []),
+        ...(participationType === "PAID" && isMonetizationApproved ? (["contribution"] as const) : []),
         ...(isGroup ? (["distribution"] as const) : []),
         ...(isLive ? (["live"] as const) : []),
         ...(isGroup ? (["participants"] as const) : []),
         "review",
       ] as string[],
-    [participationType, isGroup, isLive],
+    [participationType, isGroup, isLive, isMonetizationApproved],
   );
   const lastStep = stepIds.length;
   const currentStep = stepIds[Math.min(step, lastStep) - 1];
