@@ -66,7 +66,11 @@ export default function ScriptPage() {
     URL.revokeObjectURL(url);
   };
 
-  const dropdownList = dashakamList;
+  // Dropdown labels follow the user's preferred script/lyrics language.
+  const dropdownList = dashakamList.map((d) => {
+    const localized = scriptNameList.find((n) => n.dashakam_no === d.dashakam_no);
+    return localized?.dashakam_name ? { ...d, dashakam_name: localized.dashakam_name } : d;
+  });
 
   // Script Library availability is decided by actual rows in language_script,
   // not by the audio-driven is_published flag.
