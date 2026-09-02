@@ -66,6 +66,7 @@ export default function ScriptPage() {
     URL.revokeObjectURL(url);
   };
 
+  const scriptNameList = useDashakamNames(selectedLangCode);
   // Dropdown labels follow the user's preferred script/lyrics language.
   const dropdownList = dashakamList.map((d) => {
     const localized = scriptNameList.find((n) => n.dashakam_no === d.dashakam_no);
