@@ -823,7 +823,7 @@ export default function GroupDetailPage() {
                       You're not part of this parayanam. The garden will bloom for you once you're invited to join one.
                     </p>
                   </div>
-                ) : gardenNumbers.length > 0 ? (
+                ) : (gardenNumbers.length > 0 || myGardenNumbers.length > 0) ? (
                   isOwner ? (
                     <>
                       <div className="mb-3 flex gap-2">
