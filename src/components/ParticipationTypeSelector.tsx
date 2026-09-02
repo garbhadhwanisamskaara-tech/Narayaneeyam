@@ -21,17 +21,21 @@ const OPTIONS: { value: ParticipationType; label: string; hint: string; Icon: ty
 export default function ParticipationTypeSelector({
   value,
   onChange,
+  allowPaid = true,
 }: {
   value: ParticipationType;
   onChange: (v: ParticipationType) => void;
+  /** When false, the PAID option is hidden entirely (monetization not approved). */
+  allowPaid?: boolean;
 }) {
+  const options = allowPaid ? OPTIONS : OPTIONS.filter((o) => o.value === "FREE");
   return (
     <div>
       <p className="font-sans text-base font-semibold text-foreground">
         Is there a contribution to join?
       </p>
-      <div className="mt-3 grid gap-3 sm:grid-cols-2">
-        {OPTIONS.map(({ value: v, label, hint, Icon }) => {
+      <div className={allowPaid ? "mt-3 grid gap-3 sm:grid-cols-2" : "mt-3"}>
+        {options.map(({ value: v, label, hint, Icon }) => {
           const active = value === v;
           return (
             <button
