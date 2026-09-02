@@ -121,15 +121,22 @@ export default function NotificationBell() {
                         </p>
                         <div className="mt-2 flex gap-2">
                           {i.participation_type === "PAID" ? (
-                            <button
-                              onClick={() => {
-                                setOpen(false);
-                                navigate(i.group_id ? `/groups/${i.group_id}` : "/dashboard");
-                              }}
-                              className="inline-flex items-center gap-1.5 rounded-lg bg-gradient-peacock px-3 py-1.5 font-sans text-xs font-semibold text-primary-foreground hover:opacity-90"
-                            >
-                              Review & Pay to Join
-                            </button>
+                            PARAYANAM_PAYMENTS_ENABLED ? (
+                              <button
+                                onClick={() => {
+                                  setOpen(false);
+                                  navigate(i.group_id ? `/groups/${i.group_id}` : "/dashboard");
+                                }}
+                                className="inline-flex items-center gap-1.5 rounded-lg bg-gradient-peacock px-3 py-1.5 font-sans text-xs font-semibold text-primary-foreground hover:opacity-90"
+                              >
+                                Review & Pay to Join
+                              </button>
+                            ) : (
+                              <p className="rounded-lg bg-primary/10 px-3 py-2 font-sans text-xs font-semibold text-primary">
+                                Payments are temporarily paused for system maintenance. Please check back after 3rd
+                                September.
+                              </p>
+                            )
                           ) : (
                             <button
                               onClick={() => void answer(i.id, "confirmed")}
