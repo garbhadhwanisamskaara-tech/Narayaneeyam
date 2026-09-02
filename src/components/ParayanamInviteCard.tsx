@@ -1,4 +1,5 @@
 import { Check, Clock, ExternalLink, HandCoins, Loader2, Users, X } from "lucide-react";
+import { PARAYANAM_PAYMENTS_ENABLED } from "@/config/features";
 import type { PendingInvite } from "@/hooks/useParayanamParticipants";
 import { useCapabilities } from "@/hooks/useCapabilities";
 
