@@ -383,6 +383,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setSession(null);
       setIsAdmin(false);
       setIsFounder(false);
+      setIsMonetizationApproved(false);
       setProfile(null);
       setSubscriptionPlan(null);
       setLoading(false);
