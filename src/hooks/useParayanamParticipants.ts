@@ -244,7 +244,7 @@ export function useMyPendingInvites() {
     const { data: sessions } = await (supabase as any)
       .from("challenge_sessions")
       .select(
-        "id, group_id, start_date, end_date, dashakams_target, parayanam_name, user_id, delivery_mode, participation_type, contribution_amount, payment_url, payment_note",
+        "id, group_id, start_date, end_date, dashakams_target, parayanam_name, user_id, delivery_mode, participation_type, contribution_amount, payment_url, payment_note, general_note",
       )
       .in(
         "id",
@@ -305,6 +305,7 @@ export function useMyPendingInvites() {
           contribution_amount: s?.contribution_amount ?? null,
           payment_url: s?.payment_url ?? null,
           payment_note: s?.payment_note ?? null,
+          general_note: s?.general_note ?? null,
         };
       }),
     );
