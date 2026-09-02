@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Download, ChevronDown, ChevronUp, Loader2, BookOpen } from "lucide-react";
-import { useDashakam, type MergedVerse } from "@/hooks/useDashakam";
+import { useDashakam, useDashakamNames, type MergedVerse } from "@/hooks/useDashakam";
 import { supabase } from "@/integrations/supabase/client";
 import VerseIcons from "@/components/VerseIcons";
 import SEO from "@/components/SEO";
