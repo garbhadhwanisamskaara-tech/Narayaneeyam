@@ -55,7 +55,7 @@ export default function ParayanamReview(props: ParayanamReviewProps) {
   if (live) {
     rows.push(
       { label: "Sessions", value: `${live.planLabel} · ${live.sessionCount} in total` },
-      { label: "Session timing", value: `${live.startTime} to ${live.endTime}` },
+      { label: "Session timing", value: `${live.startTime} to ${live.endTime} IST` },
       {
         label: "Meeting link",
         value: live.hasMeetingLink ? "Meeting link added" : "Meeting link missing",

@@ -179,7 +179,7 @@ export default function LiveScheduleEditor({
         <div className="grid gap-4 sm:grid-cols-2">
           <div>
             <label htmlFor="live-start" className="font-sans text-base font-semibold text-foreground">
-              Start time <span className="text-destructive" aria-hidden="true">*</span>
+              Start time (IST) <span className="text-destructive" aria-hidden="true">*</span>
             </label>
             <input
               id="live-start"
@@ -191,7 +191,7 @@ export default function LiveScheduleEditor({
           </div>
           <div>
             <label htmlFor="live-end" className="font-sans text-base font-semibold text-foreground">
-              End time <span className="text-destructive" aria-hidden="true">*</span>
+              End time (IST) <span className="text-destructive" aria-hidden="true">*</span>
             </label>
             <input
               id="live-end"
@@ -278,7 +278,7 @@ export default function LiveScheduleEditor({
                       {s.session_date ? prettyDate(s.session_date) : "Pick a date"}
                     </p>
                     <p className="font-sans text-sm text-muted-foreground">
-                      {s.start_time} – {s.end_time} ·{" "}
+                      {s.start_time} – {s.end_time} IST ·{" "}
                       {isValidMeetingUrl(s.meeting_url || value.meetingUrl)
                         ? "Meeting link added"
                         : "Meeting link missing"}
@@ -371,13 +371,13 @@ function SessionEditor({
         )}
         <div>
           <label className="font-sans text-sm font-semibold text-foreground">
-            Start time <span className="text-destructive" aria-hidden="true">*</span>
+            Start time (IST) <span className="text-destructive" aria-hidden="true">*</span>
           </label>
           <input type="time" value={start} onChange={(e) => setStart(e.target.value)} className={inputClass} />
         </div>
         <div>
           <label className="font-sans text-sm font-semibold text-foreground">
-            End time <span className="text-destructive" aria-hidden="true">*</span>
+            End time (IST) <span className="text-destructive" aria-hidden="true">*</span>
           </label>
           <input type="time" value={end} onChange={(e) => setEnd(e.target.value)} className={inputClass} />
         </div>

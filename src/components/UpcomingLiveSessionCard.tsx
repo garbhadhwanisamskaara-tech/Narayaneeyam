@@ -15,6 +15,7 @@ const REASON_MESSAGES: Record<string, string> = {
 
 function fmtTime(iso: string) {
   return new Date(iso).toLocaleTimeString("en-IN", {
+    timeZone: "Asia/Kolkata",
     hour: "numeric",
     minute: "2-digit",
     hour12: true,
@@ -107,7 +108,7 @@ function SessionRow({ s, now }: { s: UpcomingLiveSession; now: number }) {
 
         <span className="flex items-center gap-1.5">
           <Clock className="h-4 w-4" />
-          {fmtTime(s.startDatetime)} – {fmtTime(s.endDatetime)}
+          {fmtTime(s.startDatetime)} – {fmtTime(s.endDatetime)} IST
         </span>
       </div>
 
@@ -119,7 +120,7 @@ function SessionRow({ s, now }: { s: UpcomingLiveSession; now: number }) {
             className="mt-5 inline-flex w-full cursor-not-allowed items-center justify-center gap-2 rounded-xl border border-border bg-muted px-5 py-3 font-sans text-sm font-semibold text-muted-foreground"
           >
             <Lock className="h-4 w-4" />
-            Join opens at {fmtTime(new Date(opensAt).toISOString())}
+            Join opens at {fmtTime(new Date(opensAt).toISOString())} IST
           </button>
 
           <p className="mt-2 text-center font-sans text-xs text-muted-foreground">
