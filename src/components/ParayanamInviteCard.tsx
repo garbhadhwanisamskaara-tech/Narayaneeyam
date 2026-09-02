@@ -103,6 +103,7 @@ export default function ParayanamInviteCard({ invite: i, busy, onAccept, onDecli
             {i.payment_note && <div className="italic">{i.payment_note}</div>}
           </>
         )}
+        {i.general_note && <div className="italic">{i.general_note}</div>}
       </dl>
 
       <div className="mt-4 flex gap-2">

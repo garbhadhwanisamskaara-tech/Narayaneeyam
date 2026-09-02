@@ -637,6 +637,23 @@ export default function CreateParayanamPage() {
         )}
 
         {currentStep === "details" && (
+          <div>
+            <label htmlFor="general-note" className="font-sans text-sm font-semibold text-foreground">
+              Remarks for members <span className="font-normal text-muted-foreground">(optional)</span>
+            </label>
+            <textarea
+              id="general-note"
+              rows={3}
+              maxLength={500}
+              value={generalNote}
+              onChange={(e) => setGeneralNote(e.target.value)}
+              placeholder="Anything you'd like members to know about this parayanam."
+              className="mt-2 w-full rounded-lg border border-border bg-background px-3 py-2 font-sans text-sm text-foreground outline-none focus:ring-2 focus:ring-primary"
+            />
+          </div>
+        )}
+
+        {currentStep === "details" && (
           <div className="space-y-5">
             <div>
               <p className="font-sans text-sm font-semibold text-foreground">Start from a template</p>
