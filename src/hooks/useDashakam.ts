@@ -367,3 +367,9 @@ export function publishedDashakams(list: DashakamListItem[]): DashakamListItem[]
 export function prefetchDashakamList(lang: string = "en"): Promise<DashakamListItem[]> {
   return queryClient.fetchQuery(listQueryOptions(lang));
 }
+
+/** Dashakam names in a specific language — used for pickers/labels only. */
+export function useDashakamNames(lang: string = "en"): DashakamListItem[] {
+  const q = useQuery({ ...listQueryOptions(lang), placeholderData: DASHAKAM_SEED });
+  return q.data ?? DASHAKAM_SEED;
+}
