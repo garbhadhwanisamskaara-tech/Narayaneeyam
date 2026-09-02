@@ -43,6 +43,7 @@ import {
 } from "@/components/ui/dialog";
 import { Separator } from "@/components/ui/separator";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { cn } from "@/lib/utils";
 
 // Copy for the "How group parayanam works" help panel. Kept in one place so it is easy to tweak after review.
 const STATUS_LABEL: Record<ParticipantStatus, string> = {
@@ -105,6 +106,8 @@ export default function GroupDetailPage() {
   const sessionParam = searchParams.get("session");
   const [selectedSessionId, setSelectedSessionId] = useState<string | null>(sessionParam);
   const [pickerTouched, setPickerTouched] = useState(!!sessionParam);
+  // Owner-only garden view toggle: "mine" = personal garden, "group" = group-aggregate garden.
+  const [ownerGardenView, setOwnerGardenView] = useState<"mine" | "group">("mine");
 
   const { parayanams, loading: loadingParayanams, refresh: refreshParayanams } = useGroupParayanams(groupId);
   const { members, loading: loadingMembers, refresh: refreshMembers } = useGroupMembers(groupId, selectedSessionId);
@@ -820,18 +823,59 @@ export default function GroupDetailPage() {
                       You're not part of this parayanam. The garden will bloom for you once you're invited to join one.
                     </p>
                   </div>
-                ) : gardenNumbers.length > 0 ? (
+                ) : (gardenNumbers.length > 0 || myGardenNumbers.length > 0) ? (
                   isOwner ? (
-                    <DashakamGarden
-                      blooms={gardenBlooms}
-                      dashakamNumbers={gardenNumbers}
-                      tiles={gardenTiles}
-                      onTapDashakam={handleTapDashakam}
-                      pendingDashakam={gardenPending}
-                      title="Parayanam Dashakam Garden"
-                      subtitle={parayanamName || undefined}
-                      loading={gardenLoading}
-                    />
+                    <>
+                      <div className="mb-3 flex gap-2">
+                        {(
+                          [
+                            ["mine", "My Garden"],
+                            ["group", "Group Garden"],
+                          ] as const
+                        ).map(([value, label]) => (
+                          <button
+                            key={value}
+                            type="button"
+                            onClick={() => setOwnerGardenView(value)}
+                            aria-pressed={ownerGardenView === value}
+                            className={cn(
+                              "rounded-full border px-4 py-1.5 font-sans text-sm transition-colors",
+                              ownerGardenView === value
+                                ? "border-primary bg-primary text-primary-foreground"
+                                : "border-border bg-card text-muted-foreground hover:bg-muted"
+                            )}
+                          >
+                            {label}
+                          </button>
+                        ))}
+                      </div>
+                      {ownerGardenView === "group" ? (
+                        <DashakamGarden
+                          blooms={gardenBlooms}
+                          dashakamNumbers={gardenNumbers}
+                          tiles={gardenTiles}
+                          onTapDashakam={handleTapDashakam}
+                          pendingDashakam={gardenPending}
+                          title="Parayanam Dashakam Garden"
+                          subtitle={parayanamName || undefined}
+                          loading={gardenLoading}
+                        />
+                      ) : (
+                        <>
+                          <DashakamGarden
+                            blooms={myBlooms}
+                            dashakamNumbers={myGardenNumbers}
+                            tiles={myTiles}
+                            onTapDashakam={handleTapMyDashakam}
+                            pendingDashakam={myGardenPending}
+                            title="My Parayanam Garden"
+                            subtitle={parayanamName || undefined}
+                            loading={myGardenLoading}
+                          />
+                          <FeatherCollection tiles={myTiles} />
+                        </>
+                      )}
+                    </>
                   ) : (
                     <>
                       <DashakamGarden
