@@ -229,12 +229,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       ]);
       setIsAdmin(roles.isAdmin);
       setIsFounder(roles.isFounder);
+      setIsMonetizationApproved(roles.isMonetizationApproved);
       const nextProfile = await initialiseNewProfile(currentUser, prof);
       setProfile(nextProfile);
       setSubscriptionPlan(await fetchPlan(nextProfile?.subscription_plan_id));
     } else {
       setIsAdmin(false);
       setIsFounder(false);
+      setIsMonetizationApproved(false);
       setProfile(null);
       setSubscriptionPlan(null);
     }
