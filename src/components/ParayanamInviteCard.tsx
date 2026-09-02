@@ -77,7 +77,7 @@ export default function ParayanamInviteCard({ invite: i, busy, onAccept, onDecli
               <span className="text-foreground/80">Contribution:</span>{" "}
               {i.contribution_amount != null ? `₹${i.contribution_amount}` : "As advised by the Guru"}
             </div>
-            {!canPayInApp && i.payment_url && (
+            {!canPayInApp && PARAYANAM_PAYMENTS_ENABLED && i.payment_url && (
               <div>
                 {isPaymentLink(i.payment_url) ? (
                   <a
@@ -173,7 +173,8 @@ export function AwaitingContributionCard({ invite: i }: { invite: PendingInvite 
       {i.contribution_amount != null && (
         <p className="mt-2 font-sans text-xs text-foreground/80">Contribution: ₹{i.contribution_amount}</p>
       )}
-      {i.payment_url &&
+      {PARAYANAM_PAYMENTS_ENABLED &&
+        i.payment_url &&
         (isPaymentLink(i.payment_url) ? (
           <a
             href={i.payment_url.trim()}
