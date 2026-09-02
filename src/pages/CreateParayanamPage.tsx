@@ -58,6 +58,7 @@ export default function CreateParayanamPage() {
 
   const [step, setStep] = useState(1);
   const [parayanamName, setParayanamName] = useState("");
+  const [generalNote, setGeneralNote] = useState("");
   const [setId, setSetId] = useState<string>("");
   const [custom, setCustom] = useState<number[]>([]);
   const [selectedTemplateId, setSelectedTemplateId] = useState<string>("scratch");
@@ -139,6 +140,7 @@ export default function CreateParayanamPage() {
       }
       const d = (data.draft_state ?? {}) as any;
       setParayanamName(data.parayanam_name ?? "");
+      setGeneralNote(data.general_note ?? "");
       setDeliveryMode((data.delivery_mode ?? "SELF_PACED") as DeliveryMode);
       setParticipationType((data.participation_type ?? "FREE") as ParticipationType);
       setDistribution((data.distribution_mode ?? "SAME_FOR_ALL") as DistributionMode);
@@ -379,6 +381,7 @@ export default function CreateParayanamPage() {
     contribution_amount: participationType === "PAID" && contribution.amount ? Number(contribution.amount) : null,
     payment_url: participationType === "PAID" ? contribution.paymentUrl.trim() || null : null,
     payment_note: participationType === "PAID" && contribution.note.trim() ? contribution.note.trim() : null,
+    general_note: generalNote.trim() ? generalNote.trim() : null,
     challenge_type: isGroup ? (mode === "RELAY" ? "group_relay" : "group_standard") : "personal",
     auto_invite_group_members: isGroup ? autoInvite : false,
     distribution_mode: mode,
@@ -628,6 +631,23 @@ export default function CreateParayanamPage() {
               value={parayanamName}
               onChange={(e) => setParayanamName(e.target.value)}
               placeholder="Diwali 2026 Parayanam"
+              className="mt-2 w-full rounded-lg border border-border bg-background px-3 py-2 font-sans text-sm text-foreground outline-none focus:ring-2 focus:ring-primary"
+            />
+          </div>
+        )}
+
+        {currentStep === "details" && (
+          <div>
+            <label htmlFor="general-note" className="font-sans text-sm font-semibold text-foreground">
+              Remarks for members <span className="font-normal text-muted-foreground">(optional)</span>
+            </label>
+            <textarea
+              id="general-note"
+              rows={3}
+              maxLength={500}
+              value={generalNote}
+              onChange={(e) => setGeneralNote(e.target.value)}
+              placeholder="Anything you'd like members to know about this parayanam."
               className="mt-2 w-full rounded-lg border border-border bg-background px-3 py-2 font-sans text-sm text-foreground outline-none focus:ring-2 focus:ring-primary"
             />
           </div>
