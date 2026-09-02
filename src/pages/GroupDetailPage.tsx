@@ -825,16 +825,57 @@ export default function GroupDetailPage() {
                   </div>
                 ) : gardenNumbers.length > 0 ? (
                   isOwner ? (
-                    <DashakamGarden
-                      blooms={gardenBlooms}
-                      dashakamNumbers={gardenNumbers}
-                      tiles={gardenTiles}
-                      onTapDashakam={handleTapDashakam}
-                      pendingDashakam={gardenPending}
-                      title="Parayanam Dashakam Garden"
-                      subtitle={parayanamName || undefined}
-                      loading={gardenLoading}
-                    />
+                    <>
+                      <div className="mb-3 flex gap-2">
+                        {(
+                          [
+                            ["mine", "My Garden"],
+                            ["group", "Group Garden"],
+                          ] as const
+                        ).map(([value, label]) => (
+                          <button
+                            key={value}
+                            type="button"
+                            onClick={() => setOwnerGardenView(value)}
+                            aria-pressed={ownerGardenView === value}
+                            className={cn(
+                              "rounded-full border px-4 py-1.5 font-sans text-sm transition-colors",
+                              ownerGardenView === value
+                                ? "border-primary bg-primary text-primary-foreground"
+                                : "border-border bg-card text-muted-foreground hover:bg-muted"
+                            )}
+                          >
+                            {label}
+                          </button>
+                        ))}
+                      </div>
+                      {ownerGardenView === "group" ? (
+                        <DashakamGarden
+                          blooms={gardenBlooms}
+                          dashakamNumbers={gardenNumbers}
+                          tiles={gardenTiles}
+                          onTapDashakam={handleTapDashakam}
+                          pendingDashakam={gardenPending}
+                          title="Parayanam Dashakam Garden"
+                          subtitle={parayanamName || undefined}
+                          loading={gardenLoading}
+                        />
+                      ) : (
+                        <>
+                          <DashakamGarden
+                            blooms={myBlooms}
+                            dashakamNumbers={myGardenNumbers}
+                            tiles={myTiles}
+                            onTapDashakam={handleTapMyDashakam}
+                            pendingDashakam={myGardenPending}
+                            title="My Parayanam Garden"
+                            subtitle={parayanamName || undefined}
+                            loading={myGardenLoading}
+                          />
+                          <FeatherCollection tiles={myTiles} />
+                        </>
+                      )}
+                    </>
                   ) : (
                     <>
                       <DashakamGarden
