@@ -20,7 +20,9 @@ import { useGroupMembers, useGroups, type Group } from "@/hooks/useGroups";
 import { useGroupParayanams, parayanamLabel } from "@/hooks/useGroupParayanams";
 import SEO from "@/components/SEO";
 import DashakamGarden from "@/components/DashakamGarden";
+import FeatherCollection from "@/components/FeatherCollection";
 import { useSessionGarden } from "@/hooks/useSessionGarden";
+import { useMyDashakamGarden } from "@/hooks/useMyDashakamGarden";
 import { isParticipantEligible } from "@/lib/parayanamEligibility";
 import PendingInvitesSection from "@/components/PendingInvitesSection";
 import ManageParayanamDialog from "@/components/ManageParayanamDialog";
@@ -115,6 +117,16 @@ export default function GroupDetailPage() {
     refresh: refreshGarden,
     toggleDashakam,
   } = useSessionGarden(selectedSessionId);
+  // Personal garden for non-owner participants: blooms reflect only the
+  // signed-in user's own completions.
+  const {
+    blooms: myBlooms,
+    tiles: myTiles,
+    dashakamNumbers: myDashakams,
+    loading: myGardenLoading,
+    pending: myGardenPending,
+    toggleDashakam: toggleMyDashakam,
+  } = useMyDashakamGarden(selectedSessionId);
   const {
     participants,
     loading: loadingParticipants,
