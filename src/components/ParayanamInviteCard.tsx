@@ -1,4 +1,5 @@
 import { Check, Clock, ExternalLink, HandCoins, Loader2, Users, X } from "lucide-react";
+import { PARAYANAM_PAYMENTS_ENABLED } from "@/config/features";
 import type { PendingInvite } from "@/hooks/useParayanamParticipants";
 import { useCapabilities } from "@/hooks/useCapabilities";
 
@@ -30,8 +31,10 @@ export default function ParayanamInviteCard({ invite: i, busy, onAccept, onDecli
   const paid = i.participation_type === "PAID" && !contributionSettled;
   const live = i.delivery_mode === "LIVE";
   const { canViewExternalPaymentLinks } = useCapabilities();
-  // In-app Razorpay payment is available when the parayanam has a set amount.
-  const canPayInApp = paid && !!onPay;
+  // In-app Razorpay payment is available when the parayanam has a set amount
+  // AND payments are enabled (paused during Razorpay domain verification).
+  const canPayInApp = paid && PARAYANAM_PAYMENTS_ENABLED && !!onPay;
+  const paymentsPaused = paid && !PARAYANAM_PAYMENTS_ENABLED;
 
   return (
     <div className="rounded-xl border border-border bg-background p-4">
@@ -112,6 +115,10 @@ export default function ParayanamInviteCard({ invite: i, busy, onAccept, onDecli
             {busy ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <HandCoins className="h-3.5 w-3.5" />}
             {i.contribution_amount != null ? `Pay ₹${i.contribution_amount} to Join` : "Pay to Join"}
           </button>
+        ) : paymentsPaused ? (
+          <p className="rounded-lg bg-primary/10 px-3 py-2 font-sans text-xs font-semibold text-primary">
+            Payments are temporarily paused for system maintenance. Please check back after 3rd September.
+          </p>
         ) : (
           <button
             onClick={onAccept}
