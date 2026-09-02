@@ -31,8 +31,10 @@ export default function ParayanamInviteCard({ invite: i, busy, onAccept, onDecli
   const paid = i.participation_type === "PAID" && !contributionSettled;
   const live = i.delivery_mode === "LIVE";
   const { canViewExternalPaymentLinks } = useCapabilities();
-  // In-app Razorpay payment is available when the parayanam has a set amount.
-  const canPayInApp = paid && !!onPay;
+  // In-app Razorpay payment is available when the parayanam has a set amount
+  // AND payments are enabled (paused during Razorpay domain verification).
+  const canPayInApp = paid && PARAYANAM_PAYMENTS_ENABLED && !!onPay;
+  const paymentsPaused = paid && !PARAYANAM_PAYMENTS_ENABLED;
 
   return (
     <div className="rounded-xl border border-border bg-background p-4">

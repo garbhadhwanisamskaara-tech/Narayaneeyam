@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Bell, Check, ChevronDown, ChevronRight, Loader2, MessageSquare, X } from "lucide-react";
+import { PARAYANAM_PAYMENTS_ENABLED } from "@/config/features";
 import { useMyPendingInvites } from "@/hooks/useParayanamParticipants";
 import { useTicketReplyAlerts } from "@/hooks/useTicketReplyAlerts";
 import { useMyDashakamQueue } from "@/hooks/useMyDashakamQueue";
