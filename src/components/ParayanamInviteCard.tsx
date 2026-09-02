@@ -115,6 +115,10 @@ export default function ParayanamInviteCard({ invite: i, busy, onAccept, onDecli
             {busy ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <HandCoins className="h-3.5 w-3.5" />}
             {i.contribution_amount != null ? `Pay ₹${i.contribution_amount} to Join` : "Pay to Join"}
           </button>
+        ) : paymentsPaused ? (
+          <p className="rounded-lg bg-primary/10 px-3 py-2 font-sans text-xs font-semibold text-primary">
+            Payments are temporarily paused for system maintenance. Please check back after 3rd September.
+          </p>
         ) : (
           <button
             onClick={onAccept}
