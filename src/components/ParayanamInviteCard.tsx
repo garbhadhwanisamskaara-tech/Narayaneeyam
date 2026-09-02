@@ -193,6 +193,7 @@ export function AwaitingContributionCard({ invite: i }: { invite: PendingInvite 
         This contribution goes directly to the Guru — narayaneeyam.app does not process, verify, or hold this payment.
       </p>
       {i.payment_note && <p className="mt-2 font-sans text-xs italic text-muted-foreground">{i.payment_note}</p>}
+      {i.general_note && <p className="mt-2 font-sans text-xs italic text-muted-foreground">{i.general_note}</p>}
     </div>
   );
 }
