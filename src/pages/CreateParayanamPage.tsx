@@ -58,6 +58,7 @@ export default function CreateParayanamPage() {
 
   const [step, setStep] = useState(1);
   const [parayanamName, setParayanamName] = useState("");
+  const [generalNote, setGeneralNote] = useState("");
   const [setId, setSetId] = useState<string>("");
   const [custom, setCustom] = useState<number[]>([]);
   const [selectedTemplateId, setSelectedTemplateId] = useState<string>("scratch");

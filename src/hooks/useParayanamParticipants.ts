@@ -31,6 +31,7 @@ export interface PendingInvite extends Participant {
   contribution_amount: number | null;
   payment_url: string | null;
   payment_note: string | null;
+  general_note: string | null;
 }
 
 const COLS =
