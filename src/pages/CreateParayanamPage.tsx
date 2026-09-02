@@ -887,7 +887,11 @@ export default function CreateParayanamPage() {
           <div className="space-y-6">
             <ParayanamModeSelector value={deliveryMode} onChange={setDeliveryMode} />
 
-            <ParticipationTypeSelector value={participationType} onChange={setParticipationType} />
+            <ParticipationTypeSelector
+              value={participationType}
+              onChange={setParticipationType}
+              allowPaid={isMonetizationApproved}
+            />
           </div>
         )}
 
