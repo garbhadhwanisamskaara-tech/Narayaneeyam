@@ -217,6 +217,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(true);
   const [isAdmin, setIsAdmin] = useState(false);
   const [isFounder, setIsFounder] = useState(false);
+  const [isMonetizationApproved, setIsMonetizationApproved] = useState(false);
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [subscriptionPlan, setSubscriptionPlan] = useState<SubscriptionPlanSummary | null>(null);
 
