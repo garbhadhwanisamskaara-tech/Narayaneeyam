@@ -140,6 +140,7 @@ export default function CreateParayanamPage() {
       }
       const d = (data.draft_state ?? {}) as any;
       setParayanamName(data.parayanam_name ?? "");
+      setGeneralNote(data.general_note ?? "");
       setDeliveryMode((data.delivery_mode ?? "SELF_PACED") as DeliveryMode);
       setParticipationType((data.participation_type ?? "FREE") as ParticipationType);
       setDistribution((data.distribution_mode ?? "SAME_FOR_ALL") as DistributionMode);
@@ -380,6 +381,7 @@ export default function CreateParayanamPage() {
     contribution_amount: participationType === "PAID" && contribution.amount ? Number(contribution.amount) : null,
     payment_url: participationType === "PAID" ? contribution.paymentUrl.trim() || null : null,
     payment_note: participationType === "PAID" && contribution.note.trim() ? contribution.note.trim() : null,
+    general_note: generalNote.trim() ? generalNote.trim() : null,
     challenge_type: isGroup ? (mode === "RELAY" ? "group_relay" : "group_standard") : "personal",
     auto_invite_group_members: isGroup ? autoInvite : false,
     distribution_mode: mode,
