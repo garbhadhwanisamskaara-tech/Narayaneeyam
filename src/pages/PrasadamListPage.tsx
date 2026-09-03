@@ -30,11 +30,18 @@ export default function PrasadamListPage() {
       };
 
       let rows = await fetchLang(translationLang);
-      if (rows.length === 0 && translationLang !== "en") {
-        rows = await fetchLang("en");
+      if (translationLang !== "en") {
+        const hasText = (r: PrasadamEntry) => !!r.prasadam_text && r.prasadam_text.trim() !== "";
+        const localized = rows.filter(hasText);
+        const enRows = await fetchLang("en");
+        const key = (r: PrasadamEntry) => `${r.dashakam_no}-${r.verse_no}`;
+        const map = new Map(enRows.map((r) => [key(r), r]));
+        localized.forEach((r) => map.set(key(r), r));
+        rows = [...map.values()].sort(
+          (a, b) => a.dashakam_no - b.dashakam_no || a.verse_no - b.verse_no
+        );
       }
-      if (cancelled) return;
-      setEntries(rows);
+
       setLoading(false);
     })();
     return () => {
