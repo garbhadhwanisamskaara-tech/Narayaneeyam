@@ -73,7 +73,7 @@ export default function ParayanamInviteCard({ invite: i, busy, onAccept, onDecli
               <span className="text-foreground/80">Contribution:</span>{" "}
               {i.contribution_amount != null ? `₹${i.contribution_amount}` : "As advised by the Guru"}
             </div>
-            {!canPayInApp && !paymentsPaused && i.payment_url && (
+            {!canPayInApp && i.payment_url && (
               <div>
                 {isPaymentLink(i.payment_url) ? (
                   <a
