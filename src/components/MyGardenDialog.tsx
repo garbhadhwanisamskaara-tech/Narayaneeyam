@@ -1,6 +1,6 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { ChevronLeft } from "lucide-react";
-import { usePersonalSessions } from "@/hooks/usePersonalSessions";
+import { useMyGardenSessions } from "@/hooks/useMyGardenSessions";
 import { useSessionGarden } from "@/hooks/useSessionGarden";
 import DashakamGarden from "@/components/DashakamGarden";
 import {
@@ -17,12 +17,13 @@ interface Props {
 }
 
 /**
- * Floating "My Dashakam Garden" dialog — lets the user tap lotuses for a
- * personal parayanam without leaving the page they're on. When the user has
- * several active personal parayanams, a small picker comes first.
+ * Floating "My Dashakam Garden" dialog — lets the user tap lotuses for any
+ * parayanam they can bloom in (personal or group) without leaving the page
+ * they're on. Unlike the shared group garden, this view renders only the
+ * user's own bloom state per dashakam: bud or full bloom, 0/1 or 1/1.
  */
-export default function PersonalGardenDialog({ open, onOpenChange }: Props) {
-  const { sessions, loading: sessionsLoading } = usePersonalSessions();
+export default function MyGardenDialog({ open, onOpenChange }: Props) {
+  const { sessions, loading: sessionsLoading } = useMyGardenSessions();
   const [selectedSessionId, setSelectedSessionId] = useState<string | null>(null);
 
   // Fresh picker state each time the dialog opens.
@@ -30,13 +31,29 @@ export default function PersonalGardenDialog({ open, onOpenChange }: Props) {
     if (!open) setSelectedSessionId(null);
   }, [open]);
 
-  // A single personal parayanam skips the picker entirely.
+  // A single parayanam skips the picker entirely.
   useEffect(() => {
     if (open && sessions.length === 1) setSelectedSessionId(sessions[0].id);
   }, [open, sessions]);
 
-  const { tiles, blooms, dashakamNumbers, loading, pending, toggleDashakam } =
+  const { tiles, dashakamNumbers, loading, pending, toggleDashakam } =
     useSessionGarden(selectedSessionId);
+
+  // Personal view on top of the shared garden data: a dashakam is fully
+  // bloomed once I completed it, otherwise it's a bud — other members'
+  // progress stays out of this view entirely. canTap is untouched, so the
+  // start-date gate and assignment rules still apply exactly as before.
+  const myBlooms = useMemo(() => {
+    const m = new Map<number, number>();
+    for (const [no, t] of tiles) m.set(no, t.mineDone > 0 ? 100 : 0);
+    return m;
+  }, [tiles]);
+
+  const myTiles = useMemo(() => {
+    const m = new Map<number, { done: number; total: number; canTap: boolean }>();
+    for (const [no, t] of tiles) m.set(no, { done: t.mineDone > 0 ? 1 : 0, total: 1, canTap: t.canTap });
+    return m;
+  }, [tiles]);
 
   const picking = sessions.length > 1 && selectedSessionId === null;
 
@@ -82,8 +99,8 @@ export default function PersonalGardenDialog({ open, onOpenChange }: Props) {
             </DialogHeader>
             {sessionsLoading ? null : (
               <DashakamGarden
-                blooms={blooms}
-                tiles={tiles}
+                blooms={myBlooms}
+                tiles={myTiles}
                 dashakamNumbers={dashakamNumbers}
                 onTapDashakam={toggleDashakam}
                 pendingDashakam={pending}
