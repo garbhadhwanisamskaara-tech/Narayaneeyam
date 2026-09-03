@@ -71,6 +71,7 @@ export function useSessionGarden(sessionId: string | null | undefined) {
     if (!sessionId) {
       setRows([]);
       setProgress([]);
+      setStartDate(null);
       setLoading(false);
       return;
     }
@@ -104,6 +105,11 @@ export function useSessionGarden(sessionId: string | null | undefined) {
   }, [refresh]);
 
   const tiles = useMemo(() => {
+    // The parayanam only becomes tappable on/after its start_date. A missing
+    // start_date counts as already started.
+    const today = new Date().toLocaleDateString("sv-SE");
+    const hasStarted = !startDate || today >= startDate;
+
     const byDashakam = new Map<number, ScheduleRow[]>();
     for (const r of rows) {
       const list = byDashakam.get(r.dashakam_no) ?? [];
