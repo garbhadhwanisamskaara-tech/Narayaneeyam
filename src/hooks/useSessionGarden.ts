@@ -50,6 +50,7 @@ export function useSessionGarden(sessionId: string | null | undefined) {
   const [progress, setProgress] = useState<{ dashakam_no: number; user_id: string }[]>([]);
   const [loading, setLoading] = useState(true);
   const [pending, setPending] = useState<number | null>(null);
+  const [startDate, setStartDate] = useState<string | null>(null);
 
   const [participationType, setParticipationType] = useState<string | null>(null);
 
