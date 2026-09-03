@@ -41,10 +41,11 @@ export default function ParayanamInviteCard({ invite: i, busy, onAccept, onDecli
   const paid = i.participation_type === "PAID" && !contributionSettled;
   const live = i.delivery_mode === "LIVE";
   const { canViewExternalPaymentLinks } = useCapabilities();
-  // In-app Razorpay payment is available when the parayanam has a set amount
-  // AND payments are enabled (paused during Razorpay domain verification).
-  const canPayInApp = paid && PARAYANAM_PAYMENTS_ENABLED && !!onPay;
-  const paymentsPaused = paid && !PARAYANAM_PAYMENTS_ENABLED;
+  // In-app Razorpay payment is available when the parayanam has a set amount,
+  // unless this specific parayanam's payments are paused.
+  const pausedForPayments = isPausedForPayments(i.challenge_session_id);
+  const canPayInApp = paid && !pausedForPayments && !!onPay;
+  const paymentsPaused = paid && pausedForPayments;
 
   return (
     <div className="rounded-xl border border-border bg-background p-4">
@@ -87,7 +88,7 @@ export default function ParayanamInviteCard({ invite: i, busy, onAccept, onDecli
               <span className="text-foreground/80">Contribution:</span>{" "}
               {i.contribution_amount != null ? `₹${i.contribution_amount}` : "As advised by the Guru"}
             </div>
-            {!canPayInApp && PARAYANAM_PAYMENTS_ENABLED && i.payment_url && (
+            {!canPayInApp && !paymentsPaused && i.payment_url && (
               <div>
                 {isPaymentLink(i.payment_url) ? (
                   <a
@@ -184,8 +185,7 @@ export function AwaitingContributionCard({ invite: i }: { invite: PendingInvite 
       {i.contribution_amount != null && (
         <p className="mt-2 font-sans text-xs text-foreground/80">Contribution: ₹{i.contribution_amount}</p>
       )}
-      {PARAYANAM_PAYMENTS_ENABLED &&
-        i.payment_url &&
+      {i.payment_url &&
         (isPaymentLink(i.payment_url) ? (
           <a
             href={i.payment_url.trim()}
