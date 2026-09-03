@@ -7,7 +7,7 @@ import { useCapabilities } from "@/hooks/useCapabilities";
  * verification). Only these specific sessions show the maintenance message;
  * every other PAID parayanam pays normally.
  */
-const PAUSED_PARAYANAM_IDS = new Set([
+export const PAUSED_PARAYANAM_IDS = new Set([
   "7a49ad6a-37fd-4cbf-b5af-5eb4fc24cec9", // 100DaysWithGuruvayurappan
 ]);
 const isPausedForPayments = (sessionId: string | null | undefined) =>
