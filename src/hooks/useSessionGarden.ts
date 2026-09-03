@@ -138,6 +138,7 @@ export function useSessionGarden(sessionId: string | null | undefined) {
       // means "personal" and the signed-in user may tap freely.
       const canTap =
         !!user &&
+        hasStarted &&
         list.some((r) =>
           r.assigned_user_id
             ? r.assigned_user_id === user.id
@@ -155,7 +156,7 @@ export function useSessionGarden(sessionId: string | null | undefined) {
       });
     }
     return map;
-  }, [rows, progress, user, confirmedCount, isConfirmedParticipant, participants.length]);
+  }, [rows, progress, user, confirmedCount, isConfirmedParticipant, participants.length, startDate]);
 
   const blooms = useMemo(() => {
     const m = new Map<number, number>();
