@@ -147,7 +147,7 @@ export function useSessionGarden(sessionId: string | null | undefined) {
       });
     }
     return map;
-  }, [rows, progress, user, confirmedCount, isConfirmedParticipant]);
+  }, [rows, progress, user, confirmedCount, isConfirmedParticipant, participants.length]);
 
   const blooms = useMemo(() => {
     const m = new Map<number, number>();
@@ -183,7 +183,7 @@ export function useSessionGarden(sessionId: string | null | undefined) {
       setPending(null);
       await refresh();
     },
-    [tiles, rows, user, isConfirmedParticipant, markDashakamComplete, unmarkDashakamComplete, refresh],
+    [tiles, rows, user, isConfirmedParticipant, participants.length, markDashakamComplete, unmarkDashakamComplete, refresh],
   );
 
   return {
