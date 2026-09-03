@@ -42,7 +42,10 @@ export default function PrasadamListPage() {
         );
       }
 
+      if (cancelled) return;
+      setEntries(rows);
       setLoading(false);
+
     })();
     return () => {
       cancelled = true;
