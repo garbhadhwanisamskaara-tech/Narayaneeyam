@@ -1,11 +1,13 @@
 import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Bell, Check, ChevronDown, ChevronRight, Loader2, MessageSquare, X } from "lucide-react";
+import { Bell, Check, ChevronDown, ChevronRight, Flower2, Loader2, MessageSquare, X } from "lucide-react";
 import { PARAYANAM_PAYMENTS_ENABLED } from "@/config/features";
 import { useMyPendingInvites } from "@/hooks/useParayanamParticipants";
 import { useTicketReplyAlerts } from "@/hooks/useTicketReplyAlerts";
 import { useMyDashakamQueue } from "@/hooks/useMyDashakamQueue";
+import { usePersonalSessions } from "@/hooks/usePersonalSessions";
 import DashakamQueueList from "@/components/DashakamQueueList";
+import PersonalGardenDialog from "@/components/PersonalGardenDialog";
 import { track } from "@/lib/analytics";
 
 function CollapsibleItem({ summary, children }: { summary: React.ReactNode; children: React.ReactNode }) {
@@ -34,12 +36,14 @@ function CollapsibleItem({ summary, children }: { summary: React.ReactNode; chil
  */
 export default function NotificationBell() {
   const [open, setOpen] = useState(false);
+  const [gardenOpen, setGardenOpen] = useState(false);
   const wrapRef = useRef<HTMLDivElement>(null);
   const navigate = useNavigate();
 
   const { invites, busyId, respond } = useMyPendingInvites();
   const { alerts } = useTicketReplyAlerts();
   const { todayRows, pendingRows } = useMyDashakamQueue();
+  const { sessions: personalSessions } = usePersonalSessions();
 
   const todayCount = todayRows.reduce((n, r) => n + r.items.length, 0);
 
