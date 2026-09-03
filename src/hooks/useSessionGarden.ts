@@ -50,6 +50,7 @@ export function useSessionGarden(sessionId: string | null | undefined) {
   const [progress, setProgress] = useState<{ dashakam_no: number; user_id: string }[]>([]);
   const [loading, setLoading] = useState(true);
   const [pending, setPending] = useState<number | null>(null);
+  const [startDate, setStartDate] = useState<string | null>(null);
 
   const [participationType, setParticipationType] = useState<string | null>(null);
 
@@ -70,16 +71,18 @@ export function useSessionGarden(sessionId: string | null | undefined) {
     if (!sessionId) {
       setRows([]);
       setProgress([]);
+      setStartDate(null);
       setLoading(false);
       return;
     }
     setLoading(true);
     const { data: sess } = await (supabase as any)
       .from("challenge_sessions")
-      .select("participation_type")
+      .select("participation_type, start_date")
       .eq("id", sessionId)
       .maybeSingle();
     setParticipationType((sess as any)?.participation_type ?? null);
+    setStartDate((sess as any)?.start_date ?? null);
     const { data } = await (supabase as any)
       .from("parayanam_schedule")
       .select("id, dashakam_no, scheduled_date, assigned_user_id")
@@ -102,6 +105,11 @@ export function useSessionGarden(sessionId: string | null | undefined) {
   }, [refresh]);
 
   const tiles = useMemo(() => {
+    // The parayanam only becomes tappable on/after its start_date. A missing
+    // start_date counts as already started.
+    const today = new Date().toLocaleDateString("sv-SE");
+    const hasStarted = !startDate || today >= startDate;
+
     const byDashakam = new Map<number, ScheduleRow[]>();
     for (const r of rows) {
       const list = byDashakam.get(r.dashakam_no) ?? [];
@@ -130,6 +138,7 @@ export function useSessionGarden(sessionId: string | null | undefined) {
       // means "personal" and the signed-in user may tap freely.
       const canTap =
         !!user &&
+        hasStarted &&
         list.some((r) =>
           r.assigned_user_id
             ? r.assigned_user_id === user.id
@@ -147,7 +156,7 @@ export function useSessionGarden(sessionId: string | null | undefined) {
       });
     }
     return map;
-  }, [rows, progress, user, confirmedCount, isConfirmedParticipant, participants.length]);
+  }, [rows, progress, user, confirmedCount, isConfirmedParticipant, participants.length, startDate]);
 
   const blooms = useMemo(() => {
     const m = new Map<number, number>();
