@@ -77,10 +77,11 @@ export function useSessionGarden(sessionId: string | null | undefined) {
     setLoading(true);
     const { data: sess } = await (supabase as any)
       .from("challenge_sessions")
-      .select("participation_type")
+      .select("participation_type, start_date")
       .eq("id", sessionId)
       .maybeSingle();
     setParticipationType((sess as any)?.participation_type ?? null);
+    setStartDate((sess as any)?.start_date ?? null);
     const { data } = await (supabase as any)
       .from("parayanam_schedule")
       .select("id, dashakam_no, scheduled_date, assigned_user_id")
