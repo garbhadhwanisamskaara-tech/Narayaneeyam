@@ -6,6 +6,8 @@ interface Props {
   ownerId: string | undefined;
   selected: string[];
   onToggle: (userId: string) => void;
+  onSelectAll: (ids: string[]) => void;
+  onDeselectAll: () => void;
   includeSelf: boolean;
   onIncludeSelfChange: (next: boolean) => void;
 }
@@ -16,10 +18,15 @@ export default function ParticipantPicker({
   ownerId,
   selected,
   onToggle,
+  onSelectAll,
+  onDeselectAll,
   includeSelf,
   onIncludeSelfChange,
 }: Props) {
   const others = members.filter((m) => m.user_id !== ownerId);
+  const othersIds = others.map((m) => m.user_id);
+  const allSelected = others.length > 0 && othersIds.every((id) => selected.includes(id));
+  const noneSelected = !othersIds.some((id) => selected.includes(id));
 
   return (
     <div>
@@ -46,6 +53,26 @@ export default function ParticipantPicker({
           No other members yet — invite people to the group first.
         </p>
       ) : (
+        <div className="mt-3 flex items-center gap-4">
+          <button
+            type="button"
+            onClick={() => onSelectAll(othersIds)}
+            disabled={allSelected}
+            className="font-sans text-xs text-primary hover:underline disabled:cursor-not-allowed disabled:opacity-50"
+          >
+            Select all
+          </button>
+          <button
+            type="button"
+            onClick={() => onDeselectAll()}
+            disabled={noneSelected}
+            className="font-sans text-xs text-primary hover:underline disabled:cursor-not-allowed disabled:opacity-50"
+          >
+            Deselect all
+          </button>
+        </div>
+      )}
+      {others.length > 0 && (
         <ul className="mt-3 max-h-[320px] space-y-2 overflow-y-auto pr-2">
           {others.map((m) => (
             <li key={m.user_id}>
