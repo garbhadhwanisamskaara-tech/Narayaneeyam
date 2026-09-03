@@ -53,6 +53,26 @@ export default function ParticipantPicker({
           No other members yet — invite people to the group first.
         </p>
       ) : (
+        <div className="mt-3 flex items-center gap-4">
+          <button
+            type="button"
+            onClick={() => onSelectAll(othersIds)}
+            disabled={allSelected}
+            className="font-sans text-xs text-primary hover:underline disabled:cursor-not-allowed disabled:opacity-50"
+          >
+            Select all
+          </button>
+          <button
+            type="button"
+            onClick={() => onDeselectAll()}
+            disabled={noneSelected}
+            className="font-sans text-xs text-primary hover:underline disabled:cursor-not-allowed disabled:opacity-50"
+          >
+            Deselect all
+          </button>
+        </div>
+      )}
+      {others.length > 0 && (
         <ul className="mt-3 max-h-[320px] space-y-2 overflow-y-auto pr-2">
           {others.map((m) => (
             <li key={m.user_id}>
