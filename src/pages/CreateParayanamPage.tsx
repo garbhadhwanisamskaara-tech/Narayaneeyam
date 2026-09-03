@@ -1111,6 +1111,8 @@ export default function CreateParayanamPage() {
               onToggle={(id) =>
                 setSelectedParticipants((prev) => (prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]))
               }
+              onSelectAll={(ids) => setSelectedParticipants(ids)}
+              onDeselectAll={() => setSelectedParticipants([])}
               includeSelf={includeSelf}
               onIncludeSelfChange={setIncludeSelf}
             />
