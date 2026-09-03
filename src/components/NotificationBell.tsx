@@ -100,6 +100,20 @@ export default function NotificationBell() {
             </button>
           </div>
 
+          {personalSessions.length > 0 && (
+            <button
+              type="button"
+              onClick={() => {
+                setOpen(false);
+                setGardenOpen(true);
+              }}
+              className="mb-3 flex w-full items-center gap-2 rounded-xl border border-border bg-muted/30 px-3 py-2 text-left font-sans text-sm font-semibold text-foreground transition-colors hover:border-primary"
+            >
+              <Flower2 className="h-4 w-4 shrink-0 text-secondary" />
+              Update your bloom garden
+            </button>
+          )}
+
           {empty ? (
             <p className="py-4 font-sans text-sm text-muted-foreground">Nothing needs your attention right now.</p>
           ) : (
@@ -205,6 +219,8 @@ export default function NotificationBell() {
           )}
         </div>
       )}
+
+      <PersonalGardenDialog open={gardenOpen} onOpenChange={setGardenOpen} />
     </div>
   );
 }
