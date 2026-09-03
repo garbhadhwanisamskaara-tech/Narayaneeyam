@@ -5,9 +5,9 @@ import { PARAYANAM_PAYMENTS_ENABLED } from "@/config/features";
 import { useMyPendingInvites } from "@/hooks/useParayanamParticipants";
 import { useTicketReplyAlerts } from "@/hooks/useTicketReplyAlerts";
 import { useMyDashakamQueue } from "@/hooks/useMyDashakamQueue";
-import { usePersonalSessions } from "@/hooks/usePersonalSessions";
+import { useMyGardenSessions } from "@/hooks/useMyGardenSessions";
 import DashakamQueueList from "@/components/DashakamQueueList";
-import PersonalGardenDialog from "@/components/PersonalGardenDialog";
+import MyGardenDialog from "@/components/MyGardenDialog";
 import { track } from "@/lib/analytics";
 
 function CollapsibleItem({ summary, children }: { summary: React.ReactNode; children: React.ReactNode }) {
@@ -43,7 +43,7 @@ export default function NotificationBell() {
   const { invites, busyId, respond } = useMyPendingInvites();
   const { alerts } = useTicketReplyAlerts();
   const { todayRows, pendingRows } = useMyDashakamQueue();
-  const { sessions: personalSessions } = usePersonalSessions();
+  const { sessions: personalSessions } = useMyGardenSessions();
 
   const todayCount = todayRows.reduce((n, r) => n + r.items.length, 0);
 
@@ -220,7 +220,7 @@ export default function NotificationBell() {
         </div>
       )}
 
-      <PersonalGardenDialog open={gardenOpen} onOpenChange={setGardenOpen} />
+      <MyGardenDialog open={gardenOpen} onOpenChange={setGardenOpen} />
     </div>
   );
 }
