@@ -345,9 +345,7 @@ export default function GroupDetailPage() {
   /** A relay needs at least one confirmed reader before blocks can be handed out. */
   const relayNeedsConfirmation = isRelaySession && confirmedParticipantCount === 0;
 
-  const todayISO = new Date().toISOString().slice(0, 10);
-  const canStartNow =
-    isOwner && !!selectedSessionId && !!sessionStartDate && sessionStartDate <= todayISO && !sessionFinalizedAt;
+  const canStartNow = isOwner && !!selectedSessionId && !sessionFinalizedAt;
 
   const handleStartNow = async () => {
     if (!selectedSessionId || relayNeedsConfirmation) return;
