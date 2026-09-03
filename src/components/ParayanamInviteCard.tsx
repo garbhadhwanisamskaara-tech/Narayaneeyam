@@ -2,17 +2,6 @@ import { Check, Clock, ExternalLink, HandCoins, Loader2, Users, X } from "lucide
 import type { PendingInvite } from "@/hooks/useParayanamParticipants";
 import { useCapabilities } from "@/hooks/useCapabilities";
 
-/**
- * Parayanams whose in-app payments are paused (e.g. pending Razorpay domain
- * verification). Only these specific sessions show the maintenance message;
- * every other PAID parayanam pays normally.
- */
-export const PAUSED_PARAYANAM_IDS = new Set([
-  "7a49ad6a-37fd-4cbf-b5af-5eb4fc24cec9", // 100DaysWithGuruvayurappan
-]);
-const isPausedForPayments = (sessionId: string | null | undefined) =>
-  !!sessionId && PAUSED_PARAYANAM_IDS.has(sessionId);
-
 const fmt = (d: string | null) => {
   if (!d) return null;
   const dt = new Date(`${d}T00:00:00`);
@@ -41,11 +30,7 @@ export default function ParayanamInviteCard({ invite: i, busy, onAccept, onDecli
   const paid = i.participation_type === "PAID" && !contributionSettled;
   const live = i.delivery_mode === "LIVE";
   const { canViewExternalPaymentLinks } = useCapabilities();
-  // In-app Razorpay payment is available when the parayanam has a set amount,
-  // unless this specific parayanam's payments are paused.
-  const pausedForPayments = isPausedForPayments(i.challenge_session_id);
-  const canPayInApp = paid && !pausedForPayments && !!onPay;
-  const paymentsPaused = paid && pausedForPayments;
+  const canPayInApp = paid && !!onPay;
 
   return (
     <div className="rounded-xl border border-border bg-background p-4">
@@ -88,7 +73,7 @@ export default function ParayanamInviteCard({ invite: i, busy, onAccept, onDecli
               <span className="text-foreground/80">Contribution:</span>{" "}
               {i.contribution_amount != null ? `₹${i.contribution_amount}` : "As advised by the Guru"}
             </div>
-            {!canPayInApp && !paymentsPaused && i.payment_url && (
+            {!canPayInApp && i.payment_url && (
               <div>
                 {isPaymentLink(i.payment_url) ? (
                   <a
@@ -127,10 +112,6 @@ export default function ParayanamInviteCard({ invite: i, busy, onAccept, onDecli
             {busy ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <HandCoins className="h-3.5 w-3.5" />}
             {i.contribution_amount != null ? `Pay ₹${i.contribution_amount} to Join` : "Pay to Join"}
           </button>
-        ) : paymentsPaused ? (
-          <p className="rounded-lg bg-primary/10 px-3 py-2 font-sans text-xs font-semibold text-primary">
-            Payments are temporarily paused for system maintenance. Please check back after 3rd September.
-          </p>
         ) : (
           <button
             onClick={onAccept}
