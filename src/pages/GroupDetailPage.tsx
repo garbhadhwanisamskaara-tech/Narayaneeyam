@@ -346,8 +346,7 @@ export default function GroupDetailPage() {
   const relayNeedsConfirmation = isRelaySession && confirmedParticipantCount === 0;
 
   const todayISO = new Date().toISOString().slice(0, 10);
-  const canStartNow =
-    isOwner && !!selectedSessionId && !!sessionStartDate && sessionStartDate <= todayISO && !sessionFinalizedAt;
+  const canStartNow = isOwner && !!selectedSessionId && !sessionFinalizedAt;
 
   const handleStartNow = async () => {
     if (!selectedSessionId || relayNeedsConfirmation) return;
