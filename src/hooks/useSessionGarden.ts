@@ -125,10 +125,16 @@ export function useSessionGarden(sessionId: string | null | undefined) {
       // Split mode assigns one chanter per row; synchronized expects everyone.
       const expectedPerRow = list.some((r) => r.assigned_user_id) ? 1 : Math.max(confirmedCount, 1);
       const total = list.length * expectedPerRow;
+      // Personal sessions have no parayanam_participants rows at all (a group
+      // session always has at least the owner), so participants.length === 0
+      // means "personal" and the signed-in user may tap freely.
       const canTap =
         !!user &&
-        isConfirmedParticipant &&
-        list.some((r) => (r.assigned_user_id ? r.assigned_user_id === user.id : true));
+        list.some((r) =>
+          r.assigned_user_id
+            ? r.assigned_user_id === user.id
+            : isConfirmedParticipant || participants.length === 0,
+        );
       map.set(no, {
         dashakam_no: no,
         scheduleIds: list.map((r) => r.id),
@@ -159,8 +165,9 @@ export function useSessionGarden(sessionId: string | null | undefined) {
       const eligible = rows.filter(
         (r) =>
           r.dashakam_no === dashakamNo &&
-          isConfirmedParticipant &&
-          (r.assigned_user_id ? r.assigned_user_id === user.id : true),
+          (r.assigned_user_id
+            ? r.assigned_user_id === user.id
+            : isConfirmedParticipant || participants.length === 0),
       );
       if (!eligible.length) return;
       const undo = tile.mineDone >= eligible.length;
