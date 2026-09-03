@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Bell, Check, ChevronDown, ChevronRight, Flower2, Loader2, MessageSquare, X } from "lucide-react";
-import { PARAYANAM_PAYMENTS_ENABLED } from "@/config/features";
+import { PAUSED_PARAYANAM_IDS } from "@/components/ParayanamInviteCard";
 import { useMyPendingInvites } from "@/hooks/useParayanamParticipants";
 import { useTicketReplyAlerts } from "@/hooks/useTicketReplyAlerts";
 import { useMyDashakamQueue } from "@/hooks/useMyDashakamQueue";
@@ -139,7 +139,12 @@ export default function NotificationBell() {
                         </p>
                         <div className="mt-2 flex gap-2">
                           {i.participation_type === "PAID" ? (
-                            PARAYANAM_PAYMENTS_ENABLED ? (
+                            PAUSED_PARAYANAM_IDS.has(i.challenge_session_id) ? (
+                              <p className="rounded-lg bg-primary/10 px-3 py-2 font-sans text-xs font-semibold text-primary">
+                                Payments are temporarily paused for system maintenance. Please check back after 3rd
+                                September.
+                              </p>
+                            ) : (
                               <button
                                 onClick={() => {
                                   setOpen(false);
@@ -149,11 +154,6 @@ export default function NotificationBell() {
                               >
                                 Review & Pay to Join
                               </button>
-                            ) : (
-                              <p className="rounded-lg bg-primary/10 px-3 py-2 font-sans text-xs font-semibold text-primary">
-                                Payments are temporarily paused for system maintenance. Please check back after 3rd
-                                September.
-                              </p>
                             )
                           ) : (
                             <button
