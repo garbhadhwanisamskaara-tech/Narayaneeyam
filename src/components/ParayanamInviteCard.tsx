@@ -1,7 +1,17 @@
 import { Check, Clock, ExternalLink, HandCoins, Loader2, Users, X } from "lucide-react";
-import { PARAYANAM_PAYMENTS_ENABLED } from "@/config/features";
 import type { PendingInvite } from "@/hooks/useParayanamParticipants";
 import { useCapabilities } from "@/hooks/useCapabilities";
+
+/**
+ * Parayanams whose in-app payments are paused (e.g. pending Razorpay domain
+ * verification). Only these specific sessions show the maintenance message;
+ * every other PAID parayanam pays normally.
+ */
+const PAUSED_PARAYANAM_IDS = new Set([
+  "7a49ad6a-37fd-4cbf-b5af-5eb4fc24cec9", // 100DaysWithGuruvayurappan
+]);
+const isPausedForPayments = (sessionId: string | null | undefined) =>
+  !!sessionId && PAUSED_PARAYANAM_IDS.has(sessionId);
 
 const fmt = (d: string | null) => {
   if (!d) return null;
