@@ -222,8 +222,12 @@ async function fetchVerses(
     if (Object.keys(tr).length === 0) tr = lEn;
   }
 
-  // Fallback prasadam to English if missing
-  if (translationLang !== "en" && Object.keys(p).length === 0) {
+  // Prasadam must follow the preferred translation language; fall back to
+  // English only for the individual verses that have no localized text.
+  const prasadamMissing =
+    Object.keys(p).length === 0 ||
+    Object.values(p).some((r: any) => !r?.prasadam_text || r.prasadam_text.trim() === "");
+  if (translationLang !== "en" && prasadamMissing) {
     const prasEn = await supabase
       .from("prasadam")
       .select("verse_no, prasadam_text")
@@ -231,8 +235,12 @@ async function fetchVerses(
       .eq("language_code", "en")
       .order("verse_no")
       .abortSignal(signal!);
-    p = toMap(prasEn.data);
+    const pEn = toMap(prasEn.data);
+    p = { ...pEn, ...Object.fromEntries(
+      Object.entries(p).filter(([, r]: any) => r?.prasadam_text && r.prasadam_text.trim() !== "")
+    ) };
   }
+
 
   const max =
     numVerses ||
