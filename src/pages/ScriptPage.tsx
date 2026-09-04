@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Download, ChevronDown, ChevronUp, Loader2, BookOpen } from "lucide-react";
-import { useDashakam, useDashakamNames, type MergedVerse } from "@/hooks/useDashakam";
+import { useDashakam, useDashakamNames, applyVerseOrderOverride, type MergedVerse } from "@/hooks/useDashakam";
 import { supabase } from "@/integrations/supabase/client";
 import VerseIcons from "@/components/VerseIcons";
 import SEO from "@/components/SEO";
@@ -33,10 +33,14 @@ export default function ScriptPage() {
   );
 
   // Determine which verses to display
+  // Text-only display override: Dashakam 45's script follows the audio
+  // sequence 11, 12, 1…10. Verse numbers stay unchanged — only the on-screen
+  // order changes. Audio/chant stepping elsewhere keeps ascending verse_no.
+  const orderedVerses = applyVerseOrderOverride(selectedDashakam, verses);
   const displayVerses =
     viewMode === "para" && selectedPara
-      ? verses.filter((v) => v.verse_no === selectedPara)
-      : verses;
+      ? orderedVerses.filter((v) => v.verse_no === selectedPara)
+      : orderedVerses;
 
   const numVerses =
     dashakamList.find((d) => d.dashakam_no === selectedDashakam)?.num_verses
