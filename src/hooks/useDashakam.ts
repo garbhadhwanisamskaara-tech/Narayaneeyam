@@ -129,6 +129,29 @@ function listQueryOptions(lang: string) {
   };
 }
 
+/**
+ * Hardcoded display-order overrides: some dashakams' audio follows a custom
+ * verse sequence. Verse numbers stay unchanged — only iteration order changes.
+ */
+export const DASHAKAM_VERSE_ORDER_OVERRIDE: Record<number, number[]> = {
+  45: [11, 12, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10],
+};
+
+/** Reorder verses per DASHAKAM_VERSE_ORDER_OVERRIDE; other dashakams untouched. */
+export function applyVerseOrderOverride<T extends { verse_no: number }>(
+  dashakamNo: number,
+  verses: T[]
+): T[] {
+  const order = DASHAKAM_VERSE_ORDER_OVERRIDE[dashakamNo];
+  if (!order) return verses;
+  const rank = new Map(order.map((v, i) => [v, i]));
+  return [...verses].sort(
+    (a, b) =>
+      (rank.get(a.verse_no) ?? Number.MAX_SAFE_INTEGER) -
+      (rank.get(b.verse_no) ?? Number.MAX_SAFE_INTEGER)
+  );
+}
+
 async function fetchVerses(
   dashakamNo: number,
   scriptLang: string,
