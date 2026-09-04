@@ -286,7 +286,10 @@ async function fetchVerses(
     });
   }
 
-  return applyVerseOrderOverride(dashakamNo, merged);
+  // Verses stay in ascending verse_no order here — audio/chant stepping is
+  // unaffected. The Dashakam 45 text-order override is applied only at the
+  // Script Library display layer (see ScriptPage).
+  return merged;
 }
 
 function versesQueryOptions(
