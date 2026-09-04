@@ -42,6 +42,17 @@ export default function PrasadamListPage() {
         );
       }
 
+      // Apply per-dashakam display-order overrides (e.g. Dashakam 45: 11, 12, 1…10)
+      const byDashakam = new Map<number, PrasadamEntry[]>();
+      for (const r of rows) {
+        const arr = byDashakam.get(r.dashakam_no) ?? [];
+        arr.push(r);
+        byDashakam.set(r.dashakam_no, arr);
+      }
+      rows = [...byDashakam.entries()]
+        .sort(([a], [b]) => a - b)
+        .flatMap(([d, rs]) => applyVerseOrderOverride(d, rs));
+
       if (cancelled) return;
       setEntries(rows);
       setLoading(false);
