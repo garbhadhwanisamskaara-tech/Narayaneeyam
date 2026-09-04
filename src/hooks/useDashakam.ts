@@ -286,7 +286,7 @@ async function fetchVerses(
     });
   }
 
-  return merged;
+  return applyVerseOrderOverride(dashakamNo, merged);
 }
 
 function versesQueryOptions(
