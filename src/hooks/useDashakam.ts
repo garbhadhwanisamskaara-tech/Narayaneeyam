@@ -265,9 +265,15 @@ async function fetchVerses(
   }
 
 
-  const max =
-    numVerses ||
-    Math.max(...Object.keys(a).map(Number), ...Object.keys(s).map(Number), 0);
+  // Never let metadata numVerses hide verses that exist in the script/audio
+  // tables (e.g. Dashakam 45 has 12 verses in language_script).
+  const max = Math.max(
+    numVerses || 0,
+    ...Object.keys(a).map(Number),
+    ...Object.keys(s).map(Number),
+    ...Object.keys(l).map(Number),
+    0
+  );
 
   const merged: MergedVerse[] = [];
   for (let i = 1; i <= max; i++) {
