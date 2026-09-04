@@ -292,10 +292,10 @@ async function fetchVerses(
     });
   }
 
-  // Verses stay in ascending verse_no order here — audio/chant stepping is
-  // unaffected. The Dashakam 45 text-order override is applied only at the
-  // Script Library display layer (see ScriptPage).
-  return merged;
+  // Apply hardcoded display-order overrides (Dashakam 45: 11, 12, 1…10) so the
+  // on-screen text follows the language_script sequence. Verse numbers and
+  // audio files stay attached to their true verse_no — only order changes.
+  return applyVerseOrderOverride(dashakamNo, merged);
 }
 
 function versesQueryOptions(
