@@ -3,6 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import SEO from "@/components/SEO";
 import { useLanguagePrefs } from "@/hooks/useLanguagePrefs";
+import { applyVerseOrderOverride } from "@/hooks/useDashakam";
 
 interface PrasadamEntry {
   dashakam_no: number;
