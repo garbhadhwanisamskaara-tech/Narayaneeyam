@@ -265,9 +265,15 @@ async function fetchVerses(
   }
 
 
-  const max =
-    numVerses ||
-    Math.max(...Object.keys(a).map(Number), ...Object.keys(s).map(Number), 0);
+  // Never let metadata numVerses hide verses that exist in the script/audio
+  // tables (e.g. Dashakam 45 has 12 verses in language_script).
+  const max = Math.max(
+    numVerses || 0,
+    ...Object.keys(a).map(Number),
+    ...Object.keys(s).map(Number),
+    ...Object.keys(l).map(Number),
+    0
+  );
 
   const merged: MergedVerse[] = [];
   for (let i = 1; i <= max; i++) {
@@ -286,10 +292,10 @@ async function fetchVerses(
     });
   }
 
-  // Verses stay in ascending verse_no order here — audio/chant stepping is
-  // unaffected. The Dashakam 45 text-order override is applied only at the
-  // Script Library display layer (see ScriptPage).
-  return merged;
+  // Apply hardcoded display-order overrides (Dashakam 45: 11, 12, 1…10) so the
+  // on-screen text follows the language_script sequence. Verse numbers and
+  // audio files stay attached to their true verse_no — only order changes.
+  return applyVerseOrderOverride(dashakamNo, merged);
 }
 
 function versesQueryOptions(
