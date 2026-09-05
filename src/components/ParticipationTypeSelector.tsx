@@ -7,7 +7,7 @@ const OPTIONS: { value: ParticipationType; label: string; hint: string; Icon: ty
   {
     value: "FREE",
     label: "Free",
-    hint: "Anyone invited can join without contributing.",
+    hint: "Everyone invited can join.",
     Icon: Gift,
   },
   {
