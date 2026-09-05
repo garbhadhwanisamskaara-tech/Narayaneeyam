@@ -163,7 +163,7 @@ export default function SubscribePage() {
       <SEO
         path="/subscribe"
         title="Subscribe — Sriman Narayaneeyam"
-        description="Choose a plan to unlock all 100 Dashakams of Sriman Narayaneeyam — Chant, Podcast, Script Library and more."
+        description="Choose a plan to unlock all 100 Dashakams of Sriman Narayaneeyam — Chant, Listen, Script Library and more."
       />
       <div className="text-center mb-8">
         <h1 className="font-display text-2xl font-bold text-foreground">Choose Your Plan</h1>

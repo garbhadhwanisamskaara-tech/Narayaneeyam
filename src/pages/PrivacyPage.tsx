@@ -121,7 +121,7 @@ export default function PrivacyPage() {
           <div className="font-sans text-foreground/80 leading-relaxed space-y-3">
             <p>We use the information we collect for these purposes:</p>
             <ul className="list-disc pl-5 space-y-2">
-              <li>To provide the app's core features: chanting, podcast playback, progress tracking, and group parayanam.</li>
+              <li>To provide the app's core features: chanting, audio playback, progress tracking, and group parayanam.</li>
               <li>To process your subscription payments and manage your trial or billing period.</li>
               <li>To send you reminders, festival alerts, and gentle nudges about your practice (only if you opt in).</li>
               <li>To improve the app, fix issues, and understand how devotees use the features we build.</li>

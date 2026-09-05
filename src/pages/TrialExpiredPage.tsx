@@ -39,7 +39,7 @@ export default function TrialExpiredPage() {
               Unlock the full experience
             </p>
             <p className="text-xs text-gold-light font-sans">
-              All 100 Dashakams · Chant & Learn modes · Podcast · Script Library
+              All 100 Dashakams · Chant & Learn modes · Listen · Script Library
             </p>
           </div>
 
