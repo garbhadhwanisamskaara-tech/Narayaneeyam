@@ -67,8 +67,8 @@ export default function ParayanamReview(props: ParayanamReviewProps) {
 
   rows.push(
     contribution
-      ? { label: "Contribution", value: `${contribution.amount} to join` }
-      : { label: "Contribution", value: "Free to join" },
+      ? { label: "Participation", value: `${contribution.amount} to join` }
+      : { label: "Participation", value: "Free to join" },
   );
   if (contribution) {
     rows.push({
