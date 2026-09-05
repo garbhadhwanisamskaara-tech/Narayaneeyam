@@ -22,7 +22,7 @@ const jsonLd = {
       contactType: "Privacy",
     },
   },
-  dateModified: "2026-08-01",
+  dateModified: "2026-09-06",
 };
 
 export default function PrivacyPage() {
@@ -60,7 +60,7 @@ export default function PrivacyPage() {
           <span className="text-xs font-sans uppercase tracking-[0.2em] text-secondary">Legal</span>
           <h1 className="font-display text-3xl sm:text-4xl text-primary mt-3 mb-3">Privacy Policy</h1>
           <div className="mx-auto h-[2px] w-20 bg-gradient-gold rounded-full mb-3" />
-          <p className="text-sm font-sans text-muted-foreground">Last updated: 1 August 2026</p>
+          <p className="text-sm font-sans text-muted-foreground">Last updated: 6 September 2026</p>
         </header>
 
         <p className="text-sm font-sans text-muted-foreground mb-8">
@@ -92,8 +92,10 @@ export default function PrivacyPage() {
             <ul className="list-disc pl-5 space-y-2">
               <li>
                 <strong>Account information:</strong> When you sign up, we collect your email address and
-                the name you choose to display. This is required to create your account and keep your
-                progress safe.
+                the name you choose to display. You can also sign in with your phone number (collected for
+                phone-based login) or with Google Sign-In, which shares your name and email from your Google
+                account and is governed by Google's own privacy policy. This information is required to create
+                your account and keep your progress safe.
               </li>
               <li>
                 <strong>Payment information:</strong> If you subscribe to a paid plan, your payment is
@@ -147,9 +149,10 @@ export default function PrivacyPage() {
                 by its own security and privacy commitments.
               </li>
               <li>
-                <strong>Analytics services:</strong> We may use analytics tools to understand app usage in
-                aggregate. These tools do not receive personal information beyond what is necessary for
-                that purpose.
+                <strong>PostHog:</strong> We use PostHog for product analytics. PostHog receives your user
+                ID and email address so we can identify your activity for product analytics purposes, such as
+                chanting progress and feature usage. PostHog is bound by its own privacy and security
+                commitments.
               </li>
             </ul>
             <p>
