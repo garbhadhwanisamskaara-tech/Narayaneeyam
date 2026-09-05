@@ -270,6 +270,36 @@ export default function RitualChantOverlay({ chants, useLearnAudio = false, titl
           <SkipForward className="h-4 w-4" /> Skip
         </button>
       </div>
+
+      <Sheet open={lyricsOpen} onOpenChange={setLyricsOpen}>
+        <SheetContent side="right" className="overflow-y-auto max-h-screen w-full sm:max-w-md">
+          <SheetHeader>
+            <SheetTitle className="font-sans">Lyrics</SheetTitle>
+          </SheetHeader>
+          <div className="mt-4 space-y-6">
+            {chants
+              .filter((c) => !!c.transliteration_text)
+              .map((c, i) => (
+                <div
+                  key={`${c.chant_key}-${i}`}
+                  className={i > 0 ? "border-t border-border/60 pt-6" : undefined}
+                >
+                  <h3 className="font-sans font-bold text-foreground mb-2">
+                    {c.ritual_chant_name || c.chant_key}
+                  </h3>
+                  <p className="font-body text-base text-foreground leading-relaxed whitespace-pre-line">
+                    {c.transliteration_text}
+                  </p>
+                  {c.translation_text && (
+                    <p className="mt-3 text-sm text-muted-foreground font-sans leading-relaxed whitespace-pre-line">
+                      {c.translation_text}
+                    </p>
+                  )}
+                </div>
+              ))}
+          </div>
+        </SheetContent>
+      </Sheet>
     </motion.div>
   );
 }
