@@ -13,7 +13,7 @@ export default function FaqPage() {
     document.title = "FAQ — Sriman Narayaneeyam App";
     const meta = document.querySelector('meta[name="description"]');
     const desc =
-      "Frequently asked questions about the Narayaneeyam app — learn how to chant, use the Learn and Podcast modules, track progress, and more.";
+      "Frequently asked questions about the Narayaneeyam app — learn how to chant, use the Chant and Listen modules, track progress, and more.";
     if (meta) {
       meta.setAttribute("content", desc);
     } else {

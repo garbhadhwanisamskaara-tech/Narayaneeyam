@@ -6,7 +6,7 @@ import MoreMenu from "@/components/MoreMenu";
 const bottomNavItems = [
   { path: "/", label: "Home", icon: Home },
   { path: "/chant", label: "Chant", icon: Mic },
-  { path: "/podcast", label: "Podcast", icon: Headphones },
+  { path: "/podcast", label: "Listen", icon: Headphones },
   { path: "/progress", label: "Progress", icon: BarChart3 },
 ];
 

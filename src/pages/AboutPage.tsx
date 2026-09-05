@@ -16,7 +16,7 @@ export default function AboutPage() {
           <li><strong>Chant with Me</strong> — Audio-guided chanting with lyrics highlighting</li>
           
           <li><strong>Devotion Pathways</strong> — Curated chanting journeys including Mini Narayaneeyam, Festival Pathways, and 100-Day Journey</li>
-          <li><strong>Podcast</strong> — Listen to Dashakams in sequence</li>
+          <li><strong>Listen</strong> — Listen to Dashakams in sequence</li>
           <li><strong>Prasadam List</strong> — Recommended offerings for each Dashakam</li>
         </ul>
         <h2>Credits</h2>

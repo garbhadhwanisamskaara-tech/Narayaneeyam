@@ -163,7 +163,7 @@ export function useBookmarks() {
         title: isFirst
           ? "Your first saved place — we'll always bring you right back. 🪔"
           : isPodcast
-          ? "🔖 Podcast bookmarked at this moment."
+          ? "🔖 Bookmarked at this moment — listening will resume here."
           : "🔖 Your place is saved. Come back whenever you're ready.",
       });
     },

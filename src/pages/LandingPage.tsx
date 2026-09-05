@@ -58,7 +58,7 @@ const features = [
   },
   {
     icon: "🎙️",
-    name: "Sacred Podcast",
+    name: "Sacred Listening",
     desc: "Listen to dashakams in the background while going about your day. Let the divine vibrations fill your space.",
   },
   {
@@ -534,7 +534,7 @@ export default function LandingPage() {
               <li>Personal bookmarks, favourites and playlists</li>
               <li>Practice streaks and progress tracking</li>
               <li>Private group parayanams with family and friends</li>
-              <li>Podcast — listen while on the go</li>
+              <li>Listen — devotional audio while on the go</li>
               <li>Works in any browser — add it to your home screen on iPhone or Android</li>
             </ul>
           </div>

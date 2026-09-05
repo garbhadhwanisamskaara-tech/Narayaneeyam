@@ -94,7 +94,8 @@ const App = () => {
                   <Route path="/script" element={<ScriptPage />} />
                   <Route path="/progress" element={<DashboardPage />} />
                   <Route path="/dashboard" element={<DashboardPage />} />
-                  <Route path="/podcast" element={<PodcastPage />} />
+                  <Route path="/listen" element={<PodcastPage />} />
+                  <Route path="/podcast" element={<Navigate to="/listen" replace />} />
                   
                   <Route path="/parayanam/new" element={<RequireCapability capability="canCreateParayanam"><CreateParayanamPage /></RequireCapability>} />
 

@@ -400,13 +400,13 @@ export default function PodcastPage() {
 
   return (
     <div className="container mx-auto px-4 py-8 select-none" onContextMenu={(e) => e.preventDefault()}>
-      <SEO path="/podcast" title="Podcast — Sriman Narayaneeyam" description="Listen to the Narayaneeyam podcast — devotional talks and explanations of the sacred text." />
+      <SEO path="/listen" title="Listen — Sriman Narayaneeyam" description="Listen to a Dashakam or create your own playlist — devotional audio of the sacred Narayaneeyam." />
       <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
         <div className="mb-8 flex items-center justify-between flex-wrap gap-2">
           <div>
-            <h1 className="font-display text-3xl font-bold text-foreground mb-2">Podcast</h1>
+            <h1 className="font-display text-3xl font-bold text-foreground mb-2">Listen</h1>
             <p className="text-muted-foreground font-sans">
-              Listen to Dashakams — plays in background even when app is minimized
+              Listen to a Dashakam or create your own playlist. Audio continues playing even when the app is minimized.
             </p>
           </div>
           <button
@@ -524,7 +524,7 @@ export default function PodcastPage() {
                   <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-secondary opacity-75"></span>
                   <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-secondary"></span>
                 </span>
-                <span className="text-xs font-sans font-semibold text-secondary uppercase tracking-wider">Podcast Module Active</span>
+                <span className="text-xs font-sans font-semibold text-secondary uppercase tracking-wider">Listening Now</span>
               </div>
             )}
             <p className="text-xs text-gold-light font-sans uppercase tracking-wide mb-1">Now Playing</p>
@@ -639,11 +639,11 @@ export default function PodcastPage() {
           {/* Status */}
           {audioUrl ? (
             <p className="text-center text-xs text-primary-foreground/40 mt-4 font-sans flex items-center justify-center gap-1">
-              <Volume2 className="h-3 w-3" /> Podcast audio ready
+              <Volume2 className="h-3 w-3" /> Ready to play
             </p>
           ) : (
             <p className="text-center text-xs text-primary-foreground/40 mt-4 font-sans">
-              🎵 No podcast audio available for this dashakam yet
+              🎵 No audio available for this dashakam yet
             </p>
           )}
 

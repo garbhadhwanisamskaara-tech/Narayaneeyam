@@ -43,7 +43,7 @@ const sections = [
       },
       {
         q: "How do I navigate the app?",
-        a: "On mobile use the bottom bar — Home, Chant, Podcast, Progress and More. On desktop use the top navigation. The 'More' menu holds Script Library, Festival Parayanams, Prasadam Guide, Saved Places, Favourites, Playlists, Blog, FAQ, Support and Settings. Your avatar at the top right opens account options and Sign Out.",
+        a: "On mobile use the bottom bar — Home, Chant, Listen, Progress and More. On desktop use the top navigation. The 'More' menu holds Script Library, Festival Parayanams, Prasadam Guide, Saved Places, Favourites, Playlists, Blog, FAQ, Support and Settings. Your avatar at the top right opens account options and Sign Out.",
       },
     ],
   },
@@ -96,11 +96,11 @@ const sections = [
   {
     id: "podcast",
     icon: <Headphones className="h-5 w-5 text-primary" />,
-    title: "Podcast",
+    title: "Listen",
     items: [
       {
         q: "How do I listen to Dashakam episodes?",
-        a: "Open Podcast and choose a published Dashakam. The full episode plays end to end, with the same speed and loop controls as Chant.",
+        a: "Open Listen and choose a published Dashakam. The full episode plays end to end, with the same speed and loop controls as Chant.",
       },
       {
         q: "Can I listen in the background?",
@@ -294,7 +294,7 @@ const UserGuidePage = () => {
       <SEO
         path="/user-guide"
         title="User Guide — Sriman Narayaneeyam"
-        description="Step-by-step guide to every feature of the Sriman Narayaneeyam app — chanting, podcast, languages, groups, parayanams, reminders and account settings."
+        description="Step-by-step guide to every feature of the Sriman Narayaneeyam app — chanting, listening, languages, groups, parayanams, reminders and account settings."
       />
       {/* Hero */}
       <div className="bg-gradient-peacock text-primary-foreground py-10 px-4 text-center">
