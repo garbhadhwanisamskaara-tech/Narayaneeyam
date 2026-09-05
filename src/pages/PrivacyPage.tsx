@@ -98,10 +98,13 @@ export default function PrivacyPage() {
                 your account and keep your progress safe.
               </li>
               <li>
-                <strong>Payment information:</strong> If you subscribe to a paid plan, your payment is
-                processed by Razorpay. We do not store your raw card numbers, CVV, or other payment
-                instrument details. Razorpay handles payment processing and shares only the payment
-                status and subscription details with us.
+                <strong>Payment information:</strong> If you subscribe to a paid plan or make a contribution
+                to join a paid group parayanam, your payment is processed by Razorpay. We do not store
+                your raw card numbers, CVV, or other payment instrument details. Razorpay handles
+                payment processing and shares only the payment status, subscription details, and
+                contribution status with us. Should in-app purchases or subscriptions be introduced
+                within the Android app in the future, they will be processed through Google Play's
+                billing system in accordance with Google Play policies.
               </li>
               <li>
                 <strong>Usage data:</strong> We record your progress through the Dashakams, chanting
@@ -124,7 +127,7 @@ export default function PrivacyPage() {
             <p>We use the information we collect for these purposes:</p>
             <ul className="list-disc pl-5 space-y-2">
               <li>To provide the app's core features: chanting, audio playback, progress tracking, and group parayanam.</li>
-              <li>To process your subscription payments and manage your trial or billing period.</li>
+              <li>To process your subscription payments and parayanam contributions, and manage your trial or billing period.</li>
               <li>To send you reminders, festival alerts, and gentle nudges about your practice (only if you opt in).</li>
               <li>To improve the app, fix issues, and understand how devotees use the features we build.</li>
               <li>To communicate with you about your account, support requests, or important policy updates.</li>
