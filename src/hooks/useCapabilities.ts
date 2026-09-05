@@ -12,7 +12,7 @@ export interface Capabilities {
 export function useCapabilities(): Capabilities {
   const isWeb = usePlatform() === "WEB";
   return {
-    canCreateGroup: isWeb,
+    canCreateGroup: true,
     canManageGroup: true,
     canCreateParayanam: isWeb,
     canManageParayanam: isWeb,
