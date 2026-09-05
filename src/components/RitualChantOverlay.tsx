@@ -27,6 +27,7 @@ export default function RitualChantOverlay({ chants, useLearnAudio = false, titl
   const [currentIdx, setCurrentIdx] = useState(0);
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const [isPlaying, setIsPlaying] = useState(true);
+  const [lyricsOpen, setLyricsOpen] = useState(false);
   const [muted, setMuted] = useState<boolean>(() => getGlobalMuted());
   const [currentSpeed, setCurrentSpeed] = useState<number>(speed);
   const speedRef = useRef(speed);
