@@ -2,7 +2,7 @@ export const faqSections = [
   {
     heading: "Getting Started",
     questions: [
-      { q: "What is the primary goal of the Narayaneeyam app?", a: "The app makes the 1,033 verses of the Narayaneeyam accessible to everyone. You can chant along with synchronised audio and text highlighting, listen to a whole dashakam like a podcast, read the verses in your preferred script, and keep track of your daily practice — all at your own pace." },
+      { q: "What is the primary goal of the Narayaneeyam app?", a: "The app makes the 1,033 verses of the Narayaneeyam accessible to everyone. You can chant along with synchronised audio and text highlighting, listen to a whole dashakam end to end, read the verses in your preferred script, and keep track of your daily practice — all at your own pace." },
       { q: "What is Narayaneeyam?", a: "Narayaneeyam is a devotional Sanskrit text composed by Melpathur Narayana Bhattathiri, condensing the Bhagavata Purana into 1,033 shlokas across 100 Dashakams. This app helps you chant, understand, and listen to it." },
       { q: "Do I need to create an account?", a: "Yes. Sign up with your email address and confirm it through the verification link we send you. Once verified, you have access to everything that is published in the app. You can also sign in with Google." },
       { q: "What if I forget my password?", a: "Use the 'Forgot password' link on the sign-in page. You will receive a reset link by email. You can also change your password any time from My Preferences." },

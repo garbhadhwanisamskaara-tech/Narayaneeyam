@@ -280,7 +280,7 @@ export default function AdminContentPage() {
                 <Label className="text-sm font-sans text-muted-foreground mb-1 block">Audio Variant</Label>
                 <div className="flex gap-2">
                   <Button size="sm" variant={audioVariant === "chant" ? "default" : "outline"} onClick={() => setAudioVariant("chant")} className="font-sans text-xs">
-                    Chant / Podcast
+                    Chant / Listen
                   </Button>
                   <Button size="sm" variant={audioVariant === "learn" ? "default" : "outline"} onClick={() => setAudioVariant("learn")} className="font-sans text-xs">
                     Learn
@@ -295,7 +295,7 @@ export default function AdminContentPage() {
                 </code>
                 <p className="text-xs text-muted-foreground mt-1 font-sans">
                   {audioVariant === "chant"
-                    ? "Used in: Chant with Me, Podcast modules"
+                    ? "Used in: Chant with Me, Listen modules"
                     : "Used in: Learn with Me module (has built-in silence gaps)"}
                 </p>
               </div>
