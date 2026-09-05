@@ -65,7 +65,7 @@ export function useRitualChants(scriptLang: string = "en", translationLang?: str
       }
     }
     fetch();
-  }, [languageCode]);
+  }, [scriptLang, resolvedTranslationLang]);
 
   const openingChants = chants
     .filter((c) => c.trigger_point === "session_start")
