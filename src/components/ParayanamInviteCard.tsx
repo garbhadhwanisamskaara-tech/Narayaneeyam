@@ -30,7 +30,7 @@ export default function ParayanamInviteCard({ invite: i, busy, onAccept, onDecli
   const paid = i.participation_type === "PAID" && !contributionSettled;
   const live = i.delivery_mode === "LIVE";
   const { canViewExternalPaymentLinks } = useCapabilities();
-  const canPayInApp = paid && !!onPay;
+  const canPayInApp = paid && !!onPay && canViewExternalPaymentLinks;
 
   return (
     <div className="rounded-xl border border-border bg-background p-4">
