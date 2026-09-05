@@ -1,10 +1,11 @@
 import { useEffect, useRef, useState, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { SkipForward, Volume2, VolumeX, Play, Pause } from "lucide-react";
+import { SkipForward, Volume2, VolumeX, Play, Pause, ScrollText } from "lucide-react";
 import type { RitualChant } from "@/hooks/useRitualChants";
 import { getStorageUrl } from "@/lib/storageUrl";
 import { registerAudioElement, isMuted as getGlobalMuted, setGlobalMuted } from "@/lib/globalMute";
 import { fadeOutElement } from "@/lib/audiofade";
+import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import heroBg from "@/assets/hero-bg.jpg";
 
 const SPEED_OPTIONS = [0.75, 1, 1.25, 1.5, 2];
