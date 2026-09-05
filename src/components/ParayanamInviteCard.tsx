@@ -150,6 +150,10 @@ export function AwaitingContributionCard({ invite: i }: { invite: PendingInvite 
         <p className="mt-1 font-sans text-xs text-muted-foreground">
           Your participation in {i.parayanam_name ?? "this parayanam"} is awaiting approval from the Guru.
         </p>
+        <p className="mt-2 font-sans text-[11px] leading-snug text-muted-foreground">
+          To complete your contribution, message your Guru directly, or open narayaneeyam.app in your phone's
+          browser to pay online.
+        </p>
       </div>
     );
   }
