@@ -31,9 +31,7 @@ export default function ParticipationTypeSelector({
   const options = allowPaid ? OPTIONS : OPTIONS.filter((o) => o.value === "FREE");
   return (
     <div>
-      <p className="font-sans text-base font-semibold text-foreground">
-        Is there a contribution to join?
-      </p>
+      /** <p className="font-sans text-base font-semibold text-foreground">Is there a contribution to join?</p> **/
       <div className={allowPaid ? "mt-3 grid gap-3 sm:grid-cols-2" : "mt-3"}>
         {options.map(({ value: v, label, hint, Icon }) => {
           const active = value === v;
@@ -44,9 +42,7 @@ export default function ParticipationTypeSelector({
               aria-pressed={active}
               onClick={() => onChange(v)}
               className={`flex min-h-[104px] w-full items-start gap-3 rounded-2xl border-2 p-5 text-left transition-colors ${
-                active
-                  ? "border-primary bg-secondary/40"
-                  : "border-border hover:border-primary"
+                active ? "border-primary bg-secondary/40" : "border-border hover:border-primary"
               }`}
             >
               <Icon className={`mt-0.5 h-6 w-6 shrink-0 ${active ? "text-primary" : "text-muted-foreground"}`} />
