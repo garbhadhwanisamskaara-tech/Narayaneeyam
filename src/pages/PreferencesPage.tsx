@@ -6,6 +6,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
 import { Input } from "@/components/ui/input";
+import { PasswordInput } from "@/components/PasswordInput";
 import LanguagePreferences from "@/components/LanguagePreferences";
 import ReminderSettings from "@/components/ReminderSettings";
 import {
@@ -263,16 +264,14 @@ export default function PreferencesPage() {
           Enter your current password, then choose a new one of at least 6 characters.
         </p>
         <form onSubmit={handleChangePassword} className="space-y-3">
-          <Input
-            type="password"
+          <PasswordInput
             placeholder="Current password"
             value={currentPassword}
             onChange={(e) => setCurrentPassword(e.target.value)}
             autoComplete="current-password"
             required
           />
-          <Input
-            type="password"
+          <PasswordInput
             placeholder="New password"
             value={newPassword}
             onChange={(e) => setNewPassword(e.target.value)}
@@ -280,9 +279,7 @@ export default function PreferencesPage() {
             autoComplete="new-password"
             required
           />
-
-          <Input
-            type="password"
+          <PasswordInput
             placeholder="Confirm new password"
             value={confirmPassword}
             onChange={(e) => setConfirmPassword(e.target.value)}

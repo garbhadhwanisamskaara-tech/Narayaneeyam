@@ -5,6 +5,7 @@ import { Lock, KeyRound } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { PasswordInput } from "@/components/PasswordInput";
 import { useToast } from "@/hooks/use-toast";
 import logoImg from "@/assets/logo.png";
 import SEO from "@/components/SEO";
@@ -70,14 +71,22 @@ export default function ResetPasswordPage() {
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-4">
-            <div className="relative">
-              <Lock className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-              <Input type="password" placeholder="New password" value={password} onChange={(e) => setPassword(e.target.value)} className="pl-10" required minLength={6} />
-            </div>
-            <div className="relative">
-              <KeyRound className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-              <Input type="password" placeholder="Confirm password" value={confirm} onChange={(e) => setConfirm(e.target.value)} className="pl-10" required minLength={6} />
-            </div>
+            <PasswordInput
+              leftIcon={<Lock className="h-4 w-4" />}
+              placeholder="New password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              required
+              minLength={6}
+            />
+            <PasswordInput
+              leftIcon={<KeyRound className="h-4 w-4" />}
+              placeholder="Confirm password"
+              value={confirm}
+              onChange={(e) => setConfirm(e.target.value)}
+              required
+              minLength={6}
+            />
             <Button type="submit" disabled={loading} className="w-full bg-gradient-peacock text-primary-foreground font-sans font-semibold hover:opacity-90">
               {loading ? "Please wait…" : "Update Password"}
             </Button>
