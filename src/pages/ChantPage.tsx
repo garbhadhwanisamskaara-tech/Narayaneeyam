@@ -226,7 +226,7 @@ export default function ChantPage() {
   // when the preferred translation language has no content for this dashakam)
   const effectiveTranslationLang =
     dbVerses.find((v) => v.translation_text)?.translation_language || translationLang;
-  const { openingChants, dashakamClosingChant, sessionClosingChant } = useRitualChants("en");
+  const { openingChants, dashakamClosingChant, sessionClosingChant } = useRitualChants(translitLang);
 
   // Build the dashakam dropdown list from DB
   const dropdownList = dashakamList.map((d) => ({
