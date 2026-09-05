@@ -248,6 +248,13 @@ export default function RitualChantOverlay({ chants, useLearnAudio = false, titl
           >
             {currentSpeed}x
           </button>
+          <button
+            onClick={() => setLyricsOpen(true)}
+            aria-label="Show lyrics"
+            className="inline-flex h-9 items-center justify-center gap-1.5 rounded-lg border border-border bg-card px-3 text-xs font-sans font-medium text-foreground hover:bg-muted transition-colors"
+          >
+            <ScrollText className="h-4 w-4" /> Lyrics
+          </button>
         </div>
 
         <button
