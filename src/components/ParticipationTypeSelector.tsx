@@ -31,7 +31,6 @@ export default function ParticipationTypeSelector({
   const options = allowPaid ? OPTIONS : OPTIONS.filter((o) => o.value === "FREE");
   return (
     <div>
-      /** <p className="font-sans text-base font-semibold text-foreground">Is there a contribution to join?</p> **/
       <div className={allowPaid ? "mt-3 grid gap-3 sm:grid-cols-2" : "mt-3"}>
         {options.map(({ value: v, label, hint, Icon }) => {
           const active = value === v;
