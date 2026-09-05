@@ -41,18 +41,19 @@ export function useRitualChants(scriptLang: string = "en", translationLang?: str
         if (!error && data) {
           const mapped: RitualChant[] = data.map((r: any) => {
             const scripts = Array.isArray(r.ritual_chant_scripts) ? r.ritual_chant_scripts : [];
-            const script = scripts.find((s: any) => s.language_code === languageCode);
             const fallback = scripts.find((s: any) => s.language_code === "en");
-            const chosen = script || fallback;
+            const scriptChosen = scripts.find((s: any) => s.language_code === scriptLang) || fallback;
+            const translationChosen =
+              scripts.find((s: any) => s.language_code === resolvedTranslationLang) || fallback;
             return {
               chant_key: r.chant_key,
               trigger_point: r.trigger_point,
               display_order: r.display_order,
               chant_audio_file: r.chant_audio_file,
               learn_audio_file: r.learn_audio_file,
-              ritual_chant_name: chosen?.ritual_chant_name || r.chant_key,
-              transliteration_text: chosen?.transliteration_text || "",
-              translation_text: chosen?.translation_text || "",
+              ritual_chant_name: scriptChosen?.ritual_chant_name || r.chant_key,
+              transliteration_text: scriptChosen?.transliteration_text || "",
+              translation_text: translationChosen?.translation_text || "",
             };
           });
           setChants(mapped);
