@@ -26,12 +26,12 @@ export const faqSections = [
     ],
   },
   {
-    heading: "Podcast Module",
+    heading: "Listen Module",
     questions: [
-      { q: "What is the Podcast section?", a: "Podcast plays a full Dashakam end to end — ideal for listening during a commute, a walk, or your daily routine." },
-      { q: "Can I use the app while commuting or working?", a: "Yes. Podcast playback continues in the background and on the lock screen, so the chanting can accompany you while you are away from the screen." },
+      { q: "What is the Listen section?", a: "Listen plays a full Dashakam end to end — ideal for listening during a commute, a walk, or your daily routine." },
+      { q: "Can I use the app while commuting or working?", a: "Yes. Audio playback continues in the background and on the lock screen, so the chanting can accompany you while you are away from the screen." },
       { q: "Can I listen offline?", a: "Not yet — the app needs an internet connection to stream the audio. Offline listening may be added in a future update." },
-      { q: "How long is each podcast episode?", a: "It depends on the dashakam you choose, the loop setting, and the playback speed you select." },
+      { q: "How long is each listening session?", a: "It depends on the dashakam you choose, the loop setting, and the playback speed you select." },
     ],
   },
   {
