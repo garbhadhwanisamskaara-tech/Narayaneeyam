@@ -38,7 +38,7 @@ import {
 const navItems = [
   { path: "/", label: "Home", icon: LayoutDashboard },
   { path: "/chant", label: "Chant", icon: Mic },
-  { path: "/podcast", label: "Podcast", icon: Headphones },
+  { path: "/podcast", label: "Listen", icon: Headphones },
   { path: "/progress", label: "Progress", icon: BarChart3 },
 ];
 

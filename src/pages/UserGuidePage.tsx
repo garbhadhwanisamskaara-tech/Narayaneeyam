@@ -96,11 +96,11 @@ const sections = [
   {
     id: "podcast",
     icon: <Headphones className="h-5 w-5 text-primary" />,
-    title: "Podcast",
+    title: "Listen",
     items: [
       {
         q: "How do I listen to Dashakam episodes?",
-        a: "Open Podcast and choose a published Dashakam. The full episode plays end to end, with the same speed and loop controls as Chant.",
+        a: "Open Listen and choose a published Dashakam. The full episode plays end to end, with the same speed and loop controls as Chant.",
       },
       {
         q: "Can I listen in the background?",

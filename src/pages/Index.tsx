@@ -37,7 +37,7 @@ export default function Index() {
   // graph initialises out of order in production builds).
   const mainFeatures = [
     { path: "/chant", icon: Mic, title: "Chant with Me", desc: "Chant along with synchronized text highlighting" },
-    { path: "/podcast", icon: Headphones, title: "Podcast", desc: "Listen to dashakams in the background" },
+    { path: "/podcast", icon: Headphones, title: "Listen", desc: "Listen to dashakams in the background" },
   ];
 
   const moreFeatures = [
