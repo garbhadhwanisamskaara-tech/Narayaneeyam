@@ -132,10 +132,9 @@ export default function CreateParayanamPage() {
         .select("*")
         .eq("id", id)
         .eq("user_id", user.id)
-        .eq("technical_state", "DRAFT")
         .maybeSingle();
       if (cancelled) return;
-      if (dErr || !data) {
+      if (dErr || !data || !data.draft_state) {
         setLoadingDraft(false);
         setError(dErr?.message ?? "That draft could not be found.");
         return;
@@ -394,7 +393,7 @@ export default function CreateParayanamPage() {
     start_date: startDate,
     end_date: endDate,
 
-    technical_state: state,
+    technical_state: "ACTIVE",
     spiritual_state: "in_progress",
     dashakams_target: dashakams.length,
     dashakam_list: dashakams,
@@ -434,8 +433,7 @@ export default function CreateParayanamPage() {
           .from("challenge_sessions")
           .update(payload)
           .eq("id", draftId)
-          .eq("user_id", user.id)
-          .eq("technical_state", "DRAFT");
+          .eq("user_id", user.id);
         if (uErr) throw new Error(uErr.message);
       } else {
         const { data, error: iErr } = await (supabase as any)
@@ -472,7 +470,6 @@ export default function CreateParayanamPage() {
           .update(payload)
           .eq("id", draftId)
           .eq("user_id", user.id)
-          .eq("technical_state", "DRAFT")
           .select("id")
           .single();
         if (uErr) throw new Error(uErr.message);
