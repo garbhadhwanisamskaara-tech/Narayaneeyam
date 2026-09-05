@@ -1,10 +1,11 @@
 import { useEffect, useRef, useState, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { SkipForward, Volume2, VolumeX, Play, Pause } from "lucide-react";
+import { SkipForward, Volume2, VolumeX, Play, Pause, ScrollText } from "lucide-react";
 import type { RitualChant } from "@/hooks/useRitualChants";
 import { getStorageUrl } from "@/lib/storageUrl";
 import { registerAudioElement, isMuted as getGlobalMuted, setGlobalMuted } from "@/lib/globalMute";
 import { fadeOutElement } from "@/lib/audiofade";
+import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import heroBg from "@/assets/hero-bg.jpg";
 
 const SPEED_OPTIONS = [0.75, 1, 1.25, 1.5, 2];
@@ -26,6 +27,7 @@ export default function RitualChantOverlay({ chants, useLearnAudio = false, titl
   const [currentIdx, setCurrentIdx] = useState(0);
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const [isPlaying, setIsPlaying] = useState(true);
+  const [lyricsOpen, setLyricsOpen] = useState(false);
   const [muted, setMuted] = useState<boolean>(() => getGlobalMuted());
   const [currentSpeed, setCurrentSpeed] = useState<number>(speed);
   const speedRef = useRef(speed);
@@ -246,6 +248,13 @@ export default function RitualChantOverlay({ chants, useLearnAudio = false, titl
           >
             {currentSpeed}x
           </button>
+          <button
+            onClick={() => setLyricsOpen(true)}
+            aria-label="Show lyrics"
+            className="inline-flex h-9 items-center justify-center gap-1.5 rounded-lg border border-border bg-card px-3 text-xs font-sans font-medium text-foreground hover:bg-muted transition-colors"
+          >
+            <ScrollText className="h-4 w-4" /> Lyrics
+          </button>
         </div>
 
         <button
@@ -261,6 +270,36 @@ export default function RitualChantOverlay({ chants, useLearnAudio = false, titl
           <SkipForward className="h-4 w-4" /> Skip
         </button>
       </div>
+
+      <Sheet open={lyricsOpen} onOpenChange={setLyricsOpen}>
+        <SheetContent side="right" className="overflow-y-auto max-h-screen w-full sm:max-w-md">
+          <SheetHeader>
+            <SheetTitle className="font-sans">Lyrics</SheetTitle>
+          </SheetHeader>
+          <div className="mt-4 space-y-6">
+            {chants
+              .filter((c) => !!c.transliteration_text)
+              .map((c, i) => (
+                <div
+                  key={`${c.chant_key}-${i}`}
+                  className={i > 0 ? "border-t border-border/60 pt-6" : undefined}
+                >
+                  <h3 className="font-sans font-bold text-foreground mb-2">
+                    {c.ritual_chant_name || c.chant_key}
+                  </h3>
+                  <p className="font-body text-base text-foreground leading-relaxed whitespace-pre-line">
+                    {c.transliteration_text}
+                  </p>
+                  {c.translation_text && (
+                    <p className="mt-3 text-sm text-muted-foreground font-sans leading-relaxed whitespace-pre-line">
+                      {c.translation_text}
+                    </p>
+                  )}
+                </div>
+              ))}
+          </div>
+        </SheetContent>
+      </Sheet>
     </motion.div>
   );
 }
