@@ -49,7 +49,6 @@ interface Props {
   onOpenChange?: (open: boolean) => void;
 }
 
-
 const STATUS_LABEL: Record<ParticipantStatus, string> = {
   invited: "Invited",
   confirmed: "Confirmed",
@@ -591,36 +590,38 @@ export default function ManageParayanamDialog({
                 </label>
               </div>
 
-              {/* Participation type */}
-              <div>
-                <label className="font-sans text-xs font-semibold text-foreground">Participation</label>
+              {/* Participation type — editing is web-only, same as creation */}
+              {canConfigurePayments && (
+                <div>
+                  <label className="font-sans text-xs font-semibold text-foreground">Participation</label>
 
-                <div className="mt-2 flex flex-wrap gap-4">
-                  <label className="flex items-center gap-2 font-sans text-sm text-foreground">
-                    <input
-                      type="radio"
-                      name="manage-participation-type"
-                      value="FREE"
-                      checked={participationType === "FREE"}
-                      onChange={() => setParticipationType("FREE")}
-                      className="accent-primary"
-                    />
-                    Free
-                  </label>
+                  <div className="mt-2 flex flex-wrap gap-4">
+                    <label className="flex items-center gap-2 font-sans text-sm text-foreground">
+                      <input
+                        type="radio"
+                        name="manage-participation-type"
+                        value="FREE"
+                        checked={participationType === "FREE"}
+                        onChange={() => setParticipationType("FREE")}
+                        className="accent-primary"
+                      />
+                      Free
+                    </label>
 
-                  <label className="flex items-center gap-2 font-sans text-sm text-foreground">
-                    <input
-                      type="radio"
-                      name="manage-participation-type"
-                      value="PAID"
-                      checked={participationType === "PAID"}
-                      onChange={() => setParticipationType("PAID")}
-                      className="accent-primary"
-                    />
-                    Contribution required
-                  </label>
+                    <label className="flex items-center gap-2 font-sans text-sm text-foreground">
+                      <input
+                        type="radio"
+                        name="manage-participation-type"
+                        value="PAID"
+                        checked={participationType === "PAID"}
+                        onChange={() => setParticipationType("PAID")}
+                        className="accent-primary"
+                      />
+                      Contribution required
+                    </label>
+                  </div>
                 </div>
-              </div>
+              )}
 
               {participationType === "PAID" && (
                 <>
@@ -948,8 +949,7 @@ export default function ManageParayanamDialog({
           <AlertDialogHeader>
             <AlertDialogTitle>Automatically invite group members?</AlertDialogTitle>
             <AlertDialogDescription>
-              Existing group members who have not yet been invited will also receive a Parayanam invitation.
-              Continue?
+              Existing group members who have not yet been invited will also receive a Parayanam invitation. Continue?
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
