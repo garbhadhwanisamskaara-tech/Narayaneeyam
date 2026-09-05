@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
+import { SUBSCRIPTION_ENABLED } from "@/config/features";
 
 interface FeaturedPlan {
   price_inr: number | null;
@@ -34,7 +35,7 @@ export default function TrialStatusLine() {
     profile?.subscription_end &&
     new Date(profile.subscription_end).getTime() > Date.now();
 
-  if (!isTrialActive || !plan?.price_inr) return null;
+  if (!SUBSCRIPTION_ENABLED || !isTrialActive || !plan?.price_inr) return null;
 
   const priceText = `₹${Number(plan.price_inr).toLocaleString("en-IN")}${
     plan.duration_label ? `/${plan.duration_label}` : ""
