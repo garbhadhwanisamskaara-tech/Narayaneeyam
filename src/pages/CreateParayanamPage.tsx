@@ -4,6 +4,7 @@ import { ArrowLeft, Loader2, Sparkles } from "lucide-react";
 import { track } from "@/lib/analytics";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
+import { useCapabilities } from "@/hooks/useCapabilities";
 import { useDashakamSets } from "@/hooks/useDashakamSets";
 import { useParayanamTemplates } from "@/hooks/useParayanamTemplates";
 import { prefetchDashakamList } from "@/hooks/useDashakam";
@@ -50,6 +51,7 @@ export default function CreateParayanamPage() {
   const groupId = params.get("group") ?? undefined;
   const isGroup = !!groupId;
   const { user, isMonetizationApproved } = useAuth();
+  const { canConfigurePayments } = useCapabilities();
   const navigate = useNavigate();
 
   const { sets, loading: loadingSets } = useDashakamSets();
@@ -907,11 +909,13 @@ export default function CreateParayanamPage() {
           <div className="space-y-6">
             <ParayanamModeSelector value={deliveryMode} onChange={setDeliveryMode} />
 
-            <ParticipationTypeSelector
-              value={participationType}
-              onChange={setParticipationType}
-              allowPaid={isMonetizationApproved}
-            />
+            {canConfigurePayments && (
+              <ParticipationTypeSelector
+                value={participationType}
+                onChange={setParticipationType}
+                allowPaid={isMonetizationApproved && canConfigurePayments}
+              />
+            )}
           </div>
         )}
 
