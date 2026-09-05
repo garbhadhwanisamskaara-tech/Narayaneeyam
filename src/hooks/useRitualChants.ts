@@ -19,7 +19,8 @@ interface UseRitualChantsReturn {
   loading: boolean;
 }
 
-export function useRitualChants(languageCode: string = "en"): UseRitualChantsReturn {
+export function useRitualChants(scriptLang: string = "en", translationLang?: string): UseRitualChantsReturn {
+  const resolvedTranslationLang = translationLang || scriptLang;
   const [chants, setChants] = useState<RitualChant[]>([]);
   const [loading, setLoading] = useState(true);
 
