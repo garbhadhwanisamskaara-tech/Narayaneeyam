@@ -26,6 +26,13 @@ interface Props {
   pendingDashakam?: number | null;
 }
 
+function formatShortDate(date: string | null | undefined) {
+  if (!date) return null;
+  const d = new Date(date);
+  if (isNaN(d.getTime())) return null;
+  return d.toLocaleDateString("en-GB", { day: "numeric", month: "short" });
+}
+
 /**
  * A single lotus whose petals open with bloom intensity.
  * 0% = closed bud, 100% = fully bloomed.
