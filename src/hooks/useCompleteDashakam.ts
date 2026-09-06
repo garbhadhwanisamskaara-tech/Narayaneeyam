@@ -2,6 +2,7 @@ import { useCallback, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { track } from "@/lib/analytics";
+import { friendlyError } from "@/lib/errorMessages";
 
 /**
  * Per-person dashakam completion. Each chanter records their own row in
@@ -45,7 +46,7 @@ export function useCompleteDashakam() {
 
       if (scheduleErr || !scheduleRow) {
         setPendingId(null);
-        setError(scheduleErr?.message ?? "Could not find schedule row");
+        setError(friendlyError(scheduleErr, "Could not find schedule row"));
         return false;
       }
 
@@ -59,7 +60,7 @@ export function useCompleteDashakam() {
 
       if (err) {
         setPendingId(null);
-        setError(err.message);
+        setError(friendlyError(err, "Could not mark this dashakam complete. Please try again."));
         return false;
       }
 
@@ -113,7 +114,7 @@ export function useCompleteDashakam() {
 
       if (err) {
         setPendingId(null);
-        setError(err.message);
+        setError(friendlyError(err, "Could not undo this completion. Please try again."));
         return false;
       }
 
