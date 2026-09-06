@@ -14,34 +14,34 @@ interface ScheduleRow {
 
 export interface GardenTile {
   dashakam_no: number;
-  /** Schedule rows for this dashakam (usually one). */
+  /** The schedule row this tile represents. */
   scheduleIds: string[];
-  /** Rows the current user has completed. */
+  /** 1 when the current user has completed this exact occurrence. */
   mineDone: number;
-  /** Schedule row ids the current user has completed. */
+  /** Schedule row ids the current user has completed (0 or 1 entry). */
   mineRowIds: string[];
-  /** Completions recorded by anyone. */
+  /** Completions recorded by anyone for this occurrence. */
   done: number;
   /** Expected completions once everyone confirmed has chanted it. */
   total: number;
   canTap: boolean;
   /** 0–100 bloom intensity. */
   percent: number;
-  /** Scheduled date for this dashakam, if any. */
+  /** Scheduled date for this occurrence, if any. */
   scheduled_date: string | null;
 }
 
+export interface GardenOccurrence {
+  /** Schedule row id — the unit of completion. */
+  key: string;
+  dashakamNo: number;
+  scheduledDate: string;
+}
+
 /**
- * Single source of truth for a group parayanam's garden: the schedule rows,
- * everyone's completions and the current user's own taps. Any completion write
- * refreshes all of it together so the garden, its header count and the
- * schedule views never drift apart.
- *
- * Completions are read from user_progress, keyed by (challenge_session_id,
- * dashakam_no, user_id) rather than schedule_id -- confirmed safe: no
- * session has ever assigned the same user more than one schedule row for
- * the same dashakam number, so this loses no information versus the old
- * parayanam_member_progress-based lookup.
+ * Single source of truth for a parayanam's garden. Completion is tracked per
+ * exact scheduled occurrence (parayanam_member_progress.schedule_id), so a
+ * dashakam repeated on several days shows as several separate buds.
  */
 export function useSessionGarden(sessionId: string | null | undefined) {
   const { user } = useAuth();
@@ -49,9 +49,9 @@ export function useSessionGarden(sessionId: string | null | undefined) {
   const { markDashakamComplete, unmarkDashakamComplete } = useCompleteDashakam();
 
   const [rows, setRows] = useState<ScheduleRow[]>([]);
-  const [progress, setProgress] = useState<{ dashakam_no: number; user_id: string }[]>([]);
+  const [progress, setProgress] = useState<{ schedule_id: string; user_id: string }[]>([]);
   const [loading, setLoading] = useState(true);
-  const [pending, setPending] = useState<number | null>(null);
+  const [pending, setPending] = useState<string | null>(null);
   const [startDate, setStartDate] = useState<string | null>(null);
 
   const [participationType, setParticipationType] = useState<string | null>(null);
@@ -67,7 +67,6 @@ export function useSessionGarden(sessionId: string | null | undefined) {
     () => !!user && eligibleParticipants.some((p) => p.user_id === user.id),
     [eligibleParticipants, user],
   );
-
 
   const refresh = useCallback(async () => {
     if (!sessionId) {
@@ -94,11 +93,16 @@ export function useSessionGarden(sessionId: string | null | undefined) {
     const scheduleRows = (data ?? []) as ScheduleRow[];
     setRows(scheduleRows);
 
-    const { data: prog } = await (supabase as any)
-      .from("user_progress")
-      .select("dashakam_no, user_id")
-      .eq("challenge_session_id", sessionId);
-    setProgress((prog ?? []) as { dashakam_no: number; user_id: string }[]);
+    const ids = scheduleRows.map((r) => r.id);
+    if (ids.length) {
+      const { data: prog } = await (supabase as any)
+        .from("parayanam_member_progress")
+        .select("schedule_id, user_id")
+        .in("schedule_id", ids);
+      setProgress((prog ?? []) as { schedule_id: string; user_id: string }[]);
+    } else {
+      setProgress([]);
+    }
     setLoading(false);
   }, [sessionId]);
 
@@ -112,96 +116,74 @@ export function useSessionGarden(sessionId: string | null | undefined) {
     const today = new Date().toLocaleDateString("sv-SE");
     const hasStarted = !startDate || today >= startDate;
 
-    const byDashakam = new Map<number, ScheduleRow[]>();
-    for (const r of rows) {
-      const list = byDashakam.get(r.dashakam_no) ?? [];
-      list.push(r);
-      byDashakam.set(r.dashakam_no, list);
-    }
-
-    // Keyed by dashakam_no -- one bucket per dashakam, holding everyone's
-    // completion of it within this session.
-    const doneByDashakam = new Map<number, number>();
-    const mineDashakams = new Set<number>();
+    const doneByRow = new Map<string, number>();
+    const mineRows = new Set<string>();
     for (const p of progress) {
-      doneByDashakam.set(p.dashakam_no, (doneByDashakam.get(p.dashakam_no) ?? 0) + 1);
-      if (user && p.user_id === user.id) mineDashakams.add(p.dashakam_no);
+      doneByRow.set(p.schedule_id, (doneByRow.get(p.schedule_id) ?? 0) + 1);
+      if (user && p.user_id === user.id) mineRows.add(p.schedule_id);
     }
 
-    const map = new Map<number, GardenTile>();
-    for (const [no, list] of byDashakam) {
-      const done = doneByDashakam.get(no) ?? 0;
-      const mine = mineDashakams.has(no);
+    const map = new Map<string, GardenTile>();
+    for (const r of rows) {
+      const done = doneByRow.get(r.id) ?? 0;
+      const mine = mineRows.has(r.id);
       // Split mode assigns one chanter per row; synchronized expects everyone.
-      const expectedPerRow = list.some((r) => r.assigned_user_id) ? 1 : Math.max(confirmedCount, 1);
-      const total = list.length * expectedPerRow;
-      // Personal sessions have no parayanam_participants rows at all (a group
-      // session always has at least the owner), so participants.length === 0
-      // means "personal" and the signed-in user may tap freely.
+      const total = r.assigned_user_id ? 1 : Math.max(confirmedCount, 1);
+      // Personal sessions have no parayanam_participants rows at all, so
+      // participants.length === 0 means "personal".
       const canTap =
         !!user &&
         hasStarted &&
-        list.some((r) =>
-          r.assigned_user_id
-            ? r.assigned_user_id === user.id
-            : isConfirmedParticipant || participants.length === 0,
-        );
-      map.set(no, {
-        dashakam_no: no,
-        scheduleIds: list.map((r) => r.id),
-        mineDone: mine ? list.length : 0,
-        mineRowIds: mine ? list.map((r) => r.id) : [],
+        (r.assigned_user_id
+          ? r.assigned_user_id === user.id
+          : isConfirmedParticipant || participants.length === 0);
+      map.set(r.id, {
+        dashakam_no: r.dashakam_no,
+        scheduleIds: [r.id],
+        mineDone: mine ? 1 : 0,
+        mineRowIds: mine ? [r.id] : [],
         done,
         total,
         canTap,
         percent: total > 0 ? Math.min(100, (done / total) * 100) : 0,
-        scheduled_date: list[0]?.scheduled_date ?? null,
+        scheduled_date: r.scheduled_date ?? null,
       });
     }
     return map;
   }, [rows, progress, user, confirmedCount, isConfirmedParticipant, participants.length, startDate]);
 
   const blooms = useMemo(() => {
-    const m = new Map<number, number>();
-    for (const [no, t] of tiles) m.set(no, t.percent);
+    const m = new Map<string, number>();
+    for (const [key, t] of tiles) m.set(key, t.percent);
     return m;
   }, [tiles]);
 
-  const dashakamNumbers = useMemo(() => Array.from(tiles.keys()).sort((a, b) => a - b), [tiles]);
+  const occurrences = useMemo<GardenOccurrence[]>(
+    () => rows.map((r) => ({ key: r.id, dashakamNo: r.dashakam_no, scheduledDate: r.scheduled_date })),
+    [rows],
+  );
 
-  /** Toggle the current user's completion for a dashakam, then refetch everything. */
+  /** Toggle the current user's completion for one scheduled occurrence. */
   const toggleDashakam = useCallback(
-    async (dashakamNo: number) => {
-      const tile = tiles.get(dashakamNo);
+    async (occurrenceKey: string) => {
+      const tile = tiles.get(occurrenceKey);
       if (!tile || !tile.canTap || !user) return;
-      const eligible = rows.filter(
-        (r) =>
-          r.dashakam_no === dashakamNo &&
-          (r.assigned_user_id
-            ? r.assigned_user_id === user.id
-            : isConfirmedParticipant || participants.length === 0),
-      );
-      if (!eligible.length) return;
-      const undo = tile.mineDone >= eligible.length;
-      setPending(dashakamNo);
-      const mine = new Set(tile.mineRowIds);
-      for (const row of eligible) {
-        if (undo) {
-          if (mine.has(row.id)) await unmarkDashakamComplete(row.id);
-        } else if (!mine.has(row.id)) {
-          await markDashakamComplete(row.id);
-        }
+      setPending(occurrenceKey);
+      if (tile.mineDone > 0) {
+        await unmarkDashakamComplete(occurrenceKey);
+      } else {
+        await markDashakamComplete(occurrenceKey);
       }
       setPending(null);
       await refresh();
     },
-    [tiles, rows, user, isConfirmedParticipant, participants.length, markDashakamComplete, unmarkDashakamComplete, refresh],
+    [tiles, user, markDashakamComplete, unmarkDashakamComplete, refresh],
   );
 
   return {
     tiles,
     blooms,
-    dashakamNumbers,
+    occurrences,
     confirmedCount,
     loading,
     pending,
