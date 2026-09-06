@@ -114,6 +114,7 @@ export function useMyDashakamGarden(sessionId: string | null | undefined) {
         total,
         canTap,
         percent: mine ? 100 : 0,
+        scheduled_date: list[0]?.scheduled_date ?? null,
       });
     }
     return map;

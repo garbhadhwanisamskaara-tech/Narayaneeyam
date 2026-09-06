@@ -27,6 +27,8 @@ export interface GardenTile {
   canTap: boolean;
   /** 0–100 bloom intensity. */
   percent: number;
+  /** Scheduled date for this dashakam, if any. */
+  scheduled_date: string | null;
 }
 
 /**
@@ -153,6 +155,7 @@ export function useSessionGarden(sessionId: string | null | undefined) {
         total,
         canTap,
         percent: total > 0 ? Math.min(100, (done / total) * 100) : 0,
+        scheduled_date: list[0]?.scheduled_date ?? null,
       });
     }
     return map;

@@ -50,11 +50,12 @@ export default function MyGardenDialog({ open, onOpenChange }: Props) {
   }, [tiles]);
 
   const myTiles = useMemo(() => {
-    const m = new Map<number, { done: number; total: number; canTap: boolean }>();
-    for (const [no, t] of tiles) m.set(no, { done: t.mineDone > 0 ? 1 : 0, total: 1, canTap: t.canTap });
+    const m = new Map<number, { done: number; total: number; canTap: boolean; scheduled_date?: string | null }>();
+    for (const [no, t] of tiles) m.set(no, { done: t.mineDone > 0 ? 1 : 0, total: 1, canTap: t.canTap, scheduled_date: t.scheduled_date });
     return m;
   }, [tiles]);
 
+  const selectedSession = sessions.find((s) => s.id === selectedSessionId);
   const picking = sessions.length > 1 && selectedSessionId === null;
 
   return (
@@ -105,7 +106,7 @@ export default function MyGardenDialog({ open, onOpenChange }: Props) {
                 onTapDashakam={toggleDashakam}
                 pendingDashakam={pending}
                 loading={loading}
-                title="My Dashakam Garden"
+                title={selectedSession?.label ?? "My Dashakam Garden"}
               />
             )}
           </>
