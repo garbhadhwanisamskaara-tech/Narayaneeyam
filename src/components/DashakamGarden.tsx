@@ -126,6 +126,9 @@ export default function DashakamGarden({
 }: Props) {
   const interactive = !!tiles;
   const [expanded, setExpanded] = useState(false);
+  const { scriptLang } = useLanguagePrefs();
+  // Subscribe to the localized dashakam list so names re-render once loaded.
+  useDashakamNames(scriptLang);
   const showGrid = interactive || expanded;
 
   const numbers =
@@ -201,6 +204,7 @@ export default function DashakamGarden({
               tile={tiles?.get(num)}
               onTap={onTapDashakam}
               pending={pendingDashakam === num}
+              lang={scriptLang}
             />
           ))}
         </div>
