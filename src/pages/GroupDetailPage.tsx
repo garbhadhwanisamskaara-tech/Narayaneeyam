@@ -114,7 +114,7 @@ export default function GroupDetailPage() {
   const {
     blooms: gardenBlooms,
     tiles: gardenTiles,
-    dashakamNumbers: gardenDashakams,
+    occurrences: gardenOccurrences,
     loading: gardenLoading,
     pending: gardenPending,
     refresh: refreshGarden,
@@ -125,7 +125,7 @@ export default function GroupDetailPage() {
   const {
     blooms: myBlooms,
     tiles: myTiles,
-    dashakamNumbers: myDashakams,
+    occurrences: myOccurrences,
     loading: myGardenLoading,
     pending: myGardenPending,
     toggleDashakam: toggleMyDashakam,
@@ -316,17 +316,18 @@ export default function GroupDetailPage() {
   const canSeeParayanamData = !hasSession || isParayanamParticipant;
 
   // Prefer the live schedule the garden loaded; fall back to the session's list.
-  const gardenNumbers = gardenDashakams.length ? gardenDashakams : (dashakamNumbers ?? []);
-  const myGardenNumbers = myDashakams.length ? myDashakams : (dashakamNumbers ?? []);
+  const fallbackOccurrences = (dashakamNumbers ?? []).map((n) => ({ key: String(n), dashakamNo: n }));
+  const gardenNumbers = gardenOccurrences.length ? gardenOccurrences : fallbackOccurrences;
+  const myGardenNumbers = myOccurrences.length ? myOccurrences : fallbackOccurrences;
 
   /** A completion write must refresh the garden, its header count, the schedule views and the member counts together. */
-  const handleTapDashakam = async (dashakamNo: number) => {
-    await toggleDashakam(dashakamNo);
+  const handleTapDashakam = async (occurrenceKey: string) => {
+    await toggleDashakam(occurrenceKey);
     setRefreshKey((k) => k + 1);
     await refreshMembers();
   };
-  const handleTapMyDashakam = async (dashakamNo: number) => {
-    await toggleMyDashakam(dashakamNo);
+  const handleTapMyDashakam = async (occurrenceKey: string) => {
+    await toggleMyDashakam(occurrenceKey);
     setRefreshKey((k) => k + 1);
     await refreshMembers();
   };
@@ -850,7 +851,7 @@ export default function GroupDetailPage() {
                       {ownerGardenView === "group" ? (
                         <DashakamGarden
                           blooms={gardenBlooms}
-                          dashakamNumbers={gardenNumbers}
+                          occurrences={gardenNumbers}
                           tiles={gardenTiles}
                           onTapDashakam={handleTapDashakam}
                           pendingDashakam={gardenPending}
@@ -862,7 +863,7 @@ export default function GroupDetailPage() {
                         <>
                           <DashakamGarden
                             blooms={myBlooms}
-                            dashakamNumbers={myGardenNumbers}
+                            occurrences={myGardenNumbers}
                             tiles={myTiles}
                             onTapDashakam={handleTapMyDashakam}
                             pendingDashakam={myGardenPending}
@@ -878,7 +879,7 @@ export default function GroupDetailPage() {
                     <>
                       <DashakamGarden
                         blooms={myBlooms}
-                        dashakamNumbers={myGardenNumbers}
+                        occurrences={myGardenNumbers}
                         tiles={myTiles}
                         onTapDashakam={handleTapMyDashakam}
                         pendingDashakam={myGardenPending}

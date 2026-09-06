@@ -36,7 +36,7 @@ export default function MyGardenDialog({ open, onOpenChange }: Props) {
     if (open && sessions.length === 1) setSelectedSessionId(sessions[0].id);
   }, [open, sessions]);
 
-  const { tiles, dashakamNumbers, loading, pending, toggleDashakam } =
+  const { tiles, occurrences, loading, pending, toggleDashakam } =
     useSessionGarden(selectedSessionId);
 
   // Personal view on top of the shared garden data: a dashakam is fully
@@ -44,14 +44,14 @@ export default function MyGardenDialog({ open, onOpenChange }: Props) {
   // progress stays out of this view entirely. canTap is untouched, so the
   // start-date gate and assignment rules still apply exactly as before.
   const myBlooms = useMemo(() => {
-    const m = new Map<number, number>();
-    for (const [no, t] of tiles) m.set(no, t.mineDone > 0 ? 100 : 0);
+    const m = new Map<string, number>();
+    for (const [key, t] of tiles) m.set(key, t.mineDone > 0 ? 100 : 0);
     return m;
   }, [tiles]);
 
   const myTiles = useMemo(() => {
-    const m = new Map<number, { done: number; total: number; canTap: boolean; scheduled_date?: string | null }>();
-    for (const [no, t] of tiles) m.set(no, { done: t.mineDone > 0 ? 1 : 0, total: 1, canTap: t.canTap, scheduled_date: t.scheduled_date });
+    const m = new Map<string, { done: number; total: number; canTap: boolean; scheduled_date?: string | null }>();
+    for (const [key, t] of tiles) m.set(key, { done: t.mineDone > 0 ? 1 : 0, total: 1, canTap: t.canTap, scheduled_date: t.scheduled_date });
     return m;
   }, [tiles]);
 
@@ -102,7 +102,7 @@ export default function MyGardenDialog({ open, onOpenChange }: Props) {
               <DashakamGarden
                 blooms={myBlooms}
                 tiles={myTiles}
-                dashakamNumbers={dashakamNumbers}
+                occurrences={occurrences}
                 onTapDashakam={toggleDashakam}
                 pendingDashakam={pending}
                 loading={loading}
