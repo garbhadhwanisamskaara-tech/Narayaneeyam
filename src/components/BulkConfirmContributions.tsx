@@ -3,6 +3,7 @@ import { Download, Loader2, Upload, Users } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
 import { notifyParayanamConfirmedForSession } from "@/hooks/useParayanamParticipants";
+import { friendlyError } from "@/lib/errorMessages";
 
 type BulkResult = "CONFIRMED_NOW" | "ALREADY_CONFIRMED" | "EMAIL_NOT_IN_APP" | "NOT_IN_PARAYANAM" | "DECLINED" | "LEFT";
 

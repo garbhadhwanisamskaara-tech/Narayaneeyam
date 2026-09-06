@@ -3,6 +3,7 @@ import { track } from "@/lib/analytics";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { HIDDEN_GROUP_STATUSES_FILTER } from "@/lib/parayanamFilters";
+import { friendlyError } from "@/lib/errorMessages";
 
 export interface Group {
   id: string;
