@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { ChevronDown, ChevronUp } from "lucide-react";
-import { getDashakamName } from "@/hooks/useDashakam";
+import { getDashakamName, useDashakamNames } from "@/hooks/useDashakam";
+import { useLanguagePrefs } from "@/hooks/useLanguagePrefs";
 import { cn } from "@/lib/utils";
 
 export interface GardenTileInfo {
@@ -69,12 +70,14 @@ function GardenCell({
   tile,
   onTap,
   pending,
+  lang,
 }: {
   num: number;
   percent: number;
   tile?: GardenTileInfo;
   onTap?: (n: number) => void;
   pending?: boolean;
+  lang: string;
 }) {
   const clickable = !!tile?.canTap && !!onTap;
   const label = tile && tile.total > 0 ? `${tile.done}/${tile.total}` : null;
@@ -84,7 +87,7 @@ function GardenCell({
       type="button"
       disabled={!clickable || pending}
       onClick={clickable ? () => onTap?.(num) : undefined}
-      title={`${num}. ${getDashakamName(num)} — ${Math.round(percent)}% bloomed${
+      title={`${num}. ${getDashakamName(num, lang)} — ${Math.round(percent)}% bloomed${
         label ? ` (${label} done)` : ""
       }${dateLabel ? ` — ${dateLabel}` : ""}${clickable ? " — tap to mark done" : ""}`}
       aria-label={`Dashakam ${num}${label ? `, ${label} done` : ""}${
@@ -123,6 +126,9 @@ export default function DashakamGarden({
 }: Props) {
   const interactive = !!tiles;
   const [expanded, setExpanded] = useState(false);
+  const { scriptLang } = useLanguagePrefs();
+  // Subscribe to the localized dashakam list so names re-render once loaded.
+  useDashakamNames(scriptLang);
   const showGrid = interactive || expanded;
 
   const numbers =
@@ -198,6 +204,7 @@ export default function DashakamGarden({
               tile={tiles?.get(num)}
               onTap={onTapDashakam}
               pending={pendingDashakam === num}
+              lang={scriptLang}
             />
           ))}
         </div>
