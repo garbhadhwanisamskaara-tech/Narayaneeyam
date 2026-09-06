@@ -168,19 +168,23 @@ export function useMyDashakamQueue() {
         return;
       }
 
-      // 5. Drop the ones already marked complete by this user. Keyed by
-      // (challenge_session_id, dashakam_no) since that's what user_progress
-      // records per completion, not schedule_id.
+      // 5. Drop occurrences this user already completed. Keyed by the exact
+      // schedule row, so a dashakam repeated on several days stays in the
+      // queue for each day it is still pending.
       const { data: progData } = await (supabase as any)
-        .from("user_progress")
-        .select("challenge_session_id, dashakam_no")
+        .from("parayanam_member_progress")
+        .select("schedule_id")
         .eq("user_id", user.id)
-        .in("challenge_session_id", sessionIds);
-      const done = new Set(((progData ?? []) as any[]).map((p) => `${p.challenge_session_id}::${p.dashakam_no}`));
+        .in(
+          "schedule_id",
+          mine.map((r) => r.id),
+        );
+      const done = new Set(((progData ?? []) as { schedule_id: string }[]).map((p) => p.schedule_id));
 
       setItems(
         mine
-          .filter((r) => !done.has(`${r.challenge_session_id}::${r.dashakam_no}`))
+          .filter((r) => !done.has(r.id))
+
           .map((r) => {
             const s = sessions.get(r.challenge_session_id)!;
             return {

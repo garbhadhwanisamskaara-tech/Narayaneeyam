@@ -11,20 +11,27 @@ export interface GardenTileInfo {
   scheduled_date?: string | null;
 }
 
+export interface GardenOccurrenceInfo {
+  /** Unique key for this occurrence (schedule row id). */
+  key: string;
+  dashakamNo: number;
+  scheduledDate?: string;
+}
+
 interface Props {
-  /** Bloom percent (0–100) keyed by dashakam number. Missing = closed bud. */
-  blooms: Map<number, number>;
-  /** Dashakams actually in this parayanam. Defaults to all 100. */
-  dashakamNumbers?: number[];
+  /** Bloom percent (0–100) keyed by occurrence key. Missing = closed bud. */
+  blooms: Map<string, number>;
+  /** Scheduled occurrences in this parayanam. Defaults to dashakams 1–100. */
+  occurrences?: GardenOccurrenceInfo[];
   title?: string;
   subtitle?: string;
   loading?: boolean;
-  /** Per-dashakam completion fractions; enables the "x/y" label. */
-  tiles?: Map<number, GardenTileInfo>;
-  /** Tap-to-complete handler. Tiles are only tappable when tiles[n].canTap. */
-  onTapDashakam?: (dashakamNo: number) => void;
-  /** Dashakam currently being written. */
-  pendingDashakam?: number | null;
+  /** Per-occurrence completion fractions; enables the "x/y" label. */
+  tiles?: Map<string, GardenTileInfo>;
+  /** Tap-to-complete handler, receives the occurrence key. */
+  onTapDashakam?: (occurrenceKey: string) => void;
+  /** Occurrence currently being written. */
+  pendingDashakam?: string | null;
 }
 
 function formatShortDate(date: string | null | undefined) {
@@ -65,32 +72,36 @@ function Lotus({ percent }: { percent: number }) {
 }
 
 function GardenCell({
-  num,
+  occurrenceKey,
+  dashakamNo,
+  scheduledDate,
   percent,
   tile,
   onTap,
   pending,
   lang,
 }: {
-  num: number;
+  occurrenceKey: string;
+  dashakamNo: number;
+  scheduledDate?: string;
   percent: number;
   tile?: GardenTileInfo;
-  onTap?: (n: number) => void;
+  onTap?: (key: string) => void;
   pending?: boolean;
   lang: string;
 }) {
   const clickable = !!tile?.canTap && !!onTap;
-  const label = tile && tile.total > 0 ? `${tile.done}/${tile.total}` : null;
-  const dateLabel = tile?.scheduled_date ? formatShortDate(tile.scheduled_date) : null;
+  const label = tile && tile.total > 1 ? `${tile.done}/${tile.total}` : null;
+  const dateLabel = formatShortDate(scheduledDate ?? tile?.scheduled_date);
   return (
     <button
       type="button"
       disabled={!clickable || pending}
-      onClick={clickable ? () => onTap?.(num) : undefined}
-      title={`${num}. ${getDashakamName(num, lang)} — ${Math.round(percent)}% bloomed${
+      onClick={clickable ? () => onTap?.(occurrenceKey) : undefined}
+      title={`${dashakamNo}. ${getDashakamName(dashakamNo, lang)} — ${Math.round(percent)}% bloomed${
         label ? ` (${label} done)` : ""
       }${dateLabel ? ` — ${dateLabel}` : ""}${clickable ? " — tap to mark done" : ""}`}
-      aria-label={`Dashakam ${num}${label ? `, ${label} done` : ""}${
+      aria-label={`Dashakam ${dashakamNo}${label ? `, ${label} done` : ""}${
         dateLabel ? `, ${dateLabel}` : ""
       }${clickable ? ", tap to mark complete" : ""}`}
       className={cn(
@@ -102,7 +113,7 @@ function GardenCell({
       <span className="block w-full flex-1">
         <Lotus percent={percent} />
       </span>
-      <span className="font-display text-[9px] font-semibold leading-none text-muted-foreground">{num}</span>
+      <span className="font-display text-[9px] font-semibold leading-none text-muted-foreground">{dashakamNo}</span>
       {dateLabel && (
         <span className="mt-0.5 font-sans text-[8px] leading-none text-muted-foreground">{dateLabel}</span>
       )}
@@ -116,7 +127,7 @@ function GardenCell({
 
 export default function DashakamGarden({
   blooms,
-  dashakamNumbers,
+  occurrences,
   title = "My Dashakam Garden",
   subtitle,
   loading,
@@ -131,30 +142,26 @@ export default function DashakamGarden({
   useDashakamNames(scriptLang);
   const showGrid = interactive || expanded;
 
-  const numbers =
-    dashakamNumbers && dashakamNumbers.length > 0
-      ? [...dashakamNumbers].sort((a, b) => a - b)
-      : Array.from({ length: 100 }, (_, i) => i + 1);
-  const total = numbers.length;
+  const items: GardenOccurrenceInfo[] =
+    occurrences && occurrences.length > 0
+      ? occurrences
+      : Array.from({ length: 100 }, (_, i) => ({ key: String(i + 1), dashakamNo: i + 1 }));
+  const total = items.length;
 
+  const bloomed = items.filter((o) => (blooms.get(o.key) ?? 0) >= 100).length;
 
-  const bloomed = numbers.filter((n) => (blooms.get(n) ?? 0) >= 100).length;
-
-  // The next dashakam not yet fully bloomed — what the compact view leads with.
-  let nextNum = numbers[0];
-  for (const n of numbers) {
-    nextNum = n;
-    if ((blooms.get(n) ?? 0) < 100) break;
+  // The next occurrence not yet fully bloomed — what the compact view leads with.
+  let next = items[0];
+  for (const o of items) {
+    next = o;
+    if ((blooms.get(o.key) ?? 0) < 100) break;
   }
-  const nextPercent = blooms.get(nextNum) ?? 0;
+  const nextPercent = next ? (blooms.get(next.key) ?? 0) : 0;
 
-  // Most recently bloomed, for the compact strip — highest dashakam numbers
-  // with a bloom recorded, newest-first. Bloom order isn't dated here, so
-  // this is a reasonable proxy: recently-worked-on numbers tend to cluster
-  // near the current position.
-  const recent = Array.from(blooms.entries())
-    .filter(([num, pct]) => pct >= 100 && numbers.includes(num))
-    .sort((a, b) => b[0] - a[0])
+  // Most recently bloomed, newest scheduled date first.
+  const recent = items
+    .filter((o) => (blooms.get(o.key) ?? 0) >= 100)
+    .sort((a, b) => (b.scheduledDate ?? "").localeCompare(a.scheduledDate ?? "") || b.dashakamNo - a.dashakamNo)
     .slice(0, 5);
 
   return (
@@ -176,7 +183,7 @@ export default function DashakamGarden({
               <Lotus percent={nextPercent} />
             </div>
             <p className="text-center font-sans text-xs text-muted-foreground">
-              {nextPercent >= 100 ? "All blooming" : `Dashakam ${nextNum}`}
+              {nextPercent >= 100 || !next ? "All blooming" : `Dashakam ${next.dashakamNo}`}
             </p>
           </div>
 
@@ -185,9 +192,9 @@ export default function DashakamGarden({
             <div className="flex flex-col items-center gap-2 sm:items-start">
               <p className="font-sans text-xs text-muted-foreground">Recently bloomed</p>
               <div className="flex gap-1.5">
-                {recent.map(([num, pct]) => (
-                  <div key={num} className="h-10 w-10 rounded-lg border border-border/60 bg-muted/40 p-1">
-                    <Lotus percent={pct} />
+                {recent.map((o) => (
+                  <div key={o.key} className="h-10 w-10 rounded-lg border border-border/60 bg-muted/40 p-1">
+                    <Lotus percent={blooms.get(o.key) ?? 0} />
                   </div>
                 ))}
               </div>
@@ -196,14 +203,16 @@ export default function DashakamGarden({
         </div>
       ) : (
         <div className="grid grid-cols-5 gap-1 sm:grid-cols-10 sm:gap-2">
-          {numbers.map((num) => (
+          {items.map((o) => (
             <GardenCell
-              key={num}
-              num={num}
-              percent={blooms.get(num) ?? 0}
-              tile={tiles?.get(num)}
+              key={o.key}
+              occurrenceKey={o.key}
+              dashakamNo={o.dashakamNo}
+              scheduledDate={o.scheduledDate}
+              percent={blooms.get(o.key) ?? 0}
+              tile={tiles?.get(o.key)}
               onTap={onTapDashakam}
-              pending={pendingDashakam === num}
+              pending={pendingDashakam === o.key}
               lang={scriptLang}
             />
           ))}

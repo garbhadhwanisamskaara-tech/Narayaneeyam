@@ -3,7 +3,7 @@ import type { GardenTile } from "@/hooks/useSessionGarden";
 
 interface Props {
   /** The same personal tiles the garden renders with. */
-  tiles: Map<number, GardenTile>;
+  tiles: Map<string, GardenTile>;
 }
 
 /**
