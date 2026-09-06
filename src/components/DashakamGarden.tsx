@@ -71,6 +71,7 @@ function GardenCell({
 }) {
   const clickable = !!tile?.canTap && !!onTap;
   const label = tile && tile.total > 0 ? `${tile.done}/${tile.total}` : null;
+  const dateLabel = tile?.scheduled_date ? formatShortDate(tile.scheduled_date) : null;
   return (
     <button
       type="button"
@@ -78,10 +79,10 @@ function GardenCell({
       onClick={clickable ? () => onTap?.(num) : undefined}
       title={`${num}. ${getDashakamName(num)} — ${Math.round(percent)}% bloomed${
         label ? ` (${label} done)` : ""
-      }${clickable ? " — tap to mark done" : ""}`}
+      }${dateLabel ? ` — ${dateLabel}` : ""}${clickable ? " — tap to mark done" : ""}`}
       aria-label={`Dashakam ${num}${label ? `, ${label} done` : ""}${
-        clickable ? ", tap to mark complete" : ""
-      }`}
+        dateLabel ? `, ${dateLabel}` : ""
+      }${clickable ? ", tap to mark complete" : ""}`}
       className={cn(
         "relative flex aspect-square flex-col items-center justify-center rounded-lg border border-border/60 bg-muted/40 p-0.5 transition-transform",
         clickable ? "cursor-pointer hover:scale-110 hover:border-primary/50" : "cursor-default hover:scale-110",
@@ -92,6 +93,9 @@ function GardenCell({
         <Lotus percent={percent} />
       </span>
       <span className="font-display text-[9px] font-semibold leading-none text-muted-foreground">{num}</span>
+      {dateLabel && (
+        <span className="mt-0.5 font-sans text-[8px] leading-none text-muted-foreground">{dateLabel}</span>
+      )}
       {label && (
         <span className="mt-0.5 font-sans text-[8px] leading-none text-muted-foreground">{label}</span>
       )}
