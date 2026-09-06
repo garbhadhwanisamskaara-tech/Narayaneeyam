@@ -85,11 +85,13 @@ async function fetchRoles(userId: string): Promise<{ isAdmin: boolean; isFounder
     if (error || !data) {
       return { isAdmin: false, isFounder: false, isMonetizationApproved: false };
     }
+    const roles = data as { is_admin: boolean; is_founder: boolean; is_monetization_approved: boolean };
     return {
-      isAdmin: !!data.is_admin,
-      isFounder: !!data.is_founder,
-      isMonetizationApproved: !!data.is_monetization_approved,
+      isAdmin: !!roles.is_admin,
+      isFounder: !!roles.is_founder,
+      isMonetizationApproved: !!roles.is_monetization_approved,
     };
+
   } catch {
     return { isAdmin: false, isFounder: false, isMonetizationApproved: false };
   }
