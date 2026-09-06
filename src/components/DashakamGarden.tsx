@@ -70,12 +70,14 @@ function GardenCell({
   tile,
   onTap,
   pending,
+  lang,
 }: {
   num: number;
   percent: number;
   tile?: GardenTileInfo;
   onTap?: (n: number) => void;
   pending?: boolean;
+  lang: string;
 }) {
   const clickable = !!tile?.canTap && !!onTap;
   const label = tile && tile.total > 0 ? `${tile.done}/${tile.total}` : null;
@@ -85,7 +87,7 @@ function GardenCell({
       type="button"
       disabled={!clickable || pending}
       onClick={clickable ? () => onTap?.(num) : undefined}
-      title={`${num}. ${getDashakamName(num)} — ${Math.round(percent)}% bloomed${
+      title={`${num}. ${getDashakamName(num, lang)} — ${Math.round(percent)}% bloomed${
         label ? ` (${label} done)` : ""
       }${dateLabel ? ` — ${dateLabel}` : ""}${clickable ? " — tap to mark done" : ""}`}
       aria-label={`Dashakam ${num}${label ? `, ${label} done` : ""}${
