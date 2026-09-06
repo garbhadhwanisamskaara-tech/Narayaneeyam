@@ -97,6 +97,7 @@ export default function MyGardenDialog({ open, onOpenChange }: Props) {
                 </button>
               )}
             </DialogHeader>
+            const selectedSession = sessions.find((s) => s.id === selectedSessionId);
             {sessionsLoading ? null : (
               <DashakamGarden
                 blooms={myBlooms}
@@ -105,7 +106,7 @@ export default function MyGardenDialog({ open, onOpenChange }: Props) {
                 onTapDashakam={toggleDashakam}
                 pendingDashakam={pending}
                 loading={loading}
-                title="My Dashakam Garden"
+                title={selectedSession?.label ?? "My Dashakam Garden"}
               />
             )}
           </>

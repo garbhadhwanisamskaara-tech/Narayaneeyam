@@ -27,6 +27,8 @@ export interface GardenTile {
   canTap: boolean;
   /** 0–100 bloom intensity. */
   percent: number;
+  /** Scheduled date for this dashakam, if any. */
+  scheduled_date: string | null;
 }
 
 /**

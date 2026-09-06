@@ -7,6 +7,7 @@ export interface GardenTileInfo {
   done: number;
   total: number;
   canTap: boolean;
+  scheduled_date?: string | null;
 }
 
 interface Props {
