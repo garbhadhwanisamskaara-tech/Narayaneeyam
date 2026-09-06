@@ -273,14 +273,25 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       syncSession(nextSession);
     });
 
-    void supabase.auth.getSession().then(({ data: { session: nextSession } }) => {
-      syncSession(nextSession);
-    });
+    void supabase.auth.getSession()
+      .then(({ data: { session: nextSession } }) => {
+        syncSession(nextSession);
+      })
+      .catch((err) => {
+        console.error("supabase.auth.getSession() failed:", err);
+        if (isActive) syncSession(null);
+      });
+
+    const failSafeTimer = window.setTimeout(() => {
+      if (isActive) setLoading((prev) => (prev ? false : prev));
+    }, 10000);
 
     return () => {
       isActive = false;
       subscription.unsubscribe();
+      window.clearTimeout(failSafeTimer);
     };
+
   }, []);
 
   const displayName =

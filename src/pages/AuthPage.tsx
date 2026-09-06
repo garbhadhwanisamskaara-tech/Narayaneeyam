@@ -57,65 +57,85 @@ export default function AuthPage() {
 
   const handleGoogleSignIn = async () => {
     setLoading(true);
-    const { error } = await supabase.auth.signInWithOAuth({
-      provider: "google",
-      options: { redirectTo: `${window.location.origin}${nextPath}` },
-    });
-    if (error) {
-      toast({ title: "Google sign-in failed", description: error.message, variant: "destructive" });
+    try {
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider: "google",
+        options: { redirectTo: `${window.location.origin}${nextPath}` },
+      });
+      if (error) {
+        toast({ title: "Google sign-in failed", description: error.message, variant: "destructive" });
+      }
+    } catch (err) {
+      toast({
+        title: "Google sign-in failed",
+        description: err instanceof Error ? err.message : "Please try again.",
+        variant: "destructive",
+      });
+    } finally {
       setLoading(false);
     }
   };
+
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     setShowResend(false);
 
-    if (mode === "forgot") {
-      if (!supabase) { setLoading(false); return; }
-      const { error } = await supabase.auth.resetPasswordForEmail(email, {
-        redirectTo: `${window.location.origin}/reset-password`,
-      });
-      if (error) {
-        toast({ title: "Error", description: error.message, variant: "destructive" });
-      } else {
-        toast({ title: "Check your email", description: "We've sent you a password reset link." });
-        setMode("signin");
-      }
-    } else if (mode === "signup") {
-      const { error } = await signUp(email, password, name, {
-        scriptLanguage: scriptLang || null,
-        translationLanguage: translationLang || null,
-      });
-      if (error) {
-        toast({ title: "Sign up failed", description: error.message, variant: "destructive" });
-      } else {
-        toast({
-          title: "Account created!",
-          description: "Please check your email and click the confirmation link to activate your account.",
+    try {
+      if (mode === "forgot") {
+        if (!supabase) { return; }
+        const { error } = await supabase.auth.resetPasswordForEmail(email, {
+          redirectTo: `${window.location.origin}/reset-password`,
         });
-        setMode("signin");
-      }
-    } else {
-      const { error } = await signIn(email, password);
-      if (error) {
-        if (error.message?.toLowerCase().includes("email not confirmed")) {
-          setShowResend(true);
-          toast({
-            title: "Email not confirmed",
-            description: "Please confirm your email first. Check your inbox for the confirmation link.",
-            variant: "destructive",
-          });
+        if (error) {
+          toast({ title: "Error", description: error.message, variant: "destructive" });
         } else {
-          toast({ title: "Sign in failed", description: error.message, variant: "destructive" });
+          toast({ title: "Check your email", description: "We've sent you a password reset link." });
+          setMode("signin");
+        }
+      } else if (mode === "signup") {
+        const { error } = await signUp(email, password, name, {
+          scriptLanguage: scriptLang || null,
+          translationLanguage: translationLang || null,
+        });
+        if (error) {
+          toast({ title: "Sign up failed", description: error.message, variant: "destructive" });
+        } else {
+          toast({
+            title: "Account created!",
+            description: "Please check your email and click the confirmation link to activate your account.",
+          });
+          setMode("signin");
         }
       } else {
-        navigate(nextPath, { replace: true });
+        const { error } = await signIn(email, password);
+        if (error) {
+          if (error.message?.toLowerCase().includes("email not confirmed")) {
+            setShowResend(true);
+            toast({
+              title: "Email not confirmed",
+              description: "Please confirm your email first. Check your inbox for the confirmation link.",
+              variant: "destructive",
+            });
+          } else {
+            toast({ title: "Sign in failed", description: error.message, variant: "destructive" });
+          }
+        } else {
+          navigate(nextPath, { replace: true });
+        }
       }
+    } catch (err) {
+      toast({
+        title: "Something went wrong",
+        description: err instanceof Error ? err.message : "Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
   };
+
 
   const titles: Record<Mode, { heading: string; sub: string }> = {
     signin: { heading: "Welcome Back", sub: "Continue your devotional journey" },
