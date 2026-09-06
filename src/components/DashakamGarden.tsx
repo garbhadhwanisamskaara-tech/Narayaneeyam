@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { ChevronDown, ChevronUp } from "lucide-react";
-import { getDashakamName } from "@/hooks/useDashakam";
+import { getDashakamName, useDashakamNames } from "@/hooks/useDashakam";
+import { useLanguagePrefs } from "@/hooks/useLanguagePrefs";
 import { cn } from "@/lib/utils";
 
 export interface GardenTileInfo {
