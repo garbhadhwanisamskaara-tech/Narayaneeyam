@@ -4,7 +4,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useCompleteDashakam } from "@/hooks/useCompleteDashakam";
 import { useSessionParticipants } from "@/hooks/useParayanamParticipants";
 import { isParticipantEligible } from "@/lib/parayanamEligibility";
-import type { GardenTile } from "@/hooks/useSessionGarden";
+import type { GardenOccurrence, GardenTile } from "@/hooks/useSessionGarden";
 
 interface ScheduleRow {
   id: string;
@@ -14,11 +14,8 @@ interface ScheduleRow {
 }
 
 /**
- * Personal version of the parayanam garden. Mirrors useSessionGarden's
- * structure and tile shape, but bloom intensity is binary and entirely
- * personal: a dashakam is 100% bloomed once the signed-in user has
- * completed it, otherwise 0%. Group-wide aggregates play no part, and the
- * user_progress query is scoped to the current user only.
+ * Personal version of the parayanam garden. One tile per scheduled
+ * occurrence; bloom is binary and entirely personal.
  */
 export function useMyDashakamGarden(sessionId: string | null | undefined) {
   const { user } = useAuth();
@@ -26,9 +23,9 @@ export function useMyDashakamGarden(sessionId: string | null | undefined) {
   const { markDashakamComplete, unmarkDashakamComplete } = useCompleteDashakam();
 
   const [rows, setRows] = useState<ScheduleRow[]>([]);
-  const [progress, setProgress] = useState<{ dashakam_no: number; user_id: string }[]>([]);
+  const [mineRowIds, setMineRowIds] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
-  const [pending, setPending] = useState<number | null>(null);
+  const [pending, setPending] = useState<string | null>(null);
 
   const [participationType, setParticipationType] = useState<string | null>(null);
 
@@ -44,7 +41,7 @@ export function useMyDashakamGarden(sessionId: string | null | undefined) {
   const refresh = useCallback(async () => {
     if (!sessionId) {
       setRows([]);
-      setProgress([]);
+      setMineRowIds([]);
       setLoading(false);
       return;
     }
@@ -65,15 +62,16 @@ export function useMyDashakamGarden(sessionId: string | null | undefined) {
     setRows(scheduleRows);
 
     // Personal garden: only this user's own completions are relevant.
-    if (user) {
+    const ids = scheduleRows.map((r) => r.id);
+    if (user && ids.length) {
       const { data: prog } = await (supabase as any)
-        .from("user_progress")
-        .select("dashakam_no, user_id")
-        .eq("challenge_session_id", sessionId)
-        .eq("user_id", user.id);
-      setProgress((prog ?? []) as { dashakam_no: number; user_id: string }[]);
+        .from("parayanam_member_progress")
+        .select("schedule_id")
+        .eq("user_id", user.id)
+        .in("schedule_id", ids);
+      setMineRowIds(((prog ?? []) as { schedule_id: string }[]).map((p) => p.schedule_id));
     } else {
-      setProgress([]);
+      setMineRowIds([]);
     }
     setLoading(false);
   }, [sessionId, user]);
@@ -83,83 +81,61 @@ export function useMyDashakamGarden(sessionId: string | null | undefined) {
   }, [refresh]);
 
   const tiles = useMemo(() => {
-    const byDashakam = new Map<number, ScheduleRow[]>();
+    const mineSet = new Set(mineRowIds);
+    const map = new Map<string, GardenTile>();
     for (const r of rows) {
-      const list = byDashakam.get(r.dashakam_no) ?? [];
-      list.push(r);
-      byDashakam.set(r.dashakam_no, list);
-    }
-
-    const mineDashakams = new Set<number>();
-    for (const p of progress) {
-      if (user && p.user_id === user.id) mineDashakams.add(p.dashakam_no);
-    }
-
-    const map = new Map<number, GardenTile>();
-    for (const [no, list] of byDashakam) {
-      const mine = mineDashakams.has(no);
+      const mine = mineSet.has(r.id);
       const canTap =
         !!user &&
         isConfirmedParticipant &&
-        list.some((r) => (r.assigned_user_id ? r.assigned_user_id === user.id : true));
-      // done/total only drive the tile's "x/y" label; percent is personal.
-      const done = mine ? list.length : 0;
-      const total = list.length;
-      map.set(no, {
-        dashakam_no: no,
-        scheduleIds: list.map((r) => r.id),
-        mineDone: mine ? list.length : 0,
-        mineRowIds: mine ? list.map((r) => r.id) : [],
-        done,
-        total,
+        (r.assigned_user_id ? r.assigned_user_id === user.id : true);
+      map.set(r.id, {
+        dashakam_no: r.dashakam_no,
+        scheduleIds: [r.id],
+        mineDone: mine ? 1 : 0,
+        mineRowIds: mine ? [r.id] : [],
+        done: mine ? 1 : 0,
+        total: 1,
         canTap,
         percent: mine ? 100 : 0,
-        scheduled_date: list[0]?.scheduled_date ?? null,
+        scheduled_date: r.scheduled_date ?? null,
       });
     }
     return map;
-  }, [rows, progress, user, isConfirmedParticipant]);
+  }, [rows, mineRowIds, user, isConfirmedParticipant]);
 
   const blooms = useMemo(() => {
-    const m = new Map<number, number>();
-    for (const [no, t] of tiles) m.set(no, t.percent);
+    const m = new Map<string, number>();
+    for (const [key, t] of tiles) m.set(key, t.percent);
     return m;
   }, [tiles]);
 
-  const dashakamNumbers = useMemo(() => Array.from(tiles.keys()).sort((a, b) => a - b), [tiles]);
+  const occurrences = useMemo<GardenOccurrence[]>(
+    () => rows.map((r) => ({ key: r.id, dashakamNo: r.dashakam_no, scheduledDate: r.scheduled_date })),
+    [rows],
+  );
 
-  /** Toggle the current user's completion for a dashakam, then refetch everything. */
+  /** Toggle the current user's completion for one scheduled occurrence. */
   const toggleDashakam = useCallback(
-    async (dashakamNo: number) => {
-      const tile = tiles.get(dashakamNo);
+    async (occurrenceKey: string) => {
+      const tile = tiles.get(occurrenceKey);
       if (!tile || !tile.canTap || !user) return;
-      const eligible = rows.filter(
-        (r) =>
-          r.dashakam_no === dashakamNo &&
-          isConfirmedParticipant &&
-          (r.assigned_user_id ? r.assigned_user_id === user.id : true),
-      );
-      if (!eligible.length) return;
-      const undo = tile.mineDone >= eligible.length;
-      setPending(dashakamNo);
-      const mine = new Set(tile.mineRowIds);
-      for (const row of eligible) {
-        if (undo) {
-          if (mine.has(row.id)) await unmarkDashakamComplete(row.id);
-        } else if (!mine.has(row.id)) {
-          await markDashakamComplete(row.id);
-        }
+      setPending(occurrenceKey);
+      if (tile.mineDone > 0) {
+        await unmarkDashakamComplete(occurrenceKey);
+      } else {
+        await markDashakamComplete(occurrenceKey);
       }
       setPending(null);
       await refresh();
     },
-    [tiles, rows, user, isConfirmedParticipant, markDashakamComplete, unmarkDashakamComplete, refresh],
+    [tiles, user, markDashakamComplete, unmarkDashakamComplete, refresh],
   );
 
   return {
     tiles,
     blooms,
-    dashakamNumbers,
+    occurrences,
     loading,
     pending,
     refresh,
