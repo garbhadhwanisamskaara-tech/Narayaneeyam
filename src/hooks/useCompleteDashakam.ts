@@ -46,7 +46,7 @@ export function useCompleteDashakam() {
 
       if (scheduleErr || !scheduleRow) {
         setPendingId(null);
-        setError(scheduleErr?.message ?? "Could not find schedule row");
+        setError(friendlyError(scheduleErr, "Could not find schedule row"));
         return false;
       }
 
@@ -60,7 +60,7 @@ export function useCompleteDashakam() {
 
       if (err) {
         setPendingId(null);
-        setError(err.message);
+        setError(friendlyError(err, "Could not mark this dashakam complete. Please try again."));
         return false;
       }
 
@@ -114,7 +114,7 @@ export function useCompleteDashakam() {
 
       if (err) {
         setPendingId(null);
-        setError(err.message);
+        setError(friendlyError(err, "Could not undo this completion. Please try again."));
         return false;
       }
 

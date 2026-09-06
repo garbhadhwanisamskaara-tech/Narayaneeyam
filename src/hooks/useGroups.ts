@@ -74,7 +74,7 @@ export function useGroups() {
     ]);
 
     if (memberRes.error && ownedRes.error) {
-      setError(memberRes.error.message);
+      setError(friendlyError(memberRes.error, "We couldn't load your groups right now. Please try again."));
       setLoading(false);
       return;
     }
@@ -156,7 +156,7 @@ export function useGroupMembers(groupId: string | undefined, sessionId: string |
       .order("joined_at", { ascending: true });
 
     if (err) {
-      setError(err.message);
+      setError(friendlyError(err, "We couldn't load group members right now. Please try again."));
       setMembers([]);
       setLoading(false);
       return;
@@ -257,7 +257,7 @@ export function useGroupInvite(groupId: string | undefined) {
       .eq("revoked", false)
       .order("created_at", { ascending: false })
       .limit(1);
-    if (err) setError(err.message);
+    if (err) setError(friendlyError(err, "We couldn't load the invite link right now. Please try again."));
     else {
       setError(null);
       setInvite((data?.[0] ?? null) as GroupInvite | null);

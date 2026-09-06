@@ -116,7 +116,7 @@ export default function ParayanamParticipantManager({ sessionId, isOwner }: Prop
       .eq("id", id);
     setBusyId(null);
     if (err) {
-      setError(err.message);
+      setError(friendlyError(err, "Could not update this member's contribution status. Please try again."));
       return;
     }
     // Best-effort: the server decides whether the member is now fully confirmed.

@@ -137,7 +137,7 @@ export default function CreateParayanamPage() {
       if (cancelled) return;
       if (dErr || !data || !data.draft_state) {
         setLoadingDraft(false);
-        setError(dErr?.message ?? "That draft could not be found.");
+        setError(friendlyError(dErr, "That draft could not be found."));
         return;
       }
       const d = (data.draft_state ?? {}) as any;
@@ -451,7 +451,7 @@ export default function CreateParayanamPage() {
         description: "You can continue setup later.",
       });
     } catch (e: any) {
-      setError(e?.message ?? "Could not save the draft.");
+      setError(friendlyError(e, "Could not save the draft."));
     } finally {
       setSavingDraft(false);
     }
@@ -587,7 +587,7 @@ export default function CreateParayanamPage() {
         navigate("/progress");
       }
     } catch (e: any) {
-      setError(e?.message ?? "Could not create the parayanam.");
+      setError(friendlyError(e, "Could not create the parayanam."));
     } finally {
       setBusy(false);
     }

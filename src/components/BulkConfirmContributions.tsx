@@ -136,7 +136,7 @@ export default function BulkConfirmContributions({ sessionId, onChanged }: Props
     setBusy(false);
 
     if (rpcError) {
-      setError(rpcError.message || "The contributions could not be confirmed.");
+      setError(friendlyError(rpcError, "The contributions could not be confirmed."));
       toast({ title: "Could not confirm contributions", description: rpcError.message, variant: "destructive" });
       return;
     }
