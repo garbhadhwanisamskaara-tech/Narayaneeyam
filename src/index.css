@@ -187,7 +187,7 @@
   }
 
   .karaoke-glow {
-    text-shadow: 0 0 8px hsl(42 65% 55% / 0.6), 0 0 20px hsl(42 65% 55% / 0.3);
+    text-shadow: 0 0 8px hsl(var(--primary) / 0.5), 0 0 20px hsl(var(--primary) / 0.25);
   }
 
   .overflow-wrap-anywhere {
