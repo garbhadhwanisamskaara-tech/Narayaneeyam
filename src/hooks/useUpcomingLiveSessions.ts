@@ -19,7 +19,7 @@ export interface UpcomingLiveSession {
 }
 
 function todayIso() {
-  return new Date().toLocaleDateString("sv-SE");
+  return new Date().toLocaleDateString("sv-SE", { timeZone: "Asia/Kolkata" });
 }
 
 /**
@@ -160,17 +160,16 @@ export function useUpcomingLiveSessions() {
         .filter((r) => new Date(r.endDatetime).getTime() > now)
         .sort((a, b) => new Date(a.startDatetime).getTime() - new Date(b.startDatetime).getTime());
 
-      // Keep only the NEXT upcoming live session
-      // for each Parayanam.
-      const nextByParayanam = new Map<string, UpcomingLiveSession>();
+      const todayIsoStr = todayIso();
+      const tomorrowIsoStr = new Date(Date.now() + 24 * 60 * 60 * 1000).toLocaleDateString(
+        "sv-SE",
+        { timeZone: "Asia/Kolkata" },
+      );
+      const todayAndTomorrow = futureSessions.filter(
+        (session) => session.sessionDate === todayIsoStr || session.sessionDate === tomorrowIsoStr,
+      );
 
-      for (const session of futureSessions) {
-        if (!nextByParayanam.has(session.challengeSessionId)) {
-          nextByParayanam.set(session.challengeSessionId, session);
-        }
-      }
-
-      setSessions(Array.from(nextByParayanam.values()));
+      setSessions(todayAndTomorrow);
     } catch {
       setSessions([]);
     }
