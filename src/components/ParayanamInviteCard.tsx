@@ -60,6 +60,7 @@ export default function ParayanamInviteCard({ invite: i, busy, onAccept, onDecli
           <div>
             <span className="text-foreground/80">First live session:</span>{" "}
             {new Date(i.first_session_at).toLocaleString("en-IN", {
+              timeZone: "Asia/Kolkata",
               day: "numeric",
               month: "short",
               hour: "numeric",

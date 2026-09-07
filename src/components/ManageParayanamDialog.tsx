@@ -516,6 +516,7 @@ export default function ManageParayanamDialog({
 
                   <p className="mt-1 font-sans text-sm text-foreground">
                     {new Date(liveSessions[0].start_datetime).toLocaleString("en-IN", {
+                      timeZone: "Asia/Kolkata",
                       day: "numeric",
                       month: "short",
                       year: "numeric",
