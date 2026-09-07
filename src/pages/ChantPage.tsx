@@ -1436,7 +1436,7 @@ export default function ChantPage() {
                               else lineRefsMap.current.delete(key);
                             }}
                             className={`block py-0.5 transition-all duration-500 rounded-sm ${
-                              isActive ? "text-primary font-semibold karaoke-glow" : "text-foreground/60"
+                              isActive ? "text-primary font-semibold" : "text-foreground/60"
                             }`}
                           >
                             {line}
