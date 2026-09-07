@@ -19,7 +19,7 @@ export interface UpcomingLiveSession {
 }
 
 function todayIso() {
-  return new Date().toLocaleDateString("sv-SE");
+  return new Date().toLocaleDateString("sv-SE", { timeZone: "Asia/Kolkata" });
 }
 
 /**
