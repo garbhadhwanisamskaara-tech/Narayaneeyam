@@ -59,6 +59,11 @@ function SessionRow({ s, now }: { s: UpcomingLiveSession; now: number }) {
     setBusy(true);
     setMessage(null);
 
+    // Open a blank tab synchronously, in direct response to the click,
+    // BEFORE any await — otherwise many mobile browsers silently block
+    // window.open() once it happens after an async gap.
+    const popup = window.open("", "_blank", "noopener,noreferrer");
+
     try {
       const { data, error } = await (supabase as any).rpc("get_live_session_access", {
         p_session_id: s.liveSessionId,
@@ -69,11 +74,19 @@ function SessionRow({ s, now }: { s: UpcomingLiveSession; now: number }) {
       const res = Array.isArray(data) ? data[0] : data;
 
       if (res?.can_join && res?.meeting_url) {
-        window.open(res.meeting_url, "_blank", "noopener,noreferrer");
+        if (popup && !popup.closed) {
+          popup.location.href = res.meeting_url;
+        } else {
+          // The blank tab itself got blocked before we even knew the URL —
+          // fall back to same-tab navigation so the member isn't stuck.
+          window.location.href = res.meeting_url;
+        }
       } else {
+        popup?.close();
         setMessage(REASON_MESSAGES[res?.reason as string] ?? "You cannot join this session right now");
       }
     } catch {
+      popup?.close();
       toast({
         title: "Could not open the session",
         description: "Please try again in a moment.",
