@@ -186,7 +186,7 @@ export default function UpcomingLiveSessionCard() {
       </button>
 
       {expanded && (
-        <div className="space-y-4">
+        <div className="max-h-[420px] overflow-y-auto rounded-2xl border border-border bg-background/50 p-3 space-y-3 pr-2 scrollbar-thin">
           {sessions.map((s) => (
             <SessionRow key={s.liveSessionId} s={s} now={now} />
           ))}
