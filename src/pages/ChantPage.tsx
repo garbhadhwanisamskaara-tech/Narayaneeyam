@@ -1419,7 +1419,7 @@ export default function ChantPage() {
                       if (lines.length <= 1 || !isActiveVerse) {
                         return (
                           <p
-                            className={`whitespace-pre-line transition-colors duration-300 ${isActiveVerse ? "text-secondary font-semibold" : "text-foreground"}`}
+                            className={`whitespace-pre-line transition-colors duration-300 ${isActiveVerse ? "text-primary font-semibold" : "text-foreground"}`}
                           >
                             {text}
                           </p>
@@ -1436,7 +1436,7 @@ export default function ChantPage() {
                               else lineRefsMap.current.delete(key);
                             }}
                             className={`block py-0.5 transition-all duration-500 rounded-sm ${
-                              isActive ? "text-secondary font-semibold karaoke-glow" : "text-foreground/60"
+                              isActive ? "text-primary font-semibold karaoke-glow" : "text-foreground/60"
                             }`}
                           >
                             {line}
