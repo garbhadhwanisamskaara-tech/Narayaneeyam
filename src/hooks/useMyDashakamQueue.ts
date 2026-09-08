@@ -76,6 +76,7 @@ export function useMyDashakamQueue() {
   const load = useCallback(async () => {
     if (!user) {
       setItems([]);
+      setSourceSummaries([]);
       setLoading(false);
       return;
     }
