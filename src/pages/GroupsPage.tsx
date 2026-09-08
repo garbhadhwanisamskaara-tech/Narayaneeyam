@@ -5,7 +5,7 @@ import { useGroups } from "@/hooks/useGroups";
 import { useAuth } from "@/contexts/AuthContext";
 import { useCapabilities } from "@/hooks/useCapabilities";
 import SEO from "@/components/SEO";
-import DashakamQueueList from "@/components/DashakamQueueList";
+import GroupProgressSummaryList from "@/components/GroupProgressSummaryList";
 
 export default function GroupsPage() {
   const { groups, loading, error, createGroup } = useGroups();
