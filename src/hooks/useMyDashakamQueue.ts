@@ -70,6 +70,7 @@ function groupRows(items: QueueItem[], withDate: boolean): QueueRow[] {
 export function useMyDashakamQueue() {
   const { user } = useAuth();
   const [items, setItems] = useState<QueueItem[]>([]);
+  const [sourceSummaries, setSourceSummaries] = useState<SourceSummary[]>([]);
   const [loading, setLoading] = useState(true);
 
   const load = useCallback(async () => {
