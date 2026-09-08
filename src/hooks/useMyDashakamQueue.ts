@@ -139,6 +139,7 @@ export function useMyDashakamQueue() {
       const sessionIds = Array.from(sessions.keys());
       if (!sessionIds.length) {
         setItems([]);
+        setSourceSummaries([]);
         setLoading(false);
         return;
       }
