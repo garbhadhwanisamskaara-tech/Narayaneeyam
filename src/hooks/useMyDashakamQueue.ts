@@ -24,6 +24,13 @@ export interface QueueRow {
   items: QueueItem[];
 }
 
+export interface SourceSummary {
+  sourceName: string;
+  completed: number;
+  pending: number;
+  pendingItems: QueueItem[];
+}
+
 function todayIso() {
   // Local calendar date (yyyy-mm-dd)
   return new Date().toLocaleDateString("sv-SE");
@@ -63,11 +70,13 @@ function groupRows(items: QueueItem[], withDate: boolean): QueueRow[] {
 export function useMyDashakamQueue() {
   const { user } = useAuth();
   const [items, setItems] = useState<QueueItem[]>([]);
+  const [sourceSummaries, setSourceSummaries] = useState<SourceSummary[]>([]);
   const [loading, setLoading] = useState(true);
 
   const load = useCallback(async () => {
     if (!user) {
       setItems([]);
+      setSourceSummaries([]);
       setLoading(false);
       return;
     }
@@ -130,6 +139,7 @@ export function useMyDashakamQueue() {
       const sessionIds = Array.from(sessions.keys());
       if (!sessionIds.length) {
         setItems([]);
+        setSourceSummaries([]);
         setLoading(false);
         return;
       }
@@ -164,6 +174,7 @@ export function useMyDashakamQueue() {
       });
       if (!mine.length) {
         setItems([]);
+        setSourceSummaries([]);
         setLoading(false);
         return;
       }
@@ -180,6 +191,30 @@ export function useMyDashakamQueue() {
           mine.map((r) => r.id),
         );
       const done = new Set(((progData ?? []) as { schedule_id: string }[]).map((p) => p.schedule_id));
+
+      const summaryMap = new Map<string, SourceSummary>();
+      for (const r of mine) {
+        const s = sessions.get(r.challenge_session_id)!;
+        const sourceName = s.group_id ? (groupNames.get(s.group_id) ?? "Group") : "Personal";
+        const entry = summaryMap.get(sourceName) ?? { sourceName, completed: 0, pending: 0, pendingItems: [] };
+        if (done.has(r.id)) {
+          entry.completed += 1;
+        } else {
+          entry.pending += 1;
+          entry.pendingItems.push({
+            scheduleId: r.id,
+            dashakamNo: r.dashakam_no,
+            scheduledDate: r.scheduled_date,
+            sessionId: s.id,
+            sourceName,
+          });
+        }
+        summaryMap.set(sourceName, entry);
+      }
+      const summaries = Array.from(summaryMap.values());
+      for (const s of summaries) s.pendingItems.sort((a, b) => a.dashakamNo - b.dashakamNo);
+      summaries.sort((a, b) => a.sourceName.localeCompare(b.sourceName));
+      setSourceSummaries(summaries);
 
       setItems(
         mine
@@ -198,6 +233,7 @@ export function useMyDashakamQueue() {
       );
     } catch {
       setItems([]);
+      setSourceSummaries([]);
     }
     setLoading(false);
   }, [user]);
@@ -208,6 +244,17 @@ export function useMyDashakamQueue() {
 
   const removeItem = useCallback((scheduleId: string) => {
     setItems((prev) => prev.filter((i) => i.scheduleId !== scheduleId));
+    setSourceSummaries((prev) =>
+      prev
+        .map((s) => ({
+          ...s,
+          pendingItems: s.pendingItems.filter((i) => i.scheduleId !== scheduleId),
+        }))
+        .map((s) => ({
+          ...s,
+          pending: s.pendingItems.length,
+        })),
+    );
   }, []);
 
   const today = todayIso();
@@ -225,5 +272,6 @@ export function useMyDashakamQueue() {
     pendingCount: pendingItems.length,
     removeItem,
     refresh: load,
+    sourceSummaries,
   };
 }
