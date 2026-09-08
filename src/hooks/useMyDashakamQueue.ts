@@ -174,6 +174,7 @@ export function useMyDashakamQueue() {
       });
       if (!mine.length) {
         setItems([]);
+        setSourceSummaries([]);
         setLoading(false);
         return;
       }
