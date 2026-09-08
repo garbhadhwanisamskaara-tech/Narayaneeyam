@@ -20,6 +20,7 @@ import {
   Sparkles,
   Flower2,
   LifeBuoy,
+  Video,
 } from "lucide-react";
 import { getProgress } from "@/lib/progress";
 import heroBg from "@/assets/hero-bg.jpg";
@@ -30,6 +31,7 @@ import SEO from "@/components/SEO";
 import TrialStatusLine from "@/components/TrialStatusLine";
 import UpcomingLiveSessionCard from "@/components/UpcomingLiveSessionCard";
 import { SUBSCRIPTION_ENABLED } from "@/config/features";
+import { useHasConfirmedContribution } from "@/hooks/useHasConfirmedContribution";
 
 export default function Index() {
   // Defined inside the component so icon components are referenced at render
