@@ -40,9 +40,9 @@ function fmtShortDate(d: string | null) {
 }
 
 function SessionRow({ s, now }: { s: UpcomingLiveSession; now: number }) {
-  const { toast } = useToast();
-  const [busy, setBusy] = useState(false);
-  const [message, setMessage] = useState<string | null>(null);
+  const [resolvedUrl, setResolvedUrl] = useState<string | null>(null);
+  const [reason, setReason] = useState<string | null>(null);
+  const [checking, setChecking] = useState(false);
 
   const start = new Date(s.startDatetime).getTime();
   const end = new Date(s.endDatetime).getTime();
@@ -55,47 +55,42 @@ function SessionRow({ s, now }: { s: UpcomingLiveSession; now: number }) {
       ? `${fmtShortDate(s.parayanamStartDate)} – ${fmtShortDate(s.parayanamEndDate)}`
       : null;
 
-  const handleJoin = async () => {
-    setBusy(true);
-    setMessage(null);
+  // Resolve the meeting URL automatically once the activation window opens,
+  // re-checking on the parent's 15-second `now` tick. Rendering a real <a>
+  // avoids popup blocking that affects script-triggered window.open().
+  useEffect(() => {
+    if (!canJoin) {
+      setResolvedUrl(null);
+      return;
+    }
 
-    // Open a blank tab synchronously, in direct response to the click,
-    // BEFORE any await — otherwise many mobile browsers silently block
-    // window.open() once it happens after an async gap.
-    const popup = window.open("", "_blank", "noopener,noreferrer");
+    let cancelled = false;
+    setChecking(true);
 
-    try {
+    (async () => {
       const { data, error } = await (supabase as any).rpc("get_live_session_access", {
         p_session_id: s.liveSessionId,
       });
 
-      if (error) throw error;
+      if (cancelled) return;
 
       const res = Array.isArray(data) ? data[0] : data;
 
-      if (res?.can_join && res?.meeting_url) {
-        if (popup && !popup.closed) {
-          popup.location.href = res.meeting_url;
-        } else {
-          // The blank tab itself got blocked before we even knew the URL —
-          // fall back to same-tab navigation so the member isn't stuck.
-          window.location.href = res.meeting_url;
-        }
+      if (!error && res?.can_join && res?.meeting_url) {
+        setResolvedUrl(res.meeting_url);
+        setReason(null);
       } else {
-        popup?.close();
-        setMessage(REASON_MESSAGES[res?.reason as string] ?? "You cannot join this session right now");
+        setResolvedUrl(null);
+        setReason(res?.reason ?? null);
       }
-    } catch {
-      popup?.close();
-      toast({
-        title: "Could not open the session",
-        description: "Please try again in a moment.",
-        variant: "destructive",
-      });
-    }
 
-    setBusy(false);
-  };
+      setChecking(false);
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [canJoin, now, s.liveSessionId]);
 
   return (
     <div className="rounded-2xl border border-border bg-card p-5 shadow-sm">
