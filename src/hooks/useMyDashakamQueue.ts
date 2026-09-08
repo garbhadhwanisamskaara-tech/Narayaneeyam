@@ -261,5 +261,6 @@ export function useMyDashakamQueue() {
     pendingCount: pendingItems.length,
     removeItem,
     refresh: load,
+    sourceSummaries,
   };
 }
