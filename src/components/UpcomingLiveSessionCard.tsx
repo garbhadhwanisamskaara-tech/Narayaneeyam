@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { Calendar, ChevronDown, ChevronUp, Clock, Loader2, Lock, Users, Video } from "lucide-react";
 import { Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
-import { useToast } from "@/hooks/use-toast";
+
 import { useUpcomingLiveSessions, type UpcomingLiveSession } from "@/hooks/useUpcomingLiveSessions";
 
 const REASON_MESSAGES: Record<string, string> = {
