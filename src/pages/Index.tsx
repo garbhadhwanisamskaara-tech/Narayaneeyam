@@ -20,7 +20,6 @@ import {
   Sparkles,
   Flower2,
   LifeBuoy,
-  Video,
 } from "lucide-react";
 import { getProgress } from "@/lib/progress";
 import heroBg from "@/assets/hero-bg.jpg";
