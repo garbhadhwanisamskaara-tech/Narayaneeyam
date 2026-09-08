@@ -38,7 +38,7 @@ export default function GroupsPage() {
       </p>
 
       <div className="mt-6">
-        <DashakamQueueList showGroupsLink={false} card />
+        <GroupProgressSummaryList card />
       </div>
 
       {canCreateGroup && (
