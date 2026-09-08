@@ -244,6 +244,17 @@ export function useMyDashakamQueue() {
 
   const removeItem = useCallback((scheduleId: string) => {
     setItems((prev) => prev.filter((i) => i.scheduleId !== scheduleId));
+    setSourceSummaries((prev) =>
+      prev
+        .map((s) => ({
+          ...s,
+          pendingItems: s.pendingItems.filter((i) => i.scheduleId !== scheduleId),
+        }))
+        .map((s) => ({
+          ...s,
+          pending: s.pendingItems.length,
+        })),
+    );
   }, []);
 
   const today = todayIso();
