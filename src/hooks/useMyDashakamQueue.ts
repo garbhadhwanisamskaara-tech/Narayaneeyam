@@ -192,6 +192,30 @@ export function useMyDashakamQueue() {
         );
       const done = new Set(((progData ?? []) as { schedule_id: string }[]).map((p) => p.schedule_id));
 
+      const summaryMap = new Map<string, SourceSummary>();
+      for (const r of mine) {
+        const s = sessions.get(r.challenge_session_id)!;
+        const sourceName = s.group_id ? (groupNames.get(s.group_id) ?? "Group") : "Personal";
+        const entry = summaryMap.get(sourceName) ?? { sourceName, completed: 0, pending: 0, pendingItems: [] };
+        if (done.has(r.id)) {
+          entry.completed += 1;
+        } else {
+          entry.pending += 1;
+          entry.pendingItems.push({
+            scheduleId: r.id,
+            dashakamNo: r.dashakam_no,
+            scheduledDate: r.scheduled_date,
+            sessionId: s.id,
+            sourceName,
+          });
+        }
+        summaryMap.set(sourceName, entry);
+      }
+      const summaries = Array.from(summaryMap.values());
+      for (const s of summaries) s.pendingItems.sort((a, b) => a.dashakamNo - b.dashakamNo);
+      summaries.sort((a, b) => a.sourceName.localeCompare(b.sourceName));
+      setSourceSummaries(summaries);
+
       setItems(
         mine
           .filter((r) => !done.has(r.id))
