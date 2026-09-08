@@ -135,16 +135,23 @@ function SessionRow({ s, now }: { s: UpcomingLiveSession; now: number }) {
             The live-session link becomes available {s.joinBeforeMins} minutes before the session.
           </p>
         </>
-      ) : (
-        <button
-          type="button"
-          onClick={handleJoin}
-          disabled={busy}
-          className="mt-5 inline-flex w-full items-center justify-center gap-2 rounded-xl bg-gradient-peacock px-5 py-3 font-sans text-sm font-semibold text-primary-foreground transition-transform hover:scale-[1.01] disabled:opacity-60"
+      ) : checking && !resolvedUrl ? (
+        <div className="mt-5 flex items-center justify-center gap-2 rounded-xl bg-muted px-5 py-3 font-sans text-sm text-muted-foreground">
+          <Loader2 className="h-4 w-4 animate-spin" /> Checking access…
+        </div>
+      ) : resolvedUrl ? (
+        <a
+          href={resolvedUrl}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="mt-5 inline-flex w-full items-center justify-center gap-2 rounded-xl bg-gradient-peacock px-5 py-3 font-sans text-sm font-semibold text-primary-foreground hover:opacity-90"
         >
-          {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <Video className="h-4 w-4" />}
-          Join Live Session
-        </button>
+          <Video className="h-4 w-4" /> Join Live Session
+        </a>
+      ) : (
+        <div className="mt-5 rounded-xl bg-muted px-5 py-3 text-center font-sans text-sm text-muted-foreground">
+          {REASON_MESSAGES[reason as string] ?? "You cannot join this session right now"}
+        </div>
       )}
 
       {s.groupId && (
@@ -155,8 +162,6 @@ function SessionRow({ s, now }: { s: UpcomingLiveSession; now: number }) {
           View Parayanam
         </Link>
       )}
-
-      {message && <p className="mt-3 text-center font-sans text-xs text-muted-foreground">{message}</p>}
     </div>
   );
 }
