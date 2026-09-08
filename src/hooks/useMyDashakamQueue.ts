@@ -24,6 +24,13 @@ export interface QueueRow {
   items: QueueItem[];
 }
 
+export interface SourceSummary {
+  sourceName: string;
+  completed: number;
+  pending: number;
+  pendingItems: QueueItem[];
+}
+
 function todayIso() {
   // Local calendar date (yyyy-mm-dd)
   return new Date().toLocaleDateString("sv-SE");
