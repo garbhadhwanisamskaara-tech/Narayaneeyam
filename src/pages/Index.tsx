@@ -77,6 +77,7 @@ export default function Index() {
   const [showAbout, setShowAbout] = useState(false);
   const [showMore, setShowMore] = useState(false);
   const [festivalMessage, setFestivalMessage] = useState<string | null>(null);
+  const { hasConfirmed } = useHasConfirmedContribution();
 
   useEffect(() => {
     async function fetchFestival() {
@@ -179,6 +180,31 @@ export default function Index() {
       <section className="container mx-auto px-4 mt-4 relative z-20">
         <UpcomingLiveSessionCard />
       </section>
+
+      {hasConfirmed && (
+        <section className="container mx-auto px-4 mt-4 relative z-20">
+          <motion.a
+            href="https://youtube.com/live/MPMOrJi2dRY?feature=share"
+            target="_blank"
+            rel="noopener noreferrer"
+            initial={{ opacity: 0, y: 12 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5 }}
+            className="group flex items-center gap-4 rounded-2xl border border-secondary/40 bg-gradient-to-r from-secondary/10 to-card p-5 shadow-gold transition-all hover:shadow-peacock"
+          >
+            <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-secondary/20">
+              <Video className="h-6 w-6 text-secondary" />
+            </div>
+            <div className="min-w-0 flex-1">
+              <p className="font-sans text-sm font-medium text-muted-foreground">YouTube Live · Today, 8th Sep</p>
+              <p className="font-display text-base font-semibold text-foreground group-hover:text-primary transition-colors">
+                Click here to join Youtube live session today 8th Sep with ChantwithVidya 100dayswithGuruvayurappan
+              </p>
+            </div>
+            <ChevronDown className="h-5 w-5 shrink-0 -rotate-90 text-muted-foreground group-hover:text-primary" />
+          </motion.a>
+        </section>
+      )}
 
       <section className="container mx-auto px-4 -mt-4 relative z-10 pb-8">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
