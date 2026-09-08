@@ -233,6 +233,7 @@ export function useMyDashakamQueue() {
       );
     } catch {
       setItems([]);
+      setSourceSummaries([]);
     }
     setLoading(false);
   }, [user]);
