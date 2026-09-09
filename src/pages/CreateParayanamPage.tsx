@@ -639,7 +639,7 @@ export default function CreateParayanamPage() {
           </div>
         )}
 
-        {currentStep === "details" && (
+        {currentStep === "details" && isMonetizationApproved && (
           <div>
             <label htmlFor="general-note" className="font-sans text-sm font-semibold text-foreground">
               Remarks for members <span className="font-normal text-muted-foreground">(optional)</span>
