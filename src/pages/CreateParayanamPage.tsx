@@ -142,7 +142,7 @@ export default function CreateParayanamPage() {
       }
       const d = (data.draft_state ?? {}) as any;
       setParayanamName(data.parayanam_name ?? "");
-      setGeneralNote(data.general_note ?? "");
+      setGeneralNote(isMonetizationApproved ? (data.general_note ?? "") : "");
       setDeliveryMode((data.delivery_mode ?? "SELF_PACED") as DeliveryMode);
       setParticipationType((data.participation_type ?? "FREE") as ParticipationType);
       setDistribution((data.distribution_mode ?? "SAME_FOR_ALL") as DistributionMode);
