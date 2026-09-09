@@ -27,6 +27,7 @@ import BottomNav from "@/components/BottomNav";
 import NotificationBell from "@/components/NotificationBell";
 import SubscriptionBanner from "@/components/SubscriptionBanner";
 import { SUBSCRIPTION_ENABLED } from "@/config/features";
+import { useCapabilities } from "@/hooks/useCapabilities";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -53,6 +54,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
     return false;
   });
   const { user, displayName, signOut, loading, isEmailVerified, isAccessLocked } = useAuth();
+  const { canViewPaymentHistory } = useCapabilities();
 
   const toggleTheme = () => {
     const next = !isDark;
