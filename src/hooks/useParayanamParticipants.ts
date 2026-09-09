@@ -316,74 +316,7 @@ export function useMyPendingInvites() {
       return;
     }
 
-    const { data: sessions } = await (supabase as any)
-      .from("challenge_sessions")
-      .select(
-        "id, group_id, start_date, end_date, dashakams_target, parayanam_name, user_id, delivery_mode, participation_type, contribution_amount, payment_url, payment_note, general_note",
-      )
-      .in(
-        "id",
-        rows.map((r) => r.challenge_session_id),
-      );
-
-    const sessionById = new Map<string, any>(((sessions ?? []) as any[]).map((s) => [s.id, s]));
-    const groupIds = Array.from(
-      new Set(((sessions ?? []) as any[]).map((s) => s.group_id).filter(Boolean)),
-    ) as string[];
-
-    const guruIds = Array.from(new Set(((sessions ?? []) as any[]).map((s) => s.user_id).filter(Boolean))) as string[];
-    let guruNameById = new Map<string, string>();
-    if (guruIds.length) {
-      const { data: gurus } = await (supabase as any)
-        .from("profiles")
-        .select("id, display_name, email")
-        .in("id", guruIds);
-      guruNameById = new Map(((gurus ?? []) as any[]).map((g) => [g.id, g.display_name ?? g.email ?? "Guru"]));
-    }
-
-    let nameById = new Map<string, string>();
-    if (groupIds.length) {
-      const { data: groups } = await (supabase as any).from("groups").select("id, group_name").in("id", groupIds);
-      nameById = new Map(((groups ?? []) as any[]).map((g) => [g.id, g.group_name]));
-    }
-
-    // First live session per parayanam, so the invite can show when it begins.
-    const firstSessionBySession = new Map<string, string>();
-    const liveIds = ((sessions ?? []) as any[]).filter((s) => s.delivery_mode === "LIVE").map((s) => s.id);
-    if (liveIds.length) {
-      const { data: ls } = await (supabase as any)
-        .from("live_sessions_public")
-        .select("challenge_session_id, session_date, start_datetime")
-        .in("challenge_session_id", liveIds)
-        .order("start_datetime", { ascending: true });
-      ((ls ?? []) as any[]).forEach((row) => {
-        if (!firstSessionBySession.has(row.challenge_session_id))
-          firstSessionBySession.set(row.challenge_session_id, row.start_datetime ?? row.session_date);
-      });
-    }
-
-    setInvites(
-      rows.map((r) => {
-        const s = sessionById.get(r.challenge_session_id);
-        return {
-          ...r,
-          group_id: s?.group_id ?? null,
-          group_name: s?.group_id ? (nameById.get(s.group_id) ?? null) : null,
-          start_date: s?.start_date ?? null,
-          end_date: s?.end_date ?? null,
-          dashakams_target: s?.dashakams_target ?? null,
-          parayanam_name: s?.parayanam_name ?? null,
-          guru_name: s?.user_id ? (guruNameById.get(s.user_id) ?? null) : null,
-          delivery_mode: s?.delivery_mode ?? null,
-          first_session_at: firstSessionBySession.get(r.challenge_session_id) ?? null,
-          participation_type: s?.participation_type ?? null,
-          contribution_amount: s?.contribution_amount ?? null,
-          payment_url: s?.payment_url ?? null,
-          payment_note: s?.payment_note ?? null,
-          general_note: s?.general_note ?? null,
-        };
-      }),
-    );
+    setInvites(await enrichPendingInvites(rows));
     setLoading(false);
   }, [user]);
 
