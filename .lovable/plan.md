@@ -25,6 +25,14 @@ Important nuance: the names are missing for **all** participants, including ones
 
 The manager reads participants from `parayanam_participants`, then does a second read of `profiles` for those people's display name and email. When that second read returns nothing — whether blocked by policy or by permissions — every row silently falls back to "Member". There is no error shown, which is why this looks like a display bug rather than an access failure.
 
+The latest browser requests reinforce this: the signed-in owner can successfully read her own profile row, so the `profiles` table is reachable and has a valid grant. The failure is therefore much more likely to be row filtering by the current `profiles` SELECT policy than a missing table-wide grant. The screenshots show that filtering affecting the other invited and confirmed people at scale.
+
+## What change impacted it
+
+No matching app or migration change was made in this repository during the last three days. The 6 September participant-manager edit changed only error wording; it did not change the profiles query. No recent repository commit changed `profiles` policies, `shares_group_with()`, or `group_members`.
+
+Therefore, the exact database-side change cannot be named from this repository. The observed behaviour is consistent with a policy/function change made directly in the database: the owner may read her own profile, but other participant profile rows are filtered out. Comparing the live `profiles` SELECT policy and `shares_group_with()` definition with the database's earlier version will identify that exact direct change.
+
 ## Suggested next steps (no changes made)
 
 1. On your side, check the current read policies on `profiles` and the definition of `shares_group_with()`, and compare against what existed before 6 September.
