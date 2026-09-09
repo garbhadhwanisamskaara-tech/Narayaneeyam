@@ -20,17 +20,20 @@ const OPTIONS: { value: DeliveryMode; label: string; hint: string; Icon: typeof 
 export default function ParayanamModeSelector({
   value,
   onChange,
+  allowedModes,
 }: {
   value: DeliveryMode;
   onChange: (v: DeliveryMode) => void;
+  allowedModes?: DeliveryMode[];
 }) {
+  const visibleOptions = allowedModes ? OPTIONS.filter((o) => allowedModes.includes(o.value)) : OPTIONS;
   return (
     <div>
       <p className="font-sans text-base font-semibold text-foreground">
         How will you conduct this Parayanam?
       </p>
       <div className="mt-3 grid gap-3 sm:grid-cols-2">
-        {OPTIONS.map(({ value: v, label, hint, Icon }) => {
+        {visibleOptions.map(({ value: v, label, hint, Icon }) => {
           const active = value === v;
           return (
             <button

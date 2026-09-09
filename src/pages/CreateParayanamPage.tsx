@@ -142,7 +142,7 @@ export default function CreateParayanamPage() {
       }
       const d = (data.draft_state ?? {}) as any;
       setParayanamName(data.parayanam_name ?? "");
-      setGeneralNote(data.general_note ?? "");
+      setGeneralNote(isMonetizationApproved ? (data.general_note ?? "") : "");
       setDeliveryMode((data.delivery_mode ?? "SELF_PACED") as DeliveryMode);
       setParticipationType((data.participation_type ?? "FREE") as ParticipationType);
       setDistribution((data.distribution_mode ?? "SAME_FOR_ALL") as DistributionMode);
@@ -311,12 +311,15 @@ export default function CreateParayanamPage() {
 
   const isLive = deliveryMode === "LIVE";
 
-  /** Monetization gate: a Guru without the monetization_approved role can never use PAID. */
+  /** Monetization gate: a Guru without the monetization_approved role can never use PAID or LIVE. */
   useEffect(() => {
     if (!isMonetizationApproved && participationType === "PAID") {
       setParticipationType("FREE");
     }
-  }, [isMonetizationApproved, participationType]);
+    if (!isMonetizationApproved && deliveryMode === "LIVE") {
+      setDeliveryMode("SELF_PACED");
+    }
+  }, [isMonetizationApproved, participationType, deliveryMode]);
 
   /** Steps are dynamic: Contribution only for PAID, Live Schedule only for LIVE. */
   const stepIds = useMemo(
@@ -383,7 +386,7 @@ export default function CreateParayanamPage() {
     contribution_amount: participationType === "PAID" && contribution.amount ? Number(contribution.amount) : null,
     payment_url: participationType === "PAID" ? contribution.paymentUrl.trim() || null : null,
     payment_note: participationType === "PAID" && contribution.note.trim() ? contribution.note.trim() : null,
-    general_note: generalNote.trim() ? generalNote.trim() : null,
+    general_note: isMonetizationApproved && generalNote.trim() ? generalNote.trim() : null,
     challenge_type: isGroup ? (mode === "RELAY" ? "group_relay" : "group_standard") : "personal",
     auto_invite_group_members: isGroup ? autoInvite : false,
     distribution_mode: mode,
@@ -636,7 +639,7 @@ export default function CreateParayanamPage() {
           </div>
         )}
 
-        {currentStep === "details" && (
+        {currentStep === "details" && isMonetizationApproved && (
           <div>
             <label htmlFor="general-note" className="font-sans text-sm font-semibold text-foreground">
               Remarks for members <span className="font-normal text-muted-foreground">(optional)</span>
@@ -905,7 +908,11 @@ export default function CreateParayanamPage() {
         )}
         {currentStep === "mode" && (
           <div className="space-y-6">
-            <ParayanamModeSelector value={deliveryMode} onChange={setDeliveryMode} />
+            <ParayanamModeSelector
+              value={deliveryMode}
+              onChange={setDeliveryMode}
+              allowedModes={isMonetizationApproved ? undefined : ["SELF_PACED"]}
+            />
 
             {canConfigurePayments && (
               <ParticipationTypeSelector
