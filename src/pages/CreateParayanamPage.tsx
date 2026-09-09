@@ -386,7 +386,7 @@ export default function CreateParayanamPage() {
     contribution_amount: participationType === "PAID" && contribution.amount ? Number(contribution.amount) : null,
     payment_url: participationType === "PAID" ? contribution.paymentUrl.trim() || null : null,
     payment_note: participationType === "PAID" && contribution.note.trim() ? contribution.note.trim() : null,
-    general_note: generalNote.trim() ? generalNote.trim() : null,
+    general_note: isMonetizationApproved && generalNote.trim() ? generalNote.trim() : null,
     challenge_type: isGroup ? (mode === "RELAY" ? "group_relay" : "group_standard") : "personal",
     auto_invite_group_members: isGroup ? autoInvite : false,
     distribution_mode: mode,
