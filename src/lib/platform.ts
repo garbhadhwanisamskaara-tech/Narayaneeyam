@@ -5,12 +5,7 @@ export function detectPlatform(): AppPlatform {
   const override = new URLSearchParams(window.location.search).get('platform');
   if (override === 'play_twa') return 'PLAY_TWA';
   if (override === 'web') return 'WEB';
-  const referrerIsTwa = document.referrer.startsWith('android-app://');
-  if (referrerIsTwa) {
-    localStorage.setItem('narayaneeyam_platform', 'PLAY_TWA');
-    return 'PLAY_TWA';
-  }
-  const stored = localStorage.getItem('narayaneeyam_platform');
-  if (stored === 'PLAY_TWA') return 'PLAY_TWA';
+  if (document.referrer.startsWith('android-app://')) return 'PLAY_TWA';
+  if (window.matchMedia('(display-mode: standalone)').matches) return 'PLAY_TWA';
   return 'WEB';
 }
