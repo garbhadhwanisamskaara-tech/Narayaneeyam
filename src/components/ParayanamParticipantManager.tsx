@@ -4,6 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useCapabilities } from "@/hooks/useCapabilities";
 import { notifyParayanamConfirmed } from "@/hooks/useParayanamParticipants";
 import { friendlyError } from "@/lib/errorMessages";
+import { fetchProfileNames } from "@/lib/profileNames";
 type InviteStatus = "invited" | "confirmed" | "declined" | "left";
 type ContributionStatus = "not_required" | "pending" | "confirmed";
 type AccessStatus = "active" | "locked";
