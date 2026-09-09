@@ -908,7 +908,11 @@ export default function CreateParayanamPage() {
         )}
         {currentStep === "mode" && (
           <div className="space-y-6">
-            <ParayanamModeSelector value={deliveryMode} onChange={setDeliveryMode} />
+            <ParayanamModeSelector
+              value={deliveryMode}
+              onChange={setDeliveryMode}
+              allowedModes={isMonetizationApproved ? undefined : ["SELF_PACED"]}
+            />
 
             {canConfigurePayments && (
               <ParticipationTypeSelector
