@@ -198,12 +198,14 @@ export default function Layout({ children }: { children: React.ReactNode }) {
                       </Link>
                     </DropdownMenuItem>
                   )}
-                  <DropdownMenuItem asChild className="cursor-pointer">
-                    <Link to="/payment-history">
-                      <Receipt className="mr-2 h-4 w-4" />
-                      Payment History
-                    </Link>
-                  </DropdownMenuItem>
+                  {canViewPaymentHistory && (
+                    <DropdownMenuItem asChild className="cursor-pointer">
+                      <Link to="/payment-history">
+                        <Receipt className="mr-2 h-4 w-4" />
+                        Payment History
+                      </Link>
+                    </DropdownMenuItem>
+                  )}
                   <DropdownMenuSeparator />
                   <DropdownMenuItem asChild className="cursor-pointer">
                     <Link to="/support">
