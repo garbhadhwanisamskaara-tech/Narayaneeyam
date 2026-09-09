@@ -1,7 +1,8 @@
 import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Bell, Check, ChevronDown, ChevronRight, Flower2, Loader2, MessageSquare, X } from "lucide-react";
-import { useMyPendingInvites } from "@/hooks/useParayanamParticipants";
+import { useMyAwaitingContributions, useMyPendingInvites } from "@/hooks/useParayanamParticipants";
+import { AwaitingContributionCard } from "@/components/ParayanamInviteCard";
 import { useTicketReplyAlerts } from "@/hooks/useTicketReplyAlerts";
 import { useMyDashakamQueue } from "@/hooks/useMyDashakamQueue";
 import { useMyGardenSessions } from "@/hooks/useMyGardenSessions";
@@ -40,6 +41,7 @@ export default function NotificationBell() {
   const navigate = useNavigate();
 
   const { invites, busyId, respond } = useMyPendingInvites();
+  const { invites: awaiting } = useMyAwaitingContributions();
   const { alerts } = useTicketReplyAlerts();
   const { todayRows, pendingRows } = useMyDashakamQueue();
   const { sessions: personalSessions } = useMyGardenSessions();
@@ -48,7 +50,7 @@ export default function NotificationBell() {
 
   const pendingDisplayCount = pendingRows.reduce((n, r) => n + r.items.length, 0);
 
-  const count = invites.length + alerts.length + todayCount + pendingDisplayCount;
+  const count = invites.length + alerts.length + todayCount + pendingDisplayCount + awaiting.length;
 
   useEffect(() => {
     if (!open) return;
@@ -68,7 +70,8 @@ export default function NotificationBell() {
     }
   };
 
-  const empty = invites.length === 0 && alerts.length === 0 && !todayRows.length && !pendingRows.length;
+  const empty =
+    invites.length === 0 && alerts.length === 0 && !todayRows.length && !pendingRows.length && awaiting.length === 0;
 
   return (
     <div ref={wrapRef} className="relative">
@@ -169,6 +172,36 @@ export default function NotificationBell() {
                             <X className="h-3.5 w-3.5" /> Decline
                           </button>
                         </div>
+                      </CollapsibleItem>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {awaiting.length > 0 && (
+                <div>
+                  <h4 className="font-display text-sm font-semibold text-foreground">Awaiting your contribution</h4>
+                  <div className="mt-1">
+                    {awaiting.map((i) => (
+                      <CollapsibleItem
+                        key={`awaiting-${i.id}`}
+                        summary={
+                          <>
+                            <span className="font-semibold">{i.parayanam_name ?? "A parayanam"}</span>
+                            <span className="text-muted-foreground"> · pay to join</span>
+                          </>
+                        }
+                      >
+                        <AwaitingContributionCard invite={i} />
+                        <button
+                          onClick={() => {
+                            setOpen(false);
+                            navigate(i.group_id ? `/groups/${i.group_id}` : "/dashboard");
+                          }}
+                          className="mt-2 inline-flex items-center gap-1.5 rounded-lg bg-gradient-peacock px-3 py-1.5 font-sans text-xs font-semibold text-primary-foreground hover:opacity-90"
+                        >
+                          <Check className="h-3.5 w-3.5" /> Review &amp; Pay to Join
+                        </button>
                       </CollapsibleItem>
                     ))}
                   </div>

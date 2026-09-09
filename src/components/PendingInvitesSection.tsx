@@ -1,6 +1,10 @@
 import { useState } from "react";
 import { Check, Loader2, MailQuestion, X } from "lucide-react";
-import { useMyPendingInvites, type PendingInvite } from "@/hooks/useParayanamParticipants";
+import {
+  useMyAwaitingContributions,
+  useMyPendingInvites,
+  type PendingInvite,
+} from "@/hooks/useParayanamParticipants";
 import { useParayanamPayment } from "@/hooks/useParayanamPayment";
 import ParayanamInviteCard, { AwaitingContributionCard } from "@/components/ParayanamInviteCard";
 import PushRemindersPrompt from "@/components/PushRemindersPrompt";
@@ -11,11 +15,15 @@ const NUDGE_KEY = "push-nudge-shown";
 /** Invites to group parayanams that are waiting for the current user's answer. */
 export default function PendingInvitesSection({ groupId }: { groupId?: string }) {
   const { invites, loading, busyId, respond, refresh } = useMyPendingInvites();
+  const {
+    invites: awaiting,
+    loading: awaitingLoading,
+    refresh: refreshAwaiting,
+  } = useMyAwaitingContributions();
   const { pay, payingId } = useParayanamPayment();
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
   const [showNudge, setShowNudge] = useState(false);
-  const [awaiting, setAwaiting] = useState<PendingInvite[]>([]);
 
   const list = groupId ? invites.filter((i) => i.group_id === groupId) : invites;
 
@@ -44,8 +52,10 @@ export default function PendingInvitesSection({ groupId }: { groupId?: string })
           );
         }
 
-        if (invite?.participation_type === "PAID" && invite.contribution_status === "pending") {
-          setAwaiting((prev) => [...prev.filter((x) => x.id !== invite.id), invite]);
+        // The awaiting-contribution list is fetched from the database, so a
+        // PAID accept simply triggers a refetch (realtime also picks it up).
+        if (invite?.participation_type === "PAID") {
+          void refreshAwaiting();
         }
 
         track("parayanam_joined");
@@ -76,6 +86,7 @@ export default function PendingInvitesSection({ groupId }: { groupId?: string })
             : "Payment received — you have joined.",
         );
         void refresh();
+        void refreshAwaiting();
       },
       onError: (message) => setError(message),
     });
@@ -83,7 +94,7 @@ export default function PendingInvitesSection({ groupId }: { groupId?: string })
 
   const awaitingList = groupId ? awaiting.filter((i) => i.group_id === groupId) : awaiting;
 
-  if (loading || (list.length === 0 && awaitingList.length === 0 && !showNudge)) return null;
+  if (loading || awaitingLoading || (list.length === 0 && awaitingList.length === 0 && !showNudge)) return null;
   if (list.length === 0 && awaitingList.length === 0) return <PushRemindersPrompt />;
 
   return (
