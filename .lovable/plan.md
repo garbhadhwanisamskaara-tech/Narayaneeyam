@@ -1,30 +1,20 @@
-# Restore participant names securely
+# Fix missing member names in large groups
 
-## Confirmed diagnosis
+For groups with hundreds of members, the app asks the database for every name in one giant request. That request is too long to succeed, so it fails quietly and every person shows up as "Member" — even the group owner.
 
-- Both screenshots show the owner’s participant lists falling back to “Member.”
-- Participant rows are loading successfully; only their names are missing.
-- The screen performs a second `profiles` query for names. Current browser requests prove the signed-in owner can read her own profile, so the table grant works, but other users’ profile rows are being filtered by the current access policy.
-- No relevant frontend or migration change was committed in the last three days. The 6 September edit to `ParayanamParticipantManager.tsx` changed only error wording.
-- Accepting a Parayanam invitation updates `parayanam_participants` only. It does not create a `group_members` row; joining through a group invitation is the separate path that does that.
+## What changes
 
-## Implementation
+1. **Ask for names in batches.** Instead of one request for 400-800 people, send several smaller requests (100 people each) at the same time and combine the answers into one list of names.
+2. **Show a problem when there is one.** If any batch fails, the screen shows a short message ("We couldn't load member names. Try again.") with a Try again button, instead of silently showing "Member" for everyone.
+3. Applies to both places that load member names: the Guru's participant list for a parayanam, and the group members list.
 
-1. Add a narrowly scoped database function that accepts a Parayanam session ID and returns only participant IDs, display names, and email fallbacks.
-2. Inside the function, derive the caller from the authenticated session and return rows only when that caller owns the requested Parayanam. Do not trust a caller-supplied owner ID.
-3. Grant function execution only to signed-in users and revoke public/anonymous execution.
-4. Update `ParayanamParticipantManager.tsx` to use this owner-only lookup instead of directly reading other users’ `profiles` rows.
-5. Keep the existing “Member” fallback only for genuinely empty names. Show a visible loading error if the secure lookup itself fails, rather than silently turning every person into “Member.”
-6. Leave invitation acceptance and `group_members` unchanged: accepting a Parayanam invitation must not silently make someone a group member.
+## Technical details
 
-## Database ownership
-
-Because you manage the database separately, the SQL will be added as a reviewable migration file but will not be run against your database from this task. The frontend change will require you to apply that SQL before publishing it.
-
-## Verification
-
-- As the Parayanam owner, confirm invited and confirmed participants show their names/email fallback.
-- As a non-owner participant, call the lookup for the same session and confirm it returns no private participant details.
-- Confirm an unrelated signed-in user cannot retrieve names.
-- Confirm the existing invitation response still changes only `parayanam_participants` and does not insert into `group_members`.
-- Confirm database-function application separately from the frontend display check; until you apply the SQL, the live database path remains unverified.
+- Add a shared helper (`src/lib/profileNames.ts`) exporting `fetchProfileNames(ids: string[]): Promise<Map<string, string>>`:
+  - de-duplicates ids, chunks into groups of 100,
+  - runs `supabase.from("profiles").select("id, display_name, email").in("id", chunk)` for all chunks via `Promise.all`,
+  - throws if any chunk returns an error (so callers can surface it),
+  - merges into a single `Map<id, display_name ?? email ?? "Member">`.
+- `src/components/ParayanamParticipantManager.tsx` (~lines 76-85): replace the inline `.in("id", ...)` lookup with `fetchProfileNames`. Wrap in try/catch; on failure set the existing `error` state via `friendlyError(...)` with fallback "We couldn't load member names. Please try again." and render a "Try again" button that calls `load()`.
+- `src/hooks/useGroups.ts` `useGroupMembers` (~lines 168-179): same replacement; on failure set the hook's `error` state and keep `refresh()` available for retry. `GroupsPage`/`GroupDetailPage` consumers already read `error`; add a retry button where the members list is rendered if none exists.
+- No schema, RLS, or query-shape changes — only how many ids go per request.
