@@ -58,6 +58,12 @@ export default function Index() {
       desc: "Recommended Dashakams for each sacred day",
     },
     { path: "/prasadam", icon: Flower2, title: "Prasadam Guide", desc: "Offerings mentioned in the verses" },
+    {
+      path: "/shlokas",
+      icon: BookOpen,
+      title: "Shlokas",
+      desc: "Opening and closing prayers for your chanting practice, in script and audio.",
+    },
     { path: "/saved-places", icon: Bookmark, title: "Bookmarks", desc: "Your saved verses for quick access" },
     { path: "/heart-shelf", icon: Heart, title: "Favourites", desc: "Slokas close to your heart" },
     {

@@ -123,6 +123,7 @@ const App = () => {
                   <Route path="/payment-history" element={<PaymentHistoryPage />} />
                   <Route path="/user-guide" element={<UserGuidePage />} />
                   <Route path="/preferences" element={<PreferencesPage />} />
+                  <Route path="/shlokas" element={<ShlokasPage />} />
                   <Route path="/verify-email" element={<VerifyEmailPage />} />
                   <Route path="/trial-expired" element={<TrialExpiredPage />} />
                   <Route path="/admin/festivals" element={<AdminRoute><AdminFestivalsPage /></AdminRoute>} />
