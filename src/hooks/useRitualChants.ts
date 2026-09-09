@@ -51,7 +51,8 @@ export function useRitualChants(scriptLang: string = "en", translationLang?: str
               display_order: r.display_order,
               chant_audio_file: r.chant_audio_file,
               learn_audio_file: r.learn_audio_file,
-              ritual_chant_name: scriptChosen?.ritual_chant_name || r.chant_key,
+              ritual_chant_name:
+                scriptChosen?.ritual_chant_name || fallback?.ritual_chant_name || r.chant_key,
               transliteration_text: scriptChosen?.transliteration_text || "",
               translation_text: translationChosen?.translation_text || "",
             };
