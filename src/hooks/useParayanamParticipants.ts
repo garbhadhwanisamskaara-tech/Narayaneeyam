@@ -407,3 +407,74 @@ export function useMyPendingInvites() {
 
   return { invites, loading, busyId, respond, refresh };
 }
+
+/**
+ * PAID parayanams the current user has already accepted but not yet paid for
+ * (status = confirmed, contribution_status = pending). Fetched from the
+ * database on mount/refresh so the "Pay to Join" path survives refreshes,
+ * new sessions and new devices — unlike the old in-memory-only tracking.
+ */
+export function useMyAwaitingContributions() {
+  const { user } = useAuth();
+  const [invites, setInvites] = useState<PendingInvite[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  const refresh = useCallback(async () => {
+    if (!user) {
+      setInvites([]);
+      setLoading(false);
+      return;
+    }
+    setLoading(true);
+    const { data } = await (supabase as any)
+      .from("parayanam_participants")
+      .select(COLS)
+      .eq("user_id", user.id)
+      .eq("status", "confirmed")
+      .eq("contribution_status", "pending");
+
+    const enriched = await enrichPendingInvites((data ?? []) as Participant[]);
+    // contribution_status lives on the participant row, participation_type on
+    // the session — keep only genuinely PAID parayanams.
+    setInvites(enriched.filter((i) => i.participation_type === "PAID"));
+    setLoading(false);
+  }, [user]);
+
+  useEffect(() => {
+    void refresh();
+  }, [refresh]);
+
+  // Refetch whenever any of this user's participant rows change (payment
+  // verified, Guru approval, etc.) so the awaiting list stays live.
+  const refreshRef = useRef(refresh);
+  useEffect(() => {
+    refreshRef.current = refresh;
+  }, [refresh]);
+
+  const userId = user?.id ?? null;
+  useEffect(() => {
+    if (!userId) return;
+    const channel = supabase
+      .channel(`parayanam-awaiting-${userId}-${Math.random().toString(36).slice(2)}`)
+      .on(
+        "postgres_changes",
+        {
+          event: "*",
+          schema: "public",
+          table: "parayanam_participants",
+          filter: `user_id=eq.${userId}`,
+        },
+        () => {
+          void refreshRef.current();
+        },
+      )
+      .subscribe((status) => {
+        if (status === "SUBSCRIBED") void refreshRef.current();
+      });
+    return () => {
+      void supabase.removeChannel(channel);
+    };
+  }, [userId]);
+
+  return { invites, loading, refresh };
+}
