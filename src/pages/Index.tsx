@@ -20,6 +20,7 @@ import {
   Sparkles,
   Flower2,
   LifeBuoy,
+  Route,
 } from "lucide-react";
 import { getProgress } from "@/lib/progress";
 import heroBg from "@/assets/hero-bg.jpg";
@@ -58,6 +59,12 @@ export default function Index() {
       desc: "Recommended Dashakams for each sacred day",
     },
     { path: "/prasadam", icon: Flower2, title: "Prasadam Guide", desc: "Offerings mentioned in the verses" },
+    {
+      path: "/devotion-pathways",
+      icon: Route,
+      title: "Predefined Parayanams",
+      desc: "Structured journeys like the 100-Day and Mini Narayaneeyam",
+    },
     {
       path: "/shlokas",
       icon: BookOpen,
