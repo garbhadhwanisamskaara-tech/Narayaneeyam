@@ -7,6 +7,7 @@ export interface Capabilities {
   canManageParayanam: boolean;
   canConfigurePayments: boolean;
   canViewExternalPaymentLinks: boolean;
+  canViewPaymentHistory: boolean;
 }
 
 export function useCapabilities(): Capabilities {
@@ -18,5 +19,6 @@ export function useCapabilities(): Capabilities {
     canManageParayanam: true,
     canConfigurePayments: isWeb,
     canViewExternalPaymentLinks: isWeb,
+    canViewPaymentHistory: isWeb,
   };
 }
