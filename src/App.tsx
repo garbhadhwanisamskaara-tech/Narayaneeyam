@@ -56,6 +56,7 @@ import BlogIndexPage from "./pages/blog/BlogIndexPage";
 import BlogPostPage from "./pages/blog/BlogPostPage";
 import PrivacyPage from "./pages/PrivacyPage";
 import SankalpaMomentPage from "./pages/SankalpaMomentPage";
+import ShlokasPage from "./pages/ShlokasPage";
 
 import CreateParayanamPage from "./pages/CreateParayanamPage";
 
