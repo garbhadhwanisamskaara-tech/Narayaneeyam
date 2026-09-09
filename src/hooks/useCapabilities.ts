@@ -14,8 +14,8 @@ export function useCapabilities(): Capabilities {
   return {
     canCreateGroup: true,
     canManageGroup: true,
-    canCreateParayanam: isWeb,
-    canManageParayanam: isWeb,
+    canCreateParayanam: true,
+    canManageParayanam: true,
     canConfigurePayments: isWeb,
     canViewExternalPaymentLinks: isWeb,
   };
