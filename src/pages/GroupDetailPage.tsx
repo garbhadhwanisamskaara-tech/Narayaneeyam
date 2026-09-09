@@ -110,7 +110,10 @@ export default function GroupDetailPage() {
   const [ownerGardenView, setOwnerGardenView] = useState<"mine" | "group">("mine");
 
   const { parayanams, loading: loadingParayanams, refresh: refreshParayanams } = useGroupParayanams(groupId);
-  const { members, loading: loadingMembers, refresh: refreshMembers } = useGroupMembers(groupId, selectedSessionId);
+  const { members, loading: loadingMembers, error: membersError, refresh: refreshMembers } = useGroupMembers(
+    groupId,
+    selectedSessionId,
+  );
   const {
     blooms: gardenBlooms,
     tiles: gardenTiles,

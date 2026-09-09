@@ -270,7 +270,18 @@ export default function ParayanamParticipantManager({ sessionId, isOwner }: Prop
           )}
         </div>
       )}
-      {error && <p className="font-sans text-sm text-destructive">{error}</p>}
+      {error && (
+        <div className="flex items-center gap-3">
+          <p className="font-sans text-sm text-destructive">{error}</p>
+          <button
+            type="button"
+            onClick={() => void load()}
+            className="inline-flex items-center gap-1.5 rounded-lg border border-border px-3 py-1.5 font-sans text-xs font-semibold text-muted-foreground hover:border-primary hover:text-primary"
+          >
+            <RotateCcw className="h-3.5 w-3.5" /> Try again
+          </button>
+        </div>
+      )}
     </div>
   );
 }
