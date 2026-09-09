@@ -311,12 +311,15 @@ export default function CreateParayanamPage() {
 
   const isLive = deliveryMode === "LIVE";
 
-  /** Monetization gate: a Guru without the monetization_approved role can never use PAID. */
+  /** Monetization gate: a Guru without the monetization_approved role can never use PAID or LIVE. */
   useEffect(() => {
     if (!isMonetizationApproved && participationType === "PAID") {
       setParticipationType("FREE");
     }
-  }, [isMonetizationApproved, participationType]);
+    if (!isMonetizationApproved && deliveryMode === "LIVE") {
+      setDeliveryMode("SELF_PACED");
+    }
+  }, [isMonetizationApproved, participationType, deliveryMode]);
 
   /** Steps are dynamic: Contribution only for PAID, Live Schedule only for LIVE. */
   const stepIds = useMemo(
