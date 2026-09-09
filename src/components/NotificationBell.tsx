@@ -1,7 +1,8 @@
 import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Bell, Check, ChevronDown, ChevronRight, Flower2, Loader2, MessageSquare, X } from "lucide-react";
-import { useMyPendingInvites } from "@/hooks/useParayanamParticipants";
+import { useMyAwaitingContributions, useMyPendingInvites } from "@/hooks/useParayanamParticipants";
+import { AwaitingContributionCard } from "@/components/ParayanamInviteCard";
 import { useTicketReplyAlerts } from "@/hooks/useTicketReplyAlerts";
 import { useMyDashakamQueue } from "@/hooks/useMyDashakamQueue";
 import { useMyGardenSessions } from "@/hooks/useMyGardenSessions";
@@ -40,6 +41,7 @@ export default function NotificationBell() {
   const navigate = useNavigate();
 
   const { invites, busyId, respond } = useMyPendingInvites();
+  const { invites: awaiting } = useMyAwaitingContributions();
   const { alerts } = useTicketReplyAlerts();
   const { todayRows, pendingRows } = useMyDashakamQueue();
   const { sessions: personalSessions } = useMyGardenSessions();
@@ -48,7 +50,7 @@ export default function NotificationBell() {
 
   const pendingDisplayCount = pendingRows.reduce((n, r) => n + r.items.length, 0);
 
-  const count = invites.length + alerts.length + todayCount + pendingDisplayCount;
+  const count = invites.length + alerts.length + todayCount + pendingDisplayCount + awaiting.length;
 
   useEffect(() => {
     if (!open) return;
@@ -68,7 +70,8 @@ export default function NotificationBell() {
     }
   };
 
-  const empty = invites.length === 0 && alerts.length === 0 && !todayRows.length && !pendingRows.length;
+  const empty =
+    invites.length === 0 && alerts.length === 0 && !todayRows.length && !pendingRows.length && awaiting.length === 0;
 
   return (
     <div ref={wrapRef} className="relative">
