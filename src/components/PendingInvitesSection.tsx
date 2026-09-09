@@ -52,8 +52,10 @@ export default function PendingInvitesSection({ groupId }: { groupId?: string })
           );
         }
 
-        if (invite?.participation_type === "PAID" && invite.contribution_status === "pending") {
-          setAwaiting((prev) => [...prev.filter((x) => x.id !== invite.id), invite]);
+        // The awaiting-contribution list is fetched from the database, so a
+        // PAID accept simply triggers a refetch (realtime also picks it up).
+        if (invite?.participation_type === "PAID") {
+          void refreshAwaiting();
         }
 
         track("parayanam_joined");
