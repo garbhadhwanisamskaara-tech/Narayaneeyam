@@ -4,6 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { HIDDEN_GROUP_STATUSES_FILTER } from "@/lib/parayanamFilters";
 import { friendlyError } from "@/lib/errorMessages";
+import { fetchProfileNames } from "@/lib/profileNames";
 
 export interface Group {
   id: string;
@@ -165,18 +166,23 @@ export function useGroupMembers(groupId: string | undefined, sessionId: string |
     const rows = (data ?? []) as Omit<GroupMember, "display_name" | "completed">[];
     const ids = rows.map((r) => r.user_id);
 
-    const [profRes, scheduleRes] = await Promise.all([
-      ids.length
-        ? (supabase as any).from("profiles").select("id, display_name, email").in("id", ids)
-        : Promise.resolve({ data: [] }),
-      sessionId && ids.length
-        ? (supabase as any).from("parayanam_schedule").select("id").eq("challenge_session_id", sessionId)
-        : Promise.resolve({ data: [] }),
-    ]);
-
-    const nameById = new Map<string, string>(
-      (profRes.data ?? []).map((p: any) => [p.id, p.display_name ?? p.email ?? "Member"]),
-    );
+    // Names are fetched in chunks — a single .in() with hundreds of ids exceeds
+    // the URL length limit and silently fails, showing "Member" for everyone.
+    let nameById: Map<string, string>;
+    let scheduleRes: any;
+    try {
+      [nameById, scheduleRes] = await Promise.all([
+        ids.length ? fetchProfileNames(ids) : Promise.resolve(new Map<string, string>()),
+        sessionId && ids.length
+          ? (supabase as any).from("parayanam_schedule").select("id").eq("challenge_session_id", sessionId)
+          : Promise.resolve({ data: [] }),
+      ]);
+    } catch (e: any) {
+      setError(friendlyError(e, "We couldn't load member names right now. Please try again."));
+      setMembers([]);
+      setLoading(false);
+      return;
+    }
 
     const scheduleIds = ((scheduleRes.data ?? []) as any[]).map((r) => r.id as string);
     const counts = new Map<string, number>();

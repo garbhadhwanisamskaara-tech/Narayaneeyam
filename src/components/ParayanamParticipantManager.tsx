@@ -4,6 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useCapabilities } from "@/hooks/useCapabilities";
 import { notifyParayanamConfirmed } from "@/hooks/useParayanamParticipants";
 import { friendlyError } from "@/lib/errorMessages";
+import { fetchProfileNames } from "@/lib/profileNames";
 type InviteStatus = "invited" | "confirmed" | "declined" | "left";
 type ContributionStatus = "not_required" | "pending" | "confirmed";
 type AccessStatus = "active" | "locked";
@@ -72,17 +73,20 @@ export default function ParayanamParticipantManager({ sessionId, isOwner }: Prop
     setPaid(session?.participation_type === "PAID");
 
     const list = (parts ?? []) as Omit<Row, "name">[];
+    // Names are fetched in chunks — a single .in() with hundreds of ids exceeds
+    // the URL length limit and silently fails, showing "Member" for everyone.
     let nameById = new Map<string, string>();
-    if (list.length) {
-      const { data: profiles } = await (supabase as any)
-        .from("profiles")
-        .select("id, display_name, email")
-        .in(
-          "id",
-          list.map((p) => p.user_id),
-        );
-      nameById = new Map(((profiles ?? []) as any[]).map((p) => [p.id, p.display_name ?? p.email ?? "Member"]));
+    try {
+      if (list.length) {
+        nameById = await fetchProfileNames(list.map((p) => p.user_id));
+      }
+    } catch (e: any) {
+      setError(friendlyError(e, "We couldn't load member names right now. Please try again."));
+      setRows([]);
+      setLoading(false);
+      return;
     }
+    setError(null);
 
     setRows(
       list
@@ -266,7 +270,18 @@ export default function ParayanamParticipantManager({ sessionId, isOwner }: Prop
           )}
         </div>
       )}
-      {error && <p className="font-sans text-sm text-destructive">{error}</p>}
+      {error && (
+        <div className="flex items-center gap-3">
+          <p className="font-sans text-sm text-destructive">{error}</p>
+          <button
+            type="button"
+            onClick={() => void load()}
+            className="inline-flex items-center gap-1.5 rounded-lg border border-border px-3 py-1.5 font-sans text-xs font-semibold text-muted-foreground hover:border-primary hover:text-primary"
+          >
+            <RotateCcw className="h-3.5 w-3.5" /> Try again
+          </button>
+        </div>
+      )}
     </div>
   );
 }

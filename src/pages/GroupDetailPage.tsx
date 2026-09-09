@@ -110,7 +110,10 @@ export default function GroupDetailPage() {
   const [ownerGardenView, setOwnerGardenView] = useState<"mine" | "group">("mine");
 
   const { parayanams, loading: loadingParayanams, refresh: refreshParayanams } = useGroupParayanams(groupId);
-  const { members, loading: loadingMembers, refresh: refreshMembers } = useGroupMembers(groupId, selectedSessionId);
+  const { members, loading: loadingMembers, error: membersError, refresh: refreshMembers } = useGroupMembers(
+    groupId,
+    selectedSessionId,
+  );
   const {
     blooms: gardenBlooms,
     tiles: gardenTiles,
@@ -532,6 +535,17 @@ export default function GroupDetailPage() {
             </button>
             {!membersOpen ? null : loadingMembers ? (
               <Loader2 className="mt-4 h-5 w-5 animate-spin text-primary" />
+            ) : membersError ? (
+              <div className="mt-3 flex items-center gap-3">
+                <p className="font-sans text-sm text-destructive">{membersError}</p>
+                <button
+                  type="button"
+                  onClick={() => void refreshMembers()}
+                  className="inline-flex items-center gap-1.5 rounded-lg border border-border px-3 py-1.5 font-sans text-xs font-semibold text-muted-foreground hover:border-primary hover:text-primary"
+                >
+                  Try again
+                </button>
+              </div>
             ) : members.length === 0 ? (
               <p className="mt-3 font-sans text-sm text-muted-foreground">No members yet.</p>
             ) : !isOwner ? (
