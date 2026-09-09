@@ -86,6 +86,7 @@ export default function PendingInvitesSection({ groupId }: { groupId?: string })
             : "Payment received — you have joined.",
         );
         void refresh();
+        void refreshAwaiting();
       },
       onError: (message) => setError(message),
     });
@@ -93,7 +94,7 @@ export default function PendingInvitesSection({ groupId }: { groupId?: string })
 
   const awaitingList = groupId ? awaiting.filter((i) => i.group_id === groupId) : awaiting;
 
-  if (loading || (list.length === 0 && awaitingList.length === 0 && !showNudge)) return null;
+  if (loading || awaitingLoading || (list.length === 0 && awaitingList.length === 0 && !showNudge)) return null;
   if (list.length === 0 && awaitingList.length === 0) return <PushRemindersPrompt />;
 
   return (
