@@ -1,7 +1,7 @@
 {
   "name": "Narayaneeyam",
   "short_name": "Narayaneeyam",
-  "start_url": "/?source=twa",
+  "start_url": "/",
   "scope": "/",
   "display": "standalone",
   "background_color": "#0B6679",
