@@ -142,19 +142,25 @@ export function AwaitingContributionCard({ invite: i }: { invite: PendingInvite 
 
   if (contributionSettled) return null;
 
+  const paidPending = i.participation_type === "PAID" && i.contribution_status === "pending";
+
   if (!canViewExternalPaymentLinks) {
     return (
       <div className="rounded-xl border border-primary/40 bg-primary/5 p-4">
         <p className="flex items-center gap-2 font-display text-base font-semibold text-foreground">
-          <Clock className="h-4 w-4 text-primary" /> Awaiting Guru approval
+          <Clock className="h-4 w-4 text-primary" /> {paidPending ? "Complete your contribution" : "Awaiting Guru approval"}
         </p>
         <p className="mt-1 font-sans text-xs text-muted-foreground">
-          Your participation in {i.parayanam_name ?? "this parayanam"} is awaiting approval from the Guru.
+          {paidPending
+            ? `Complete your contribution below to join ${i.parayanam_name ?? "this parayanam"}.`
+            : `Your participation in ${i.parayanam_name ?? "this parayanam"} is awaiting approval from the Guru.`}
         </p>
-        <p className="mt-2 font-sans text-[11px] leading-snug text-muted-foreground">
-          To complete your contribution, message your Guru directly, or open narayaneeyam.app in your phone's
-          browser to pay online.
-        </p>
+        {paidPending && (
+          <p className="mt-2 font-sans text-[11px] leading-snug text-muted-foreground">
+            To complete your contribution, message your Guru directly, or open narayaneeyam.app in your phone's
+            browser to pay online.
+          </p>
+        )}
       </div>
     );
   }
@@ -162,11 +168,12 @@ export function AwaitingContributionCard({ invite: i }: { invite: PendingInvite 
   return (
     <div className="rounded-xl border border-primary/40 bg-primary/5 p-4">
       <p className="flex items-center gap-2 font-display text-base font-semibold text-foreground">
-        <Clock className="h-4 w-4 text-primary" /> Awaiting Guru approval
+        <Clock className="h-4 w-4 text-primary" /> {paidPending ? "Complete your contribution" : "Awaiting Guru approval"}
       </p>
       <p className="mt-1 font-sans text-xs text-muted-foreground">
-        You have accepted the invitation to {i.parayanam_name ?? "this parayanam"}. Your access opens once
-        {i.guru_name ? ` ${i.guru_name}` : " your Guru"} approves your contribution.
+        {paidPending
+          ? `Complete your contribution below to join ${i.parayanam_name ?? "this parayanam"}.`
+          : `You have accepted the invitation to ${i.parayanam_name ?? "this parayanam"}. Your access opens once${i.guru_name ? ` ${i.guru_name}` : " your Guru"} approves your contribution.`}
       </p>
       {i.contribution_amount != null && (
         <p className="mt-2 font-sans text-xs text-foreground/80">Contribution: ₹{i.contribution_amount}</p>
