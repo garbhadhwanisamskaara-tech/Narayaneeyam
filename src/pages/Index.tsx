@@ -30,6 +30,7 @@ import { supabase } from "@/integrations/supabase/client";
 import SEO from "@/components/SEO";
 import TrialStatusLine from "@/components/TrialStatusLine";
 import UpcomingLiveSessionCard from "@/components/UpcomingLiveSessionCard";
+import TodaysDashakamCard from "@/components/TodaysDashakamCard";
 import { SUBSCRIPTION_ENABLED } from "@/config/features";
 
 
@@ -180,6 +181,9 @@ export default function Index() {
               </Link>
             </motion.div>
           )}
+          <div className="mt-4">
+            <TodaysDashakamCard />
+          </div>
         </div>
       </section>
 
