@@ -41,7 +41,7 @@ export default function NotificationBell() {
   const navigate = useNavigate();
 
   const { invites, busyId, respond } = useMyPendingInvites();
-  const { invites: awaiting } = useMyAwaitingContributions();
+  const { invites: awaiting, busyId: awaitingBusyId, decline: declineAwaiting } = useMyAwaitingContributions();
   const { alerts } = useTicketReplyAlerts();
   const { todayRows, pendingRows } = useMyDashakamQueue();
   const { sessions: personalSessions } = useMyGardenSessions();
