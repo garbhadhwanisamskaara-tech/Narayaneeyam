@@ -158,13 +158,21 @@ export default function Index() {
               </motion.p>
             )}
           </motion.div>
-          {progress.lastSessionDate && (
+          {progress.lastSessionDate && !resumeDismissed && (
             <motion.div
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
               transition={{ delay: 0.4 }}
-              className="inline-flex items-center gap-4 rounded-xl bg-card/90 backdrop-blur-sm px-6 py-4 shadow-gold"
+              className="inline-flex items-center gap-4 rounded-xl bg-card/90 backdrop-blur-sm px-6 py-4 shadow-gold relative"
             >
+              <button
+                type="button"
+                onClick={() => setResumeDismissed(true)}
+                className="absolute -top-2 -right-2 rounded-full bg-muted p-1 text-muted-foreground shadow-sm hover:bg-muted/80 hover:text-foreground transition-colors"
+                aria-label="Hide continue card"
+              >
+                <X className="h-3.5 w-3.5" />
+              </button>
               <div className="text-left">
                 <p className="text-sm text-muted-foreground font-sans">Continue where you left off</p>
                 <p className="font-display text-foreground font-semibold">
