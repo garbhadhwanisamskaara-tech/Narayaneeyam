@@ -90,6 +90,7 @@ export default function Index() {
   const progress = getProgress();
   const [showAbout, setShowAbout] = useState(false);
   const [showMore, setShowMore] = useState(false);
+  const [resumeDismissed, setResumeDismissed] = useState(false);
   const [festivalMessage, setFestivalMessage] = useState<string | null>(null);
 
   useEffect(() => {
