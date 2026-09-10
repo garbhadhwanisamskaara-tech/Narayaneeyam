@@ -9,6 +9,7 @@ import { useMyGardenSessions } from "@/hooks/useMyGardenSessions";
 import DashakamQueueList from "@/components/DashakamQueueList";
 import MyGardenDialog from "@/components/MyGardenDialog";
 import { track } from "@/lib/analytics";
+import { toast } from "sonner";
 
 function CollapsibleItem({ summary, children }: { summary: React.ReactNode; children: React.ReactNode }) {
   const [open, setOpen] = useState(false);
@@ -37,11 +38,12 @@ function CollapsibleItem({ summary, children }: { summary: React.ReactNode; chil
 export default function NotificationBell() {
   const [open, setOpen] = useState(false);
   const [gardenOpen, setGardenOpen] = useState(false);
+  const [confirmDeclineId, setConfirmDeclineId] = useState<string | null>(null);
   const wrapRef = useRef<HTMLDivElement>(null);
   const navigate = useNavigate();
 
   const { invites, busyId, respond } = useMyPendingInvites();
-  const { invites: awaiting } = useMyAwaitingContributions();
+  const { invites: awaiting, busyId: awaitingBusyId, decline: declineAwaiting } = useMyAwaitingContributions();
   const { alerts } = useTicketReplyAlerts();
   const { todayRows, pendingRows } = useMyDashakamQueue();
   const { sessions: personalSessions } = useMyGardenSessions();
@@ -60,6 +62,16 @@ export default function NotificationBell() {
     document.addEventListener("mousedown", onDown);
     return () => document.removeEventListener("mousedown", onDown);
   }, [open]);
+
+  const declineContribution = async (id: string) => {
+    try {
+      await declineAwaiting(id);
+      setConfirmDeclineId(null);
+      toast.success("You have left the parayanam. You can be invited again later.");
+    } catch {
+      /* the item stays in the list so it can be retried */
+    }
+  };
 
   const answer = async (id: string, status: "confirmed" | "declined") => {
     try {
@@ -193,15 +205,52 @@ export default function NotificationBell() {
                         }
                       >
                         <AwaitingContributionCard invite={i} />
-                        <button
-                          onClick={() => {
-                            setOpen(false);
-                            navigate(i.group_id ? `/groups/${i.group_id}` : "/dashboard");
-                          }}
-                          className="mt-2 inline-flex items-center gap-1.5 rounded-lg bg-gradient-peacock px-3 py-1.5 font-sans text-xs font-semibold text-primary-foreground hover:opacity-90"
-                        >
-                          <Check className="h-3.5 w-3.5" /> Review &amp; Pay to Join
-                        </button>
+                        <div className="mt-2 flex items-center gap-3">
+                          <button
+                            onClick={() => {
+                              setOpen(false);
+                              navigate(i.group_id ? `/groups/${i.group_id}` : "/dashboard");
+                            }}
+                            className="inline-flex items-center gap-1.5 rounded-lg bg-gradient-peacock px-3 py-1.5 font-sans text-xs font-semibold text-primary-foreground hover:opacity-90"
+                          >
+                            <Check className="h-3.5 w-3.5" /> Review &amp; Pay to Join
+                          </button>
+                          <button
+                            onClick={() => setConfirmDeclineId(i.id)}
+                            disabled={awaitingBusyId === i.id}
+                            className="font-sans text-xs font-semibold text-muted-foreground underline underline-offset-2 hover:text-destructive disabled:opacity-60"
+                          >
+                            Decline
+                          </button>
+                        </div>
+                        {confirmDeclineId === i.id && (
+                          <div className="mt-2 rounded-lg border border-border bg-muted/30 p-3">
+                            <p className="font-sans text-xs text-foreground">
+                              Decline and leave {i.parayanam_name ?? "this parayanam"}? You can be invited again later.
+                            </p>
+                            <div className="mt-2 flex gap-2">
+                              <button
+                                onClick={() => void declineContribution(i.id)}
+                                disabled={awaitingBusyId === i.id}
+                                className="inline-flex items-center gap-1.5 rounded-lg border border-destructive px-3 py-1.5 font-sans text-xs font-semibold text-destructive hover:bg-destructive/10 disabled:opacity-60"
+                              >
+                                {awaitingBusyId === i.id ? (
+                                  <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                                ) : (
+                                  <X className="h-3.5 w-3.5" />
+                                )}
+                                Yes, decline
+                              </button>
+                              <button
+                                onClick={() => setConfirmDeclineId(null)}
+                                disabled={awaitingBusyId === i.id}
+                                className="inline-flex items-center rounded-lg border border-border px-3 py-1.5 font-sans text-xs font-semibold text-muted-foreground hover:border-primary hover:text-primary disabled:opacity-60"
+                              >
+                                Cancel
+                              </button>
+                            </div>
+                          </div>
+                        )}
                       </CollapsibleItem>
                     ))}
                   </div>

@@ -418,6 +418,7 @@ export function useMyAwaitingContributions() {
   const { user } = useAuth();
   const [invites, setInvites] = useState<PendingInvite[]>([]);
   const [loading, setLoading] = useState(true);
+  const [busyId, setBusyId] = useState<string | null>(null);
 
   const refresh = useCallback(async () => {
     if (!user) {
@@ -476,5 +477,27 @@ export function useMyAwaitingContributions() {
     };
   }, [userId]);
 
-  return { invites, loading, refresh };
+  // Same status-update call used when declining a fresh invitation — this
+  // simply undoes the earlier acceptance of a PAID parayanam.
+  const decline = useCallback(
+    async (participantId: string) => {
+      setBusyId(participantId);
+      try {
+        const { data, error } = await (supabase as any).rpc("respond_to_parayanam_invite", {
+          p_participant_id: participantId,
+          p_status: "declined",
+        });
+        if (error) throw new Error(error.message);
+        if (!data || data.length === 0) {
+          throw new Error("The invitation was not updated. Please refresh the page and try again.");
+        }
+        await refresh();
+      } finally {
+        setBusyId(null);
+      }
+    },
+    [refresh],
+  );
+
+  return { invites, loading, busyId, decline, refresh };
 }
