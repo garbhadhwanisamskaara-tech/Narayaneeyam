@@ -181,6 +181,9 @@ export default function Index() {
               </Link>
             </motion.div>
           )}
+          <div className="mt-4">
+            <TodaysDashakamCard />
+          </div>
         </div>
       </section>
 
