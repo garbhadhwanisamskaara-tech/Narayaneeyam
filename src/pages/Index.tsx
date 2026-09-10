@@ -21,6 +21,7 @@ import {
   Flower2,
   LifeBuoy,
   Route,
+  X,
 } from "lucide-react";
 import { getProgress } from "@/lib/progress";
 import heroBg from "@/assets/hero-bg.jpg";
