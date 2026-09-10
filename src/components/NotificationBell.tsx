@@ -37,6 +37,7 @@ function CollapsibleItem({ summary, children }: { summary: React.ReactNode; chil
 export default function NotificationBell() {
   const [open, setOpen] = useState(false);
   const [gardenOpen, setGardenOpen] = useState(false);
+  const [confirmDeclineId, setConfirmDeclineId] = useState<string | null>(null);
   const wrapRef = useRef<HTMLDivElement>(null);
   const navigate = useNavigate();
 
