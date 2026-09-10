@@ -1,7 +1,26 @@
-/* Push messaging service worker for daily reminders.
-   No fetch/caching handlers — this worker only handles push notifications. */
+/* Push messaging + minimal app-shell service worker.
+   - Existing push/notification handling is preserved unchanged.
+   - Added fetch handler for basic offline app-shell support. */
 
-self.addEventListener("install", () => self.skipWaiting());
+const SHELL_CACHE = "narayaneeyam-shell-v1";
+const PRECACHE_URLS = [
+  "/",
+  "/index.html",
+  "/manifest.json",
+  "/favicon.png",
+  "/icons/icon-192.png",
+];
+
+self.addEventListener("install", (event) => {
+  event.waitUntil(
+    (async () => {
+      const cache = await caches.open(SHELL_CACHE);
+      await cache.addAll(PRECACHE_URLS);
+    })(),
+  );
+  self.skipWaiting();
+});
+
 self.addEventListener("activate", (event) => event.waitUntil(self.clients.claim()));
 
 self.addEventListener("push", (event) => {
@@ -43,4 +62,58 @@ self.addEventListener("notificationclick", (event) => {
       if (self.clients.openWindow) return self.clients.openWindow(targetUrl);
     })(),
   );
+});
+
+/* Minimal fetch handler: network-first for navigations, cache-first for
+   same-origin static assets, pass-through for everything else. */
+
+const STATIC_EXTENSIONS = /\.(?:js|css|png|jpg|jpeg|svg|gif|webp|json|ico|mp3|webm|wasm|woff|woff2|ttf|otf)$/i;
+
+self.addEventListener("fetch", (event) => {
+  const { request } = event;
+  const url = new URL(request.url);
+
+  // Only handle same-origin requests.
+  if (url.origin !== self.location.origin) return;
+
+  if (request.mode === "navigate") {
+    event.respondWith(
+      (async () => {
+        try {
+          const networkResponse = await fetch(request);
+          if (networkResponse && networkResponse.status === 200) {
+            const cache = await caches.open(SHELL_CACHE);
+            cache.put(request, networkResponse.clone());
+          }
+          return networkResponse;
+        } catch (error) {
+          const cached = await caches.match(request);
+          if (cached) return cached;
+          const fallback = await caches.match("/index.html");
+          if (fallback) return fallback;
+          throw error;
+        }
+      })(),
+    );
+    return;
+  }
+
+  if (STATIC_EXTENSIONS.test(url.pathname)) {
+    event.respondWith(
+      (async () => {
+        const cache = await caches.open(SHELL_CACHE);
+        const cached = await cache.match(request);
+        if (cached) return cached;
+
+        const networkResponse = await fetch(request);
+        if (networkResponse && networkResponse.status === 200) {
+          cache.put(request, networkResponse.clone());
+        }
+        return networkResponse;
+      })(),
+    );
+    return;
+  }
+
+  // Everything else (API calls, etc.) goes directly to the network.
 });
