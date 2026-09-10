@@ -205,15 +205,52 @@ export default function NotificationBell() {
                         }
                       >
                         <AwaitingContributionCard invite={i} />
-                        <button
-                          onClick={() => {
-                            setOpen(false);
-                            navigate(i.group_id ? `/groups/${i.group_id}` : "/dashboard");
-                          }}
-                          className="mt-2 inline-flex items-center gap-1.5 rounded-lg bg-gradient-peacock px-3 py-1.5 font-sans text-xs font-semibold text-primary-foreground hover:opacity-90"
-                        >
-                          <Check className="h-3.5 w-3.5" /> Review &amp; Pay to Join
-                        </button>
+                        <div className="mt-2 flex items-center gap-3">
+                          <button
+                            onClick={() => {
+                              setOpen(false);
+                              navigate(i.group_id ? `/groups/${i.group_id}` : "/dashboard");
+                            }}
+                            className="inline-flex items-center gap-1.5 rounded-lg bg-gradient-peacock px-3 py-1.5 font-sans text-xs font-semibold text-primary-foreground hover:opacity-90"
+                          >
+                            <Check className="h-3.5 w-3.5" /> Review &amp; Pay to Join
+                          </button>
+                          <button
+                            onClick={() => setConfirmDeclineId(i.id)}
+                            disabled={awaitingBusyId === i.id}
+                            className="font-sans text-xs font-semibold text-muted-foreground underline underline-offset-2 hover:text-destructive disabled:opacity-60"
+                          >
+                            Decline
+                          </button>
+                        </div>
+                        {confirmDeclineId === i.id && (
+                          <div className="mt-2 rounded-lg border border-border bg-muted/30 p-3">
+                            <p className="font-sans text-xs text-foreground">
+                              Decline and leave {i.parayanam_name ?? "this parayanam"}? You can be invited again later.
+                            </p>
+                            <div className="mt-2 flex gap-2">
+                              <button
+                                onClick={() => void declineContribution(i.id)}
+                                disabled={awaitingBusyId === i.id}
+                                className="inline-flex items-center gap-1.5 rounded-lg border border-destructive px-3 py-1.5 font-sans text-xs font-semibold text-destructive hover:bg-destructive/10 disabled:opacity-60"
+                              >
+                                {awaitingBusyId === i.id ? (
+                                  <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                                ) : (
+                                  <X className="h-3.5 w-3.5" />
+                                )}
+                                Yes, decline
+                              </button>
+                              <button
+                                onClick={() => setConfirmDeclineId(null)}
+                                disabled={awaitingBusyId === i.id}
+                                className="inline-flex items-center rounded-lg border border-border px-3 py-1.5 font-sans text-xs font-semibold text-muted-foreground hover:border-primary hover:text-primary disabled:opacity-60"
+                              >
+                                Cancel
+                              </button>
+                            </div>
+                          </div>
+                        )}
                       </CollapsibleItem>
                     ))}
                   </div>
