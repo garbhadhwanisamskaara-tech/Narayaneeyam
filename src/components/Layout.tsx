@@ -26,6 +26,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import BottomNav from "@/components/BottomNav";
 import NotificationBell from "@/components/NotificationBell";
 import SubscriptionBanner from "@/components/SubscriptionBanner";
+import PwaInstallBanner from "@/components/PwaInstallBanner";
 import { SUBSCRIPTION_ENABLED } from "@/config/features";
 import { useCapabilities } from "@/hooks/useCapabilities";
 import {
@@ -338,6 +339,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
       </header>
 
       <SubscriptionBanner />
+      <PwaInstallBanner />
       <main className="pb-16 lg:pb-0">{children}</main>
       <BottomNav />
     </div>
