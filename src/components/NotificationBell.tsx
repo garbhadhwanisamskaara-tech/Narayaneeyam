@@ -9,6 +9,7 @@ import { useMyGardenSessions } from "@/hooks/useMyGardenSessions";
 import DashakamQueueList from "@/components/DashakamQueueList";
 import MyGardenDialog from "@/components/MyGardenDialog";
 import { track } from "@/lib/analytics";
+import { toast } from "sonner";
 
 function CollapsibleItem({ summary, children }: { summary: React.ReactNode; children: React.ReactNode }) {
   const [open, setOpen] = useState(false);
@@ -61,6 +62,16 @@ export default function NotificationBell() {
     document.addEventListener("mousedown", onDown);
     return () => document.removeEventListener("mousedown", onDown);
   }, [open]);
+
+  const declineContribution = async (id: string) => {
+    try {
+      await declineAwaiting(id);
+      setConfirmDeclineId(null);
+      toast.success("You have left the parayanam. You can be invited again later.");
+    } catch {
+      /* the item stays in the list so it can be retried */
+    }
+  };
 
   const answer = async (id: string, status: "confirmed" | "declined") => {
     try {
