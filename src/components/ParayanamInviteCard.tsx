@@ -111,7 +111,7 @@ export default function ParayanamInviteCard({ invite: i, busy, onAccept, onDecli
             className="inline-flex items-center gap-1.5 rounded-lg bg-gradient-peacock px-4 py-2 font-sans text-xs font-semibold text-primary-foreground hover:opacity-90 disabled:opacity-60"
           >
             {busy ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <HandCoins className="h-3.5 w-3.5" />}
-            {i.contribution_amount != null ? `Pay ₹${i.contribution_amount} to Join` : "Pay to Join"}
+            {i.contribution_amount != null ? `Pay ₹${i.contribution_amount}` : "Pay"}
           </button>
         ) : (
           <button
