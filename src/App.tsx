@@ -91,6 +91,7 @@ const App = () => {
               <Layout>
                 <Routes>
                   <Route path="/chant" element={<ChantPage />} />
+                  <Route path="/chant/:dashakamNo" element={<ChantPage />} />
                   
                   <Route path="/script" element={<ScriptPage />} />
                   <Route path="/progress" element={<DashboardPage />} />

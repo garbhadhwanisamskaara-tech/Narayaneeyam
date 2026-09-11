@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useCallback, useMemo } from "react";
-import { useSearchParams } from "react-router-dom";
+import { useSearchParams, useParams } from "react-router-dom";
 import { toast } from "sonner";
 import { motion, AnimatePresence } from "framer-motion";
 import {
@@ -61,6 +61,7 @@ function normalizeDashakam(value: unknown, fallback = DEFAULT_DASHAKAM) {
 }
 
 export default function ChantPage() {
+  const { dashakamNo } = useParams<{ dashakamNo: string }>();
   const [searchParams] = useSearchParams();
   const [selectedDashakam, setSelectedDashakam] = useState(DEFAULT_DASHAKAM);
   const [selectedPara, setSelectedPara] = useState<number | null>(null);
@@ -299,7 +300,7 @@ export default function ChantPage() {
   // Whether that jump should also start playing the verse from its beginning
   const pendingAutoPlayRef = useRef(false);
 
-  // Restore last position or use query param
+  // Restore last position, use URL path param, or use query param
   useEffect(() => {
     const qd = searchParams.get("dashakam");
     const qv = searchParams.get("verse");
@@ -308,6 +309,13 @@ export default function ChantPage() {
       if (vnum >= 1) {
         pendingVerseRef.current = vnum;
         pendingAutoPlayRef.current = searchParams.get("play") === "1";
+      }
+    }
+    if (dashakamNo) {
+      const num = normalizeDashakam(parseInt(dashakamNo, 10));
+      if (num >= 1 && num <= 100) {
+        setSelectedDashakam(num);
+        return;
       }
     }
     if (qd) {
