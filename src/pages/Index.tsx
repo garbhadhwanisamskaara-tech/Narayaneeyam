@@ -33,6 +33,7 @@ import TrialStatusLine from "@/components/TrialStatusLine";
 import UpcomingLiveSessionCard from "@/components/UpcomingLiveSessionCard";
 import TodaysDashakamCard from "@/components/TodaysDashakamCard";
 import { SUBSCRIPTION_ENABLED } from "@/config/features";
+import { useAuth } from "@/contexts/AuthContext";
 
 
 export default function Index() {
@@ -88,10 +89,48 @@ export default function Index() {
   ];
 
   const progress = getProgress();
+  const { user } = useAuth();
   const [showAbout, setShowAbout] = useState(false);
   const [showMore, setShowMore] = useState(false);
-  const [resumeDismissed, setResumeDismissed] = useState(false);
+  // Permanent dismiss flag from profiles — once true the card never shows again.
+  const [continueCardDismissed, setContinueCardDismissed] = useState<boolean | null>(null);
   const [festivalMessage, setFestivalMessage] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!user) {
+      setContinueCardDismissed(null);
+      return;
+    }
+    let cancelled = false;
+    (async () => {
+      try {
+        const { data } = await (supabase as any)
+          .from("profiles")
+          .select("continue_card_dismissed")
+          .eq("id", user.id)
+          .maybeSingle();
+        if (!cancelled) setContinueCardDismissed(data?.continue_card_dismissed === true);
+      } catch {
+        if (!cancelled) setContinueCardDismissed(false);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [user]);
+
+  const dismissContinueCard = async () => {
+    setContinueCardDismissed(true); // optimistic — hide immediately
+    if (!user) return;
+    try {
+      await (supabase as any)
+        .from("profiles")
+        .update({ continue_card_dismissed: true })
+        .eq("id", user.id);
+    } catch {
+      // silent — card stays hidden this view regardless
+    }
+  };
 
   useEffect(() => {
     async function fetchFestival() {
