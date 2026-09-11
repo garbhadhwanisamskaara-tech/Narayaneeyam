@@ -117,7 +117,7 @@ export default function PwaInstallBanner() {
         }
       } else {
         showFollowUp({
-          title: "Install from your browser menu",
+          title: BROWSER_MENU_TITLE,
           body: "Look for Add to Home Screen or Install in your browser's menu to keep Narayaneeyam close.",
           tone: "neutral",
         });
