@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from "react";
 import { detectPlatform } from "@/lib/platform";
 
 export type PwaPlatform = "ios-safari" | "macos-safari" | "chromium" | "other";
+export type PromptOutcome = "accepted" | "dismissed" | "error" | "unsupported";
 
 interface BeforeInstallPromptEvent extends Event {
   prompt: () => Promise<void>;
@@ -60,15 +61,15 @@ export function usePwaInstall() {
     };
   }, []);
 
-  const promptInstall = useCallback(async () => {
-    if (!deferredPrompt) return false;
+  const promptInstall = useCallback(async (): Promise<PromptOutcome> => {
+    if (!deferredPrompt) return "unsupported";
     try {
       await deferredPrompt.prompt();
       const choice = await deferredPrompt.userChoice;
       setDeferredPrompt(null);
-      return choice.outcome === "accepted";
+      return choice.outcome === "accepted" ? "accepted" : "dismissed";
     } catch {
-      return false;
+      return "error";
     }
   }, [deferredPrompt]);
 
