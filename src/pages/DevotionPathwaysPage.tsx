@@ -285,6 +285,13 @@ export default function DevotionPathwaysPage() {
       {/* Upcoming timeline */}
       <UpcomingTimeline festivals={todayFestival ? upcomingFestivals : upcomingFestivals.slice(1)} />
 
+      {templatesLoading && (
+        <div className="flex items-center justify-center gap-2 py-8 text-muted-foreground">
+          <Loader2 className="h-5 w-5 animate-spin" />
+          <span className="text-sm font-sans">Loading pathways…</span>
+        </div>
+      )}
+
       {/* Pathway cards */}
       <div className="grid gap-4">
         {activePathways.map((pathway, idx) => {
