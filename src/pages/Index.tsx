@@ -197,7 +197,7 @@ export default function Index() {
               </motion.p>
             )}
           </motion.div>
-          {progress.lastSessionDate && !resumeDismissed && (
+          {progress.lastSessionDate && continueCardDismissed !== true && (
             <motion.div
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
@@ -206,7 +206,7 @@ export default function Index() {
             >
               <button
                 type="button"
-                onClick={() => setResumeDismissed(true)}
+                onClick={dismissContinueCard}
                 className="absolute -top-2 -right-2 rounded-full bg-muted p-1 text-muted-foreground shadow-sm hover:bg-muted/80 hover:text-foreground transition-colors"
                 aria-label="Hide continue card"
               >
