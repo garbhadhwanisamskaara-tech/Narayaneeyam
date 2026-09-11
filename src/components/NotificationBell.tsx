@@ -43,7 +43,12 @@ export default function NotificationBell() {
   const navigate = useNavigate();
 
   const { invites, busyId, respond } = useMyPendingInvites();
-  const { invites: awaiting, busyId: awaitingBusyId, decline: declineAwaiting } = useMyAwaitingContributions();
+  const {
+    invites: awaiting,
+    busyId: awaitingBusyId,
+    decline: declineAwaiting,
+    refresh: refreshAwaiting,
+  } = useMyAwaitingContributions();
   const { alerts } = useTicketReplyAlerts();
   const { todayRows, pendingRows } = useMyDashakamQueue();
   const { sessions: personalSessions } = useMyGardenSessions();
@@ -204,17 +209,25 @@ export default function NotificationBell() {
                           </>
                         }
                       >
-                        <AwaitingContributionCard invite={i} />
+                        <AwaitingContributionCard
+                          invite={i}
+                          onPaid={() => {
+                            toast.success("Payment received — you have joined.");
+                            void refreshAwaiting();
+                          }}
+                        />
                         <div className="mt-2 flex items-center gap-3">
-                          <button
-                            onClick={() => {
-                              setOpen(false);
-                              navigate(i.group_id ? `/groups/${i.group_id}` : "/dashboard");
-                            }}
-                            className="inline-flex items-center gap-1.5 rounded-lg bg-gradient-peacock px-3 py-1.5 font-sans text-xs font-semibold text-primary-foreground hover:opacity-90"
-                          >
-                            <Check className="h-3.5 w-3.5" /> Review &amp; Pay to Join
-                          </button>
+                          {i.payment_url && (
+                            <button
+                              onClick={() => {
+                                setOpen(false);
+                                navigate(i.group_id ? `/groups/${i.group_id}` : "/dashboard");
+                              }}
+                              className="inline-flex items-center gap-1.5 rounded-lg bg-gradient-peacock px-3 py-1.5 font-sans text-xs font-semibold text-primary-foreground hover:opacity-90"
+                            >
+                              <Check className="h-3.5 w-3.5" /> Review &amp; Pay to Join
+                            </button>
+                          )}
                           <button
                             onClick={() => setConfirmDeclineId(i.id)}
                             disabled={awaitingBusyId === i.id}
