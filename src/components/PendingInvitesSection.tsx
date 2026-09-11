@@ -116,7 +116,19 @@ export default function PendingInvitesSection({ groupId }: { groupId?: string })
         ))}
         {awaitingList.map((i) => (
           <li key={`awaiting-${i.id}`}>
-            <AwaitingContributionCard invite={i} />
+            <AwaitingContributionCard
+              invite={i}
+              onPaid={() => {
+                track("parayanam_joined");
+                setSuccess(
+                  i.parayanam_name
+                    ? `Payment received — you have joined “${i.parayanam_name}”.`
+                    : "Payment received — you have joined.",
+                );
+                void refresh();
+                void refreshAwaiting();
+              }}
+            />
           </li>
         ))}
       </ul>
