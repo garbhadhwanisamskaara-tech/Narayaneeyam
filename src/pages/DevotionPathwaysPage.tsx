@@ -6,12 +6,13 @@ import {
   Mic, Headphones, CalendarDays, Loader2, Clock,
 } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
-import { DEVOTION_PATHWAYS, FESTIVAL_PATHWAYS, type DevotionPathway } from "@/data/devotionPathways";
+import { FESTIVAL_PATHWAYS, type DevotionPathway } from "@/data/devotionPathways";
 import { getDashakamName } from "@/hooks/useDashakam";
 import PathwayDashakamList from "@/components/PathwayDashakamList";
 import FestivalPathwaysList from "@/components/FestivalPathwaysList";
 import HundredDayJourney from "@/components/HundredDayJourney";
 import { useFestivalPathways, type FestivalItem } from "@/hooks/useFestivalPathways";
+import { useParayanamTemplates } from "@/hooks/useParayanamTemplates";
 import SEO from "@/components/SEO";
 
 const iconMap: Record<string, React.ElementType> = {
