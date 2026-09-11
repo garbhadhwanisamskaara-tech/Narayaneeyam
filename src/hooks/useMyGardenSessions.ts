@@ -41,12 +41,13 @@ export function useMyGardenSessions(): UseMyGardenSessionsResult {
         .not("technical_state", "in", HIDDEN_SESSION_STATES_FILTER)
         .order("created_at", { ascending: false });
 
-      // 2. Group parayanams the user is confirmed in.
+      // 2. Group parayanams the user is confirmed in and has active access to.
       const { data: participantRows, error: participantError } = await (supabase as any)
         .from("parayanam_participants")
         .select("challenge_session_id")
         .eq("user_id", user.id)
-        .eq("status", "confirmed");
+        .eq("status", "confirmed")
+        .eq("access_status", "active");
 
       if (participantError) throw participantError;
       const groupSessionIds = Array.from(
