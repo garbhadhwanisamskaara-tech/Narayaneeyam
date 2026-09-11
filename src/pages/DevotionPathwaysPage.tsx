@@ -6,12 +6,13 @@ import {
   Mic, Headphones, CalendarDays, Loader2, Clock,
 } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
-import { DEVOTION_PATHWAYS, FESTIVAL_PATHWAYS, type DevotionPathway } from "@/data/devotionPathways";
+import { FESTIVAL_PATHWAYS, type DevotionPathway } from "@/data/devotionPathways";
 import { getDashakamName } from "@/hooks/useDashakam";
 import PathwayDashakamList from "@/components/PathwayDashakamList";
 import FestivalPathwaysList from "@/components/FestivalPathwaysList";
 import HundredDayJourney from "@/components/HundredDayJourney";
 import { useFestivalPathways, type FestivalItem } from "@/hooks/useFestivalPathways";
+import { useParayanamTemplates } from "@/hooks/useParayanamTemplates";
 import SEO from "@/components/SEO";
 
 const iconMap: Record<string, React.ElementType> = {
@@ -121,8 +122,33 @@ export default function DevotionPathwaysPage() {
   const navigate = useNavigate();
 
   const { todayFestival, upcomingFestivals, allFestivals, loading: festivalsLoading } = useFestivalPathways();
+  const { templates, loading: templatesLoading } = useParayanamTemplates();
 
-  const activePathways = DEVOTION_PATHWAYS.filter((p) => p.active).sort(
+  const iconOptions = Object.keys(iconMap);
+
+  const templatePathways: DevotionPathway[] = templates.map((t, idx) => ({
+    id: t.id,
+    name: t.template_name,
+    description: t.description ?? "",
+    dashakams: t.dashakam_list,
+    icon: iconOptions[idx % iconOptions.length],
+    display_order: t.sort_order ?? idx,
+    active: true,
+    type: "standard",
+  }));
+
+  const festivalPathway: DevotionPathway = {
+    id: "festival-pathways",
+    name: "Festival Pathways",
+    description: "Dashakams recommended for important festivals",
+    icon: "Sparkles",
+    dashakams: [],
+    display_order: 0,
+    active: true,
+    type: "festival",
+  };
+
+  const activePathways = [festivalPathway, ...templatePathways].sort(
     (a, b) => a.display_order - b.display_order
   );
 
@@ -258,6 +284,13 @@ export default function DevotionPathwaysPage() {
 
       {/* Upcoming timeline */}
       <UpcomingTimeline festivals={todayFestival ? upcomingFestivals : upcomingFestivals.slice(1)} />
+
+      {templatesLoading && (
+        <div className="flex items-center justify-center gap-2 py-8 text-muted-foreground">
+          <Loader2 className="h-5 w-5 animate-spin" />
+          <span className="text-sm font-sans">Loading pathways…</span>
+        </div>
+      )}
 
       {/* Pathway cards */}
       <div className="grid gap-4">
