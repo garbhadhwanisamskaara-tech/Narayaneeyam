@@ -122,8 +122,33 @@ export default function DevotionPathwaysPage() {
   const navigate = useNavigate();
 
   const { todayFestival, upcomingFestivals, allFestivals, loading: festivalsLoading } = useFestivalPathways();
+  const { templates, loading: templatesLoading } = useParayanamTemplates();
 
-  const activePathways = DEVOTION_PATHWAYS.filter((p) => p.active).sort(
+  const iconOptions = Object.keys(iconMap);
+
+  const templatePathways: DevotionPathway[] = templates.map((t, idx) => ({
+    id: t.id,
+    name: t.template_name,
+    description: t.description ?? "",
+    dashakams: t.dashakam_list,
+    icon: iconOptions[idx % iconOptions.length],
+    display_order: t.sort_order ?? idx,
+    active: true,
+    type: "standard",
+  }));
+
+  const festivalPathway: DevotionPathway = {
+    id: "festival-pathways",
+    name: "Festival Pathways",
+    description: "Dashakams recommended for important festivals",
+    icon: "Sparkles",
+    dashakams: [],
+    display_order: 0,
+    active: true,
+    type: "festival",
+  };
+
+  const activePathways = [festivalPathway, ...templatePathways].sort(
     (a, b) => a.display_order - b.display_order
   );
 
