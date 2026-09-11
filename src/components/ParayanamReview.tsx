@@ -32,7 +32,7 @@ export type ParayanamReviewProps = {
   };
   contribution?: {
     amount: string;
-    hasPaymentLink: boolean;
+    hasPaymentLink?: boolean;
   } | null;
   invitedCount: number;
   isGroup: boolean;
@@ -70,7 +70,7 @@ export default function ParayanamReview(props: ParayanamReviewProps) {
       ? { label: "Participation", value: `${contribution.amount} to join` }
       : { label: "Participation", value: "Free to join" },
   );
-  if (contribution) {
+  if (contribution && contribution.hasPaymentLink !== undefined) {
     rows.push({
       label: "Payment / contribution details",
       value: contribution.hasPaymentLink ? "Payment details added" : "Payment details missing",

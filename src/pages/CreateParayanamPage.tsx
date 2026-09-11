@@ -27,7 +27,7 @@ import ParayanamModeSelector, { type DeliveryMode } from "@/components/Parayanam
 import ParticipationTypeSelector, { type ParticipationType } from "@/components/ParticipationTypeSelector";
 import ContributionDetailsForm, {
   isValidContributionAmount,
-  isValidPaymentInstructions,
+  isValidContributionNote,
   type ContributionDetails,
 } from "@/components/ContributionDetailsForm";
 import LiveScheduleEditor, {
@@ -69,7 +69,7 @@ export default function CreateParayanamPage() {
   const [participationType, setParticipationType] = useState<ParticipationType>("FREE");
   const [contribution, setContribution] = useState<ContributionDetails>({
     amount: "",
-    paymentUrl: "",
+    
     note: "",
   });
   const [liveSchedule, setLiveSchedule] = useState<LiveScheduleValue>(emptyLiveSchedule());
@@ -343,7 +343,7 @@ export default function CreateParayanamPage() {
   }, [step, lastStep]);
 
   const contributionValid =
-    isValidContributionAmount(contribution.amount) && isValidPaymentInstructions(contribution.paymentUrl);
+    isValidContributionAmount(contribution.amount) && isValidContributionNote(contribution.note);
 
   const canNext =
     currentStep === "details"
@@ -384,7 +384,7 @@ export default function CreateParayanamPage() {
     delivery_mode: deliveryMode,
     participation_type: participationType,
     contribution_amount: participationType === "PAID" && contribution.amount ? Number(contribution.amount) : null,
-    payment_url: participationType === "PAID" ? contribution.paymentUrl.trim() || null : null,
+    
     payment_note: participationType === "PAID" && contribution.note.trim() ? contribution.note.trim() : null,
     general_note: isMonetizationApproved && generalNote.trim() ? generalNote.trim() : null,
     challenge_type: isGroup ? (mode === "RELAY" ? "group_relay" : "group_standard") : "personal",
@@ -1180,7 +1180,7 @@ export default function CreateParayanamPage() {
             }
             contribution={
               participationType === "PAID"
-                ? { amount: contribution.amount, hasPaymentLink: isValidPaymentInstructions(contribution.paymentUrl) }
+                ? { amount: contribution.amount }
                 : null
             }
           />
