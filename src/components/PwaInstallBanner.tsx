@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { CheckCircle2, X } from "lucide-react";
 import logoImg from "@/assets/logo.png";
 import { supabase } from "@/integrations/supabase/client";
@@ -8,6 +8,12 @@ import { usePwaPromptEligibility } from "@/hooks/usePwaPromptEligibility";
 
 const HEADING = "Keep Narayaneeyam close";
 const AUTO_DISMISS_MS = 6000;
+const BROWSER_MENU_TITLE = "Install from your browser menu";
+const INSTALLED_SUCCESS: FollowUp = {
+  title: "You're all set!",
+  body: "Look for the icon on your home screen — tap it anytime to jump straight into chanting.",
+  tone: "success",
+};
 
 type FollowUp = {
   title: string;
@@ -21,6 +27,19 @@ export default function PwaInstallBanner() {
   const { user } = useAuth();
   const [closed, setClosed] = useState(false);
   const [followUp, setFollowUp] = useState<FollowUp>(null);
+  const fallbackRef = useRef(false);
+
+  useEffect(() => {
+    fallbackRef.current = followUp?.title === BROWSER_MENU_TITLE;
+  }, [followUp]);
+
+  useEffect(() => {
+    const onInstalled = () => {
+      if (fallbackRef.current) setFollowUp(INSTALLED_SUCCESS);
+    };
+    window.addEventListener("appinstalled", onInstalled);
+    return () => window.removeEventListener("appinstalled", onInstalled);
+  }, []);
 
   useEffect(() => {
     if (!followUp) return;
