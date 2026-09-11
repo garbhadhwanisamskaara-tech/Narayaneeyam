@@ -1,6 +1,8 @@
+import { useState } from "react";
 import { Check, Clock, ExternalLink, HandCoins, Loader2, Users, X } from "lucide-react";
 import type { PendingInvite } from "@/hooks/useParayanamParticipants";
 import { useCapabilities } from "@/hooks/useCapabilities";
+import { useParayanamPayment } from "@/hooks/useParayanamPayment";
 
 const fmt = (d: string | null) => {
   if (!d) return null;
@@ -111,7 +113,7 @@ export default function ParayanamInviteCard({ invite: i, busy, onAccept, onDecli
             className="inline-flex items-center gap-1.5 rounded-lg bg-gradient-peacock px-4 py-2 font-sans text-xs font-semibold text-primary-foreground hover:opacity-90 disabled:opacity-60"
           >
             {busy ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <HandCoins className="h-3.5 w-3.5" />}
-            {i.contribution_amount != null ? `Pay ₹${i.contribution_amount} to Join` : "Pay to Join"}
+            {i.contribution_amount != null ? `Pay ₹${i.contribution_amount}` : "Pay"}
           </button>
         ) : (
           <button
@@ -136,9 +138,20 @@ export default function ParayanamInviteCard({ invite: i, busy, onAccept, onDecli
 }
 
 /** Shown after a member accepts a contribution-based parayanam. */
-export function AwaitingContributionCard({ invite: i }: { invite: PendingInvite }) {
+export function AwaitingContributionCard({ invite: i, onPaid }: { invite: PendingInvite; onPaid?: () => void }) {
   const { canViewExternalPaymentLinks } = useCapabilities();
+  const { pay, payingId } = useParayanamPayment();
+  const [payError, setPayError] = useState<string | null>(null);
   const contributionSettled = i.contribution_status === "confirmed" || i.contribution_status === "not_required";
+  const paying = payingId === i.challenge_session_id;
+
+  const payNow = async () => {
+    setPayError(null);
+    await pay(i.challenge_session_id, {
+      onPaid: () => onPaid?.(),
+      onError: () => setPayError("Payment not completed"),
+    });
+  };
 
   if (contributionSettled) return null;
 
@@ -178,8 +191,8 @@ export function AwaitingContributionCard({ invite: i }: { invite: PendingInvite 
       {i.contribution_amount != null && (
         <p className="mt-2 font-sans text-xs text-foreground/80">Contribution: ₹{i.contribution_amount}</p>
       )}
-      {i.payment_url &&
-        (isPaymentLink(i.payment_url) ? (
+      {i.payment_url ? (
+        isPaymentLink(i.payment_url) ? (
           <a
             href={i.payment_url.trim()}
             target="_blank"
@@ -191,7 +204,22 @@ export function AwaitingContributionCard({ invite: i }: { invite: PendingInvite 
           </a>
         ) : (
           <p className="mt-2 whitespace-pre-wrap font-sans text-xs text-foreground/80">{i.payment_url}</p>
-        ))}
+        )
+      ) : (
+        paidPending && (
+          <div className="mt-3">
+            <button
+              onClick={() => void payNow()}
+              disabled={paying}
+              className="inline-flex items-center gap-1.5 rounded-lg bg-gradient-peacock px-4 py-2 font-sans text-xs font-semibold text-primary-foreground hover:opacity-90 disabled:opacity-60"
+            >
+              {paying ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <HandCoins className="h-3.5 w-3.5" />}
+              {i.contribution_amount != null ? `Pay ₹${i.contribution_amount}` : "Pay"}
+            </button>
+            {payError && <p className="mt-2 font-sans text-xs text-destructive">{payError}</p>}
+          </div>
+        )
+      )}
       <p className="mt-2 font-sans text-[11px] leading-snug text-muted-foreground">
         This contribution goes directly to the Guru — narayaneeyam.app does not process, verify, or hold this payment.
       </p>
