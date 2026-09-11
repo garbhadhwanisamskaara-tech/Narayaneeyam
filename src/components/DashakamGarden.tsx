@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { ChevronDown, ChevronUp } from "lucide-react";
+import { useRef, useState } from "react";
+import { ChevronDown, ChevronUp, Loader2, Share2 } from "lucide-react";
 import { getDashakamName, useDashakamNames } from "@/hooks/useDashakam";
 import { useLanguagePrefs } from "@/hooks/useLanguagePrefs";
 import { cn } from "@/lib/utils";
@@ -124,6 +124,12 @@ function GardenCell({
   );
 }
 
+function sanitizeFileName(text: string) {
+  return text
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-|-$/g, "");
+}
 
 export default function DashakamGarden({
   blooms,
@@ -137,6 +143,9 @@ export default function DashakamGarden({
 }: Props) {
   const interactive = !!tiles;
   const [expanded, setExpanded] = useState(false);
+  const [capturing, setCapturing] = useState(false);
+  const [captureError, setCaptureError] = useState<string | null>(null);
+  const gardenRef = useRef<HTMLDivElement>(null);
   const { scriptLang } = useLanguagePrefs();
   // Subscribe to the localized dashakam list so names re-render once loaded.
   useDashakamNames(scriptLang);
@@ -164,6 +173,54 @@ export default function DashakamGarden({
     .sort((a, b) => (b.scheduledDate ?? "").localeCompare(a.scheduledDate ?? "") || b.dashakamNo - a.dashakamNo)
     .slice(0, 5);
 
+  const handleShare = async () => {
+    if (!gardenRef.current || capturing) return;
+    setCapturing(true);
+    setCaptureError(null);
+    try {
+      const html2canvas = (await import("html2canvas")).default;
+      const canvas = await html2canvas(gardenRef.current, {
+        backgroundColor: getComputedStyle(gardenRef.current).backgroundColor || "#ffffff",
+        scale: 2,
+        useCORS: true,
+      });
+      const blob = await new Promise<Blob | null>((resolve) => canvas.toBlob(resolve, "image/png"));
+      if (!blob) throw new Error("Could not create image from garden.");
+
+      const fileName = `dashakam-garden-${sanitizeFileName(title)}.png`;
+      const file = new File([blob], fileName, { type: "image/png" });
+      const caption = subtitle || `${bloomed} of ${total} lotuses in full bloom`;
+
+      const shareData: ShareData = {
+        files: [file],
+        title,
+        text: `${title} — ${caption}`,
+      };
+
+      if (navigator.share && navigator.canShare && navigator.canShare(shareData)) {
+        await navigator.share(shareData);
+      } else {
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = fileName;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+      }
+    } catch (err) {
+      const isAbort =
+        err instanceof Error &&
+        (err.name === "AbortError" || err.message?.toLowerCase().includes("cancel") || err.message?.toLowerCase().includes("share"));
+      if (!isAbort) {
+        setCaptureError("Could not share the garden right now. Please try again.");
+      }
+    } finally {
+      setCapturing(false);
+    }
+  };
+
   return (
     <div className="rounded-2xl border border-border bg-card p-5 shadow-peacock">
       <div className="mb-4 flex items-start justify-between gap-3">
@@ -173,51 +230,72 @@ export default function DashakamGarden({
             {loading ? "Tending the garden…" : (subtitle ?? `${bloomed} of ${total} lotuses in full bloom`)}
           </p>
         </div>
+        <button
+          type="button"
+          onClick={handleShare}
+          disabled={capturing}
+          aria-label={capturing ? "Saving garden image" : "Share or download garden image"}
+          className={cn(
+            "flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-border bg-muted/50 text-muted-foreground transition-colors",
+            "hover:bg-muted hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
+            capturing && "cursor-wait opacity-60"
+          )}
+        >
+          {capturing ? <Loader2 className="h-4 w-4 animate-spin" /> : <Share2 className="h-4 w-4" />}
+        </button>
       </div>
 
-      {!showGrid ? (
-        <div className="flex flex-col items-center gap-4 py-2 sm:flex-row sm:items-center sm:justify-center sm:gap-8">
-          {/* The lotus you're working toward, shown large */}
-          <div className="flex flex-col items-center gap-2">
-            <div className="h-20 w-20 rounded-xl border border-border/60 bg-muted/40 p-1.5">
-              <Lotus percent={nextPercent} />
-            </div>
-            <p className="text-center font-sans text-xs text-muted-foreground">
-              {nextPercent >= 100 || !next ? "All blooming" : `Dashakam ${next.dashakamNo}`}
-            </p>
-          </div>
-
-          {/* Recently bloomed strip */}
-          {recent.length > 0 && (
-            <div className="flex flex-col items-center gap-2 sm:items-start">
-              <p className="font-sans text-xs text-muted-foreground">Recently bloomed</p>
-              <div className="flex gap-1.5">
-                {recent.map((o) => (
-                  <div key={o.key} className="h-10 w-10 rounded-lg border border-border/60 bg-muted/40 p-1">
-                    <Lotus percent={blooms.get(o.key) ?? 0} />
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-        </div>
-      ) : (
-        <div className="grid grid-cols-5 gap-1 sm:grid-cols-10 sm:gap-2">
-          {items.map((o) => (
-            <GardenCell
-              key={o.key}
-              occurrenceKey={o.key}
-              dashakamNo={o.dashakamNo}
-              scheduledDate={o.scheduledDate}
-              percent={blooms.get(o.key) ?? 0}
-              tile={tiles?.get(o.key)}
-              onTap={onTapDashakam}
-              pending={pendingDashakam === o.key}
-              lang={scriptLang}
-            />
-          ))}
-        </div>
+      {captureError && (
+        <p className="mb-3 rounded-lg border border-destructive/20 bg-destructive/10 px-3 py-2 font-sans text-xs text-destructive">
+          {captureError}
+        </p>
       )}
+
+      <div ref={gardenRef} className="rounded-xl bg-card p-1">
+        {!showGrid ? (
+          <div className="flex flex-col items-center gap-4 py-2 sm:flex-row sm:items-center sm:justify-center sm:gap-8">
+            {/* The lotus you're working toward, shown large */}
+            <div className="flex flex-col items-center gap-2">
+              <div className="h-20 w-20 rounded-xl border border-border/60 bg-muted/40 p-1.5">
+                <Lotus percent={nextPercent} />
+              </div>
+              <p className="text-center font-sans text-xs text-muted-foreground">
+                {nextPercent >= 100 || !next ? "All blooming" : `Dashakam ${next.dashakamNo}`}
+              </p>
+            </div>
+
+            {/* Recently bloomed strip */}
+            {recent.length > 0 && (
+              <div className="flex flex-col items-center gap-2 sm:items-start">
+                <p className="font-sans text-xs text-muted-foreground">Recently bloomed</p>
+                <div className="flex gap-1.5">
+                  {recent.map((o) => (
+                    <div key={o.key} className="h-10 w-10 rounded-lg border border-border/60 bg-muted/40 p-1">
+                      <Lotus percent={blooms.get(o.key) ?? 0} />
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+        ) : (
+          <div className="grid grid-cols-5 gap-1 sm:grid-cols-10 sm:gap-2">
+            {items.map((o) => (
+              <GardenCell
+                key={o.key}
+                occurrenceKey={o.key}
+                dashakamNo={o.dashakamNo}
+                scheduledDate={o.scheduledDate}
+                percent={blooms.get(o.key) ?? 0}
+                tile={tiles?.get(o.key)}
+                onTap={onTapDashakam}
+                pending={pendingDashakam === o.key}
+                lang={scriptLang}
+              />
+            ))}
+          </div>
+        )}
+      </div>
 
       {interactive ? (
         <p className="mt-3 text-center font-sans text-xs text-muted-foreground">
@@ -244,4 +322,3 @@ export default function DashakamGarden({
     </div>
   );
 }
-
