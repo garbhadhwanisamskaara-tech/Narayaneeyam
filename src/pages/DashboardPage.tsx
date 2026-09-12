@@ -47,7 +47,7 @@ export default function DashboardPage() {
       <SEO
         path="/dashboard"
         title="Your Progress — Sriman Narayaneeyam"
-        description="Track your devotional journey through Sriman Narayaneeyam — streak, completed Dashakams and your current chanting position."
+        description="Track your devotional journey through Sriman Narayaneeyam — completed Dashakams and your current chanting position."
       />
       <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
         <div className="mb-8">
@@ -101,7 +101,7 @@ export default function DashboardPage() {
               <div className="flex-1">
                 <p className="font-display text-base font-semibold text-foreground">Sign in to track your progress</p>
                 <p className="text-sm text-muted-foreground font-sans">
-                  Your streak, completed dashakams, and journey progress will sync across devices.
+                  Your completed dashakams and journey progress will sync across devices.
                 </p>
               </div>
               <Link
