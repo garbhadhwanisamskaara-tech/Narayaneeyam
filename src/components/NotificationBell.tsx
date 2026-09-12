@@ -39,6 +39,7 @@ export default function NotificationBell() {
   const [open, setOpen] = useState(false);
   const [gardenOpen, setGardenOpen] = useState(false);
   const [confirmDeclineId, setConfirmDeclineId] = useState<string | null>(null);
+  const [declineError, setDeclineError] = useState<string | null>(null);
   const wrapRef = useRef<HTMLDivElement>(null);
   const navigate = useNavigate();
 
@@ -69,12 +70,16 @@ export default function NotificationBell() {
   }, [open]);
 
   const declineContribution = async (id: string) => {
+    setDeclineError(null);
     try {
       await declineAwaiting(id);
       setConfirmDeclineId(null);
       toast.success("You have left the parayanam. You can be invited again later.");
-    } catch {
-      /* the item stays in the list so it can be retried */
+    } catch (e: any) {
+      // Keep the item so it can be retried, but say why it did not work.
+      const msg = e?.message ?? "Could not decline right now. Please try again.";
+      setDeclineError(msg);
+      toast.error(msg);
     }
   };
 
