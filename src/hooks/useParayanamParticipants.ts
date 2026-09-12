@@ -34,8 +34,7 @@ export interface PendingInvite extends Participant {
   general_note: string | null;
 }
 
-const COLS =
-  "id, challenge_session_id, user_id, status, invited_at, responded_at, contribution_status, access_status";
+const COLS = "id, challenge_session_id, user_id, status, invited_at, responded_at, contribution_status, access_status";
 
 /**
  * Invites a set of members to a parayanam. The owner (when opted in) is written
@@ -232,9 +231,7 @@ async function enrichPendingInvites(rows: Participant[]): Promise<PendingInvite[
     );
 
   const sessionById = new Map<string, any>(((sessions ?? []) as any[]).map((s) => [s.id, s]));
-  const groupIds = Array.from(
-    new Set(((sessions ?? []) as any[]).map((s) => s.group_id).filter(Boolean)),
-  ) as string[];
+  const groupIds = Array.from(new Set(((sessions ?? []) as any[]).map((s) => s.group_id).filter(Boolean))) as string[];
 
   const guruIds = Array.from(new Set(((sessions ?? []) as any[]).map((s) => s.user_id).filter(Boolean))) as string[];
   let guruNameById = new Map<string, string>();
@@ -483,9 +480,8 @@ export function useMyAwaitingContributions() {
     async (participantId: string) => {
       setBusyId(participantId);
       try {
-        const { data, error } = await (supabase as any).rpc("respond_to_parayanam_invite", {
+        const { data, error } = await (supabase as any).rpc("withdraw_pending_contribution", {
           p_participant_id: participantId,
-          p_status: "declined",
         });
         if (error) throw new Error(error.message);
         if (!data || data.length === 0) {
