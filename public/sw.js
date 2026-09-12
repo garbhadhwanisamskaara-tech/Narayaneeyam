@@ -116,6 +116,29 @@ self.addEventListener("fetch", (event) => {
     return;
   }
 
+  // Network-first for code: fresh after each deploy, cache only as an
+  // offline fallback.
+  if (CODE_EXTENSIONS.test(url.pathname)) {
+    event.respondWith(
+      (async () => {
+        const cache = await caches.open(SHELL_CACHE);
+        try {
+          const networkResponse = await fetch(request);
+          if (networkResponse && networkResponse.status === 200) {
+            cache.put(request, networkResponse.clone());
+          }
+          return networkResponse;
+        } catch (error) {
+          const cached = await cache.match(request);
+          if (cached) return cached;
+          throw error;
+        }
+      })(),
+    );
+    return;
+  }
+
+  // Cache-first for immutable static assets (icons, images, fonts, audio).
   if (STATIC_EXTENSIONS.test(url.pathname)) {
     event.respondWith(
       (async () => {
