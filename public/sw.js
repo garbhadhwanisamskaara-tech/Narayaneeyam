@@ -2,7 +2,8 @@
    - Existing push/notification handling is preserved unchanged.
    - Added fetch handler for basic offline app-shell support. */
 
-const SHELL_CACHE = "narayaneeyam-shell-v1";
+const SHELL_CACHE = "narayaneeyam-shell-v2";
+const CACHE_PREFIX = "narayaneeyam-shell-";
 const PRECACHE_URLS = [
   "/",
   "/index.html",
@@ -21,7 +22,20 @@ self.addEventListener("install", (event) => {
   self.skipWaiting();
 });
 
-self.addEventListener("activate", (event) => event.waitUntil(self.clients.claim()));
+self.addEventListener("activate", (event) =>
+  event.waitUntil(
+    (async () => {
+      // Wipe every older app-shell cache so stale bundles are never served again.
+      const names = await caches.keys();
+      await Promise.all(
+        names
+          .filter((name) => name.startsWith(CACHE_PREFIX) && name !== SHELL_CACHE)
+          .map((name) => caches.delete(name)),
+      );
+      await self.clients.claim();
+    })(),
+  ),
+);
 
 self.addEventListener("push", (event) => {
   let payload = {};
@@ -67,7 +81,11 @@ self.addEventListener("notificationclick", (event) => {
 /* Minimal fetch handler: network-first for navigations, cache-first for
    same-origin static assets, pass-through for everything else. */
 
-const STATIC_EXTENSIONS = /\.(?:js|css|png|jpg|jpeg|svg|gif|webp|json|ico|mp3|webm|wasm|woff|woff2|ttf|otf)$/i;
+// JS/CSS change with every deploy, so they must be network-first — a stale
+// bundle stuck in cache is what made the TWA run old code (e.g. the garden
+// bloom bug) long after the webapp was fixed.
+const CODE_EXTENSIONS = /\.(?:js|css)$/i;
+const STATIC_EXTENSIONS = /\.(?:png|jpg|jpeg|svg|gif|webp|json|ico|mp3|webm|wasm|woff|woff2|ttf|otf)$/i;
 
 self.addEventListener("fetch", (event) => {
   const { request } = event;
@@ -98,6 +116,29 @@ self.addEventListener("fetch", (event) => {
     return;
   }
 
+  // Network-first for code: fresh after each deploy, cache only as an
+  // offline fallback.
+  if (CODE_EXTENSIONS.test(url.pathname)) {
+    event.respondWith(
+      (async () => {
+        const cache = await caches.open(SHELL_CACHE);
+        try {
+          const networkResponse = await fetch(request);
+          if (networkResponse && networkResponse.status === 200) {
+            cache.put(request, networkResponse.clone());
+          }
+          return networkResponse;
+        } catch (error) {
+          const cached = await cache.match(request);
+          if (cached) return cached;
+          throw error;
+        }
+      })(),
+    );
+    return;
+  }
+
+  // Cache-first for immutable static assets (icons, images, fonts, audio).
   if (STATIC_EXTENSIONS.test(url.pathname)) {
     event.respondWith(
       (async () => {
