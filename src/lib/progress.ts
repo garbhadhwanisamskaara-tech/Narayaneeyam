@@ -28,13 +28,7 @@ export interface UserProgress {
   lastPage: string;
   completedVerses: string[]; // verse ids
   completedDashakams: number[];
-  totalChantingMinutes: number;
-  /** Leftover listening seconds not yet rolled into totalChantingMinutes */
-  chantingSecondsRemainder?: number;
-  currentStreak: number;
-  longestStreak: number;
   lastSessionDate: string;
-  totalSessions: number;
   bookmarks: string[];
   bookmarkEntries: BookmarkEntry[];
   favouriteEntries: FavouriteEntry[];
@@ -59,11 +53,7 @@ const defaultProgress: UserProgress = {
   lastPage: "/",
   completedVerses: [],
   completedDashakams: [],
-  totalChantingMinutes: 0,
-  currentStreak: 0,
-  longestStreak: 0,
   lastSessionDate: "",
-  totalSessions: 0,
   bookmarks: [],
   bookmarkEntries: [],
   favouriteEntries: [],
@@ -103,37 +93,11 @@ export function clearLocalSavedEntries(which: "bookmarks" | "favourites"): void 
   }
 }
 
-/**
- * Add real listening time (in seconds) to the user's total chanting time.
- * Keeps sub-minute leftovers so short bursts eventually add up.
- */
-export function addChantingSeconds(seconds: number): UserProgress {
-  if (!Number.isFinite(seconds) || seconds <= 0) return getProgress();
-  const current = getProgress();
-  const total = (current.chantingSecondsRemainder || 0) + seconds;
-  const wholeMinutes = Math.floor(total / 60);
-  return saveProgress({
-    totalChantingMinutes: current.totalChantingMinutes + wholeMinutes,
-    chantingSecondsRemainder: total - wholeMinutes * 60,
-  });
-}
-
 export function updateStreak() {
   const progress = getProgress();
   const today = new Date().toISOString().split("T")[0];
-  const yesterday = new Date(Date.now() - 86400000).toISOString().split("T")[0];
 
   if (progress.lastSessionDate === today) return progress;
 
-  let newStreak = 1;
-  if (progress.lastSessionDate === yesterday) {
-    newStreak = progress.currentStreak + 1;
-  }
-
-  return saveProgress({
-    currentStreak: newStreak,
-    longestStreak: Math.max(newStreak, progress.longestStreak),
-    lastSessionDate: today,
-    totalSessions: progress.totalSessions + 1,
-  });
+  return saveProgress({ lastSessionDate: today });
 }
