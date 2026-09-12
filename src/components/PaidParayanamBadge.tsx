@@ -56,7 +56,7 @@ export default function PaidParayanamBadge() {
         <PopoverTrigger asChild>
           <StarBadge label={label} interactive />
         </PopoverTrigger>
-        <PopoverContent side="bottom" align="end" className="w-auto max-w-[min(18rem,calc(100vw-2rem))] px-3 py-2">
+        <PopoverContent side="bottom" align="center" className="w-auto max-w-[min(18rem,calc(100vw-2rem))] px-3 py-2">
           <p className="font-sans text-xs text-popover-foreground">{label}</p>
         </PopoverContent>
       </Popover>
@@ -69,7 +69,7 @@ export default function PaidParayanamBadge() {
         <TooltipTrigger asChild>
           <StarBadge label={label} />
         </TooltipTrigger>
-        <TooltipContent side="bottom" align="end" className="max-w-[20rem]">
+        <TooltipContent side="bottom" align="center" className="max-w-[20rem]">
           <p className="font-sans text-xs">{label}</p>
         </TooltipContent>
       </Tooltip>
