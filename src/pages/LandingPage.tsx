@@ -74,7 +74,7 @@ const features = [
   {
     icon: "📊",
     name: "Practice Tracker",
-    desc: "Track your streak days, minutes chanted, and sessions completed. Build a meaningful, consistent devotional practice.",
+    desc: "Track your dashakam completions across the 100 Dashakams of Narayaneeyam. A simple, gentle view of how far your practice has grown."
   },
   {
     icon: "🌐",

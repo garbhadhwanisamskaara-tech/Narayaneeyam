@@ -157,15 +157,11 @@ const sections = [
     items: [
       {
         q: "What does the Progress page show?",
-        a: "Your dashboard shows how many of the 100 Dashakams you have completed, minutes chanted, sessions and your daily streak — a gentle picture of your practice over time.",
+        a: "Your dashboard shows how many of the 100 Dashakams you have completed — a gentle picture of your practice over time.",
       },
       {
         q: "How do I continue where I left off?",
         a: "The app remembers your last position. When you return, a Continue banner takes you straight back to that dashakam and verse.",
-      },
-      {
-        q: "How do streaks work?",
-        a: "Each day you chant adds a day to your streak. Consistency matters more than duration — even a few minutes keeps it going.",
       },
     ],
   },
