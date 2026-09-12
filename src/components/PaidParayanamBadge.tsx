@@ -48,7 +48,7 @@ export default function PaidParayanamBadge() {
 
   if (!parayanamNames.length) return null;
 
-  const label = `Paid for ${parayanamNames.join(", ")}`;
+  const label = `Approved for ${parayanamNames.join(", ")}`;
 
   if (isMobile) {
     return (
