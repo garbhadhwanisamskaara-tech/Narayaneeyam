@@ -586,7 +586,6 @@ export default function ChantPage() {
       return;
     }
 
-    logAudioEvent("audio_complete", selectedDashakam, currentVerse.paragraph, currentVerse.audio || "");
     markVerseFinished(selectedDashakam, currentVerse.paragraph).then(() => {
       checkDashakamCompletion(selectedDashakam, allVerses.length);
     });
@@ -750,8 +749,7 @@ export default function ChantPage() {
         if (loadLogged) return;
         loadLogged = true;
         const loadTime = Math.round(performance.now() - loadStart);
-        const eventType = loadTime > 1500 ? "audio_load_slow" : "audio_load";
-        logAudioEvent(eventType, selectedDashakam, currentVerse.paragraph, currentVerse.audio!, {
+        logAudioEvent("audio_load", selectedDashakam, currentVerse.paragraph, currentVerse.audio!, {
           load_time_ms: loadTime,
         });
       };
@@ -814,7 +812,6 @@ export default function ChantPage() {
       engine.pause();
       pausedRef.current = true;
       stopSloka();
-      logAudioEvent("audio_pause", selectedDashakam, displayVerses[highlightedVerse]?.paragraph || 0, "");
       setIsPlaying(false);
       setIsPaused(true);
     } else {

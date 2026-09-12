@@ -2,9 +2,8 @@ import { supabase } from "@/integrations/supabase/client";
 
 type EventType =
   | "user_login" | "user_logout" | "user_signup"
-  | "chant_started" | "learn_started" | "verse_started" | "verse_completed" | "chant_completed"
-  | "audio_play" | "audio_pause" | "audio_complete" | "audio_error" | "audio_load" | "audio_load_slow"
-  | "app_error" | "page_view";
+  | "chant_started" | "learn_started"
+  | "audio_play" | "audio_error" | "audio_load";
 
 interface EventMetadata {
   dashakam?: number;
@@ -65,7 +64,7 @@ export function logEvent(eventType: EventType, metadata?: EventMetadata): void {
 
 /** Convenience: log audio event with standard fields */
 export function logAudioEvent(
-  eventType: "audio_play" | "audio_pause" | "audio_complete" | "audio_error" | "audio_load" | "audio_load_slow",
+  eventType: "audio_play" | "audio_error" | "audio_load",
   dashakam: number,
   verse: number,
   audioFile: string,
