@@ -27,6 +27,7 @@ import BottomNav from "@/components/BottomNav";
 import NotificationBell from "@/components/NotificationBell";
 import SubscriptionBanner from "@/components/SubscriptionBanner";
 import PwaInstallBanner from "@/components/PwaInstallBanner";
+import PaidParayanamBadge from "@/components/PaidParayanamBadge";
 import { SUBSCRIPTION_ENABLED } from "@/config/features";
 import { useCapabilities } from "@/hooks/useCapabilities";
 import {
@@ -171,8 +172,13 @@ export default function Layout({ children }: { children: React.ReactNode }) {
                     className="flex items-center gap-2 rounded-lg bg-primary-foreground/10 px-3 py-1.5 text-primary-foreground transition-colors hover:bg-primary-foreground/15"
                     title="Account menu"
                   >
-                    <div className="flex h-7 w-7 items-center justify-center rounded-full bg-secondary text-secondary-foreground">
-                      <User className="h-4 w-4" />
+                    <div className="relative flex-shrink-0">
+                      <div className="flex h-7 w-7 items-center justify-center rounded-full bg-secondary text-secondary-foreground">
+                        <User className="h-4 w-4" />
+                      </div>
+                      <div className="absolute -bottom-1 -right-1">
+                        <PaidParayanamBadge />
+                      </div>
                     </div>
                     <span className="text-sm font-sans font-medium max-w-[120px] truncate">{displayName}</span>
                     <ChevronDown className="h-4 w-4 text-primary-foreground/70" />
@@ -239,14 +245,21 @@ export default function Layout({ children }: { children: React.ReactNode }) {
           <div className="lg:hidden flex items-center gap-2 flex-shrink-0">
             {!loading && user && <NotificationBell />}
             {!loading && user && (
-              <button
-                type="button"
-                onClick={() => setMobileOpen(!mobileOpen)}
-                className="flex h-8 w-8 items-center justify-center rounded-full bg-secondary text-secondary-foreground text-xs font-bold transition-transform"
-                title="Account menu"
-              >
-                {mobileOpen ? <X className="h-4 w-4" /> : (displayName?.[0] ?? "U").toUpperCase()}
-              </button>
+              <div className="relative">
+                <button
+                  type="button"
+                  onClick={() => setMobileOpen(!mobileOpen)}
+                  className="flex h-8 w-8 items-center justify-center rounded-full bg-secondary text-secondary-foreground text-xs font-bold transition-transform"
+                  title="Account menu"
+                >
+                  {mobileOpen ? <X className="h-4 w-4" /> : (displayName?.[0] ?? "U").toUpperCase()}
+                </button>
+                {!mobileOpen && (
+                  <div className="absolute -bottom-1 -right-1">
+                    <PaidParayanamBadge />
+                  </div>
+                )}
+              </div>
             )}
           </div>
         </div>
