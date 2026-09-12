@@ -234,7 +234,10 @@ export default function NotificationBell() {
                             </button>
                           )}
                           <button
-                            onClick={() => setConfirmDeclineId(i.id)}
+                            onClick={() => {
+                              setDeclineError(null);
+                              setConfirmDeclineId(i.id);
+                            }}
                             disabled={awaitingBusyId === i.id}
                             className="font-sans text-xs font-semibold text-muted-foreground underline underline-offset-2 hover:text-destructive disabled:opacity-60"
                           >
@@ -260,13 +263,21 @@ export default function NotificationBell() {
                                 Yes, decline
                               </button>
                               <button
-                                onClick={() => setConfirmDeclineId(null)}
+                                onClick={() => {
+                                  setDeclineError(null);
+                                  setConfirmDeclineId(null);
+                                }}
                                 disabled={awaitingBusyId === i.id}
                                 className="inline-flex items-center rounded-lg border border-border px-3 py-1.5 font-sans text-xs font-semibold text-muted-foreground hover:border-primary hover:text-primary disabled:opacity-60"
                               >
                                 Cancel
                               </button>
                             </div>
+                            {declineError && (
+                              <p className="mt-2 rounded-lg bg-destructive/10 px-2 py-1.5 font-sans text-xs text-destructive">
+                                {declineError}
+                              </p>
+                            )}
                           </div>
                         )}
                       </CollapsibleItem>
