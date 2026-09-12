@@ -176,7 +176,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
                       <div className="flex h-7 w-7 items-center justify-center rounded-full bg-secondary text-secondary-foreground">
                         <User className="h-4 w-4" />
                       </div>
-                      <div className="absolute -bottom-1 -right-1" onClick={(event) => event.stopPropagation()}>
+                      <div className="absolute -bottom-1 -right-1">
                         <PaidParayanamBadge />
                       </div>
                     </div>
