@@ -14,35 +14,11 @@ interface UserProgressData {
   completedDashakams: CompletedDashakam[];
   dashakamsCompleted: number;
   lastActivity: string | null;
-  currentStreak: number;
   totalDashakams: number;
   completionPercentage: number;
   markComplete: (dashakamNo: number, pathwayId?: string) => Promise<void>;
   loading: boolean;
   isGuest: boolean;
-}
-
-function calculateStreak(dates: string[]): number {
-  if (dates.length === 0) return 0;
-  const unique = [...new Set(dates)].sort().reverse();
-  const today = new Date().toISOString().split("T")[0];
-  const yesterday = new Date(Date.now() - 86400000).toISOString().split("T")[0];
-
-  // Streak must include today or yesterday
-  if (unique[0] !== today && unique[0] !== yesterday) return 0;
-
-  let streak = 1;
-  for (let i = 0; i < unique.length - 1; i++) {
-    const curr = new Date(unique[i]);
-    const prev = new Date(unique[i + 1]);
-    const diffDays = (curr.getTime() - prev.getTime()) / 86400000;
-    if (diffDays === 1) {
-      streak++;
-    } else {
-      break;
-    }
-  }
-  return streak;
 }
 
 export function useUserProgress(): UserProgressData {
@@ -103,7 +79,6 @@ export function useUserProgress(): UserProgressData {
 
   const dashakamsCompleted = new Set(completedDashakams.map((c) => c.dashakam_no)).size;
   const lastActivity = completedDashakams.length > 0 ? completedDashakams[0].completed_date : null;
-  const currentStreak = calculateStreak(completedDashakams.map((c) => c.completed_date));
   const completionPercentage = Math.round((dashakamsCompleted / 100) * 100);
 
   const markComplete = useCallback(
@@ -158,7 +133,6 @@ export function useUserProgress(): UserProgressData {
     completedDashakams,
     dashakamsCompleted,
     lastActivity,
-    currentStreak,
     totalDashakams: 100,
     completionPercentage,
     markComplete,
