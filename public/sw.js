@@ -2,7 +2,8 @@
    - Existing push/notification handling is preserved unchanged.
    - Added fetch handler for basic offline app-shell support. */
 
-const SHELL_CACHE = "narayaneeyam-shell-v1";
+const SHELL_CACHE = "narayaneeyam-shell-v2";
+const CACHE_PREFIX = "narayaneeyam-shell-";
 const PRECACHE_URLS = [
   "/",
   "/index.html",
@@ -21,7 +22,20 @@ self.addEventListener("install", (event) => {
   self.skipWaiting();
 });
 
-self.addEventListener("activate", (event) => event.waitUntil(self.clients.claim()));
+self.addEventListener("activate", (event) =>
+  event.waitUntil(
+    (async () => {
+      // Wipe every older app-shell cache so stale bundles are never served again.
+      const names = await caches.keys();
+      await Promise.all(
+        names
+          .filter((name) => name.startsWith(CACHE_PREFIX) && name !== SHELL_CACHE)
+          .map((name) => caches.delete(name)),
+      );
+      await self.clients.claim();
+    })(),
+  ),
+);
 
 self.addEventListener("push", (event) => {
   let payload = {};
