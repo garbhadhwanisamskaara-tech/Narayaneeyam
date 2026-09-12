@@ -124,20 +124,17 @@ export function AudioProvider({ children }: { children: ReactNode }) {
     const onDurationChange = () => commitTime(true);
 
     const onEnded = () => {
-      stopTracking();
       pauseReasonRef.current = "ended";
       setState((s) => ({ ...s, isPlaying: false, isPaused: false, progress: 100 }));
       onEndedRef.current?.();
     };
     const onPause = () => {
-      stopTracking();
       // Any pause not explicitly attributed is a browser/system interruption
       if (pauseReasonRef.current === null) pauseReasonRef.current = "system";
       // Only mark paused if we didn't explicitly stop (src cleared)
       setState((s) => ({ ...s, isPlaying: false, isPaused: !!s.src }));
     };
     const onPlaying = () => {
-      startTracking();
       pauseReasonRef.current = null;
       setState((s) => (s.isPlaying && !s.isPaused ? s : { ...s, isPlaying: true, isPaused: false }));
     };
@@ -180,7 +177,7 @@ export function AudioProvider({ children }: { children: ReactNode }) {
       a.removeEventListener("waiting", onWaiting);
       a.removeEventListener("error", onError);
     };
-  }, [audio, startTracking, stopTracking]);
+  }, [audio]);
 
 
   // --- Page lifecycle: restore ONLY playback the system interrupted ---
