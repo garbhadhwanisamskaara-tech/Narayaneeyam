@@ -1,9 +1,7 @@
 /**
- * Static Devotion Pathways data with Supabase integration.
- * Saves to user_progress table when logged in, localStorage fallback for guests.
+ * Static festival pathway data and helper functions.
  */
 
-import { supabase } from "@/integrations/supabase/client";
 
 export interface DevotionPathway {
   id: string;
