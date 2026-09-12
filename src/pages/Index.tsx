@@ -4,7 +4,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import {
   Mic,
   FileText,
-  Flame,
+  
   BookOpen,
   Headphones,
   ChevronDown,
