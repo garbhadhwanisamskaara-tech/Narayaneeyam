@@ -1,9 +1,7 @@
 /**
- * Static Devotion Pathways data with Supabase integration.
- * Saves to user_progress table when logged in, localStorage fallback for guests.
+ * Static festival pathway data and helper functions.
  */
 
-import { supabase } from "@/integrations/supabase/client";
 
 export interface DevotionPathway {
   id: string;
@@ -13,7 +11,7 @@ export interface DevotionPathway {
   dashakams: number[];
   display_order: number;
   active: boolean;
-  type: "standard" | "festival" | "journey";
+  type: "standard" | "festival";
 }
 
 export interface FestivalPathway {
@@ -84,129 +82,3 @@ export function getTodayFestival(): FestivalCalendarEntry | null {
   return calendar.find((f) => f.festival_date === today) ?? null;
 }
 
-// ─── All pathways for the card grid ──────────────────────────────────────────
-export const DEVOTION_PATHWAYS: DevotionPathway[] = [
-  {
-    id: "full-narayaneeyam",
-    name: "Full Narayaneeyam",
-    description: "Chant all 100 Dashakams",
-    icon: "BookOpen",
-    dashakams: Array.from({ length: 100 }, (_, i) => i + 1),
-    display_order: 1,
-    active: true,
-    type: "standard",
-  },
-  {
-    id: "festival-pathways",
-    name: "Festival Pathways",
-    description: "Dashakams recommended for important festivals",
-    icon: "Sparkles",
-    dashakams: [],
-    display_order: 2,
-    active: true,
-    type: "festival",
-  },
-  {
-    id: "mini-narayaneeyam",
-    name: "Mini Narayaneeyam",
-    description: "Condensed set of important Dashakams",
-    icon: "Star",
-    dashakams: MINI_NARAYANEEYAM,
-    display_order: 3,
-    active: true,
-    type: "standard",
-  },
-  {
-    id: "100-day-journey",
-    name: "100 Day Journey",
-    description: "One Dashakam per day for 100 days",
-    icon: "Calendar",
-    dashakams: Array.from({ length: 100 }, (_, i) => i + 1),
-    display_order: 4,
-    active: true,
-    type: "journey",
-  },
-  {
-    id: "super-mini-narayaneeyam",
-    name: "Super Mini Narayaneeyam",
-    description: "Short daily devotion — 5 key Dashakams",
-    icon: "Zap",
-    dashakams: SUPER_MINI_NARAYANEEYAM,
-    display_order: 5,
-    active: true,
-    type: "standard",
-  },
-];
-
-// ─── 100-Day Journey progress ────────────────────────────────────────────────
-const JOURNEY_KEY = "100day_journey";
-
-export interface JourneyProgress {
-  pathway_id: string;
-  started_at: string;
-  completions: { dashakam: number; date: string }[];
-}
-
-export function getJourneyProgress(): JourneyProgress | null {
-  try {
-    const raw = localStorage.getItem(JOURNEY_KEY);
-    return raw ? JSON.parse(raw) : null;
-  } catch {
-    return null;
-  }
-}
-
-export function saveJourneyProgress(progress: JourneyProgress): void {
-  localStorage.setItem(JOURNEY_KEY, JSON.stringify(progress));
-}
-
-export function startJourney(): JourneyProgress {
-  const progress: JourneyProgress = {
-    pathway_id: "100-day-journey",
-    started_at: new Date().toISOString(),
-    completions: [],
-  };
-  saveJourneyProgress(progress);
-  return progress;
-}
-
-/**
- * Mark a dashakam complete. If userId is provided, also saves to Supabase.
- */
-export function markDayComplete(dashakam: number, userId?: string): JourneyProgress {
-  let progress = getJourneyProgress();
-  if (!progress) progress = startJourney();
-  const today = new Date().toISOString().split("T")[0];
-
-  if (!progress.completions.find((c) => c.dashakam === dashakam)) {
-    progress.completions.push({ dashakam, date: today });
-    saveJourneyProgress(progress);
-
-    // If logged in, also save to Supabase
-    if (userId) {
-      supabase
-        .from("user_progress")
-        .upsert(
-          {
-            user_id: userId,
-            pathway_id: "100-day-journey",
-            dashakam_no: dashakam,
-            completed_date: today,
-          },
-          { onConflict: "user_id,pathway_id,dashakam_no" }
-        )
-        .then(() => {});
-    }
-  }
-  return progress;
-}
-
-export function shouldShowJourneyOnDashboard(): boolean {
-  const progress = getJourneyProgress();
-  if (!progress || progress.completions.length === 0) return false;
-  const lastCompletion = progress.completions[progress.completions.length - 1];
-  const lastDate = new Date(lastCompletion.date);
-  const now = new Date();
-  const daysSince = Math.floor((now.getTime() - lastDate.getTime()) / (1000 * 60 * 60 * 24));
-  return daysSince <= 7;
-}
