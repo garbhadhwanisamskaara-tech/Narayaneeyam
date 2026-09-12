@@ -218,10 +218,6 @@ export default function Index() {
                   Dashakam {progress.lastDashakam}, Verse {progress.lastParagraph}
                 </p>
               </div>
-              <div className="flex items-center gap-2 text-secondary">
-                <Flame className="h-5 w-5" />
-                <span className="font-display font-bold text-lg">{progress.currentStreak}</span>
-              </div>
               <Link
                 to={progress.lastPage || "/chant"}
                 className="rounded-lg bg-gradient-gold px-4 py-2 font-sans text-sm font-semibold text-primary shadow-gold transition-transform hover:scale-105"
@@ -328,9 +324,6 @@ export default function Index() {
         >
           {[
             { label: "Verses Chanted", value: progress.completedVerses.length, icon: BookOpen },
-            { label: "Streak Days", value: progress.currentStreak, icon: Flame },
-            { label: "Minutes", value: progress.totalChantingMinutes, icon: Mic },
-            { label: "Sessions", value: progress.totalSessions, icon: Headphones },
           ].map((stat) => (
             <div key={stat.label} className="rounded-xl bg-gradient-peacock p-5 text-center">
               <stat.icon className="h-5 w-5 text-gold-light mx-auto mb-2" />
