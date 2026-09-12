@@ -81,7 +81,11 @@ self.addEventListener("notificationclick", (event) => {
 /* Minimal fetch handler: network-first for navigations, cache-first for
    same-origin static assets, pass-through for everything else. */
 
-const STATIC_EXTENSIONS = /\.(?:js|css|png|jpg|jpeg|svg|gif|webp|json|ico|mp3|webm|wasm|woff|woff2|ttf|otf)$/i;
+// JS/CSS change with every deploy, so they must be network-first — a stale
+// bundle stuck in cache is what made the TWA run old code (e.g. the garden
+// bloom bug) long after the webapp was fixed.
+const CODE_EXTENSIONS = /\.(?:js|css)$/i;
+const STATIC_EXTENSIONS = /\.(?:png|jpg|jpeg|svg|gif|webp|json|ico|mp3|webm|wasm|woff|woff2|ttf|otf)$/i;
 
 self.addEventListener("fetch", (event) => {
   const { request } = event;
