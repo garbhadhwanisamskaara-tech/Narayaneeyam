@@ -19,7 +19,6 @@ export default function DashboardPage() {
     completedDashakams,
     dashakamsCompleted,
     lastActivity,
-    currentStreak,
     completionPercentage,
     loading: progressLoading,
     isGuest,
@@ -36,7 +35,7 @@ export default function DashboardPage() {
   const daysActive =
     completedDashakams.length > 0
       ? Math.max(1, new Set(completedDashakams.map((c) => c.completed_date)).size)
-      : Math.max(1, localProgress.totalSessions);
+      : 1;
   const avgPerDay = daysActive > 0 ? dashakamsCompleted / daysActive : 0;
   const remaining = 100 - dashakamsCompleted;
   const estDays = avgPerDay > 0 ? Math.ceil(remaining / avgPerDay) : null;
@@ -129,18 +128,6 @@ export default function DashboardPage() {
               value: `D${currentDashakam} · V${currentVerse}`,
               pct: (currentDashakam / 100) * 100,
               color: "hsl(var(--secondary))",
-            },
-            {
-              label: "Streak",
-              value: `${currentStreak} day${currentStreak !== 1 ? "s" : ""}`,
-              pct: Math.min(100, currentStreak * 10),
-              color: "hsl(42, 70%, 50%)",
-            },
-            {
-              label: "Sessions",
-              value: `${localProgress.totalSessions}`,
-              pct: Math.min(100, localProgress.totalSessions * 5),
-              color: "hsl(var(--primary))",
             },
           ].map((item, i) => (
             <motion.div
@@ -280,29 +267,6 @@ export default function DashboardPage() {
           ))}
         </div>
 
-        {/* Devotion Streak */}
-        <motion.div
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.3 }}
-          className="rounded-xl border border-border bg-card p-6 mb-8"
-        >
-          <div className="flex items-center gap-4">
-            <div className="flex items-center gap-2">
-              <span className="text-3xl">🪷</span>
-              <Flame className="h-8 w-8 text-secondary" />
-            </div>
-            <div>
-              <p className="font-display text-2xl font-bold text-foreground">
-                {currentStreak} Day{currentStreak !== 1 ? "s" : ""} Chanting Streak
-              </p>
-              <p className="text-sm text-muted-foreground font-sans">
-                {currentStreak > 0 ? "Keep the flame alive! 🔥" : "Start chanting today to begin your streak 🪔"}
-              </p>
-            </div>
-          </div>
-        </motion.div>
-
         {/* Recently Completed */}
         {recentCompleted.length > 0 && (
           <motion.div
@@ -339,9 +303,6 @@ export default function DashboardPage() {
           <div className="grid grid-cols-2 gap-3">
             {[
               { icon: BookOpen, label: "Dashakams Done", value: `${dashakamsCompleted} / 100` },
-              { icon: Clock, label: "Total Time", value: `${localProgress.totalChantingMinutes} min` },
-              { icon: Flame, label: "Current Streak", value: `${currentStreak} days` },
-              { icon: Mic, label: "Total Sessions", value: `${localProgress.totalSessions}` },
             ].map((s) => (
               <div key={s.label} className="flex items-center gap-3 rounded-lg bg-muted/50 p-3">
                 <s.icon className="h-5 w-5 text-secondary shrink-0" />
