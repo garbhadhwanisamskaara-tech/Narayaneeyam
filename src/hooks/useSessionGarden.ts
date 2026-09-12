@@ -95,11 +95,24 @@ export function useSessionGarden(sessionId: string | null | undefined) {
 
     const ids = scheduleRows.map((r) => r.id);
     if (ids.length) {
-      const { data: prog } = await (supabase as any)
-        .from("parayanam_member_progress")
-        .select("schedule_id, user_id")
-        .in("schedule_id", ids);
-      setProgress((prog ?? []) as { schedule_id: string; user_id: string }[]);
+      // A parayanam with many members easily exceeds the default 1000-row
+      // response cap (100 dashakams x N chanters), which used to silently
+      // drop completions and turn already-bloomed lotuses back into buds.
+      // Page through the rows until every completion is in hand.
+      const all: { schedule_id: string; user_id: string }[] = [];
+      const PAGE = 1000;
+      for (let from = 0; ; from += PAGE) {
+        const { data: page, error: pageErr } = await (supabase as any)
+          .from("parayanam_member_progress")
+          .select("schedule_id, user_id")
+          .in("schedule_id", ids)
+          .order("schedule_id", { ascending: true })
+          .range(from, from + PAGE - 1);
+        const rowsPage = (page ?? []) as { schedule_id: string; user_id: string }[];
+        all.push(...rowsPage);
+        if (pageErr || rowsPage.length < PAGE) break;
+      }
+      setProgress(all);
     } else {
       setProgress([]);
     }
