@@ -8,8 +8,6 @@ import {
   useMemo,
   type ReactNode,
 } from "react";
-import { addChantingSeconds } from "@/lib/progress";
-import { recordListeningTimeSupabase } from "@/lib/supabaseProgress";
 import { registerAudioElement } from "@/lib/globalMute";
 import { track } from "@/lib/analytics";
 
@@ -96,52 +94,6 @@ export function AudioProvider({ children }: { children: ReactNode }) {
     if (import.meta.env.DEV) console.warn("[AudioEngine]", ...args);
   };
 
-
-  // --- Real listening-time tracking (wall clock, seek-proof) ---
-  const listenStartRef = useRef<number | null>(null);
-  const flushTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
-
-  /** Commit elapsed wall-clock time since listening started. */
-  const flushListeningTime = useCallback((keepTracking: boolean) => {
-    const startedAt = listenStartRef.current;
-    if (startedAt == null) return;
-    const elapsed = (Date.now() - startedAt) / 1000;
-    listenStartRef.current = keepTracking ? Date.now() : null;
-    if (elapsed <= 0.5) return;
-    addChantingSeconds(elapsed);
-    void recordListeningTimeSupabase(elapsed);
-  }, []);
-
-  const startTracking = useCallback(() => {
-    if (listenStartRef.current == null) listenStartRef.current = Date.now();
-    if (flushTimerRef.current == null) {
-      flushTimerRef.current = setInterval(() => flushListeningTime(true), 60000);
-    }
-  }, [flushListeningTime]);
-
-  const stopTracking = useCallback(() => {
-    flushListeningTime(false);
-    if (flushTimerRef.current != null) {
-      clearInterval(flushTimerRef.current);
-      flushTimerRef.current = null;
-    }
-  }, [flushListeningTime]);
-
-  // Flush on tab close / background so nothing is lost
-  useEffect(() => {
-    const onHide = () => {
-      if (listenStartRef.current != null) flushListeningTime(true);
-    };
-    window.addEventListener("pagehide", onHide);
-    document.addEventListener("visibilitychange", onHide);
-    return () => {
-      window.removeEventListener("pagehide", onHide);
-      document.removeEventListener("visibilitychange", onHide);
-    };
-  }, [flushListeningTime]);
-
-  // Cleanup on unmount
-  useEffect(() => stopTracking, [stopTracking]);
 
   // --- Native media event wiring (single source of truth, no polling) ---
   useEffect(() => {
