@@ -7,7 +7,6 @@ import {
 import { Card, CardContent } from "@/components/ui/card";
 import { type DevotionPathway } from "@/data/devotionPathways";
 import PathwayDashakamList from "@/components/PathwayDashakamList";
-import HundredDayJourney from "@/components/HundredDayJourney";
 import { useParayanamTemplates } from "@/hooks/useParayanamTemplates";
 import SEO from "@/components/SEO";
 
@@ -41,21 +40,6 @@ export default function DevotionPathwaysPage() {
   const handleDashakamClick = (dashakamNumber: number) => {
     navigate(`/chant?dashakam=${dashakamNumber}`);
   };
-
-  // ─── 100-Day Journey (retained for any future journey entry) ───────
-  if (selectedPathway?.type === "journey") {
-    return (
-      <div className="container mx-auto px-4 py-6 max-w-3xl">
-        <button
-          onClick={handleBack}
-          className="flex items-center gap-2 text-sm font-sans text-muted-foreground hover:text-foreground mb-4 transition-colors"
-        >
-          <ArrowLeft className="h-4 w-4" /> Back to Pathways
-        </button>
-        <HundredDayJourney onDashakamClick={handleDashakamClick} />
-      </div>
-    );
-  }
 
   // ─── Standard pathway dashakam list ────────────────────────
   if (selectedPathway) {
