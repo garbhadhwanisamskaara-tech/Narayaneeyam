@@ -74,7 +74,7 @@ const features = [
   {
     icon: "📊",
     name: "Practice Tracker",
-    desc: "Track your streak days, minutes chanted, and sessions completed. Build a meaningful, consistent devotional practice.",
+    desc: "Track your dashakam completions across the 100 Dashakams of Narayaneeyam. A simple, gentle view of how far your practice has grown."
   },
   {
     icon: "🌐",
@@ -532,7 +532,7 @@ export default function LandingPage() {
               <li>Sanskrit Devanagari plus Tamil, Telugu, Malayalam, Kannada, Hindi, Marathi and English scripts</li>
               <li>Verse meanings, dashakam benefits, remarks and prasadam</li>
               <li>Personal bookmarks, favourites and playlists</li>
-              <li>Practice streaks and progress tracking</li>
+              <li>Dashakam completion tracking</li>
               <li>Private group parayanams with family and friends</li>
               <li>Listen — devotional audio while on the go</li>
               <li>Works in any browser — add it to your home screen on iPhone or Android</li>

@@ -37,7 +37,7 @@ export const faqSections = [
   {
     heading: "Progress, Playlists and Groups",
     questions: [
-      { q: "Can I track my progress?", a: "Yes. Once signed in, your Progress page shows dashakams completed out of 100, chanting minutes, sessions and your daily streak, and a Continue banner brings you back to exactly where you stopped." },
+      { q: "Can I track my progress?", a: "Yes. Once signed in, your Progress page shows how many of the 100 Dashakams you have completed, and a Continue banner brings you back to exactly where you stopped." },
       { q: "Can I create a custom playlist?", a: "Yes — the Playlist Builder lets you arrange your chosen verses or dashakams in any order and set how many times each one loops, for a personalised chanting session." },
       { q: "What is a Group Parayanam?", a: "You can create a group, invite family or friends with a link, and organise a parayanam together. Participants accept their invitation, dashakams are either shared by everyone or split among participants, and the group's Lotus Garden shows the collective progress as each dashakam is completed. It is your own private group — not a public or live global chanting session." },
       { q: "What are Festival Parayanams and the Prasadam Guide?", a: "Festival Parayanams list the dashakams traditionally chanted on specific festival days along with their benefits. The Prasadam Guide lists the prasadam associated with particular verses, so you can prepare your offering." },
