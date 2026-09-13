@@ -124,7 +124,7 @@ export default function DashboardPage() {
           <motion.article initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} className="rounded-lg border border-border bg-card p-4">
             <div className="flex items-start justify-between gap-2">
               <p className="font-sans text-xs font-semibold uppercase text-muted-foreground">Lifetime Dashakams</p>
-              <InfoTip text="Unique Dashakams completed across your devotional journey." />
+              <InfoTip text="The unique dashakams you've ever completed, out of 100 — counted once each, no matter how many times you revisit them." />
             </div>
             <div className="mt-2 flex items-center gap-3">
               <div className="relative shrink-0">
