@@ -3,6 +3,7 @@ import { Link, useSearchParams } from "react-router-dom";
 import { motion } from "framer-motion";
 import { ArrowLeft, Flower2, Loader2, Users } from "lucide-react";
 import SEO from "@/components/SEO";
+import ParayanamProgressLotus from "@/components/ParayanamProgressLotus";
 import {
   useParayanamReport,
   type ParayanamReport,
@@ -21,9 +22,20 @@ function fmtDate(d: string | null) {
 type Expanded = "completed" | "pending" | null;
 
 /** Compact row: three numbers, each opening its own list. */
-function StatsRow({ label, subtitle, stats }: { label: string; subtitle?: string; stats: ReportStats }) {
+function StatsRow({
+  label,
+  subtitle,
+  stats,
+  showParayanamLotus = false,
+}: {
+  label: string;
+  subtitle?: string;
+  stats: ReportStats;
+  showParayanamLotus?: boolean;
+}) {
   const [open, setOpen] = useState<Expanded>(null);
   const toggle = (v: Expanded) => setOpen((prev) => (prev === v ? null : v));
+  const total = stats.completed + stats.notCompleted;
 
   const numberBtn = (
     value: number,
@@ -48,9 +60,12 @@ function StatsRow({ label, subtitle, stats }: { label: string; subtitle?: string
   return (
     <div className="rounded-xl border border-border bg-card p-4">
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <div className="min-w-0">
-          <p className="truncate font-display text-base font-semibold text-foreground">{label}</p>
-          {subtitle && <p className="font-sans text-xs text-muted-foreground">{subtitle}</p>}
+        <div className="flex min-w-0 items-center gap-2">
+          {showParayanamLotus && <ParayanamProgressLotus completed={stats.completed} total={total} />}
+          <div className="min-w-0">
+            <p className="truncate font-display text-base font-semibold text-foreground">{label}</p>
+            {subtitle && <p className="font-sans text-xs text-muted-foreground">{subtitle}</p>}
+          </div>
         </div>
         <div className="flex gap-2">
           {numberBtn(stats.completed, "Completed", "completed", "text-primary")}
@@ -111,9 +126,15 @@ function ParayanamBlock({
   if (isOwner && mode === "member") {
     return (
       <div className="space-y-2">
-        <p className="font-sans text-xs uppercase tracking-wide text-muted-foreground">
-          {p.name} · {dates}
-        </p>
+        <div className="flex items-center gap-2">
+          <ParayanamProgressLotus
+            completed={p.aggregate.completed}
+            total={p.aggregate.completed + p.aggregate.notCompleted}
+          />
+          <p className="font-sans text-xs uppercase tracking-wide text-muted-foreground">
+            {p.name} · {dates}
+          </p>
+        </div>
         {p.members.length === 0 ? (
           <p className="font-sans text-sm text-muted-foreground">No confirmed participants yet.</p>
         ) : (
@@ -126,7 +147,7 @@ function ParayanamBlock({
   }
 
   if (isOwner && mode === "group") {
-    return <StatsRow label={p.name} subtitle={`${dates} · whole group`} stats={p.aggregate} />;
+    return <StatsRow label={p.name} subtitle={`${dates} · whole group`} stats={p.aggregate} showParayanamLotus />;
   }
 
   return (
@@ -134,6 +155,7 @@ function ParayanamBlock({
       label={p.name}
       subtitle={dates}
       stats={p.mine ?? { completedList: [], notCompletedList: [], completed: 0, notCompleted: 0, blooms: 0, expected: 0 }}
+      showParayanamLotus
     />
   );
 }
