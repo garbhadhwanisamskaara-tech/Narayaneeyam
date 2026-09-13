@@ -3,6 +3,8 @@ import { ChevronLeft, History } from "lucide-react";
 import { useMyGardenSessions } from "@/hooks/useMyGardenSessions";
 import { useSessionGarden } from "@/hooks/useSessionGarden";
 import DashakamGarden from "@/components/DashakamGarden";
+import type { ParayanamReport } from "@/hooks/useParayanamReport";
+import { Button } from "@/components/ui/button";
 import {
   Dialog,
   DialogContent,
@@ -14,6 +16,9 @@ import {
 interface Props {
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  initialSessionId?: string | null;
+  initialSessionLabel?: string;
+  ownerReport?: ParayanamReport | null;
 }
 
 /**
@@ -26,25 +31,35 @@ interface Props {
  * read-only: the final bloom state exactly as it stood, with no
  * tap-to-complete interaction at all.
  */
-export default function MyGardenDialog({ open, onOpenChange }: Props) {
+export default function MyGardenDialog({
+  open,
+  onOpenChange,
+  initialSessionId,
+  initialSessionLabel,
+  ownerReport,
+}: Props) {
   const { sessions, loading: sessionsLoading } = useMyGardenSessions();
   const { sessions: pastSessions, loading: pastLoading } = useMyGardenSessions({ view: "completed" });
   const [selectedSessionId, setSelectedSessionId] = useState<string | null>(null);
   const [viewingPast, setViewingPast] = useState(false);
+  const [gardenView, setGardenView] = useState<"mine" | "group">("mine");
 
   // Fresh picker state each time the dialog opens.
   useEffect(() => {
     if (!open) {
       setSelectedSessionId(null);
       setViewingPast(false);
+      setGardenView("mine");
+    } else if (initialSessionId) {
+      setSelectedSessionId(initialSessionId);
     }
-  }, [open]);
+  }, [initialSessionId, open]);
 
   // A single active parayanam skips the picker entirely (past view always
   // shows its own list, even with one entry, so the way back stays visible).
   useEffect(() => {
-    if (open && !viewingPast && sessions.length === 1) setSelectedSessionId(sessions[0].id);
-  }, [open, viewingPast, sessions]);
+    if (open && !viewingPast && !selectedSessionId && sessions.length === 1) setSelectedSessionId(sessions[0].id);
+  }, [open, viewingPast, selectedSessionId, sessions]);
 
   const { tiles, blooms, occurrences, loading, pending, toggleDashakam } =
     useSessionGarden(selectedSessionId);
@@ -67,7 +82,14 @@ export default function MyGardenDialog({ open, onOpenChange }: Props) {
 
   const activeList = viewingPast ? pastSessions : sessions;
   const selectedSession = activeList.find((s) => s.id === selectedSessionId);
+  const selectedLabel = selectedSession?.label ?? initialSessionLabel;
   const picking = selectedSessionId === null && (viewingPast || activeList.length > 1);
+  const groupOccurrences = ownerReport?.aggregateGarden.map((item) => ({
+    key: item.key,
+    dashakamNo: item.dashakamNo,
+    scheduledDate: item.scheduledDate,
+  }));
+  const groupBlooms = new Map(ownerReport?.aggregateGarden.map((item) => [item.key, item.percent]) ?? []);
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -139,13 +161,40 @@ export default function MyGardenDialog({ open, onOpenChange }: Props) {
                 )}
               </div>
             </DialogHeader>
+            {!viewingPast && ownerReport && (
+              <div className="mx-auto inline-flex rounded-lg border border-border bg-background p-1">
+                <Button
+                  type="button"
+                  size="sm"
+                  variant={gardenView === "mine" ? "default" : "ghost"}
+                  onClick={() => setGardenView("mine")}
+                >
+                  Your garden
+                </Button>
+                <Button
+                  type="button"
+                  size="sm"
+                  variant={gardenView === "group" ? "default" : "ghost"}
+                  onClick={() => setGardenView("group")}
+                >
+                  Group garden
+                </Button>
+              </div>
+            )}
             {viewingPast ? (
               <DashakamGarden
                 blooms={blooms}
                 occurrences={occurrences}
                 loading={loading}
-                title={selectedSession?.label ?? "Past garden"}
+                title={selectedLabel ?? "Past garden"}
                 subtitle="Completed parayanam — read-only"
+              />
+            ) : ownerReport && gardenView === "group" ? (
+              <DashakamGarden
+                blooms={groupBlooms}
+                occurrences={groupOccurrences}
+                title={selectedLabel ?? "Group garden"}
+                subtitle="The whole group's bloom — read-only"
               />
             ) : sessionsLoading ? null : (
               <>
@@ -156,7 +205,7 @@ export default function MyGardenDialog({ open, onOpenChange }: Props) {
                   onTapDashakam={toggleDashakam}
                   pendingDashakam={pending}
                   loading={loading}
-                  title={selectedSession?.label ?? "My Dashakam Garden"}
+                  title={selectedLabel ?? "My Dashakam Garden"}
                 />
                 <button
                   type="button"

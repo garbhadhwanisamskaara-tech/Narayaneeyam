@@ -316,22 +316,6 @@ export default function Index() {
           )}
         </AnimatePresence>
 
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.7 }}
-          className="mt-8 grid grid-cols-2 md:grid-cols-4 gap-4"
-        >
-          {[
-            { label: "Verses Chanted", value: progress.completedVerses.length, icon: BookOpen },
-          ].map((stat) => (
-            <div key={stat.label} className="rounded-xl bg-gradient-peacock p-5 text-center">
-              <stat.icon className="h-5 w-5 text-gold-light mx-auto mb-2" />
-              <p className="font-display text-2xl font-bold text-primary-foreground">{stat.value}</p>
-              <p className="text-xs text-primary-foreground/70 font-sans">{stat.label}</p>
-            </div>
-          ))}
-        </motion.div>
       </section>
 
       <section className="container mx-auto px-4 pb-16">

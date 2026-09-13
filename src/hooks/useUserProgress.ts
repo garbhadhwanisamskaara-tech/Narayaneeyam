@@ -16,6 +16,7 @@ interface UserProgressData {
   lastActivity: string | null;
   totalDashakams: number;
   completionPercentage: number;
+  mostReturnedTo: { dashakamNo: number; count: number } | null;
   markComplete: (dashakamNo: number, pathwayId?: string) => Promise<void>;
   loading: boolean;
   isGuest: boolean;
@@ -80,6 +81,20 @@ export function useUserProgress(): UserProgressData {
   const dashakamsCompleted = new Set(completedDashakams.map((c) => c.dashakam_no)).size;
   const lastActivity = completedDashakams.length > 0 ? completedDashakams[0].completed_date : null;
   const completionPercentage = Math.round((dashakamsCompleted / 100) * 100);
+  const currentYear = new Date().getFullYear();
+  const yearlyCounts = completedDashakams.reduce((counts, row) => {
+    if (new Date(row.completed_date).getFullYear() === currentYear) {
+      counts.set(row.dashakam_no, (counts.get(row.dashakam_no) ?? 0) + 1);
+    }
+    return counts;
+  }, new Map<number, number>());
+  const mostReturnedTo = Array.from(yearlyCounts.entries()).reduce<{ dashakamNo: number; count: number } | null>(
+    (best, [dashakamNo, count]) =>
+      !best || count > best.count || (count === best.count && dashakamNo < best.dashakamNo)
+        ? { dashakamNo, count }
+        : best,
+    null,
+  );
 
   const markComplete = useCallback(
     async (dashakamNo: number, pathwayId = "100-day-journey") => {
@@ -135,6 +150,7 @@ export function useUserProgress(): UserProgressData {
     lastActivity,
     totalDashakams: 100,
     completionPercentage,
+    mostReturnedTo,
     markComplete,
     loading,
     isGuest,

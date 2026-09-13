@@ -15,6 +15,14 @@ export interface ReportStats {
   notCompleted: number;
   /** Dashakams that reached full bloom (same rule as the group garden). */
   blooms: number;
+  expected: number;
+}
+
+export interface AggregateGardenOccurrence {
+  key: string;
+  dashakamNo: number;
+  scheduledDate?: string;
+  percent: number;
 }
 
 export interface MemberReport {
@@ -34,6 +42,7 @@ export interface ParayanamReport {
   members: MemberReport[];
   /** Group-wide totals for the parayanam. */
   aggregate: ReportStats;
+  aggregateGarden: AggregateGardenOccurrence[];
 }
 
 export interface GroupReport {
@@ -47,6 +56,7 @@ interface ScheduleRow {
   id: string;
   dashakam_no: number;
   assigned_user_id: string | null;
+  scheduled_date: string | null;
 }
 
 interface ProgressRow {
@@ -56,7 +66,7 @@ interface ProgressRow {
 }
 
 function emptyStats(): ReportStats {
-  return { completedList: [], notCompletedList: [], completed: 0, notCompleted: 0, blooms: 0 };
+  return { completedList: [], notCompletedList: [], completed: 0, notCompleted: 0, blooms: 0, expected: 0 };
 }
 
 /**
@@ -139,7 +149,7 @@ export function useParayanamReport(groupIdFilter?: string) {
         sessionIds.length
           ? (supabase as any)
               .from("parayanam_schedule")
-              .select("id, challenge_session_id, dashakam_no, assigned_user_id")
+              .select("id, challenge_session_id, dashakam_no, assigned_user_id, scheduled_date")
               .in("challenge_session_id", sessionIds)
           : Promise.resolve({ data: [] }),
         sessionIds.length
@@ -187,7 +197,12 @@ export function useParayanamReport(groupIdFilter?: string) {
       const scheduleBySession = new Map<string, ScheduleRow[]>();
       for (const r of schedule) {
         const list = scheduleBySession.get(r.challenge_session_id) ?? [];
-        list.push({ id: r.id, dashakam_no: r.dashakam_no, assigned_user_id: r.assigned_user_id });
+        list.push({
+          id: r.id,
+          dashakam_no: r.dashakam_no,
+          assigned_user_id: r.assigned_user_id,
+          scheduled_date: r.scheduled_date,
+        });
         scheduleBySession.set(r.challenge_session_id, list);
       }
       // Keyed by schedule row id -- one bucket per scheduled occurrence,
@@ -223,6 +238,8 @@ export function useParayanamReport(groupIdFilter?: string) {
 
             const statsFor = (uid: string): ReportStats => {
               const eligible = rows.filter((r) => (r.assigned_user_id ? r.assigned_user_id === uid : true));
+              const today = new Date().toISOString().split("T")[0];
+              const expected = eligible.filter((r) => r.scheduled_date && r.scheduled_date <= today).length;
               const completedList: CompletedDashakam[] = [];
               const notCompletedList: number[] = [];
               for (const r of eligible) {
@@ -245,6 +262,7 @@ export function useParayanamReport(groupIdFilter?: string) {
                 completed: completedList.length,
                 notCompleted: notCompletedList.length,
                 blooms,
+                expected,
               };
             };
 
@@ -268,8 +286,20 @@ export function useParayanamReport(groupIdFilter?: string) {
                 completed: completedList.length,
                 notCompleted: notCompletedList.length,
                 blooms: fullyBloomed.size,
+                expected: rows.length,
               };
             })();
+
+            const aggregateGarden: AggregateGardenOccurrence[] = rows.map((r) => {
+              const done = progressFor(r.id).length;
+              const total = r.assigned_user_id ? 1 : expectedPerRow;
+              return {
+                key: r.id,
+                dashakamNo: r.dashakam_no,
+                scheduledDate: r.scheduled_date ?? undefined,
+                percent: total > 0 ? Math.min(100, (done / total) * 100) : 0,
+              };
+            });
 
             const iTookPart = confirmed.includes(user.id);
 
@@ -293,6 +323,7 @@ export function useParayanamReport(groupIdFilter?: string) {
                     )
                 : [],
               aggregate,
+              aggregateGarden,
             };
           });
 

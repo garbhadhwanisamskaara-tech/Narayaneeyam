@@ -3,6 +3,7 @@ import { ChevronDown, ChevronUp, Loader2, Share2 } from "lucide-react";
 import { getDashakamName, useDashakamNames } from "@/hooks/useDashakam";
 import { useLanguagePrefs } from "@/hooks/useLanguagePrefs";
 import { cn } from "@/lib/utils";
+import Lotus from "@/components/Lotus";
 
 export interface GardenTileInfo {
   done: number;
@@ -39,36 +40,6 @@ function formatShortDate(date: string | null | undefined) {
   const d = new Date(date);
   if (isNaN(d.getTime())) return null;
   return d.toLocaleDateString("en-GB", { day: "numeric", month: "short" });
-}
-
-/**
- * A single lotus whose petals open with bloom intensity.
- * 0% = closed bud, 100% = fully bloomed.
- */
-function Lotus({ percent }: { percent: number }) {
-  const p = Math.max(0, Math.min(100, percent)) / 100;
-  const spread = 6 + p * 26;
-  const petalLen = 5 + p * 5;
-  const opacity = 0.35 + p * 0.65;
-
-  return (
-    <svg viewBox="0 0 32 32" className="h-full w-full" aria-hidden="true">
-      {[-2, -1, 0, 1, 2].map((i) => (
-        <ellipse
-          key={i}
-          cx="16"
-          cy={20 - petalLen}
-          rx={2.6 + p * 1.2}
-          ry={petalLen}
-          transform={`rotate(${i * spread} 16 21)`}
-          fill="hsl(var(--lotus-petal))"
-          opacity={opacity}
-        />
-      ))}
-      <circle cx="16" cy="21" r={2 + p * 1.6} fill="hsl(var(--lotus-heart))" opacity={0.5 + p * 0.5} />
-      <ellipse cx="16" cy="25.5" rx={7 + p * 2} ry="2" fill="hsl(var(--lotus-leaf))" opacity="0.55" />
-    </svg>
-  );
 }
 
 function GardenCell({
