@@ -6,6 +6,7 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } f
 import { Input } from "@/components/ui/input";
 import { Progress } from "@/components/ui/progress";
 import { cn } from "@/lib/utils";
+import Lotus from "@/components/Lotus";
 
 type Status = "Behind" | "On Track" | "Complete";
 type Filter = "All" | Status;
@@ -136,7 +137,12 @@ export default function MemberProgressDialog({ open, onOpenChange, parayanam }: 
                 const status = memberStatus(member);
                 return (
                   <tr key={member.user_id} className="border-b border-border last:border-0">
-                    <td className="px-4 py-3 font-semibold text-foreground">{member.display_name}</td>
+                    <td className="px-4 py-3 font-semibold text-foreground">
+                      <div className="flex items-center gap-2">
+                        <span className="h-8 w-8 shrink-0"><Lotus percent={percent} /></span>
+                        {member.display_name}
+                      </div>
+                    </td>
                     <td className="px-4 py-3 text-foreground">{member.stats.completed}</td>
                     <td className="px-4 py-3 text-foreground">{member.stats.expected}</td>
                     <td className="px-4 py-3 text-foreground">{total}</td>

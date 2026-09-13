@@ -1,16 +1,36 @@
+import { useState } from "react";
 import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
-import { BookOpen, Mic, BarChart3, LogIn, TrendingUp, Play } from "lucide-react";
+import { BookOpen, Info, Loader2, LogIn, Mic, Play, Repeat2, Sparkles, TrendingUp, Users } from "lucide-react";
 import { getProgress } from "@/lib/progress";
-import { TOTAL_VERSES } from "@/data/narayaneeyam";
 import { useAuth } from "@/contexts/AuthContext";
 import { useUserProgress } from "@/hooks/useUserProgress";
 import { Progress } from "@/components/ui/progress";
 import ProgressRing from "@/components/ProgressRing";
 import SEO from "@/components/SEO";
 import ActiveChallengeCard from "@/components/ActiveChallengeCard";
-import UpcomingLiveSessionCard from "@/components/UpcomingLiveSessionCard";
 import { useYearlyDashakamCount } from "@/hooks/useYearlyDashakamCount";
+import { useFeathers } from "@/hooks/useFeathers";
+import { useParayanamReport, type ParayanamReport } from "@/hooks/useParayanamReport";
+import Lotus from "@/components/Lotus";
+import MyGardenDialog from "@/components/MyGardenDialog";
+import MemberProgressDialog from "@/components/MemberProgressDialog";
+import { Button } from "@/components/ui/button";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import logoImg from "@/assets/logo.png";
+
+function InfoTip({ text }: { text: string }) {
+  return (
+    <Tooltip>
+      <TooltipTrigger asChild>
+        <Button type="button" variant="ghost" size="icon" className="h-7 w-7 text-muted-foreground" aria-label={text}>
+          <Info className="h-3.5 w-3.5" />
+        </Button>
+      </TooltipTrigger>
+      <TooltipContent className="max-w-64 font-sans text-xs">{text}</TooltipContent>
+    </Tooltip>
+  );
+}
 
 export default function DashboardPage() {
   const localProgress = getProgress();
@@ -20,10 +40,14 @@ export default function DashboardPage() {
     dashakamsCompleted,
     lastActivity,
     completionPercentage,
-    loading: progressLoading,
     isGuest,
+    mostReturnedTo,
   } = useUserProgress();
   const { count: yearlyCount, loading: yearlyLoading, year: yearlyYear } = useYearlyDashakamCount();
+  const { feathers, loading: feathersLoading } = useFeathers();
+  const { groups, loading: reportsLoading, error: reportsError } = useParayanamReport();
+  const [gardenSession, setGardenSession] = useState<{ report: ParayanamReport; isOwner: boolean } | null>(null);
+  const [memberReport, setMemberReport] = useState<ParayanamReport | null>(null);
 
   // Current position from local progress
   const currentDashakam = localProgress.chantState?.dashakam || localProgress.lastDashakam || 1;
@@ -40,7 +64,7 @@ export default function DashboardPage() {
   const remaining = 100 - dashakamsCompleted;
   const estDays = avgPerDay > 0 ? Math.ceil(remaining / avgPerDay) : null;
 
-  const recentCompleted = completedDashakams.slice(0, 5);
+  const recentCompleted = completedDashakams.slice(0, 3);
 
   return (
     <div className="container mx-auto px-4 py-8 pb-24">
@@ -50,44 +74,14 @@ export default function DashboardPage() {
         description="Track your devotional journey through Sriman Narayaneeyam — completed Dashakams and your current chanting position."
       />
       <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
-        <div className="mb-8">
-          <UpcomingLiveSessionCard />
-        </div>
-        <ActiveChallengeCard />
-
-        <div className="mb-8 rounded-xl border border-border bg-card p-5 shadow-md">
-          <h2 className="font-display text-lg font-semibold text-foreground">Dashakams read this year</h2>
-          <p className="mt-1 font-sans text-sm text-muted-foreground">
-            Every completion recorded in {yearlyYear} — solo and within parayanams.
-          </p>
-          <p className="mt-3 font-display text-4xl font-bold text-primary">
-            {yearlyLoading ? "—" : yearlyCount}
-          </p>
-        </div>
-
-        {/* My Parayanams — group-first report */}
-        <Link
-          to="/my-parayanams"
-          className="mb-8 flex items-center justify-between gap-3 rounded-xl border border-border bg-card p-5 shadow-md transition-all hover:shadow-gold"
-        >
-          <div>
-            <h2 className="font-display text-lg font-semibold text-foreground">My Parayanams</h2>
-            <p className="font-sans text-sm text-muted-foreground">
-              Every group parayanam you have joined — completed, pending and bloomed dashakams.
-            </p>
-          </div>
-          <TrendingUp className="h-5 w-5 shrink-0 text-primary" />
-        </Link>
-
         {/* Greeting */}
-        <div className="mb-8">
-          <h1 className="font-display text-3xl font-bold text-foreground mb-1 flex items-center gap-2">
-            <BarChart3 className="h-7 w-7 text-primary" /> Progress
-          </h1>
-          <p className="text-muted-foreground font-sans text-lg">
-            Namaste {displayName || ""} 🙏 — Your spiritual journey at a glance
-          </p>
+        <div className="mb-8 text-center">
+          <img src={logoImg} alt="Sriman Narayaneeyam" className="mx-auto mb-3 h-16 w-16 object-contain" />
+          <h1 className="font-display text-3xl font-bold text-foreground">Namaste {displayName || ""}</h1>
+          <p className="mt-1 font-sans text-sm text-muted-foreground">Your spiritual journey at a glance</p>
         </div>
+
+        <ActiveChallengeCard />
 
         {/* Sign-in prompt for guests */}
         {isGuest && (
@@ -114,40 +108,63 @@ export default function DashboardPage() {
           </motion.div>
         )}
 
-        {/* Key Stats Row */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
-          {[
-            {
-              label: "Dashakams",
-              value: `${dashakamsCompleted}/100`,
-              pct: completionPercentage,
-              color: "hsl(var(--primary))",
-            },
-            {
-              label: "Current Position",
-              value: `D${currentDashakam} · V${currentVerse}`,
-              pct: (currentDashakam / 100) * 100,
-              color: "hsl(var(--secondary))",
-            },
-          ].map((item, i) => (
-            <motion.div
-              key={item.label}
-              initial={{ opacity: 0, scale: 0.9 }}
-              animate={{ opacity: 1, scale: 1 }}
-              transition={{ delay: i * 0.1 }}
-              className="rounded-xl border border-border bg-card p-4 flex flex-col items-center"
-            >
-              <div className="relative">
-                <ProgressRing percent={item.pct} size={72} strokeWidth={5} color={item.color} />
-                <div className="absolute inset-0 flex items-center justify-center">
-                  <span className="font-display text-xs font-bold text-foreground text-center leading-tight">
-                    {item.value}
-                  </span>
-                </div>
+        {/* Key stats */}
+        <div className="mb-8 grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-5">
+          <motion.article initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} className="rounded-lg border border-border bg-card p-4">
+            <div className="flex items-start justify-between gap-2">
+              <p className="font-sans text-xs font-semibold uppercase text-muted-foreground">Lifetime Dashakams</p>
+              <InfoTip text="Unique Dashakams completed across your devotional journey." />
+            </div>
+            <div className="mt-2 flex items-center gap-3">
+              <div className="relative shrink-0">
+                <ProgressRing percent={completionPercentage} size={68} strokeWidth={5} />
+                <span className="absolute inset-0 flex items-center justify-center font-display text-sm font-bold text-foreground">{completionPercentage}%</span>
               </div>
-              <span className="text-xs text-muted-foreground font-sans mt-2">{item.label}</span>
-            </motion.div>
-          ))}
+              <p className="font-display text-3xl font-bold text-primary">{dashakamsCompleted}<span className="text-base text-muted-foreground">/100</span></p>
+            </div>
+          </motion.article>
+
+          <motion.article initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.05 }} className="rounded-lg border border-border bg-card p-4">
+            <div className="flex items-start justify-between gap-2">
+              <p className="font-sans text-xs font-semibold uppercase text-muted-foreground">This Year</p>
+              <InfoTip text={`Every completion recorded in ${yearlyYear} — solo and within parayanams.`} />
+            </div>
+            <BookOpen className="mt-4 h-6 w-6 text-secondary" />
+            <p className="mt-2 font-display text-3xl font-bold text-primary">{yearlyLoading ? "—" : yearlyCount}</p>
+          </motion.article>
+
+          <motion.article initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }} className="rounded-lg border border-border bg-card p-4 sm:col-span-2 xl:col-span-1">
+            <div className="flex items-start justify-between gap-2">
+              <p className="font-sans text-xs font-semibold uppercase text-muted-foreground">Where You Are Right Now</p>
+              <InfoTip text="Your most recently saved chanting position on this device." />
+            </div>
+            <p className="mt-4 font-display text-xl font-bold text-foreground">Dashakam {currentDashakam}</p>
+            <p className="font-sans text-sm text-muted-foreground">Verse {currentVerse}</p>
+            <Button asChild size="sm" className="mt-4 w-full">
+              <Link to={`/chant?dashakam=${currentDashakam}`}><Play className="h-4 w-4" /> Continue Chanting</Link>
+            </Button>
+          </motion.article>
+
+          <motion.article initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.15 }} className="rounded-lg border border-border bg-card p-4">
+            <div className="flex items-start justify-between gap-2">
+              <p className="font-sans text-xs font-semibold uppercase text-muted-foreground">Most Returned To</p>
+              <InfoTip text={`The Dashakam you completed most often during ${yearlyYear}.`} />
+            </div>
+            <Repeat2 className="mt-4 h-6 w-6 text-secondary" />
+            <p className="mt-2 font-display text-2xl font-bold text-primary">
+              {mostReturnedTo ? `Dashakam ${mostReturnedTo.dashakamNo}` : "—"}
+            </p>
+            {mostReturnedTo && <p className="font-sans text-xs text-muted-foreground">{mostReturnedTo.count} returns</p>}
+          </motion.article>
+
+          <motion.article initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }} className="rounded-lg border border-border bg-card p-4">
+            <div className="flex items-start justify-between gap-2">
+              <p className="font-sans text-xs font-semibold uppercase text-muted-foreground">Feathers Collected</p>
+              <InfoTip text="Feathers collected through completed listening and chanting activities." />
+            </div>
+            <img src={logoImg} alt="" className="mt-3 h-8 w-8 object-contain" />
+            <p className="mt-1 font-display text-3xl font-bold text-primary">{feathersLoading ? "—" : feathers.length}</p>
+          </motion.article>
         </div>
 
         {/* Journey Completion Bar */}
@@ -183,36 +200,6 @@ export default function DashboardPage() {
               </span>
             )}
             {remaining === 0 && <span className="text-secondary font-semibold">🎉 Journey Complete!</span>}
-          </div>
-        </motion.div>
-
-        {/* Continue Chanting Button */}
-        <motion.div
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.2 }}
-          className="rounded-xl border border-secondary/30 bg-secondary/5 p-5 mb-8"
-        >
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-xs text-muted-foreground font-sans uppercase tracking-wide mb-1">
-                Continue where you left off
-              </p>
-              <p className="font-display text-lg font-semibold text-foreground">
-                Dashakam {currentDashakam} — Verse {currentVerse}
-              </p>
-              {localProgress.lastSessionDate && (
-                <p className="text-xs text-muted-foreground font-sans mt-1">
-                  Last session: {localProgress.lastSessionDate}
-                </p>
-              )}
-            </div>
-            <Link
-              to={`/chant?dashakam=${currentDashakam}`}
-              className="flex items-center gap-2 rounded-lg bg-gradient-gold px-5 py-2.5 font-sans text-sm font-semibold text-primary shadow-gold transition-transform hover:scale-105"
-            >
-              <Play className="h-4 w-4" /> Continue Chanting
-            </Link>
           </div>
         </motion.div>
 
@@ -276,21 +263,83 @@ export default function DashboardPage() {
             className="rounded-xl border border-border bg-card p-5 mb-8"
           >
             <h3 className="font-display text-sm font-semibold text-foreground mb-3">Recently Completed</h3>
-            <div className="flex flex-wrap gap-2">
+            <div className="grid gap-3 sm:grid-cols-3">
               {recentCompleted.map((c) => (
-                <span
+                <div
                   key={`${c.pathway_id}-${c.dashakam_no}`}
-                  className="inline-flex items-center gap-1.5 rounded-lg bg-primary/10 px-3 py-1.5 text-xs font-sans"
+                  className="flex items-center gap-3 rounded-lg border border-border bg-muted/30 p-3"
                 >
-                  <span className="font-semibold text-primary">D{c.dashakam_no}</span>
-                  <span className="text-muted-foreground">
-                    {new Date(c.completed_date).toLocaleDateString("en-IN", { day: "numeric", month: "short" })}
+                  <span className="h-12 w-12 shrink-0"><Lotus percent={100} /></span>
+                  <span>
+                    <span className="block font-display text-sm font-semibold text-primary">Dashakam {c.dashakam_no}</span>
+                    <span className="font-sans text-xs text-muted-foreground">
+                      {new Date(c.completed_date).toLocaleDateString("en-IN", { day: "numeric", month: "short" })}
+                    </span>
                   </span>
-                </span>
+                </div>
               ))}
             </div>
           </motion.div>
         )}
+
+        <section className="mb-8">
+          <div className="mb-3 flex items-center justify-between gap-3">
+            <div>
+              <h2 className="font-display text-lg font-semibold text-foreground">My Parayanams</h2>
+              <p className="font-sans text-sm text-muted-foreground">Open a parayanam to see its lotus garden.</p>
+            </div>
+            <Users className="h-5 w-5 text-primary" />
+          </div>
+          {reportsLoading ? (
+            <Loader2 className="h-5 w-5 animate-spin text-primary" />
+          ) : reportsError ? (
+            <p className="font-sans text-sm text-destructive">{reportsError}</p>
+          ) : groups.length === 0 ? (
+            <p className="rounded-lg border border-border bg-card p-4 font-sans text-sm text-muted-foreground">No group parayanams yet.</p>
+          ) : (
+            <div className="space-y-4">
+              {groups.map((group) => (
+                <div key={group.group_id} className="rounded-lg border border-border bg-card p-4">
+                  <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <h3 className="font-display text-base font-semibold text-foreground">{group.group_name}</h3>
+                      {group.isOwner && <span className="rounded-full bg-secondary/15 px-2 py-0.5 font-sans text-xs font-semibold text-secondary-foreground">You are the Owner</span>}
+                    </div>
+                    <Link to={`/groups/${group.group_id}`} className="font-sans text-xs font-semibold text-primary hover:underline">Open group</Link>
+                  </div>
+                  <div className="space-y-2">
+                    {group.parayanams.map((parayanam) => {
+                      const stats = parayanam.mine ?? parayanam.aggregate;
+                      const total = stats.completed + stats.notCompleted;
+                      const percent = total > 0 ? Math.round((stats.completed / total) * 100) : 0;
+                      return (
+                        <div key={parayanam.session_id} className="flex flex-col gap-2 rounded-lg border border-border bg-muted/30 p-3 sm:flex-row sm:items-center sm:justify-between">
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            className="h-auto min-w-0 justify-start px-0 text-left hover:bg-transparent"
+                            onClick={() => setGardenSession({ report: parayanam, isOwner: group.isOwner })}
+                          >
+                            <span className="h-10 w-10 shrink-0"><Lotus percent={percent} /></span>
+                            <span className="min-w-0">
+                              <span className="block truncate font-display text-sm font-semibold text-foreground">{parayanam.name}</span>
+                              <span className="block font-sans text-xs text-muted-foreground">{stats.completed} of {total} completed · {stats.blooms} blooms</span>
+                            </span>
+                          </Button>
+                          {group.isOwner && (
+                            <Button type="button" variant="link" size="sm" className="h-auto justify-start px-0" onClick={() => setMemberReport(parayanam)}>
+                              View each member's progress →
+                            </Button>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </section>
 
         {/* Insights */}
         <motion.div
@@ -315,6 +364,18 @@ export default function DashboardPage() {
           </div>
         </motion.div>
       </motion.div>
+      <MyGardenDialog
+        open={gardenSession !== null}
+        onOpenChange={(open) => !open && setGardenSession(null)}
+        initialSessionId={gardenSession?.report.session_id}
+        initialSessionLabel={gardenSession?.report.name}
+        ownerReport={gardenSession?.isOwner ? gardenSession.report : null}
+      />
+      <MemberProgressDialog
+        open={memberReport !== null}
+        onOpenChange={(open) => !open && setMemberReport(null)}
+        parayanam={memberReport}
+      />
     </div>
   );
 }
