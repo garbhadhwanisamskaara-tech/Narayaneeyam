@@ -9,8 +9,6 @@ import { Progress } from "@/components/ui/progress";
 import ProgressRing from "@/components/ProgressRing";
 import SEO from "@/components/SEO";
 import ActiveChallengeCard from "@/components/ActiveChallengeCard";
-import { useYearlyDashakamCount } from "@/hooks/useYearlyDashakamCount";
-import { useFeathers } from "@/hooks/useFeathers";
 import { useParayanamReport, type ParayanamReport } from "@/hooks/useParayanamReport";
 import Lotus from "@/components/Lotus";
 import MyGardenDialog from "@/components/MyGardenDialog";
