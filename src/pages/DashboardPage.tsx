@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
-import { BookOpen, Info, Loader2, LogIn, Mic, Play, Repeat2, Sparkles, TrendingUp, Users } from "lucide-react";
+import { BookOpen, Info, Loader2, LogIn, Mic, Play, Repeat2, TrendingUp, Users } from "lucide-react";
 import { getProgress } from "@/lib/progress";
 import { useAuth } from "@/contexts/AuthContext";
 import { useUserProgress } from "@/hooks/useUserProgress";
@@ -34,7 +34,7 @@ function InfoTip({ text }: { text: string }) {
 
 export default function DashboardPage() {
   const localProgress = getProgress();
-  const { displayName, user } = useAuth();
+  const { displayName } = useAuth();
   const {
     completedDashakams,
     dashakamsCompleted,
