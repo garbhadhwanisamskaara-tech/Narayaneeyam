@@ -117,15 +117,17 @@ export default function MemberProgressDialog({ open, onOpenChange, parayanam }: 
                   ] as const
                 ).map(([key, label]) => (
                   <th key={key} scope="col" className="border-b border-border px-4 py-3 font-semibold">
-                    <button
+                    <Button
                       type="button"
+                      variant="ghost"
+                      size="sm"
                       onClick={() => changeSort(key)}
-                      className="inline-flex items-center gap-1 rounded-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                      className="h-auto justify-start px-0 py-0 text-muted-foreground hover:bg-transparent hover:text-foreground"
                     >
                       {label}
                       {sortKey === key &&
                         (ascending ? <ArrowUp className="h-3.5 w-3.5" /> : <ArrowDown className="h-3.5 w-3.5" />)}
-                    </button>
+                    </Button>
                   </th>
                 ))}
               </tr>

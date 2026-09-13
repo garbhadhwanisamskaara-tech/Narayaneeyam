@@ -304,6 +304,11 @@ export default function DashboardPage() {
                     <div className="flex flex-wrap items-center gap-2">
                       <h3 className="font-display text-base font-semibold text-foreground">{group.group_name}</h3>
                       {group.isOwner && <span className="rounded-full bg-secondary/15 px-2 py-0.5 font-sans text-xs font-semibold text-secondary-foreground">You are the Owner</span>}
+                      {group.isOwner && group.parayanams[0] && (
+                        <Button type="button" variant="link" size="sm" className="h-auto px-0" onClick={() => setMemberReport(group.parayanams[0])}>
+                          View each member's progress →
+                        </Button>
+                      )}
                     </div>
                     <Link to={`/groups/${group.group_id}`} className="font-sans text-xs font-semibold text-primary hover:underline">Open group</Link>
                   </div>
@@ -326,11 +331,6 @@ export default function DashboardPage() {
                               <span className="block font-sans text-xs text-muted-foreground">{stats.completed} of {total} completed · {stats.blooms} blooms</span>
                             </span>
                           </Button>
-                          {group.isOwner && (
-                            <Button type="button" variant="link" size="sm" className="h-auto justify-start px-0" onClick={() => setMemberReport(parayanam)}>
-                              View each member's progress →
-                            </Button>
-                          )}
                         </div>
                       );
                     })}

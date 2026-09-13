@@ -58,8 +58,8 @@ export default function MyGardenDialog({
   // A single active parayanam skips the picker entirely (past view always
   // shows its own list, even with one entry, so the way back stays visible).
   useEffect(() => {
-    if (open && !viewingPast && sessions.length === 1) setSelectedSessionId(sessions[0].id);
-  }, [open, viewingPast, sessions]);
+    if (open && !viewingPast && !selectedSessionId && sessions.length === 1) setSelectedSessionId(sessions[0].id);
+  }, [open, viewingPast, selectedSessionId, sessions]);
 
   const { tiles, blooms, occurrences, loading, pending, toggleDashakam } =
     useSessionGarden(selectedSessionId);
