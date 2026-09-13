@@ -133,7 +133,7 @@ function ParayanamBlock({
     <StatsRow
       label={p.name}
       subtitle={dates}
-      stats={p.mine ?? { completedList: [], notCompletedList: [], completed: 0, notCompleted: 0, blooms: 0 }}
+      stats={p.mine ?? { completedList: [], notCompletedList: [], completed: 0, notCompleted: 0, blooms: 0, expected: 0 }}
     />
   );
 }
