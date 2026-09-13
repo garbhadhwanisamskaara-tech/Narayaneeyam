@@ -181,22 +181,13 @@ export default function DashboardPage() {
           <motion.article initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.15 }} className="rounded-lg border border-border bg-card p-4">
             <div className="flex items-start justify-between gap-2">
               <p className="font-sans text-xs font-semibold uppercase text-muted-foreground">Most Returned To</p>
-              <InfoTip text={`The Dashakam you completed most often during ${yearlyYear}.`} />
+              <InfoTip text={`The Dashakam you completed most often during ${currentYear}.`} />
             </div>
             <Repeat2 className="mt-4 h-6 w-6 text-secondary" />
             <p className="mt-2 font-display text-2xl font-bold text-primary">
               {mostReturnedTo ? `Dashakam ${mostReturnedTo.dashakamNo}` : "—"}
             </p>
             {mostReturnedTo && <p className="font-sans text-xs text-muted-foreground">{mostReturnedTo.count} returns</p>}
-          </motion.article>
-
-          <motion.article initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }} className="rounded-lg border border-border bg-card p-4">
-            <div className="flex items-start justify-between gap-2">
-              <p className="font-sans text-xs font-semibold uppercase text-muted-foreground">Feathers Collected</p>
-              <InfoTip text="Feathers collected through completed listening and chanting activities." />
-            </div>
-            <img src={logoImg} alt="" className="mt-3 h-8 w-8 object-contain" />
-            <p className="mt-1 font-display text-3xl font-bold text-primary">{feathersLoading ? "—" : feathers.length}</p>
           </motion.article>
         </div>
 
