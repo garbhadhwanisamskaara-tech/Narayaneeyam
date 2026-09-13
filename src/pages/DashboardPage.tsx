@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
-import { BookOpen, Info, Loader2, LogIn, Mic, Play, Repeat2, TrendingUp, Users } from "lucide-react";
+import { BookOpen, Info, Loader2, LogIn, Play, Repeat2, TrendingUp, Users } from "lucide-react";
 import { getProgress } from "@/lib/progress";
 import { useAuth } from "@/contexts/AuthContext";
 import { useUserProgress } from "@/hooks/useUserProgress";
@@ -9,8 +9,6 @@ import { Progress } from "@/components/ui/progress";
 import ProgressRing from "@/components/ProgressRing";
 import SEO from "@/components/SEO";
 import ActiveChallengeCard from "@/components/ActiveChallengeCard";
-import { useYearlyDashakamCount } from "@/hooks/useYearlyDashakamCount";
-import { useFeathers } from "@/hooks/useFeathers";
 import { useParayanamReport, type ParayanamReport } from "@/hooks/useParayanamReport";
 import Lotus from "@/components/Lotus";
 import MyGardenDialog from "@/components/MyGardenDialog";
@@ -43,8 +41,6 @@ export default function DashboardPage() {
     isGuest,
     mostReturnedTo,
   } = useUserProgress();
-  const { count: yearlyCount, loading: yearlyLoading, year: yearlyYear } = useYearlyDashakamCount();
-  const { feathers, loading: feathersLoading } = useFeathers();
   const { groups, loading: reportsLoading, error: reportsError } = useParayanamReport();
   const [gardenSession, setGardenSession] = useState<{ report: ParayanamReport; isOwner: boolean } | null>(null);
   const [memberReport, setMemberReport] = useState<ParayanamReport | null>(null);
@@ -54,6 +50,21 @@ export default function DashboardPage() {
   const currentVerse = localProgress.chantState?.verse
     ? localProgress.chantState.verse + 1
     : localProgress.lastParagraph || 1;
+
+  // This Year — Chant vs. Listen breakdown (read-only, from user_progress)
+  const currentYear = new Date().getFullYear();
+  const yearlyRows = completedDashakams.filter(
+    (r) =>
+      new Date(r.completed_date).getFullYear() === currentYear &&
+      (r.pathway_id === "chant" || r.pathway_id === "podcast")
+  );
+  const chantRows = yearlyRows.filter((r) => r.pathway_id === "chant");
+  const listenRows = yearlyRows.filter((r) => r.pathway_id === "podcast");
+  const chantTotal = chantRows.length;
+  const chantUnique = new Set(chantRows.map((r) => r.dashakam_no)).size;
+  const listenTotal = listenRows.length;
+  const listenUnique = new Set(listenRows.map((r) => r.dashakam_no)).size;
+  const feathersEarned = chantTotal + listenTotal;
 
   // Estimated completion
   const daysActive =
@@ -113,7 +124,7 @@ export default function DashboardPage() {
           <motion.article initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} className="rounded-lg border border-border bg-card p-4">
             <div className="flex items-start justify-between gap-2">
               <p className="font-sans text-xs font-semibold uppercase text-muted-foreground">Lifetime Dashakams</p>
-              <InfoTip text="Unique Dashakams completed across your devotional journey." />
+              <InfoTip text="The unique dashakams you've ever completed, out of 100 — counted once each, no matter how many times you revisit them." />
             </div>
             <div className="mt-2 flex items-center gap-3">
               <div className="relative shrink-0">
@@ -127,10 +138,32 @@ export default function DashboardPage() {
           <motion.article initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.05 }} className="rounded-lg border border-border bg-card p-4">
             <div className="flex items-start justify-between gap-2">
               <p className="font-sans text-xs font-semibold uppercase text-muted-foreground">This Year</p>
-              <InfoTip text={`Every completion recorded in ${yearlyYear} — solo and within parayanams.`} />
             </div>
-            <BookOpen className="mt-4 h-6 w-6 text-secondary" />
-            <p className="mt-2 font-display text-3xl font-bold text-primary">{yearlyLoading ? "—" : yearlyCount}</p>
+            <img src={logoImg} alt="" className="mt-3 h-8 w-8 object-contain" />
+            <p className="mt-1 font-display text-3xl font-bold text-primary">{feathersEarned}</p>
+            <p className="font-sans text-xs text-muted-foreground">Feathers Earned</p>
+            <div className="mt-3 space-y-2">
+              <div className="flex items-start justify-between gap-2">
+                <div>
+                  <p className="font-sans text-xs text-muted-foreground">Chant</p>
+                  <p className="font-display text-sm font-semibold text-foreground">{chantUnique} dashakams · {chantTotal} completions</p>
+                </div>
+                <InfoTip text="Dashakams chanted this year. Chanting the same dashakam more than once counts each time." />
+              </div>
+              <div className="flex items-start justify-between gap-2">
+                <div>
+                  <p className="font-sans text-xs text-muted-foreground">Listen</p>
+                  <p className="font-display text-sm font-semibold text-foreground">{listenUnique} dashakams · {listenTotal} completions</p>
+                </div>
+                <InfoTip text="Dashakams listened to this year. Listening to the same dashakam more than once counts each time." />
+              </div>
+              <div className="flex items-start justify-between gap-2">
+                <div>
+                  <p className="font-sans text-xs text-muted-foreground">Feathers Earned</p>
+                </div>
+                <InfoTip text="Your Chant and Listen completions this year, added together." />
+              </div>
+            </div>
           </motion.article>
 
           <motion.article initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }} className="rounded-lg border border-border bg-card p-4 sm:col-span-2 xl:col-span-1">
@@ -148,22 +181,13 @@ export default function DashboardPage() {
           <motion.article initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.15 }} className="rounded-lg border border-border bg-card p-4">
             <div className="flex items-start justify-between gap-2">
               <p className="font-sans text-xs font-semibold uppercase text-muted-foreground">Most Returned To</p>
-              <InfoTip text={`The Dashakam you completed most often during ${yearlyYear}.`} />
+              <InfoTip text={`The Dashakam you completed most often during ${currentYear}.`} />
             </div>
             <Repeat2 className="mt-4 h-6 w-6 text-secondary" />
             <p className="mt-2 font-display text-2xl font-bold text-primary">
               {mostReturnedTo ? `Dashakam ${mostReturnedTo.dashakamNo}` : "—"}
             </p>
             {mostReturnedTo && <p className="font-sans text-xs text-muted-foreground">{mostReturnedTo.count} returns</p>}
-          </motion.article>
-
-          <motion.article initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }} className="rounded-lg border border-border bg-card p-4">
-            <div className="flex items-start justify-between gap-2">
-              <p className="font-sans text-xs font-semibold uppercase text-muted-foreground">Feathers Collected</p>
-              <InfoTip text="Feathers collected through completed listening and chanting activities." />
-            </div>
-            <img src={logoImg} alt="" className="mt-3 h-8 w-8 object-contain" />
-            <p className="mt-1 font-display text-3xl font-bold text-primary">{feathersLoading ? "—" : feathers.length}</p>
           </motion.article>
         </div>
 
@@ -203,56 +227,6 @@ export default function DashboardPage() {
           </div>
         </motion.div>
 
-        {/* Chant & Learn Mode Progress */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
-          {[
-            {
-              label: "Chant Mode",
-              icon: Mic,
-              state: localProgress.chantState,
-              page: "/chant",
-              color: "hsl(var(--primary))",
-            },
-            {
-              label: "Learn Mode",
-              icon: BookOpen,
-              state: localProgress.learnState as any,
-              page: "/chant?mode=learn",
-              color: "hsl(var(--secondary))",
-            },
-          ].map((mode) => (
-            <motion.div
-              key={mode.label}
-              initial={{ opacity: 0, x: -10 }}
-              animate={{ opacity: 1, x: 0 }}
-              className="rounded-xl border border-border bg-card p-5"
-            >
-              <div className="flex items-center gap-3 mb-3">
-                <div
-                  className="flex h-10 w-10 items-center justify-center rounded-xl"
-                  style={{ backgroundColor: mode.color + "20" }}
-                >
-                  <mode.icon className="h-5 w-5" style={{ color: mode.color }} />
-                </div>
-                <div>
-                  <h3 className="font-display text-sm font-semibold text-foreground">{mode.label}</h3>
-                  {mode.state ? (
-                    <p className="text-xs text-muted-foreground font-sans">
-                      Dashakam {(mode.state as any)?.dashakam || "—"}, Verse {((mode.state as any)?.verse || 0) + 1}
-                    </p>
-                  ) : (
-                    <p className="text-xs text-muted-foreground font-sans">Not started yet</p>
-                  )}
-                </div>
-              </div>
-              {mode.state && (
-                <Link to={mode.page} className="text-xs font-sans text-primary hover:underline">
-                  Resume →
-                </Link>
-              )}
-            </motion.div>
-          ))}
-        </div>
 
         {/* Recently Completed */}
         {recentCompleted.length > 0 && (
