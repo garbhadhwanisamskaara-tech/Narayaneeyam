@@ -6,3 +6,4 @@
 - [x] Add scheduled-date expected progress without changing existing report totals.
 - [x] Remove the Home “Verses Chanted” tile while preserving live sessions.
 - [x] Validate types, tests, source-level guardrails, and available browser views.
+- [x] Refine Progress tooltips and visuals; remove its duplicate and daily-parayanam cards.

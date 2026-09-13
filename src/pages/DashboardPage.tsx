@@ -161,7 +161,7 @@ export default function DashboardPage() {
                 <img src={featherAsset.url} alt="" className="h-8 w-8 shrink-0 object-contain" />
                 <div className="min-w-0">
                   <div className="flex items-center gap-1">
-                  <p className="font-sans text-xs text-muted-foreground">Feathers Earned</p>
+                    <p className="font-sans text-xs text-muted-foreground">Feathers Earned</p>
                     <InfoTip text="Your Chant and Listen completions this year, added together." />
                   </div>
                   <p className="font-display text-3xl font-bold text-primary">{feathersEarned}</p>
