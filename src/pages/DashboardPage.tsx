@@ -138,10 +138,32 @@ export default function DashboardPage() {
           <motion.article initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.05 }} className="rounded-lg border border-border bg-card p-4">
             <div className="flex items-start justify-between gap-2">
               <p className="font-sans text-xs font-semibold uppercase text-muted-foreground">This Year</p>
-              <InfoTip text={`Every completion recorded in ${yearlyYear} — solo and within parayanams.`} />
             </div>
-            <BookOpen className="mt-4 h-6 w-6 text-secondary" />
-            <p className="mt-2 font-display text-3xl font-bold text-primary">{yearlyLoading ? "—" : yearlyCount}</p>
+            <img src={logoImg} alt="" className="mt-3 h-8 w-8 object-contain" />
+            <p className="mt-1 font-display text-3xl font-bold text-primary">{feathersEarned}</p>
+            <p className="font-sans text-xs text-muted-foreground">Feathers Earned</p>
+            <div className="mt-3 space-y-2">
+              <div className="flex items-start justify-between gap-2">
+                <div>
+                  <p className="font-sans text-xs text-muted-foreground">Chant</p>
+                  <p className="font-display text-sm font-semibold text-foreground">{chantUnique} dashakams · {chantTotal} completions</p>
+                </div>
+                <InfoTip text="Dashakams chanted this year. Chanting the same dashakam more than once counts each time." />
+              </div>
+              <div className="flex items-start justify-between gap-2">
+                <div>
+                  <p className="font-sans text-xs text-muted-foreground">Listen</p>
+                  <p className="font-display text-sm font-semibold text-foreground">{listenUnique} dashakams · {listenTotal} completions</p>
+                </div>
+                <InfoTip text="Dashakams listened to this year. Listening to the same dashakam more than once counts each time." />
+              </div>
+              <div className="flex items-start justify-between gap-2">
+                <div>
+                  <p className="font-sans text-xs text-muted-foreground">Feathers Earned</p>
+                </div>
+                <InfoTip text="Your Chant and Listen completions this year, added together." />
+              </div>
+            </div>
           </motion.article>
 
           <motion.article initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }} className="rounded-lg border border-border bg-card p-4 sm:col-span-2 xl:col-span-1">
