@@ -8,17 +8,27 @@ export interface MyGardenSession {
   label: string;
 }
 
+interface UseMyGardenSessionsOptions {
+  /**
+   * "active" (default): group parayanams still in progress.
+   * "completed": group parayanams already finished, for read-only look-back.
+   */
+  view?: "active" | "completed";
+}
+
 interface UseMyGardenSessionsResult {
   sessions: MyGardenSession[];
   loading: boolean;
 }
 
 /**
- * Every parayanam the signed-in user can currently bloom something in:
- * their own personal sessions plus group parayanams they are confirmed in.
- * Used by the floating "My Dashakam Garden" dialog.
+ * Group parayanams the signed-in user is confirmed in and has active access
+ * to (locked paid contributions are excluded). Used by the floating
+ * "My Dashakam Garden" dialog. By default only active parayanams are
+ * returned; pass { view: "completed" } to list finished ones instead.
  */
-export function useMyGardenSessions(): UseMyGardenSessionsResult {
+export function useMyGardenSessions(options?: UseMyGardenSessionsOptions): UseMyGardenSessionsResult {
+  const view = options?.view ?? "active";
   const { user } = useAuth();
   const [sessions, setSessions] = useState<MyGardenSession[]>([]);
   const [loading, setLoading] = useState(true);
@@ -31,17 +41,7 @@ export function useMyGardenSessions(): UseMyGardenSessionsResult {
     }
     setLoading(true);
     try {
-      // 1. True personal parayanams (no group, not completed, not hidden).
-      const personalQuery = (supabase as any)
-        .from("challenge_sessions")
-        .select("id, parayanam_name, dashakams_target, start_date, created_at")
-        .eq("user_id", user.id)
-        .is("group_id", null)
-        .is("completed_at", null)
-        .not("technical_state", "in", HIDDEN_SESSION_STATES_FILTER)
-        .order("created_at", { ascending: false });
-
-      // 2. Group parayanams the user is confirmed in and has active access to.
+      // Group parayanams the user is confirmed in and has active access to.
       const { data: participantRows, error: participantError } = await (supabase as any)
         .from("parayanam_participants")
         .select("challenge_session_id")
@@ -54,29 +54,15 @@ export function useMyGardenSessions(): UseMyGardenSessionsResult {
         new Set(((participantRows ?? []) as { challenge_session_id: string }[]).map((r) => r.challenge_session_id)),
       );
 
-      const [personalRes, groupRes] = await Promise.all([
-        personalQuery,
-        groupSessionIds.length
-          ? (supabase as any)
-              .from("challenge_sessions")
-              .select("id, parayanam_name, groups(group_name), created_at")
-              .in("id", groupSessionIds)
-              .is("completed_at", null)
-              .not("technical_state", "in", HIDDEN_SESSION_STATES_FILTER)
-          : Promise.resolve({ data: [], error: null }),
-      ]);
-      if (personalRes.error) throw personalRes.error;
-      if (groupRes.error) throw groupRes.error;
+      let query = (supabase as any)
+        .from("challenge_sessions")
+        .select("id, parayanam_name, groups(group_name), created_at")
+        .in("id", groupSessionIds)
+        .not("technical_state", "in", HIDDEN_SESSION_STATES_FILTER);
+      query = view === "completed" ? query.not("completed_at", "is", null) : query.is("completed_at", null);
 
-      const personal: (MyGardenSession & { createdAt: string })[] = ((personalRes.data ?? []) as any[]).map(
-        (s) => ({
-          id: s.id as string,
-          createdAt: (s.created_at ?? "") as string,
-          label:
-            s.parayanam_name ??
-            `${s.dashakams_target} dashakams · started ${s.start_date}`,
-        }),
-      );
+      const groupRes = groupSessionIds.length ? await query : { data: [], error: null };
+      if (groupRes.error) throw groupRes.error;
 
       const group: (MyGardenSession & { createdAt: string })[] = ((groupRes.data ?? []) as any[]).map((s) => ({
         id: s.id as string,
@@ -84,13 +70,13 @@ export function useMyGardenSessions(): UseMyGardenSessionsResult {
         label: s.parayanam_name ?? s.groups?.group_name ?? "Group parayanam",
       }));
 
-      const combined = [...personal, ...group].sort((a, b) => b.createdAt.localeCompare(a.createdAt));
-      setSessions(combined.map(({ id, label }) => ({ id, label })));
+      group.sort((a, b) => b.createdAt.localeCompare(a.createdAt));
+      setSessions(group.map(({ id, label }) => ({ id, label })));
     } catch {
       setSessions([]);
     }
     setLoading(false);
-  }, [user]);
+  }, [user, view]);
 
   useEffect(() => {
     void load();

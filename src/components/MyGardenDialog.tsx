@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { ChevronLeft } from "lucide-react";
+import { ChevronLeft, History } from "lucide-react";
 import { useMyGardenSessions } from "@/hooks/useMyGardenSessions";
 import { useSessionGarden } from "@/hooks/useSessionGarden";
 import DashakamGarden from "@/components/DashakamGarden";
@@ -18,25 +18,35 @@ interface Props {
 
 /**
  * Floating "My Dashakam Garden" dialog — lets the user tap lotuses for any
- * parayanam they can bloom in (personal or group) without leaving the page
+ * active group parayanam they're confirmed in without leaving the page
  * they're on. Unlike the shared group garden, this view renders only the
  * user's own bloom state per dashakam: bud or full bloom, 0/1 or 1/1.
+ *
+ * A "View past gardens" link switches to completed group parayanams, shown
+ * read-only: the final bloom state exactly as it stood, with no
+ * tap-to-complete interaction at all.
  */
 export default function MyGardenDialog({ open, onOpenChange }: Props) {
   const { sessions, loading: sessionsLoading } = useMyGardenSessions();
+  const { sessions: pastSessions, loading: pastLoading } = useMyGardenSessions({ view: "completed" });
   const [selectedSessionId, setSelectedSessionId] = useState<string | null>(null);
+  const [viewingPast, setViewingPast] = useState(false);
 
   // Fresh picker state each time the dialog opens.
   useEffect(() => {
-    if (!open) setSelectedSessionId(null);
+    if (!open) {
+      setSelectedSessionId(null);
+      setViewingPast(false);
+    }
   }, [open]);
 
-  // A single parayanam skips the picker entirely.
+  // A single active parayanam skips the picker entirely (past view always
+  // shows its own list, even with one entry, so the way back stays visible).
   useEffect(() => {
-    if (open && sessions.length === 1) setSelectedSessionId(sessions[0].id);
-  }, [open, sessions]);
+    if (open && !viewingPast && sessions.length === 1) setSelectedSessionId(sessions[0].id);
+  }, [open, viewingPast, sessions]);
 
-  const { tiles, occurrences, loading, pending, toggleDashakam } =
+  const { tiles, blooms, occurrences, loading, pending, toggleDashakam } =
     useSessionGarden(selectedSessionId);
 
   // Personal view on top of the shared garden data: a dashakam is fully
@@ -55,8 +65,9 @@ export default function MyGardenDialog({ open, onOpenChange }: Props) {
     return m;
   }, [tiles]);
 
-  const selectedSession = sessions.find((s) => s.id === selectedSessionId);
-  const picking = sessions.length > 1 && selectedSessionId === null;
+  const activeList = viewingPast ? pastSessions : sessions;
+  const selectedSession = activeList.find((s) => s.id === selectedSessionId);
+  const picking = selectedSessionId === null && (viewingPast || activeList.length > 1);
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -65,14 +76,25 @@ export default function MyGardenDialog({ open, onOpenChange }: Props) {
           <>
             <DialogHeader>
               <DialogTitle className="font-display text-lg font-semibold">
-                Which parayanam?
+                {viewingPast ? "Past gardens" : "Which parayanam?"}
               </DialogTitle>
               <DialogDescription className="font-sans text-sm">
-                Choose the parayanam whose garden you'd like to update.
+                {viewingPast
+                  ? "Look back at the final bloom of a completed parayanam."
+                  : "Choose the parayanam whose garden you'd like to update."}
               </DialogDescription>
             </DialogHeader>
+            {viewingPast && (
+              <button
+                type="button"
+                onClick={() => setViewingPast(false)}
+                className="inline-flex items-center gap-1 self-start font-sans text-xs font-semibold text-muted-foreground transition-colors hover:text-primary"
+              >
+                <ChevronLeft className="h-3.5 w-3.5" /> Back to active parayanams
+              </button>
+            )}
             <div className="mt-2 space-y-2">
-              {sessions.map((s) => (
+              {activeList.map((s) => (
                 <button
                   key={s.id}
                   type="button"
@@ -82,32 +104,71 @@ export default function MyGardenDialog({ open, onOpenChange }: Props) {
                   {s.label}
                 </button>
               ))}
+              {viewingPast && !pastLoading && pastSessions.length === 0 && (
+                <p className="py-4 text-center font-sans text-sm text-muted-foreground">
+                  No completed parayanams yet — your finished gardens will appear here.
+                </p>
+              )}
             </div>
+            {!viewingPast && (
+              <button
+                type="button"
+                onClick={() => {
+                  setSelectedSessionId(null);
+                  setViewingPast(true);
+                }}
+                className="mt-3 inline-flex items-center gap-1.5 self-center font-sans text-xs font-semibold text-muted-foreground transition-colors hover:text-primary"
+              >
+                <History className="h-3.5 w-3.5" /> View past gardens
+              </button>
+            )}
           </>
         ) : (
           <>
             <DialogHeader>
               <DialogTitle className="sr-only">My Dashakam Garden</DialogTitle>
-              {sessions.length > 1 && (
+              <div className="flex items-center gap-3">
+                {(viewingPast || sessions.length > 1) && (
+                  <button
+                    type="button"
+                    onClick={() => setSelectedSessionId(null)}
+                    className="inline-flex items-center gap-1 self-start font-sans text-xs font-semibold text-muted-foreground transition-colors hover:text-primary"
+                  >
+                    <ChevronLeft className="h-3.5 w-3.5" /> {viewingPast ? "Past gardens" : "Switch parayanam"}
+                  </button>
+                )}
+              </div>
+            </DialogHeader>
+            {viewingPast ? (
+              <DashakamGarden
+                blooms={blooms}
+                occurrences={occurrences}
+                loading={loading}
+                title={selectedSession?.label ?? "Past garden"}
+                subtitle="Completed parayanam — read-only"
+              />
+            ) : sessionsLoading ? null : (
+              <>
+                <DashakamGarden
+                  blooms={myBlooms}
+                  tiles={myTiles}
+                  occurrences={occurrences}
+                  onTapDashakam={toggleDashakam}
+                  pendingDashakam={pending}
+                  loading={loading}
+                  title={selectedSession?.label ?? "My Dashakam Garden"}
+                />
                 <button
                   type="button"
-                  onClick={() => setSelectedSessionId(null)}
-                  className="inline-flex items-center gap-1 self-start font-sans text-xs font-semibold text-muted-foreground transition-colors hover:text-primary"
+                  onClick={() => {
+                    setSelectedSessionId(null);
+                    setViewingPast(true);
+                  }}
+                  className="mt-3 inline-flex w-full items-center justify-center gap-1.5 font-sans text-xs font-semibold text-muted-foreground transition-colors hover:text-primary"
                 >
-                  <ChevronLeft className="h-3.5 w-3.5" /> Switch parayanam
+                  <History className="h-3.5 w-3.5" /> View past gardens
                 </button>
-              )}
-            </DialogHeader>
-            {sessionsLoading ? null : (
-              <DashakamGarden
-                blooms={myBlooms}
-                tiles={myTiles}
-                occurrences={occurrences}
-                onTapDashakam={toggleDashakam}
-                pendingDashakam={pending}
-                loading={loading}
-                title={selectedSession?.label ?? "My Dashakam Garden"}
-              />
+              </>
             )}
           </>
         )}
