@@ -227,56 +227,6 @@ export default function DashboardPage() {
           </div>
         </motion.div>
 
-        {/* Chant & Learn Mode Progress */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
-          {[
-            {
-              label: "Chant Mode",
-              icon: Mic,
-              state: localProgress.chantState,
-              page: "/chant",
-              color: "hsl(var(--primary))",
-            },
-            {
-              label: "Learn Mode",
-              icon: BookOpen,
-              state: localProgress.learnState as any,
-              page: "/chant?mode=learn",
-              color: "hsl(var(--secondary))",
-            },
-          ].map((mode) => (
-            <motion.div
-              key={mode.label}
-              initial={{ opacity: 0, x: -10 }}
-              animate={{ opacity: 1, x: 0 }}
-              className="rounded-xl border border-border bg-card p-5"
-            >
-              <div className="flex items-center gap-3 mb-3">
-                <div
-                  className="flex h-10 w-10 items-center justify-center rounded-xl"
-                  style={{ backgroundColor: mode.color + "20" }}
-                >
-                  <mode.icon className="h-5 w-5" style={{ color: mode.color }} />
-                </div>
-                <div>
-                  <h3 className="font-display text-sm font-semibold text-foreground">{mode.label}</h3>
-                  {mode.state ? (
-                    <p className="text-xs text-muted-foreground font-sans">
-                      Dashakam {(mode.state as any)?.dashakam || "—"}, Verse {((mode.state as any)?.verse || 0) + 1}
-                    </p>
-                  ) : (
-                    <p className="text-xs text-muted-foreground font-sans">Not started yet</p>
-                  )}
-                </div>
-              </div>
-              {mode.state && (
-                <Link to={mode.page} className="text-xs font-sans text-primary hover:underline">
-                  Resume →
-                </Link>
-              )}
-            </motion.div>
-          ))}
-        </div>
 
         {/* Recently Completed */}
         {recentCompleted.length > 0 && (
