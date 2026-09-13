@@ -19,7 +19,6 @@ export default function ParayanamProgressLotus({
       <TooltipTrigger asChild>
         <span
           className={`${className} inline-flex shrink-0 cursor-help`}
-          tabIndex={0}
           aria-label={`Blooms as you progress through this parayanam — ${completed} of ${total} dashakams.`}
         >
           <Lotus percent={percent} petalColor="gold" />
