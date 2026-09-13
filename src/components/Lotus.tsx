@@ -1,14 +1,16 @@
 interface LotusProps {
   percent: number;
   className?: string;
+  petalColor?: "lotus" | "gold";
 }
 
 /** A single lotus whose petals open with bloom intensity. */
-export default function Lotus({ percent, className = "h-full w-full" }: LotusProps) {
+export default function Lotus({ percent, className = "h-full w-full", petalColor = "lotus" }: LotusProps) {
   const p = Math.max(0, Math.min(100, percent)) / 100;
   const spread = 6 + p * 26;
   const petalLen = 5 + p * 5;
   const opacity = 0.35 + p * 0.65;
+  const petalFill = petalColor === "gold" ? "hsl(var(--secondary))" : "hsl(var(--lotus-petal))";
 
   return (
     <svg viewBox="0 0 32 32" className={className} aria-hidden="true">
@@ -20,7 +22,7 @@ export default function Lotus({ percent, className = "h-full w-full" }: LotusPro
           rx={2.6 + p * 1.2}
           ry={petalLen}
           transform={`rotate(${i * spread} 16 21)`}
-          fill="hsl(var(--lotus-petal))"
+          fill={petalFill}
           opacity={opacity}
         />
       ))}

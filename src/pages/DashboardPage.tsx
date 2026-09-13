@@ -1,21 +1,22 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
-import { BookOpen, Info, Loader2, LogIn, Play, Repeat2, TrendingUp, Users } from "lucide-react";
+import { Info, Loader2, LogIn, Play, Repeat2, TrendingUp, Users } from "lucide-react";
 import { getProgress } from "@/lib/progress";
 import { useAuth } from "@/contexts/AuthContext";
 import { useUserProgress } from "@/hooks/useUserProgress";
 import { Progress } from "@/components/ui/progress";
 import ProgressRing from "@/components/ProgressRing";
 import SEO from "@/components/SEO";
-import ActiveChallengeCard from "@/components/ActiveChallengeCard";
 import { useParayanamReport, type ParayanamReport } from "@/hooks/useParayanamReport";
 import Lotus from "@/components/Lotus";
+import ParayanamProgressLotus from "@/components/ParayanamProgressLotus";
 import MyGardenDialog from "@/components/MyGardenDialog";
 import MemberProgressDialog from "@/components/MemberProgressDialog";
 import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import logoImg from "@/assets/logo.png";
+import featherAsset from "@/assets/peacock-feather-256.png.asset.json";
 
 function InfoTip({ text }: { text: string }) {
   return (
@@ -92,8 +93,6 @@ export default function DashboardPage() {
           <p className="mt-1 font-sans text-sm text-muted-foreground">Your spiritual journey at a glance</p>
         </div>
 
-        <ActiveChallengeCard />
-
         {/* Sign-in prompt for guests */}
         {isGuest && (
           <motion.div
@@ -122,7 +121,7 @@ export default function DashboardPage() {
         {/* Key stats */}
         <div className="mb-8 grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-5">
           <motion.article initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} className="rounded-lg border border-border bg-card p-4">
-            <div className="flex items-start justify-between gap-2">
+            <div className="flex items-center gap-1">
               <p className="font-sans text-xs font-semibold uppercase text-muted-foreground">Lifetime Dashakams</p>
               <InfoTip text="The unique dashakams you've ever completed, out of 100 — counted once each, no matter how many times you revisit them." />
             </div>
@@ -136,38 +135,43 @@ export default function DashboardPage() {
           </motion.article>
 
           <motion.article initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.05 }} className="rounded-lg border border-border bg-card p-4">
-            <div className="flex items-start justify-between gap-2">
+            <div className="flex items-center gap-1">
               <p className="font-sans text-xs font-semibold uppercase text-muted-foreground">This Year</p>
             </div>
-            <img src={logoImg} alt="" className="mt-3 h-8 w-8 object-contain" />
-            <p className="mt-1 font-display text-3xl font-bold text-primary">{feathersEarned}</p>
-            <p className="font-sans text-xs text-muted-foreground">Feathers Earned</p>
             <div className="mt-3 space-y-2">
-              <div className="flex items-start justify-between gap-2">
-                <div>
+              <div>
+                <div className="flex items-center gap-1">
                   <p className="font-sans text-xs text-muted-foreground">Chant</p>
+                  <InfoTip text="Dashakams chanted this year. Chanting the same dashakam more than once counts each time." />
+                </div>
+                <div>
                   <p className="font-display text-sm font-semibold text-foreground">{chantUnique} dashakams · {chantTotal} completions</p>
                 </div>
-                <InfoTip text="Dashakams chanted this year. Chanting the same dashakam more than once counts each time." />
               </div>
-              <div className="flex items-start justify-between gap-2">
-                <div>
+              <div>
+                <div className="flex items-center gap-1">
                   <p className="font-sans text-xs text-muted-foreground">Listen</p>
+                  <InfoTip text="Dashakams listened to this year. Listening to the same dashakam more than once counts each time." />
+                </div>
+                <div>
                   <p className="font-display text-sm font-semibold text-foreground">{listenUnique} dashakams · {listenTotal} completions</p>
                 </div>
-                <InfoTip text="Dashakams listened to this year. Listening to the same dashakam more than once counts each time." />
               </div>
-              <div className="flex items-start justify-between gap-2">
-                <div>
-                  <p className="font-sans text-xs text-muted-foreground">Feathers Earned</p>
+              <div className="flex items-end gap-2 pt-1">
+                <img src={featherAsset.url} alt="" className="h-8 w-8 shrink-0 object-contain" />
+                <div className="min-w-0">
+                  <div className="flex items-center gap-1">
+                    <p className="font-sans text-xs text-muted-foreground">Feathers Earned</p>
+                    <InfoTip text="Your Chant and Listen completions this year, added together." />
+                  </div>
+                  <p className="font-display text-3xl font-bold text-primary">{feathersEarned}</p>
                 </div>
-                <InfoTip text="Your Chant and Listen completions this year, added together." />
               </div>
             </div>
           </motion.article>
 
           <motion.article initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }} className="rounded-lg border border-border bg-card p-4 sm:col-span-2 xl:col-span-1">
-            <div className="flex items-start justify-between gap-2">
+            <div className="flex items-center gap-1">
               <p className="font-sans text-xs font-semibold uppercase text-muted-foreground">Where You Are Right Now</p>
               <InfoTip text="Your most recently saved chanting position on this device." />
             </div>
@@ -179,7 +183,7 @@ export default function DashboardPage() {
           </motion.article>
 
           <motion.article initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.15 }} className="rounded-lg border border-border bg-card p-4">
-            <div className="flex items-start justify-between gap-2">
+            <div className="flex items-center gap-1">
               <p className="font-sans text-xs font-semibold uppercase text-muted-foreground">Most Returned To</p>
               <InfoTip text={`The Dashakam you completed most often during ${currentYear}.`} />
             </div>
@@ -290,7 +294,6 @@ export default function DashboardPage() {
                     {group.parayanams.map((parayanam) => {
                       const stats = parayanam.mine ?? parayanam.aggregate;
                       const total = stats.completed + stats.notCompleted;
-                      const percent = total > 0 ? Math.round((stats.completed / total) * 100) : 0;
                       return (
                         <div key={parayanam.session_id} className="flex flex-col gap-2 rounded-lg border border-border bg-muted/30 p-3 sm:flex-row sm:items-center sm:justify-between">
                           <Button
@@ -299,7 +302,7 @@ export default function DashboardPage() {
                             className="h-auto min-w-0 justify-start px-0 text-left hover:bg-transparent"
                             onClick={() => setGardenSession({ report: parayanam, isOwner: group.isOwner })}
                           >
-                            <span className="h-10 w-10 shrink-0"><Lotus percent={percent} /></span>
+                            <ParayanamProgressLotus completed={stats.completed} total={total} />
                             <span className="min-w-0">
                               <span className="block truncate font-display text-sm font-semibold text-foreground">{parayanam.name}</span>
                               <span className="block font-sans text-xs text-muted-foreground">{stats.completed} of {total} completed · {stats.blooms} blooms</span>
@@ -315,28 +318,6 @@ export default function DashboardPage() {
           )}
         </section>
 
-        {/* Insights */}
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 0.5 }}
-          className="rounded-xl border border-border bg-card p-6"
-        >
-          <h3 className="font-display text-lg font-semibold text-foreground mb-4">Insights</h3>
-          <div className="grid grid-cols-2 gap-3">
-            {[
-              { icon: BookOpen, label: "Dashakams Done", value: `${dashakamsCompleted} / 100` },
-            ].map((s) => (
-              <div key={s.label} className="flex items-center gap-3 rounded-lg bg-muted/50 p-3">
-                <s.icon className="h-5 w-5 text-secondary shrink-0" />
-                <div>
-                  <p className="text-xs text-muted-foreground font-sans">{s.label}</p>
-                  <p className="font-display text-sm font-semibold text-foreground">{s.value}</p>
-                </div>
-              </div>
-            ))}
-          </div>
-        </motion.div>
       </motion.div>
       <MyGardenDialog
         open={gardenSession !== null}
