@@ -41,8 +41,6 @@ export default function DashboardPage() {
     isGuest,
     mostReturnedTo,
   } = useUserProgress();
-  const { count: yearlyCount, loading: yearlyLoading, year: yearlyYear } = useYearlyDashakamCount();
-  const { feathers, loading: feathersLoading } = useFeathers();
   const { groups, loading: reportsLoading, error: reportsError } = useParayanamReport();
   const [gardenSession, setGardenSession] = useState<{ report: ParayanamReport; isOwner: boolean } | null>(null);
   const [memberReport, setMemberReport] = useState<ParayanamReport | null>(null);
@@ -52,6 +50,21 @@ export default function DashboardPage() {
   const currentVerse = localProgress.chantState?.verse
     ? localProgress.chantState.verse + 1
     : localProgress.lastParagraph || 1;
+
+  // This Year — Chant vs. Listen breakdown (read-only, from user_progress)
+  const currentYear = new Date().getFullYear();
+  const yearlyRows = completedDashakams.filter(
+    (r) =>
+      new Date(r.completed_date).getFullYear() === currentYear &&
+      (r.pathway_id === "chant" || r.pathway_id === "podcast")
+  );
+  const chantRows = yearlyRows.filter((r) => r.pathway_id === "chant");
+  const listenRows = yearlyRows.filter((r) => r.pathway_id === "podcast");
+  const chantTotal = chantRows.length;
+  const chantUnique = new Set(chantRows.map((r) => r.dashakam_no)).size;
+  const listenTotal = listenRows.length;
+  const listenUnique = new Set(listenRows.map((r) => r.dashakam_no)).size;
+  const feathersEarned = chantTotal + listenTotal;
 
   // Estimated completion
   const daysActive =
