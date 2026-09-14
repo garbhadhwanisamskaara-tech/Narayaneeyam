@@ -50,6 +50,7 @@ export function useUserProgress(): UserProgressData {
         const { data, error } = await supabase
           .from("user_progress")
           .select("dashakam_no, completed_date, pathway_id")
+          .eq("user_id", user.id)
           .order("completed_date", { ascending: false });
 
         if (error) throw error;
