@@ -89,6 +89,33 @@ export default function RitualChantOverlay({ chants, useLearnAudio = false, titl
     };
   }, []);
 
+  // Lock the page behind this overlay while it's open. Without this, a touch
+  // that starts on the overlay but runs past its own scroll bounds (common on
+  // a small iPhone screen once the verse + translation + controls are taller
+  // than the viewport) chains onto the body underneath. On iOS Safari that
+  // chained swipe is what triggers the rubber-band/pull-to-refresh gesture —
+  // which looks exactly like "the page refreshes when I scroll or swipe".
+  useEffect(() => {
+    const { body } = document;
+    const previousOverflow = body.style.overflow;
+    const previousPosition = body.style.position;
+    const previousWidth = body.style.width;
+    const scrollY = window.scrollY;
+    body.style.overflow = "hidden";
+    // Also pin position:fixed so iOS can't rubber-band the body itself while
+    // a finger is still down on the fixed overlay above it.
+    body.style.position = "fixed";
+    body.style.top = `-${scrollY}px`;
+    body.style.width = "100%";
+    return () => {
+      body.style.overflow = previousOverflow;
+      body.style.position = previousPosition;
+      body.style.width = previousWidth;
+      body.style.top = "";
+      window.scrollTo(0, scrollY);
+    };
+  }, []);
+
   const advance = useCallback(() => {
     if (currentIdx < chants.length - 1) {
       setCurrentIdx((i) => i + 1);
