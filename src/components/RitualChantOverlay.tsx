@@ -216,86 +216,89 @@ export default function RitualChantOverlay({ chants, useLearnAudio = false, titl
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
-      className="fixed inset-0 z-40 flex items-center justify-center bg-background/95 backdrop-blur-sm p-4"
+      className="fixed inset-0 z-40 overflow-y-auto overscroll-contain bg-background/95 backdrop-blur-sm"
+      style={{ WebkitOverflowScrolling: "touch" }}
     >
-      <div className="max-w-lg w-full text-center space-y-6">
-        <p className="text-xs uppercase tracking-widest text-muted-foreground font-sans">{displayName}</p>
-        <p className="text-sm text-muted-foreground font-sans">
-          {currentIdx + 1} of {chants.length}
-        </p>
+      <div className="flex min-h-full items-center justify-center p-4">
+        <div className="max-w-lg w-full text-center space-y-6">
+          <p className="text-xs uppercase tracking-widest text-muted-foreground font-sans">{displayName}</p>
+          <p className="text-sm text-muted-foreground font-sans">
+            {currentIdx + 1} of {chants.length}
+          </p>
 
-        <div className="rounded-xl bg-gradient-peacock p-6 shadow-peacock overflow-hidden relative">
-          {hasTransliteration ? (
-            <>
-              <p className="font-body text-lg text-primary-foreground leading-relaxed whitespace-pre-line">
-                {current.transliteration_text}
-              </p>
-              {current.translation_text && (
-                <p className="mt-4 text-sm text-gold-light font-sans leading-relaxed">{current.translation_text}</p>
-              )}
-            </>
-          ) : (
-            <div className="flex flex-col items-center gap-4">
-              <img
-                src={heroBg}
-                alt="Guruvayurappan"
-                className="w-40 h-40 object-cover rounded-full border-2 border-gold-light/30"
-              />
-              {current.translation_text && (
-                <p className="text-sm text-gold-light font-sans leading-relaxed">{current.translation_text}</p>
-              )}
-            </div>
-          )}
+          <div className="rounded-xl bg-gradient-peacock p-6 shadow-peacock overflow-hidden relative">
+            {hasTransliteration ? (
+              <>
+                <p className="font-body text-lg text-primary-foreground leading-relaxed whitespace-pre-line">
+                  {current.transliteration_text}
+                </p>
+                {current.translation_text && (
+                  <p className="mt-4 text-sm text-gold-light font-sans leading-relaxed">{current.translation_text}</p>
+                )}
+              </>
+            ) : (
+              <div className="flex flex-col items-center gap-4">
+                <img
+                  src={heroBg}
+                  alt="Guruvayurappan"
+                  className="w-40 h-40 object-cover rounded-full border-2 border-gold-light/30"
+                />
+                {current.translation_text && (
+                  <p className="text-sm text-gold-light font-sans leading-relaxed">{current.translation_text}</p>
+                )}
+              </div>
+            )}
+          </div>
+
+          <div className="flex items-center justify-center gap-2 text-xs text-muted-foreground">
+            <Volume2 className="h-3 w-3" />
+            <span className="font-sans">{isPlaying ? "Playing…" : "Paused"}</span>
+          </div>
+
+          <div className="flex items-center justify-center gap-3">
+            <button
+              onClick={togglePlayPause}
+              aria-label={isPlaying ? "Pause" : "Play"}
+              className="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-border bg-card text-foreground hover:bg-muted transition-colors"
+            >
+              {isPlaying ? <Pause className="h-4 w-4" /> : <Play className="h-4 w-4" />}
+            </button>
+            <button
+              onClick={toggleMute}
+              aria-label={muted ? "Unmute" : "Mute"}
+              className="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-border bg-card text-foreground hover:bg-muted transition-colors"
+            >
+              {muted ? <VolumeX className="h-4 w-4" /> : <Volume2 className="h-4 w-4" />}
+            </button>
+            <button
+              onClick={cycleSpeed}
+              aria-label="Change playback speed"
+              className="inline-flex h-9 min-w-[3.25rem] items-center justify-center rounded-lg border border-border bg-card px-2 text-xs font-sans font-medium text-foreground hover:bg-muted transition-colors"
+            >
+              {currentSpeed}x
+            </button>
+            <button
+              onClick={() => setLyricsOpen(true)}
+              aria-label="Show lyrics"
+              className="inline-flex h-9 items-center justify-center gap-1.5 rounded-lg border border-border bg-card px-3 text-xs font-sans font-medium text-foreground hover:bg-muted transition-colors"
+            >
+              <ScrollText className="h-4 w-4" /> Lyrics
+            </button>
+          </div>
+
+          <button
+            onClick={() => {
+              if (audioRef.current) {
+                audioRef.current.pause();
+                audioRef.current = null;
+              }
+              onComplete();
+            }}
+            className="inline-flex items-center gap-2 rounded-lg border border-border bg-card px-4 py-2 text-sm font-sans text-foreground hover:bg-muted transition-colors"
+          >
+            <SkipForward className="h-4 w-4" /> Skip
+          </button>
         </div>
-
-        <div className="flex items-center justify-center gap-2 text-xs text-muted-foreground">
-          <Volume2 className="h-3 w-3" />
-          <span className="font-sans">{isPlaying ? "Playing…" : "Paused"}</span>
-        </div>
-
-        <div className="flex items-center justify-center gap-3">
-          <button
-            onClick={togglePlayPause}
-            aria-label={isPlaying ? "Pause" : "Play"}
-            className="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-border bg-card text-foreground hover:bg-muted transition-colors"
-          >
-            {isPlaying ? <Pause className="h-4 w-4" /> : <Play className="h-4 w-4" />}
-          </button>
-          <button
-            onClick={toggleMute}
-            aria-label={muted ? "Unmute" : "Mute"}
-            className="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-border bg-card text-foreground hover:bg-muted transition-colors"
-          >
-            {muted ? <VolumeX className="h-4 w-4" /> : <Volume2 className="h-4 w-4" />}
-          </button>
-          <button
-            onClick={cycleSpeed}
-            aria-label="Change playback speed"
-            className="inline-flex h-9 min-w-[3.25rem] items-center justify-center rounded-lg border border-border bg-card px-2 text-xs font-sans font-medium text-foreground hover:bg-muted transition-colors"
-          >
-            {currentSpeed}x
-          </button>
-          <button
-            onClick={() => setLyricsOpen(true)}
-            aria-label="Show lyrics"
-            className="inline-flex h-9 items-center justify-center gap-1.5 rounded-lg border border-border bg-card px-3 text-xs font-sans font-medium text-foreground hover:bg-muted transition-colors"
-          >
-            <ScrollText className="h-4 w-4" /> Lyrics
-          </button>
-        </div>
-
-        <button
-          onClick={() => {
-            if (audioRef.current) {
-              audioRef.current.pause();
-              audioRef.current = null;
-            }
-            onComplete();
-          }}
-          className="inline-flex items-center gap-2 rounded-lg border border-border bg-card px-4 py-2 text-sm font-sans text-foreground hover:bg-muted transition-colors"
-        >
-          <SkipForward className="h-4 w-4" /> Skip
-        </button>
       </div>
 
       <Sheet open={lyricsOpen} onOpenChange={setLyricsOpen}>
