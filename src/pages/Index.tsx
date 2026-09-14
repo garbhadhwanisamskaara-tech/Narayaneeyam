@@ -31,6 +31,7 @@ import { supabase } from "@/integrations/supabase/client";
 import SEO from "@/components/SEO";
 import TrialStatusLine from "@/components/TrialStatusLine";
 import UpcomingLiveSessionCard from "@/components/UpcomingLiveSessionCard";
+import PastLiveSessionsCard from "@/components/PastLiveSessionsCard";
 import TodaysDashakamCard from "@/components/TodaysDashakamCard";
 import { SUBSCRIPTION_ENABLED } from "@/config/features";
 import { useAuth } from "@/contexts/AuthContext";
