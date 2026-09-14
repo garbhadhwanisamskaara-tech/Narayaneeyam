@@ -1,6 +1,5 @@
-import { useEffect, useMemo, useState } from "react";
-import { ChevronDown, ChevronUp, X, Youtube } from "lucide-react";
-import { useAuth } from "@/contexts/AuthContext";
+import { useMemo, useState } from "react";
+import { ChevronDown, ChevronUp, Youtube } from "lucide-react";
 import { useMyPastLiveSessions } from "@/hooks/useMyPastLiveSessions";
 
 /** "14 Sep 2026" — always Indian Standard Time. */
@@ -13,65 +12,24 @@ function fmtDateIST(iso: string) {
   });
 }
 
-function dismissedKey(userId: string) {
-  return `narayaneeyam:dismissedPastSessions:${userId}`;
-}
-
 /**
- * "Don't show this again" for sessions with no recording yet. Deliberately
- * local-only (per browser, not per account) — this is a personal declutter
- * preference, not data anyone else needs to see, so it doesn't need a
- * database round trip or a new column/grant to get right.
- */
-function loadDismissed(userId: string): Set<string> {
-  try {
-    const raw = localStorage.getItem(dismissedKey(userId));
-    return new Set(raw ? (JSON.parse(raw) as string[]) : []);
-  } catch {
-    return new Set();
-  }
-}
-
-function saveDismissed(userId: string, ids: Set<string>) {
-  try {
-    localStorage.setItem(dismissedKey(userId), JSON.stringify(Array.from(ids)));
-  } catch {
-    /* best-effort only */
-  }
-}
-
-/**
- * Home-page card: every past live session across all of the member's
- * parayanams, collapsed behind "Click here to view past sessions". A
- * session with a recording shows its date as a link straight to YouTube; one
- * without yet shows "Recording not available yet" with a dismiss (×) that
- * hides just that row for this browser going forward. Recording links are
- * still added by the owner from Manage Parayanam — this card is read-only.
+ * Home-page card: past live sessions that already have a recording, across
+ * all of the member's parayanams, collapsed behind "Click here to view past
+ * sessions". Sessions without a recording yet are left out entirely — this
+ * card only ever lists something the viewer can actually watch. Recording
+ * links are still added by the owner from Manage Parayanam; this card is
+ * read-only.
  */
 export default function PastLiveSessionsCard() {
-  const { user } = useAuth();
   const { sessions, loading } = useMyPastLiveSessions();
   const [expanded, setExpanded] = useState(false);
-  const [dismissed, setDismissed] = useState<Set<string>>(new Set());
 
-  useEffect(() => {
-    if (user) setDismissed(loadDismissed(user.id));
-  }, [user]);
-
-  const visible = useMemo(
-    () => sessions.filter((s) => s.youtubeUrl || !dismissed.has(s.id)),
-    [sessions, dismissed],
+  const withRecording = useMemo(
+    () => sessions.filter((s) => s.youtubeUrl),
+    [sessions],
   );
 
-  const dismiss = (id: string) => {
-    if (!user) return;
-    const next = new Set(dismissed);
-    next.add(id);
-    setDismissed(next);
-    saveDismissed(user.id, next);
-  };
-
-  if (loading || visible.length === 0) return null;
+  if (loading || withRecording.length === 0) return null;
 
   return (
     <div className="mx-auto w-full max-w-3xl">
@@ -82,7 +40,7 @@ export default function PastLiveSessionsCard() {
         aria-expanded={expanded}
       >
         <h2 className="font-display text-lg font-semibold text-foreground">
-          Click here to view past sessions ({visible.length})
+          Click here to view past sessions ({withRecording.length})
         </h2>
 
         {expanded ? (
@@ -101,35 +59,24 @@ export default function PastLiveSessionsCard() {
             </div>
 
             <ul className="divide-y divide-border">
-              {visible.map((s) => (
-                <li key={s.id} className="grid grid-cols-2 gap-2 px-4 py-3 items-center">
-                  <span className="font-sans text-sm text-foreground">{s.parayanamName}</span>
+              {withRecording.map((s) => (
+                <li
+                  key={s.id}
+                  className="grid grid-cols-2 items-center gap-2 px-4 py-3"
+                >
+                  <span className="font-sans text-sm text-foreground">
+                    {s.parayanamName}
+                  </span>
 
-                  <div className="flex items-center gap-2">
-                    {s.youtubeUrl ? (
-                      <a
-                        href={s.youtubeUrl}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="inline-flex items-center gap-1.5 rounded-lg bg-gradient-peacock px-3 py-1.5 font-sans text-xs font-semibold text-primary-foreground hover:opacity-90"
-                      >
-                        <Youtube className="h-3.5 w-3.5" />
-                        {fmtDateIST(s.startDatetime)}
-                      </a>
-                    ) : (
-                      <span className="inline-flex items-center gap-2 font-sans text-sm text-muted-foreground">
-                        <span>{fmtDateIST(s.startDatetime)} · Recording not available yet</span>
-                        <button
-                          type="button"
-                          onClick={() => dismiss(s.id)}
-                          aria-label="Dismiss — recording not available yet"
-                          className="rounded p-0.5 hover:bg-muted"
-                        >
-                          <X className="h-3.5 w-3.5" />
-                        </button>
-                      </span>
-                    )}
-                  </div>
+                  <a
+                    href={s.youtubeUrl!}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-1.5 rounded-lg bg-gradient-peacock px-3 py-1.5 font-sans text-xs font-semibold text-primary-foreground hover:opacity-90"
+                  >
+                    <Youtube className="h-3.5 w-3.5" />
+                    {fmtDateIST(s.startDatetime)}
+                  </a>
                 </li>
               ))}
             </ul>
