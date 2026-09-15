@@ -61,6 +61,7 @@ export default function CreateParayanamPage() {
 
   const [step, setStep] = useState(1);
   const [parayanamName, setParayanamName] = useState("");
+  const [nameError, setNameError] = useState<string | null>(null);
   const [generalNote, setGeneralNote] = useState("");
   const [setId, setSetId] = useState<string>("");
   const [custom, setCustom] = useState<number[]>([]);
@@ -345,14 +346,25 @@ export default function CreateParayanamPage() {
   const contributionValid =
     isValidContributionAmount(contribution.amount) && isValidContributionNote(contribution.note);
 
+  const nameValid = parayanamName.trim().length > 0;
+  const detailsBasicsValid =
+    dashakams.length > 0 && !!startDate && !!endDate && endDate >= startDate && dates.length > 0;
+
   const canNext =
     currentStep === "details"
-      ? dashakams.length > 0 && !!startDate && !!endDate && endDate >= startDate && dates.length > 0
+      ? detailsBasicsValid && nameValid
       : currentStep === "contribution"
         ? contributionValid
         : currentStep === "live"
           ? isLiveScheduleValid(liveSchedule)
           : true;
+
+  /** Surface the DB's name constraint as the same inline error the client uses. */
+  const applyNameConstraintError = (e: any): boolean => {
+    if (!String(e?.message ?? "").includes("cs_parayanam_name_required")) return false;
+    setNameError("Please name your parayanam");
+    return true;
+  };
 
   /** Keep generated sessions in step with the parayanam's date range. */
   useEffect(() => {
@@ -428,6 +440,10 @@ export default function CreateParayanamPage() {
    */
   const handleSaveDraft = async () => {
     if (!user) return;
+    if (!parayanamName.trim()) {
+      setNameError("Please name your parayanam");
+      return;
+    }
     setSavingDraft(true);
     setError(null);
     try {
@@ -454,7 +470,7 @@ export default function CreateParayanamPage() {
         description: "You can continue setup later.",
       });
     } catch (e: any) {
-      setError(friendlyError(e, "Could not save the draft."));
+      if (!applyNameConstraintError(e)) setError(friendlyError(e, "Could not save the draft."));
     } finally {
       setSavingDraft(false);
     }
@@ -462,6 +478,11 @@ export default function CreateParayanamPage() {
 
   const handleSubmit = async () => {
     if (!user || dashakams.length === 0) return;
+    if (!parayanamName.trim()) {
+      setNameError("Please name your parayanam");
+      setStep(1);
+      return;
+    }
     setBusy(true);
     setError(null);
     try {
@@ -590,7 +611,11 @@ export default function CreateParayanamPage() {
         navigate("/progress");
       }
     } catch (e: any) {
-      setError(friendlyError(e, "Could not create the parayanam."));
+      if (applyNameConstraintError(e)) {
+        setStep(1);
+      } else {
+        setError(friendlyError(e, "Could not create the parayanam."));
+      }
     } finally {
       setBusy(false);
     }
@@ -625,17 +650,29 @@ export default function CreateParayanamPage() {
         {currentStep === "details" && (
           <div>
             <label htmlFor="parayanam-name" className="font-sans text-sm font-semibold text-foreground">
-              Parayanam name <span className="font-normal text-muted-foreground">(optional)</span>
+              Parayanam name{" "}
+              <span className="text-destructive" aria-hidden="true">
+                *
+              </span>
             </label>
             <input
               id="parayanam-name"
               type="text"
               maxLength={80}
+              required
               value={parayanamName}
-              onChange={(e) => setParayanamName(e.target.value)}
+              onChange={(e) => {
+                setParayanamName(e.target.value);
+                if (e.target.value.trim()) setNameError(null);
+              }}
+              onBlur={() => {
+                if (!parayanamName.trim()) setNameError("Please name your parayanam");
+              }}
+              aria-invalid={!!nameError}
               placeholder="Diwali 2026 Parayanam"
               className="mt-2 w-full rounded-lg border border-border bg-background px-3 py-2 font-sans text-sm text-foreground outline-none focus:ring-2 focus:ring-primary"
             />
+            {nameError && <p className="mt-2 font-sans text-xs text-destructive">{nameError}</p>}
           </div>
         )}
 
@@ -1243,8 +1280,14 @@ export default function CreateParayanamPage() {
           </button>
           {step < lastStep ? (
             <button
-              onClick={() => setStep((s) => s + 1)}
-              disabled={!canNext}
+              onClick={() => {
+                if (currentStep === "details" && !parayanamName.trim()) {
+                  setNameError("Please name your parayanam");
+                  return;
+                }
+                setStep((s) => s + 1);
+              }}
+              disabled={currentStep === "details" ? !detailsBasicsValid : !canNext}
               className="rounded-lg bg-gradient-gold px-5 py-2 font-sans text-sm font-semibold text-primary shadow-gold disabled:opacity-50"
             >
               Next
