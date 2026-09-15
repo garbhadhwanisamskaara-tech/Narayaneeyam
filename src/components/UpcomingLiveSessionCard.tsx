@@ -58,9 +58,18 @@ function SessionRow({ s, now }: { s: UpcomingLiveSession; now: number }) {
   // Resolve the meeting URL automatically once the activation window opens,
   // re-checking on the parent's 15-second `now` tick. Rendering a real <a>
   // avoids popup blocking that affects script-triggered window.open().
+  // The link stays available until the session's end time, even if a later
+  // eligibility check fails.
   useEffect(() => {
     if (!canJoin) {
       setResolvedUrl(null);
+      setChecking(false);
+      return;
+    }
+
+    // Already resolved and still within the join window — keep the link.
+    if (resolvedUrl) {
+      setChecking(false);
       return;
     }
 
@@ -80,7 +89,6 @@ function SessionRow({ s, now }: { s: UpcomingLiveSession; now: number }) {
         setResolvedUrl(res.meeting_url);
         setReason(null);
       } else {
-        setResolvedUrl(null);
         setReason(res?.reason ?? null);
       }
 
@@ -90,7 +98,7 @@ function SessionRow({ s, now }: { s: UpcomingLiveSession; now: number }) {
     return () => {
       cancelled = true;
     };
-  }, [canJoin, now, s.liveSessionId]);
+  }, [canJoin, now, s.liveSessionId, resolvedUrl]);
 
   return (
     <div className="rounded-2xl border border-border bg-card p-5 shadow-sm">
