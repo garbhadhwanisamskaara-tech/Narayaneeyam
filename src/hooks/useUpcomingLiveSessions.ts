@@ -23,8 +23,8 @@ function todayIso() {
 }
 
 /**
- * Live sessions (today onwards) for parayanams where the member is confirmed
- * and their access is active. Schedule metadata comes from the
+ * The next 2 upcoming live sessions for parayanams where the member is
+ * confirmed and their access is active. Schedule metadata comes from the
  * `live_sessions_public` view, which deliberately has no meeting_url.
  */
 export function useUpcomingLiveSessions() {
@@ -152,24 +152,14 @@ export function useUpcomingLiveSessions() {
         };
       });
 
-      // Drop sessions that already finished.
-      // Drop sessions that already finished.
+      // Drop sessions that already finished and keep the next 2 meetings.
       const now = Date.now();
 
       const futureSessions = rows
         .filter((r) => new Date(r.endDatetime).getTime() > now)
         .sort((a, b) => new Date(a.startDatetime).getTime() - new Date(b.startDatetime).getTime());
 
-      const todayIsoStr = todayIso();
-      const tomorrowIsoStr = new Date(Date.now() + 24 * 60 * 60 * 1000).toLocaleDateString(
-        "sv-SE",
-        { timeZone: "Asia/Kolkata" },
-      );
-      const todayAndTomorrow = futureSessions.filter(
-        (session) => session.sessionDate === todayIsoStr || session.sessionDate === tomorrowIsoStr,
-      );
-
-      setSessions(todayAndTomorrow);
+      setSessions(futureSessions.slice(0, 2));
     } catch {
       setSessions([]);
     }
