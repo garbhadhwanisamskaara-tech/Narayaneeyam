@@ -51,6 +51,7 @@ export default function GroupSchedulePage() {
     schedule_weekdays?: number[] | null;
   } | null>(null);
   const [parayanamName, setParayanamName] = useState("");
+  const [nameError, setNameError] = useState<string | null>(null);
   const [setId, setSetId] = useState<string>("");
   const [startDate, setStartDate] = useState(today());
   const [endDate, setEndDate] = useState(plusDays(99));
@@ -163,6 +164,10 @@ export default function GroupSchedulePage() {
 
   const handleGenerate = async () => {
     if (!group || !selectedSet) return;
+    if (!parayanamName.trim()) {
+      setNameError("Please name your parayanam");
+      return;
+    }
     if (endDate < startDate) {
       setError("The end date must be on or after the start date.");
       return;
@@ -233,7 +238,11 @@ export default function GroupSchedulePage() {
         description: "Invitations have gone out to the members you chose.",
       });
     } catch (e: any) {
-      setError(e?.message ?? "Could not save the parayanam.");
+      if (String(e?.message ?? "").includes("cs_parayanam_name_required")) {
+        setNameError("Please name your parayanam");
+      } else {
+        setError(e?.message ?? "Could not save the parayanam.");
+      }
     } finally {
       setBusy(false);
     }
@@ -358,17 +367,29 @@ export default function GroupSchedulePage() {
           <>
             <div>
               <label htmlFor="parayanam-name" className="font-sans text-sm font-semibold text-foreground">
-                Parayanam name <span className="font-normal text-muted-foreground">(optional)</span>
+                Parayanam name{" "}
+                <span className="text-destructive" aria-hidden="true">
+                  *
+                </span>
               </label>
               <input
                 id="parayanam-name"
                 type="text"
                 maxLength={80}
+                required
                 value={parayanamName}
-                onChange={(e) => setParayanamName(e.target.value)}
+                onChange={(e) => {
+                  setParayanamName(e.target.value);
+                  if (e.target.value.trim()) setNameError(null);
+                }}
+                onBlur={() => {
+                  if (!parayanamName.trim()) setNameError("Please name your parayanam");
+                }}
+                aria-invalid={!!nameError}
                 placeholder="Diwali 2026 Parayanam"
                 className="mt-2 w-full rounded-lg border border-border bg-background px-3 py-2 font-sans text-sm text-foreground outline-none focus:ring-2 focus:ring-primary"
               />
+              {nameError && <p className="mt-2 font-sans text-xs text-destructive">{nameError}</p>}
             </div>
 
             <div>
