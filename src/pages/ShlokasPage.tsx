@@ -94,7 +94,7 @@ async function fetchDashakamShlokas(
     .from("sloka_audio")
     .select(`
       sloka_audio_id, dashakam_no, verse_no, chant_audio_file,
-      sloka_scripts!left (language_code, sloka_title, transliteration_text, translation_text)
+      sloka_scripts!left (language_code, sloka_title, script_text, translation_text)
     `)
     .eq("is_active", true)
     .not("dashakam_no", "is", null)
@@ -118,7 +118,7 @@ async function fetchDashakamShlokas(
       chant_key: row.sloka_audio_id,
       ritual_chant_name:
         scriptChosen?.sloka_title || fallback?.sloka_title || `Dashakam ${row.dashakam_no}`,
-      transliteration_text: scriptChosen?.transliteration_text || "",
+      transliteration_text: scriptChosen?.script_text || "",
       translation_text: translationChosen?.translation_text || "",
       audio_file: row.chant_audio_file || "",
     } as DashakamShloka;
