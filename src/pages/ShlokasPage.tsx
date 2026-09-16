@@ -3,6 +3,13 @@ import { supabase } from "@/integrations/supabase/client";
 import SEO from "@/components/SEO";
 import { useLanguagePrefs } from "@/hooks/useLanguagePrefs";
 import { getStorageUrl } from "@/lib/storageUrl";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 interface Shloka {
   chant_key: string;
@@ -10,6 +17,14 @@ interface Shloka {
   transliteration_text: string;
   translation_text: string;
   audio_file: string;
+}
+
+type ShlokaCategory = "session_start" | "session_end" | "dashakam";
+
+interface DashakamShloka extends Shloka {
+  sloka_audio_id: string;
+  dashakam_no: number;
+  verse_no: number;
 }
 
 /** Shared building block: one card per shloka, with its own audio player. */
@@ -70,9 +85,52 @@ async function fetchRitualChants(
     });
 }
 
+/** Fetch active dashakam-linked shlokas, resolving title/script and translation independently. */
+async function fetchDashakamShlokas(
+  scriptLang: string,
+  translationLang: string,
+): Promise<DashakamShloka[]> {
+  const { data, error } = await (supabase as any)
+    .from("sloka_audio")
+    .select(`
+      sloka_audio_id, dashakam_no, verse_no, chant_audio_file,
+      sloka_scripts!left (language_code, sloka_title, script_text, translation_text)
+    `)
+    .eq("is_active", true)
+    .not("dashakam_no", "is", null)
+    .order("dashakam_no", { ascending: true })
+    .order("verse_no", { ascending: true });
+
+  if (error || !data) return [];
+
+  return data.map((row: any) => {
+    const scripts = Array.isArray(row.sloka_scripts) ? row.sloka_scripts : [];
+    const fallback = scripts.find((script: any) => script.language_code === "en") ?? scripts[0];
+    const scriptChosen =
+      scripts.find((script: any) => script.language_code === scriptLang) ?? fallback;
+    const translationChosen =
+      scripts.find((script: any) => script.language_code === translationLang) ?? fallback;
+
+    return {
+      sloka_audio_id: row.sloka_audio_id,
+      dashakam_no: row.dashakam_no,
+      verse_no: row.verse_no ?? 0,
+      chant_key: row.sloka_audio_id,
+      ritual_chant_name:
+        scriptChosen?.sloka_title || fallback?.sloka_title || `Dashakam ${row.dashakam_no}`,
+      transliteration_text: scriptChosen?.script_text || "",
+      translation_text: translationChosen?.translation_text || "",
+      audio_file: row.chant_audio_file || "",
+    } as DashakamShloka;
+  });
+}
+
 export default function ShlokasPage() {
   const [starting, setStarting] = useState<Shloka[]>([]);
   const [ending, setEnding] = useState<Shloka[]>([]);
+  const [dashakamShlokas, setDashakamShlokas] = useState<DashakamShloka[]>([]);
+  const [category, setCategory] = useState<ShlokaCategory>("session_start");
+  const [selectedDashakamShlokaId, setSelectedDashakamShlokaId] = useState<string>();
   const [loading, setLoading] = useState(true);
   const { scriptLang, translationLang } = useLanguagePrefs();
 
@@ -80,13 +138,20 @@ export default function ShlokasPage() {
     let cancelled = false;
     (async () => {
       setLoading(true);
-      const [startRows, endRows] = await Promise.all([
+      const [startRows, endRows, dashakamRows] = await Promise.all([
         fetchRitualChants("session_start", scriptLang, translationLang),
         fetchRitualChants("session_end", scriptLang, translationLang),
+        fetchDashakamShlokas(scriptLang, translationLang),
       ]);
       if (cancelled) return;
       setStarting(startRows);
       setEnding(endRows);
+      setDashakamShlokas(dashakamRows);
+      setSelectedDashakamShlokaId((current) =>
+        dashakamRows.some((row) => row.sloka_audio_id === current)
+          ? current
+          : dashakamRows[0]?.sloka_audio_id,
+      );
       setLoading(false);
     })();
     return () => {
@@ -103,43 +168,84 @@ export default function ShlokasPage() {
     );
   }
 
-  const renderSection = (title: string, rows: Shloka[]) =>
-    rows.length === 0 ? null : (
-      <section className="mb-8">
-        <h2 className="font-display text-lg font-semibold text-foreground mb-3">{title}</h2>
-        <div className="space-y-3">
-          {rows.map((s) => (
-            <ShlokaCard
-              key={s.chant_key}
-              name={s.ritual_chant_name}
-              transliteration={s.transliteration_text}
-              translation={s.translation_text}
-              audioFile={s.audio_file}
-            />
-          ))}
-        </div>
-      </section>
-    );
+  const selectedRows = category === "session_start" ? starting : ending;
+  const selectedDashakamShloka = dashakamShlokas.find(
+    (row) => row.sloka_audio_id === selectedDashakamShlokaId,
+  );
 
   return (
     <div className="container mx-auto px-4 py-6 max-w-3xl">
       <SEO
         path="/shlokas"
         title="Shlokas — Sriman Narayaneeyam"
-        description="Opening and closing prayers for your chanting practice, in script and audio."
+       description="Session and dashakam-wise prayers for your chanting practice, in script and audio."
       />
       <h1 className="font-display text-2xl font-bold text-foreground mb-2">Shlokas</h1>
       <p className="text-sm text-muted-foreground mb-6 font-sans">
-        Opening and closing prayers for your chanting practice, in script and audio.
+        Prayers for your chanting practice, in script and audio.
       </p>
 
-      {renderSection("Starting Sloka", starting)}
-      {renderSection("Ending Sloka", ending)}
+      <Select value={category} onValueChange={(value) => setCategory(value as ShlokaCategory)}>
+        <SelectTrigger aria-label="Shloka category" className="mb-6 w-full">
+          <SelectValue />
+        </SelectTrigger>
+        <SelectContent>
+          <SelectItem value="session_start">Start of Session</SelectItem>
+          <SelectItem value="session_end">End of Session</SelectItem>
+          <SelectItem value="dashakam">Dashakam-wise Slokas</SelectItem>
+        </SelectContent>
+      </Select>
 
-      {starting.length === 0 && ending.length === 0 && (
+      {category !== "dashakam" && selectedRows.length > 0 && (
+        <div className="space-y-3">
+          {selectedRows.map((shloka) => (
+            <ShlokaCard
+              key={shloka.chant_key}
+              name={shloka.ritual_chant_name}
+              transliteration={shloka.transliteration_text}
+              translation={shloka.translation_text}
+              audioFile={shloka.audio_file}
+            />
+          ))}
+        </div>
+      )}
+
+      {category !== "dashakam" && selectedRows.length === 0 && (
         <p className="text-sm text-muted-foreground font-sans text-center py-8">
           No shlokas available yet
         </p>
+      )}
+
+      {category === "dashakam" && dashakamShlokas.length === 0 && (
+        <p className="text-sm text-muted-foreground font-sans text-center py-8">
+          No dashakam-wise slokas available yet
+        </p>
+      )}
+
+      {category === "dashakam" && dashakamShlokas.length > 0 && (
+        <div className="space-y-4">
+          <Select value={selectedDashakamShlokaId} onValueChange={setSelectedDashakamShlokaId}>
+            <SelectTrigger aria-label="Dashakam-wise shloka" className="w-full">
+              <SelectValue placeholder="Choose a dashakam" />
+            </SelectTrigger>
+            <SelectContent>
+              {dashakamShlokas.map((shloka) => (
+                <SelectItem key={shloka.sloka_audio_id} value={shloka.sloka_audio_id}>
+                  {shloka.ritual_chant_name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+
+          {selectedDashakamShloka && (
+            <ShlokaCard
+              name={selectedDashakamShloka.ritual_chant_name}
+              transliteration={selectedDashakamShloka.transliteration_text}
+              translation={selectedDashakamShloka.translation_text}
+              audioFile={selectedDashakamShloka.audio_file}
+            />
+          )}
+        </div>
       )}
     </div>
   );
