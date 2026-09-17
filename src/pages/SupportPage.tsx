@@ -88,6 +88,10 @@ function PriorityBadge({ priority }: { priority: string }) {
 function RaiseTicketForm({ onSuccess, onCancel }: { onSuccess: (id: string) => void; onCancel: () => void }) {
   const { createTicket } = useSupportTickets();
   const { toast } = useToast();
+  const { canConfigurePayments } = useCapabilities();
+  const categoryOptions = canConfigurePayments
+    ? CATEGORY_OPTIONS
+    : CATEGORY_OPTIONS.filter((c) => c.value !== "subscription");
   const [subject, setSubject] = useState("");
   const [category, setCategory] = useState(CATEGORY_OPTIONS[0].value);
   const [priority, setPriority] = useState("normal");
