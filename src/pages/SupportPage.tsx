@@ -33,6 +33,8 @@ import {
   useSupportTickets,
   useTicketDetail,
   CATEGORY_OPTIONS,
+} from "@/hooks/useSupportTickets";
+import { useCapabilities } from "@/hooks/useCapabilities";
   PRIORITY_OPTIONS,
   STATUS_OPTIONS,
   categoryLabel,
