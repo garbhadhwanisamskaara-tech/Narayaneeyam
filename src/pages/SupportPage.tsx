@@ -33,8 +33,6 @@ import {
   useSupportTickets,
   useTicketDetail,
   CATEGORY_OPTIONS,
-} from "@/hooks/useSupportTickets";
-import { useCapabilities } from "@/hooks/useCapabilities";
   PRIORITY_OPTIONS,
   STATUS_OPTIONS,
   categoryLabel,
@@ -42,6 +40,7 @@ import { useCapabilities } from "@/hooks/useCapabilities";
   type TicketPriority,
   type TicketStatus,
 } from "@/hooks/useSupportTickets";
+import { useCapabilities } from "@/hooks/useCapabilities";
 import { useToast } from "@/hooks/use-toast";
 import { Link } from "react-router-dom";
 import SEO from "@/components/SEO";
