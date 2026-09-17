@@ -5,10 +5,20 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from "@/components/ui/accordion";
-import { faqSections } from "@/data/faqData";
+import { Link } from "react-router-dom";
+import { faqSections, GROUP_PARAYANAM_ANSWER_KEY, groupParayanamAnswers } from "@/data/faqData";
+import { useCapabilities } from "@/hooks/useCapabilities";
 import SEO from "@/components/SEO";
 
 export default function FaqPage() {
+  const { canConfigurePayments } = useCapabilities();
+  const resolveAnswer = (a: string) =>
+    a === GROUP_PARAYANAM_ANSWER_KEY
+      ? canConfigurePayments
+        ? groupParayanamAnswers.web
+        : groupParayanamAnswers.twa
+      : a;
+
   useEffect(() => {
     document.title = "FAQ — Sriman Narayaneeyam App";
     const meta = document.querySelector('meta[name="description"]');
