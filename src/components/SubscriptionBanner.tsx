@@ -17,10 +17,10 @@ export default function SubscriptionBanner() {
 
   const supportButton = (
     <Link
-      to="/support"
+      to="/faq"
       className="rounded-md bg-primary px-3 py-1 text-primary-foreground font-semibold hover:opacity-90 transition-opacity"
     >
-      Raise Ticket
+      View FAQ
     </Link>
   );
 
