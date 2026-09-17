@@ -27,7 +27,7 @@ export const faqSections = [
       { q: "What is the Loop feature?", a: "Loop repeats the verse or dashakam a chosen number of times automatically, so you can practise without replaying manually." },
       { q: "Can I chant a specific dashakam directly?", a: "Yes — use the Dashakam selector to jump to any of the 100 dashakams. Dashakams that have not been recorded and published yet are listed with a 'Coming soon' label and cannot be opened." },
       { q: "Why are some dashakams marked 'Coming soon'?", a: "Recording and proofing is happening dashakam by dashakam. Every dashakam is shown in the list so you can see the whole journey, but only published ones can be opened. New ones appear automatically as they are released." },
-      { q: "What language script is used for the shlokas?", a: "Sanskrit in Devanagari is the default. Transliterations and meanings are published in English, Tamil, Telugu, Malayalam, Kannada, Hindi and Marathi, and you choose your script and translation language in My Preferences. Coverage grows as each dashakam is published." },
+      { q: "What language script is used for the shlokas?", a: "Sanskrit in Devanagari is the default. Transliterations and meanings are published in English, Tamil, Telugu, Malayalam, Kannada, Hindi and Marathi. Under My Preferences, you set two separate settings: your lyrics script (the language the verse itself is shown in) and your meaning/translation language (the language the explanation is shown in) — set each independently to get the combination you want. Coverage grows as each dashakam is published." },
       { q: "Are the meanings available in English?", a: "Yes. Each published verse carries its meaning, and dashakams also carry benefits and remarks — plus prasadam details where the tradition prescribes them." },
       { q: "Can I make the text bigger?", a: "Yes — set your preferred text size under My Preferences and it applies across the verse displays." },
       { q: "Can I bookmark shlokas I want to revisit?", a: "Yes — tap the bookmark ribbon on any verse to save your place in Saved Places, and tap the heart to add a verse to your Favourites." },
@@ -47,7 +47,7 @@ export const faqSections = [
     questions: [
       { q: "Can I track my progress?", a: "Yes. Once signed in, your Progress page shows how many of the 100 Dashakams you have completed, and a Continue banner brings you back to exactly where you stopped." },
       { q: "Can I create a custom playlist?", a: "Yes — the Playlist Builder lets you arrange your chosen verses or dashakams in any order and set how many times each one loops, for a personalised chanting session." },
-      { q: "What is a Group Parayanam?", a: "You can create a group, invite family or friends with a link, and organise a parayanam together. Participants accept their invitation, dashakams are either shared by everyone or split among participants, and the group's Lotus Garden shows the collective progress as each dashakam is completed. It is your own private group — not a public or live global chanting session." },
+      { q: "What is a Group Parayanam?", a: GROUP_PARAYANAM_ANSWER_KEY },
       { q: "What are Festival Parayanams and the Prasadam Guide?", a: "Festival Parayanams list the dashakams traditionally chanted on specific festival days along with their benefits. The Prasadam Guide lists the prasadam associated with particular verses, so you can prepare your offering." },
       { q: "Can I get a daily reminder?", a: "Yes — enable parayanam reminders in My Preferences and the app can send you a browser notification at your chosen time." },
       { q: "Is my data private and secure?", a: "Yes — your account data and practice history are stored securely and are visible only to you (and, for a group parayanam, the progress you share with that group). You can delete your account at any time from My Preferences." },
@@ -56,7 +56,7 @@ export const faqSections = [
   {
     heading: "Support",
     questions: [
-      { q: "Who can I contact for support or feedback?", a: "Use the Support section in the app menu to raise a ticket — you can attach a screenshot, and we reply to the same ticket. We welcome all feedback to help improve the experience for devotees worldwide." },
+      { q: "Who can I contact for support or feedback?", a: "Check this FAQ page first — most common questions are answered above. If you still need help, use the \"Still need help?\" button at the bottom of this page to raise a ticket. You can attach a screenshot, and we reply to the same ticket. We welcome all feedback to help improve the experience for devotees worldwide." },
     ],
   },
 ];
