@@ -61,13 +61,24 @@ export default function FaqPage() {
                     {faq.q}
                   </AccordionTrigger>
                   <AccordionContent className="text-sm font-sans text-muted-foreground leading-relaxed">
-                    {faq.a}
+                    {resolveAnswer(faq.a)}
                   </AccordionContent>
                 </AccordionItem>
               ))}
             </Accordion>
           </section>
         ))}
+      </div>
+
+      <div className="mt-10 rounded-lg border border-border bg-muted/40 px-5 py-6 text-center">
+        <h2 className="font-display text-lg font-semibold text-foreground mb-1">Still need help?</h2>
+        <p className="text-sm font-sans text-muted-foreground mb-4">Didn't find your answer above?</p>
+        <Link
+          to="/support"
+          className="inline-block rounded-md bg-primary px-4 py-2 text-sm font-sans font-semibold text-primary-foreground hover:opacity-90 transition-opacity"
+        >
+          Raise a Ticket
+        </Link>
       </div>
     </div>
   );
