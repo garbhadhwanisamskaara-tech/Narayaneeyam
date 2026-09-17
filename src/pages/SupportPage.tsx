@@ -40,6 +40,7 @@ import {
   type TicketPriority,
   type TicketStatus,
 } from "@/hooks/useSupportTickets";
+import { useCapabilities } from "@/hooks/useCapabilities";
 import { useToast } from "@/hooks/use-toast";
 import { Link } from "react-router-dom";
 import SEO from "@/components/SEO";
@@ -87,6 +88,10 @@ function PriorityBadge({ priority }: { priority: string }) {
 function RaiseTicketForm({ onSuccess, onCancel }: { onSuccess: (id: string) => void; onCancel: () => void }) {
   const { createTicket } = useSupportTickets();
   const { toast } = useToast();
+  const { canConfigurePayments } = useCapabilities();
+  const categoryOptions = canConfigurePayments
+    ? CATEGORY_OPTIONS
+    : CATEGORY_OPTIONS.filter((c) => c.value !== "subscription");
   const [subject, setSubject] = useState("");
   const [category, setCategory] = useState(CATEGORY_OPTIONS[0].value);
   const [priority, setPriority] = useState("normal");
@@ -186,7 +191,7 @@ function RaiseTicketForm({ onSuccess, onCancel }: { onSuccess: (id: string) => v
             onChange={(e) => setCategory(e.target.value as import("@/hooks/useSupportTickets").TicketCategory)}
             className="w-full rounded-lg border border-border bg-card px-3 py-2 text-sm font-sans text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
           >
-            {CATEGORY_OPTIONS.map((c) => (
+            {categoryOptions.map((c) => (
               <option key={c.value} value={c.value}>
                 {c.label}
               </option>

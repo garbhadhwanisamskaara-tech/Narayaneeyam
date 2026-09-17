@@ -17,10 +17,10 @@ export default function SubscriptionBanner() {
 
   const supportButton = (
     <Link
-      to="/support"
+      to="/faq"
       className="rounded-md bg-primary px-3 py-1 text-primary-foreground font-semibold hover:opacity-90 transition-opacity"
     >
-      Raise Ticket
+      View FAQ
     </Link>
   );
 
@@ -29,7 +29,7 @@ export default function SubscriptionBanner() {
   if (!SUBSCRIPTION_ENABLED) {
     return (
       <div className="bg-muted/30 border-b border-border px-4 py-2 flex items-center justify-center gap-3 text-xs font-sans text-foreground">
-        <span>🙏 Need help with your account or chanting?</span>
+        <span>🙏 Have a question? Check our FAQ</span>
         {supportButton}
       </div>
     );
@@ -89,7 +89,7 @@ export default function SubscriptionBanner() {
     // Paid and up to date — still show Raise Ticket for every profile.
     return (
       <div className="bg-muted/30 border-b border-border px-4 py-2 flex items-center justify-center gap-3 text-xs font-sans text-foreground">
-        <span>🙏 Need help with your account or chanting?</span>
+        <span>🙏 Have a question? Check our FAQ</span>
         {supportButton}
       </div>
     );
@@ -151,7 +151,7 @@ export default function SubscriptionBanner() {
   // Fallback for any other signed-in state.
   return (
     <div className="bg-muted/30 border-b border-border px-4 py-2 flex items-center justify-center gap-3 text-xs font-sans text-foreground">
-      <span>🙏 Need help with your account or chanting?</span>
+      <span>🙏 Have a question? Check our FAQ</span>
       {supportButton}
     </div>
   );

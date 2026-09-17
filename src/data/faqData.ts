@@ -1,3 +1,11 @@
+/** Sentinel resolved in FaqPage via useCapabilities (web vs TWA wording). */
+export const GROUP_PARAYANAM_ANSWER_KEY = "__GROUP_PARAYANAM__";
+
+export const groupParayanamAnswers = {
+  web: "You can create your own private group, invite family or friends with a link, and chant together — dashakams are shared or split among participants. The group's Lotus Garden (Bloom Garden) — only shown for group parayanams, not for individual solo progress — shows collective progress as each dashakam is completed. Separately, you can also join the official 100-Day Parayanam (6 September – 14 December): a self-paced chanting journey on this app combined with a few live guided sessions. Joining is completely optional, involves a Rs 501 contribution, and you can join using the link shared by your group host. After joining, remember to tap the bell icon and \"Update your Bloom Garden\" after each dashakam — progress does not always update automatically.",
+  twa: "You can create your own private group, invite family or friends with a link, and chant together — dashakams are shared or split among participants. The group's Lotus Garden (Bloom Garden) — only shown for group parayanams, not for individual solo progress — shows collective progress as each dashakam is completed. Separately, you can also join the official 100-Day Parayanam (6 September – 14 December): a self-paced chanting journey on this app combined with a few live guided sessions. Joining is completely optional — details are shared separately by your group host. After joining, remember to tap the bell icon and \"Update your Bloom Garden\" after each dashakam — progress does not always update automatically.",
+};
+
 export const faqSections = [
   {
     heading: "Getting Started",
@@ -5,9 +13,9 @@ export const faqSections = [
       { q: "What is the primary goal of the Narayaneeyam app?", a: "The app makes the 1,033 verses of the Narayaneeyam accessible to everyone. You can chant along with synchronised audio and text highlighting, listen to a whole dashakam end to end, read the verses in your preferred script, and keep track of your daily practice — all at your own pace." },
       { q: "What is Narayaneeyam?", a: "Narayaneeyam is a devotional Sanskrit text composed by Melpathur Narayana Bhattathiri, condensing the Bhagavata Purana into 1,033 shlokas across 100 Dashakams. This app helps you chant, understand, and listen to it." },
       { q: "Do I need to create an account?", a: "Yes. Sign up with your email address and confirm it through the verification link we send you. Once verified, you have access to everything that is published in the app. You can also sign in with Google." },
-      { q: "What if I forget my password?", a: "Use the 'Forgot password' link on the sign-in page. You will receive a reset link by email. You can also change your password any time from My Preferences." },
-      { q: "Is the app available on mobile?", a: "Yes. narayaneeyam.app works in any modern mobile or desktop browser — Chrome, Safari, Edge and others. It is a web app (PWA), so there is nothing to download; you can add it to your phone's home screen and it will open like an app. There is no separate App Store or Play Store version at present." },
-      { q: "Do I have to pay to use the app?", a: "Access is currently open to every verified account during the launch trial period, which runs until 31 December 2026. After that a short grace period of 7 days applies, and subscription plans are shown on the Subscribe page inside the app. Payments, when you choose to subscribe, are handled securely through Razorpay and your receipts appear under Payment History." },
+      { q: "What if I forget my password?", a: "Use the 'Forgot password' link on the sign-in page. You will receive a reset link by email. This works even if you originally signed up with Google and never set a password — you do not need an existing password to use this link. You can also change your password any time from My Preferences." },
+      { q: "Is the app available on mobile?", a: "Yes. narayaneeyam.app works in any modern mobile or desktop browser — Chrome, Safari, Edge and others. It is a web app (PWA), so there is nothing to download; you can add it to your phone's home screen and it will open like an app. The app is also available on the Play Store: https://play.google.com/store/apps/details?id=app.narayaneeyam.twa" },
+      { q: "Do I have to pay to use the app?", a: "Access is currently open to every verified account during the launch trial period, which runs until 31 December 2026. Subscriptions are temporarily paused while we complete a few things on our end, so there is nothing to pay right now — we will let you know before anything changes." },
       { q: "Why should I use the app instead of a printed book?", a: "The app adds audio-visual synchronisation to your practice. You hear the correct intonation, pronunciation and phrase breaks that fit the metre and tune, while the text highlights as it is chanted. Many devotees follow a printed book alongside the app." },
     ],
   },
@@ -19,7 +27,7 @@ export const faqSections = [
       { q: "What is the Loop feature?", a: "Loop repeats the verse or dashakam a chosen number of times automatically, so you can practise without replaying manually." },
       { q: "Can I chant a specific dashakam directly?", a: "Yes — use the Dashakam selector to jump to any of the 100 dashakams. Dashakams that have not been recorded and published yet are listed with a 'Coming soon' label and cannot be opened." },
       { q: "Why are some dashakams marked 'Coming soon'?", a: "Recording and proofing is happening dashakam by dashakam. Every dashakam is shown in the list so you can see the whole journey, but only published ones can be opened. New ones appear automatically as they are released." },
-      { q: "What language script is used for the shlokas?", a: "Sanskrit in Devanagari is the default. Transliterations and meanings are published in English, Tamil, Telugu, Malayalam, Kannada, Hindi and Marathi, and you choose your script and translation language in My Preferences. Coverage grows as each dashakam is published." },
+      { q: "What language script is used for the shlokas?", a: "Sanskrit in Devanagari is the default. Transliterations and meanings are published in English, Tamil, Telugu, Malayalam, Kannada, Hindi and Marathi. Under My Preferences, you set two separate settings: your lyrics script (the language the verse itself is shown in) and your meaning/translation language (the language the explanation is shown in) — set each independently to get the combination you want. Coverage grows as each dashakam is published." },
       { q: "Are the meanings available in English?", a: "Yes. Each published verse carries its meaning, and dashakams also carry benefits and remarks — plus prasadam details where the tradition prescribes them." },
       { q: "Can I make the text bigger?", a: "Yes — set your preferred text size under My Preferences and it applies across the verse displays." },
       { q: "Can I bookmark shlokas I want to revisit?", a: "Yes — tap the bookmark ribbon on any verse to save your place in Saved Places, and tap the heart to add a verse to your Favourites." },
@@ -39,7 +47,7 @@ export const faqSections = [
     questions: [
       { q: "Can I track my progress?", a: "Yes. Once signed in, your Progress page shows how many of the 100 Dashakams you have completed, and a Continue banner brings you back to exactly where you stopped." },
       { q: "Can I create a custom playlist?", a: "Yes — the Playlist Builder lets you arrange your chosen verses or dashakams in any order and set how many times each one loops, for a personalised chanting session." },
-      { q: "What is a Group Parayanam?", a: "You can create a group, invite family or friends with a link, and organise a parayanam together. Participants accept their invitation, dashakams are either shared by everyone or split among participants, and the group's Lotus Garden shows the collective progress as each dashakam is completed. It is your own private group — not a public or live global chanting session." },
+      { q: "What is a Group Parayanam?", a: GROUP_PARAYANAM_ANSWER_KEY },
       { q: "What are Festival Parayanams and the Prasadam Guide?", a: "Festival Parayanams list the dashakams traditionally chanted on specific festival days along with their benefits. The Prasadam Guide lists the prasadam associated with particular verses, so you can prepare your offering." },
       { q: "Can I get a daily reminder?", a: "Yes — enable parayanam reminders in My Preferences and the app can send you a browser notification at your chosen time." },
       { q: "Is my data private and secure?", a: "Yes — your account data and practice history are stored securely and are visible only to you (and, for a group parayanam, the progress you share with that group). You can delete your account at any time from My Preferences." },
@@ -48,7 +56,7 @@ export const faqSections = [
   {
     heading: "Support",
     questions: [
-      { q: "Who can I contact for support or feedback?", a: "Use the Support section in the app menu to raise a ticket — you can attach a screenshot, and we reply to the same ticket. We welcome all feedback to help improve the experience for devotees worldwide." },
+      { q: "Who can I contact for support or feedback?", a: "Check this FAQ page first — most common questions are answered above. If you still need help, use the \"Still need help?\" button at the bottom of this page to raise a ticket. You can attach a screenshot, and we reply to the same ticket. We welcome all feedback to help improve the experience for devotees worldwide." },
     ],
   },
 ];
