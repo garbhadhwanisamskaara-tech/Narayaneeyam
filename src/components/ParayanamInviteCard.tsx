@@ -31,8 +31,8 @@ export default function ParayanamInviteCard({ invite: i, busy, onAccept, onDecli
   const contributionSettled = i.contribution_status === "confirmed" || i.contribution_status === "not_required";
   const paid = i.participation_type === "PAID" && !contributionSettled;
   const live = i.delivery_mode === "LIVE";
-  const { canViewExternalPaymentLinks } = useCapabilities();
-  const canPayInApp = paid && !!onPay && canViewExternalPaymentLinks;
+  const { canViewExternalPaymentLinks, canPayInApp: canPayInAppCapability } = useCapabilities();
+  const canPayInApp = paid && !!onPay && canPayInAppCapability;
 
   return (
     <div className="rounded-xl border border-border bg-background p-4">
@@ -70,13 +70,13 @@ export default function ParayanamInviteCard({ invite: i, busy, onAccept, onDecli
             })}
           </div>
         )}
-        {paid && canViewExternalPaymentLinks && (
+        {paid && (canPayInApp || canViewExternalPaymentLinks) && (
           <>
             <div>
               <span className="text-foreground/80">Contribution:</span>{" "}
               {i.contribution_amount != null ? `₹${i.contribution_amount}` : "As advised by the Guru"}
             </div>
-            {!canPayInApp && i.payment_url && (
+            {!canPayInApp && canViewExternalPaymentLinks && i.payment_url && (
               <div>
                 {isPaymentLink(i.payment_url) ? (
                   <a
@@ -93,7 +93,7 @@ export default function ParayanamInviteCard({ invite: i, busy, onAccept, onDecli
                 )}
               </div>
             )}
-            {!canPayInApp && (
+            {!canPayInApp && canViewExternalPaymentLinks && (
               <p className="font-sans text-[11px] leading-snug text-muted-foreground">
                 This contribution goes directly to the Guru — narayaneeyam.app does not process, verify, or hold this
                 payment.
@@ -139,7 +139,7 @@ export default function ParayanamInviteCard({ invite: i, busy, onAccept, onDecli
 
 /** Shown after a member accepts a contribution-based parayanam. */
 export function AwaitingContributionCard({ invite: i, onPaid }: { invite: PendingInvite; onPaid?: () => void }) {
-  const { canViewExternalPaymentLinks } = useCapabilities();
+  const { canViewExternalPaymentLinks, canPayInApp } = useCapabilities();
   const { pay, payingId } = useParayanamPayment();
   const [payError, setPayError] = useState<string | null>(null);
   const contributionSettled = i.contribution_status === "confirmed" || i.contribution_status === "not_required";
@@ -157,7 +157,7 @@ export function AwaitingContributionCard({ invite: i, onPaid }: { invite: Pendin
 
   const paidPending = i.participation_type === "PAID" && i.contribution_status === "pending";
 
-  if (!canViewExternalPaymentLinks) {
+  if (!canPayInApp && !canViewExternalPaymentLinks) {
     return (
       <div className="rounded-xl border border-primary/40 bg-primary/5 p-4">
         <p className="flex items-center gap-2 font-display text-base font-semibold text-foreground">
@@ -191,7 +191,7 @@ export function AwaitingContributionCard({ invite: i, onPaid }: { invite: Pendin
       {i.contribution_amount != null && (
         <p className="mt-2 font-sans text-xs text-foreground/80">Contribution: ₹{i.contribution_amount}</p>
       )}
-      {i.payment_url ? (
+      {i.payment_url && canViewExternalPaymentLinks ? (
         isPaymentLink(i.payment_url) ? (
           <a
             href={i.payment_url.trim()}
@@ -206,7 +206,7 @@ export function AwaitingContributionCard({ invite: i, onPaid }: { invite: Pendin
           <p className="mt-2 whitespace-pre-wrap font-sans text-xs text-foreground/80">{i.payment_url}</p>
         )
       ) : (
-        paidPending && (
+        paidPending && canPayInApp && (
           <div className="mt-3">
             <button
               onClick={() => void payNow()}
