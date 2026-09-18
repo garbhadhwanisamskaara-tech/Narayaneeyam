@@ -15,14 +15,6 @@ interface Discoverable {
   contribution_amount: number | null;
 }
 
-/**
- * Self-serve "Join My Parayanam?" prompts for the Guru-opted-in parayanams
- * (challenge_sessions.open_for_self_join, monetization_approved Gurus only).
- * Shown to ANY signed-in user, not just existing group members -- distinct
- * from the invite-link flow, which stays invite-only. Lists every eligible
- * parayanam at once, not just the newest. Declining one is permanent
- * (parayanam_self_join_dismissals).
- */
 export default function SelfJoinParayanamPrompt() {
   const { user } = useAuth();
   const [items, setItems] = useState<Discoverable[]>([]);
@@ -36,7 +28,7 @@ export default function SelfJoinParayanamPrompt() {
     }
     setLoading(true);
     const { data } = await (supabase as any).rpc("get_discoverable_parayanams_for_me");
-    setItems(((data ?? []) as Discoverable[]));
+    setItems((data ?? []) as Discoverable[]);
     setLoading(false);
   }, [user]);
 
@@ -87,10 +79,12 @@ function SelfJoinCard({ item, onResolved }: { item: Discoverable; onResolved: ()
     setBusy(true);
     setError(null);
     try {
-      const { error: joinErr } = await (supabase as any).rpc("self_join_parayanam", {
-        p_session_id: item.session_id,
+      const { data: joinData, error: joinErr } = await supabase.functions.invoke("self-join-parayanam", {
+        body: { session_id: item.session_id },
       });
-      if (joinErr) throw joinErr;
+      if (joinErr || joinData?.error) {
+        throw new Error(joinData?.error || joinErr?.message || "Could not join this parayanam");
+      }
 
       if (item.participation_type === "PAID") {
         await pay(item.session_id, {
