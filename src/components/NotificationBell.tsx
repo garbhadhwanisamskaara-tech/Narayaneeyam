@@ -6,26 +6,51 @@ import { AwaitingContributionCard } from "@/components/ParayanamInviteCard";
 import { useTicketReplyAlerts } from "@/hooks/useTicketReplyAlerts";
 import { useMyDashakamQueue } from "@/hooks/useMyDashakamQueue";
 import { useMyGardenSessions } from "@/hooks/useMyGardenSessions";
+import { useDismissedNotifications } from "@/lib/notificationDismiss";
 import DashakamQueueList from "@/components/DashakamQueueList";
 import MyGardenDialog from "@/components/MyGardenDialog";
 import { track } from "@/lib/analytics";
 import { toast } from "sonner";
 
-function CollapsibleItem({ summary, children }: { summary: React.ReactNode; children: React.ReactNode }) {
+function CollapsibleItem({
+  summary,
+  children,
+  onDismiss,
+}: {
+  summary: React.ReactNode;
+  children: React.ReactNode;
+  /** Optional × next to this row — hides it from the bell on this device only. */
+  onDismiss?: () => void;
+}) {
   const [open, setOpen] = useState(false);
   return (
     <div className="border-b border-border last:border-b-0">
-      <button
-        onClick={() => setOpen((o) => !o)}
-        className="flex w-full items-center justify-between gap-2 py-2 text-left"
-      >
-        <span className="min-w-0 truncate font-sans text-sm text-foreground">{summary}</span>
-        {open ? (
-          <ChevronDown className="h-4 w-4 shrink-0 text-muted-foreground" />
-        ) : (
-          <ChevronRight className="h-4 w-4 shrink-0 text-muted-foreground" />
+      <div className="flex items-center gap-1">
+        <button
+          onClick={() => setOpen((o) => !o)}
+          className="flex min-w-0 flex-1 items-center justify-between gap-2 py-2 text-left"
+        >
+          <span className="min-w-0 truncate font-sans text-sm text-foreground">{summary}</span>
+          {open ? (
+            <ChevronDown className="h-4 w-4 shrink-0 text-muted-foreground" />
+          ) : (
+            <ChevronRight className="h-4 w-4 shrink-0 text-muted-foreground" />
+          )}
+        </button>
+        {onDismiss && (
+          <button
+            type="button"
+            onClick={(e) => {
+              e.stopPropagation();
+              onDismiss();
+            }}
+            aria-label="Dismiss this notification"
+            className="shrink-0 rounded p-1 text-muted-foreground hover:bg-muted hover:text-foreground"
+          >
+            <X className="h-3.5 w-3.5" />
+          </button>
         )}
-      </button>
+      </div>
       {open && <div className="pb-3">{children}</div>}
     </div>
   );
@@ -33,7 +58,12 @@ function CollapsibleItem({ summary, children }: { summary: React.ReactNode; chil
 
 /**
  * Header bell. Every item is derived live from existing status fields — there is
- * no notifications table and no separate read/dismissed state.
+ * no notifications table and no server-side read/dismissed state. A row can be
+ * dismissed with its × (stored in localStorage — see notificationDismiss.ts),
+ * which only hides it from the bell on this device; it never touches the
+ * underlying invite, payment, or ticket, which still needs the same action
+ * wherever it's shown elsewhere in the app (e.g. Pending invites on the group
+ * page) whether or not the bell keeps reminding about it.
  */
 export default function NotificationBell() {
   const [open, setOpen] = useState(false);
@@ -53,12 +83,20 @@ export default function NotificationBell() {
   const { alerts } = useTicketReplyAlerts();
   const { todayRows, pendingRows } = useMyDashakamQueue();
   const { sessions: personalSessions } = useMyGardenSessions();
+  const { isDismissed, dismiss } = useDismissedNotifications();
+
+  const visibleInvites = invites.filter((i) => !isDismissed(`invite:${i.id}`));
+  const visibleAwaiting = awaiting.filter((i) => !isDismissed(`awaiting:${i.id}`));
+  // Keyed by ticket + the reply's own timestamp, so dismissing today's reply
+  // doesn't also hide a genuinely new reply that lands on the same ticket later.
+  const visibleAlerts = alerts.filter((a) => !isDismissed(`ticket:${a.ticketId}:${a.createdAt}`));
 
   const todayCount = todayRows.reduce((n, r) => n + r.items.length, 0);
 
   const pendingDisplayCount = pendingRows.reduce((n, r) => n + r.items.length, 0);
 
-  const count = invites.length + alerts.length + todayCount + pendingDisplayCount + awaiting.length;
+  const count =
+    visibleInvites.length + visibleAlerts.length + todayCount + pendingDisplayCount + visibleAwaiting.length;
 
   useEffect(() => {
     if (!open) return;
@@ -93,7 +131,11 @@ export default function NotificationBell() {
   };
 
   const empty =
-    invites.length === 0 && alerts.length === 0 && !todayRows.length && !pendingRows.length && awaiting.length === 0;
+    visibleInvites.length === 0 &&
+    visibleAlerts.length === 0 &&
+    !todayRows.length &&
+    !pendingRows.length &&
+    visibleAwaiting.length === 0;
 
   return (
     <div ref={wrapRef} className="relative">
@@ -142,11 +184,11 @@ export default function NotificationBell() {
             <p className="py-4 font-sans text-sm text-muted-foreground">Nothing needs your attention right now.</p>
           ) : (
             <div className="space-y-4">
-              {invites.length > 0 && (
+              {visibleInvites.length > 0 && (
                 <div>
                   <h4 className="font-display text-sm font-semibold text-foreground">Parayanam confirmations</h4>
                   <div className="mt-1">
-                    {invites.map((i) => (
+                    {visibleInvites.map((i) => (
                       <CollapsibleItem
                         key={i.id}
                         summary={
@@ -155,6 +197,7 @@ export default function NotificationBell() {
                             <span className="text-muted-foreground"> · confirm participation</span>
                           </>
                         }
+                        onDismiss={() => dismiss(`invite:${i.id}`)}
                       >
                         <p className="font-sans text-xs text-muted-foreground">
                           {i.dashakams_target ? `${i.dashakams_target} dashakams` : "Parayanam"}
@@ -200,11 +243,11 @@ export default function NotificationBell() {
                 </div>
               )}
 
-              {awaiting.length > 0 && (
+              {visibleAwaiting.length > 0 && (
                 <div>
                   <h4 className="font-display text-sm font-semibold text-foreground">Awaiting your contribution</h4>
                   <div className="mt-1">
-                    {awaiting.map((i) => (
+                    {visibleAwaiting.map((i) => (
                       <CollapsibleItem
                         key={`awaiting-${i.id}`}
                         summary={
@@ -213,6 +256,7 @@ export default function NotificationBell() {
                             <span className="text-muted-foreground"> · pay to join</span>
                           </>
                         }
+                        onDismiss={() => dismiss(`awaiting:${i.id}`)}
                       >
                         <AwaitingContributionCard
                           invite={i}
@@ -286,11 +330,11 @@ export default function NotificationBell() {
                 </div>
               )}
 
-              {alerts.length > 0 && (
+              {visibleAlerts.length > 0 && (
                 <div>
                   <h4 className="font-display text-sm font-semibold text-foreground">Support ticket replies</h4>
                   <div className="mt-1">
-                    {alerts.map((a) => (
+                    {visibleAlerts.map((a) => (
                       <CollapsibleItem
                         key={a.ticketId}
                         summary={
@@ -300,6 +344,7 @@ export default function NotificationBell() {
                             <span className="text-muted-foreground"> · new reply</span>
                           </>
                         }
+                        onDismiss={() => dismiss(`ticket:${a.ticketId}:${a.createdAt}`)}
                       >
                         <p className="line-clamp-3 font-sans text-xs text-muted-foreground">{a.message}</p>
                         <button
