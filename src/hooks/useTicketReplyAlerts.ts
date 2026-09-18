@@ -12,7 +12,10 @@ export interface TicketReplyAlert {
 
 /**
  * Support tickets with a reply from support that this user has not opened yet.
- * Derived live — no notifications table, no "mark as read" action.
+ * Derived live — no notifications table, no "mark as read" action. Closed
+ * tickets are excluded: once a ticket is closed there is nothing left to act
+ * on, so it should not keep showing up in the bell just because its last
+ * reply was never opened on this particular device.
  */
 export function useTicketReplyAlerts() {
   const { user } = useAuth();
@@ -29,9 +32,10 @@ export function useTicketReplyAlerts() {
     try {
       const { data: tickets } = await (supabase as any)
         .from("support_tickets")
-        .select("id, subject")
-        .eq("user_id", user.id);
-      const rows = (tickets ?? []) as { id: string; subject: string }[];
+        .select("id, subject, status")
+        .eq("user_id", user.id)
+        .neq("status", "closed");
+      const rows = (tickets ?? []) as { id: string; subject: string; status: string }[];
       if (!rows.length) {
         setAlerts([]);
         setLoading(false);
