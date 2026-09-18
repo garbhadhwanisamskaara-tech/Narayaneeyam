@@ -13,7 +13,6 @@ import Lotus from "@/components/Lotus";
 import ParayanamProgressLotus from "@/components/ParayanamProgressLotus";
 import MyGardenDialog from "@/components/MyGardenDialog";
 import MemberProgressDialog from "@/components/MemberProgressDialog";
-import SelfJoinParayanamPrompt from "@/components/SelfJoinParayanamPrompt";
 import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import logoImg from "@/assets/logo.png";
@@ -119,7 +118,6 @@ export default function DashboardPage() {
           </motion.div>
         )}
 
-        {!isGuest && <SelfJoinParayanamPrompt />}
 
         {/* Key stats */}
         <div className="mb-8 grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-5">
