@@ -70,13 +70,13 @@ export default function ParayanamInviteCard({ invite: i, busy, onAccept, onDecli
             })}
           </div>
         )}
-        {paid && canViewExternalPaymentLinks && (
+        {paid && (canPayInApp || canViewExternalPaymentLinks) && (
           <>
             <div>
               <span className="text-foreground/80">Contribution:</span>{" "}
               {i.contribution_amount != null ? `₹${i.contribution_amount}` : "As advised by the Guru"}
             </div>
-            {!canPayInApp && i.payment_url && (
+            {!canPayInApp && canViewExternalPaymentLinks && i.payment_url && (
               <div>
                 {isPaymentLink(i.payment_url) ? (
                   <a
@@ -93,7 +93,7 @@ export default function ParayanamInviteCard({ invite: i, busy, onAccept, onDecli
                 )}
               </div>
             )}
-            {!canPayInApp && (
+            {!canPayInApp && canViewExternalPaymentLinks && (
               <p className="font-sans text-[11px] leading-snug text-muted-foreground">
                 This contribution goes directly to the Guru — narayaneeyam.app does not process, verify, or hold this
                 payment.
@@ -139,7 +139,7 @@ export default function ParayanamInviteCard({ invite: i, busy, onAccept, onDecli
 
 /** Shown after a member accepts a contribution-based parayanam. */
 export function AwaitingContributionCard({ invite: i, onPaid }: { invite: PendingInvite; onPaid?: () => void }) {
-  const { canViewExternalPaymentLinks } = useCapabilities();
+  const { canViewExternalPaymentLinks, canPayInApp } = useCapabilities();
   const { pay, payingId } = useParayanamPayment();
   const [payError, setPayError] = useState<string | null>(null);
   const contributionSettled = i.contribution_status === "confirmed" || i.contribution_status === "not_required";
