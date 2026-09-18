@@ -1,3 +1,5 @@
+Replace the entire contents of src/hooks/useParayanamPayment.ts with:
+
 import { useCallback, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
@@ -27,6 +29,10 @@ export function useParayanamPayment() {
         return;
       }
       setPayingId(parayanamId);
+      // Tracks whether handler/payment.failed already resolved this attempt,
+      // so modal.ondismiss (which can fire right as the modal auto-closes on
+      // success) doesn't also report a spurious "cancelled" error.
+      let settled = false;
 
       try {
         const { data: orderData, error: orderError } = await supabase.functions.invoke(
@@ -57,6 +63,7 @@ export function useParayanamPayment() {
             razorpay_payment_id: string;
             razorpay_signature: string;
           }) => {
+            settled = true;
             const { data: verifyData, error: verifyError } = await supabase.functions.invoke(
               "verify-razorpay-payment",
               { body: response },
@@ -77,11 +84,18 @@ export function useParayanamPayment() {
             handlers.onPaid();
           },
           modal: {
-            ondismiss: () => setPayingId(null),
+            ondismiss: () => {
+              setPayingId(null);
+              if (!settled) {
+                settled = true;
+                handlers.onError("Payment cancelled.");
+              }
+            },
           },
         });
 
         razorpay.on("payment.failed", (response: any) => {
+          settled = true;
           setPayingId(null);
           handlers.onError(response?.error?.description || "Payment failed. Please try again.");
         });
@@ -97,3 +111,5 @@ export function useParayanamPayment() {
 
   return { pay, payingId };
 }
+
+Do not change any other file.
