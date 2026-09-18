@@ -191,7 +191,7 @@ export function AwaitingContributionCard({ invite: i, onPaid }: { invite: Pendin
       {i.contribution_amount != null && (
         <p className="mt-2 font-sans text-xs text-foreground/80">Contribution: ₹{i.contribution_amount}</p>
       )}
-      {i.payment_url ? (
+      {i.payment_url && canViewExternalPaymentLinks ? (
         isPaymentLink(i.payment_url) ? (
           <a
             href={i.payment_url.trim()}
@@ -206,7 +206,7 @@ export function AwaitingContributionCard({ invite: i, onPaid }: { invite: Pendin
           <p className="mt-2 whitespace-pre-wrap font-sans text-xs text-foreground/80">{i.payment_url}</p>
         )
       ) : (
-        paidPending && (
+        paidPending && canPayInApp && (
           <div className="mt-3">
             <button
               onClick={() => void payNow()}
