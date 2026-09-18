@@ -157,7 +157,7 @@ export function AwaitingContributionCard({ invite: i, onPaid }: { invite: Pendin
 
   const paidPending = i.participation_type === "PAID" && i.contribution_status === "pending";
 
-  if (!canViewExternalPaymentLinks) {
+  if (!canPayInApp && !canViewExternalPaymentLinks) {
     return (
       <div className="rounded-xl border border-primary/40 bg-primary/5 p-4">
         <p className="flex items-center gap-2 font-display text-base font-semibold text-foreground">
