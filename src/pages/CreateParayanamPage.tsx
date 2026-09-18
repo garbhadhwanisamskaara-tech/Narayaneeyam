@@ -88,6 +88,7 @@ export default function CreateParayanamPage() {
   const [selectedParticipants, setSelectedParticipants] = useState<string[]>([]);
   const [includeSelf, setIncludeSelf] = useState(true);
   const [autoInvite, setAutoInvite] = useState(false);
+  const [openForSelfJoin, setOpenForSelfJoin] = useState(false);
   const [draftId, setDraftId] = useState<string | null>(params.get("draft"));
   const [savingDraft, setSavingDraft] = useState(false);
   const [draftSaved, setDraftSaved] = useState(false);
@@ -162,6 +163,7 @@ export default function CreateParayanamPage() {
       if (Array.isArray(d.selectedParticipants)) setSelectedParticipants(d.selectedParticipants);
       if (typeof d.includeSelf === "boolean") setIncludeSelf(d.includeSelf);
       if (typeof data.auto_invite_group_members === "boolean") setAutoInvite(data.auto_invite_group_members);
+      if (typeof data.open_for_self_join === "boolean") setOpenForSelfJoin(data.open_for_self_join);
       if (d.step) setStep(d.step);
       setDraftId(id);
       setLoadingDraft(false);
@@ -320,7 +322,8 @@ export default function CreateParayanamPage() {
     if (!isMonetizationApproved && deliveryMode === "LIVE") {
       setDeliveryMode("SELF_PACED");
     }
-  }, [isMonetizationApproved, participationType, deliveryMode]);
+    if (!isMonetizationApproved && openForSelfJoin) setOpenForSelfJoin(false);
+  }, [isMonetizationApproved, participationType, deliveryMode, openForSelfJoin]);
 
   /** Steps are dynamic: Contribution only for PAID, Live Schedule only for LIVE. */
   const stepIds = useMemo(
@@ -401,6 +404,7 @@ export default function CreateParayanamPage() {
     general_note: isMonetizationApproved && generalNote.trim() ? generalNote.trim() : null,
     challenge_type: isGroup ? (mode === "RELAY" ? "group_relay" : "group_standard") : "personal",
     auto_invite_group_members: isGroup ? autoInvite : false,
+    open_for_self_join: isGroup && isMonetizationApproved ? openForSelfJoin : false,
     distribution_mode: mode,
     schedule_pattern: schedulePattern,
     schedule_weekdays: schedulePattern === "WEEKDAYS" ? weekdays : null,
@@ -1179,6 +1183,25 @@ export default function CreateParayanamPage() {
                 </span>
               </span>
             </label>
+            {isGroup && isMonetizationApproved && (
+              <label className="flex cursor-pointer items-start gap-3 rounded-xl border border-border p-4 hover:border-primary">
+                <input
+                  type="checkbox"
+                  checked={openForSelfJoin}
+                  onChange={(e) => setOpenForSelfJoin(e.target.checked)}
+                  className="mt-0.5 h-4 w-4 accent-primary"
+                />
+                <span>
+                  <span className="block font-sans text-sm font-semibold text-foreground">
+                    Show this parayanam on the home screen?
+                  </span>
+                  <span className="mt-1 block font-sans text-xs text-muted-foreground">
+                    Any signed-in user — not just people you've invited — can see and join it from there (paying
+                    first, if this is a paid Parayanam). Declining is remembered, so they won't be asked again.
+                  </span>
+                </span>
+              </label>
+            )}
           </div>
         )}
 
