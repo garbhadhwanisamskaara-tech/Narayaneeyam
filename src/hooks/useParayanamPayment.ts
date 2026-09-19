@@ -1,5 +1,3 @@
-Replace the entire contents of src/hooks/useParayanamPayment.ts with:
-
 import { useCallback, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
@@ -111,5 +109,3 @@ export function useParayanamPayment() {
 
   return { pay, payingId };
 }
-
-Do not change any other file.
