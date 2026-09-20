@@ -35,6 +35,8 @@ import GroupSettingsPage from "./pages/GroupSettingsPage";
 
 
 import DevotionPathwaysPage from "./pages/DevotionPathwaysPage";
+import JourneyListPage from "./pages/JourneyListPage";
+import JourneyDashboardPage from "./pages/JourneyDashboardPage";
 import PrasadamListPage from "./pages/PrasadamListPage";
 import FestivalsPage from "./pages/FestivalsPage";
 import AboutPage from "./pages/AboutPage";
@@ -109,6 +111,8 @@ const App = () => {
 
 
                   <Route path="/devotion-pathways" element={<DevotionPathwaysPage />} />
+                  <Route path="/journeys" element={<JourneyListPage />} />
+                  <Route path="/journeys/:slug" element={<JourneyDashboardPage />} />
                   <Route path="/prasadam" element={<PrasadamListPage />} />
                   <Route path="/festivals" element={<FestivalsPage />} />
                   <Route path="/about" element={<AboutPage />} />
