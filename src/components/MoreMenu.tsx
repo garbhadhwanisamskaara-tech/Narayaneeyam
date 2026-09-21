@@ -10,6 +10,7 @@ interface Props {
 
 const menuItems = [
   { path: "/script", label: "Script Library", icon: FileText },
+  { path: "/journeys", label: "Guided Journeys", icon: Footprints },
   { path: "/festivals", label: "Festival Parayanams", icon: Sparkles },
   { path: "/prasadam", label: "Prasadam Guide", icon: Flower2 },
   { path: "/devotion-pathways", label: "Predefined Parayanams", icon: Route },
