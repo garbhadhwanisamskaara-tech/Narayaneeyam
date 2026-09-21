@@ -145,6 +145,7 @@ export default function JourneyDashboardPage() {
             <div className="mt-6 rounded-2xl border border-border bg-card p-5 shadow-peacock">
               <p className="font-sans text-xs uppercase tracking-wide text-muted-foreground">
                 Day {todayDay.day_number} of {journey.duration_days}
+                {todayDay.estimated_minutes ? ` • ~${todayDay.estimated_minutes} min` : ""}
               </p>
               <h2 className="mt-1 font-display text-xl font-bold text-foreground">{todayDay.title}</h2>
               {todayDay.hook && <p className="mt-2 font-sans text-sm text-muted-foreground">{todayDay.hook}</p>}
@@ -202,13 +203,20 @@ export default function JourneyDashboardPage() {
             </div>
             <div className="rounded-2xl border border-border bg-card p-4">
               <p className="font-sans text-xs uppercase tracking-wide text-muted-foreground">Upcoming</p>
-              <ul className={cn("mt-2 space-y-1")}>
+              <ul className={cn("mt-2 space-y-2")}>
                 {currentDay &&
                   days
                     .filter((d) => d.day_number > currentDay)
                     .map((d) => (
-                      <li key={d.id} className="flex items-center gap-1.5 font-sans text-sm text-muted-foreground">
-                        <Lock className="h-3.5 w-3.5" /> Day {d.day_number}: {d.title}
+                      <li key={d.id} className="flex items-start gap-1.5 font-sans text-sm text-muted-foreground">
+                        <Lock className="mt-0.5 h-3.5 w-3.5 shrink-0" />
+                        <span>
+                          Day {d.day_number}: {d.title}
+                          {d.estimated_minutes ? ` (~${d.estimated_minutes} min)` : ""}
+                          {d.explanation && (
+                            <span className="block text-xs text-muted-foreground/80">{d.explanation}</span>
+                          )}
+                        </span>
                       </li>
                     ))}
               </ul>
