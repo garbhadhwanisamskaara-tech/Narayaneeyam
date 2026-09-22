@@ -19,7 +19,7 @@ import {
   HelpCircle,
   Sparkles,
   Flower2,
-  LifeBuoy,
+  Footprints,
   Route,
   X,
 } from "lucide-react";
@@ -60,6 +60,12 @@ export default function Index() {
       desc: "View slokas in multiple scripts with transliteration",
     },
     {
+      path: "/journeys",
+      icon: Footprints,
+      title: "Guided Journeys",
+      desc: "Day-by-day guided paths through the Narayaneeyam",
+    },
+    {
       path: "/festivals",
       icon: Sparkles,
       title: "Festival Parayanams",
@@ -87,9 +93,13 @@ export default function Index() {
       desc: "Chant together, become an Achaarya, and see your group's Garden",
     },
     { path: "/blog", icon: Newspaper, title: "Blog", desc: "Stories and guides for your Narayaneeyam journey" },
-    { path: "/support", icon: LifeBuoy, title: "Help & Support", desc: "Raise a ticket or get assistance" },
     { path: "/faq", icon: HelpCircle, title: "FAQ", desc: "Answers to common questions" },
-    { path: "/user-guide", icon: Settings, title: "Settings & Guide", desc: "App guide and preferences" },
+    {
+      path: "/user-guide",
+      icon: Settings,
+      title: "Help & Settings",
+      desc: "App guide, preferences, and raising a support ticket",
+    },
   ];
 
   const progress = getProgress();
