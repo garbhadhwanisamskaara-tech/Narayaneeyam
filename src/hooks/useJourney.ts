@@ -37,6 +37,7 @@ export interface JourneyRun {
 interface UseJourneyResult {
   journey: Journey | null;
   days: JourneyDay[];
+  availableRuns: JourneyRun[];
   /** The run a plain "Join" tap uses -- the is_default row when there's only
    *  one (V1's case), else the first OPEN/ACTIVE row. No run-picker UI is
    *  built in V1 since only one run exists per journey (§13). */
@@ -79,6 +80,7 @@ export function useJourney(slug: string | undefined): UseJourneyResult {
       return {
         journey: journey as Journey,
         days: (days ?? []) as JourneyDay[],
+        availableRuns: (runs ?? []) as JourneyRun[],
         defaultRun: ((runs ?? [])[0] ?? null) as JourneyRun | null,
       };
     },
@@ -87,6 +89,7 @@ export function useJourney(slug: string | undefined): UseJourneyResult {
   return {
     journey: data?.journey ?? null,
     days: data?.days ?? [],
+    availableRuns: data?.availableRuns ?? [],
     defaultRun: data?.defaultRun ?? null,
     isLoading,
     error: (error as Error | null) ?? null,

@@ -5,18 +5,91 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useJourney } from "@/hooks/useJourney";
 import { useJourneyEnrollment } from "@/hooks/useJourneyEnrollment";
 import { useJourneyProgress } from "@/hooks/useJourneyProgress";
+import type { JourneyDay } from "@/hooks/useJourney";
+import type { JourneyProgress } from "@/hooks/useJourneyProgress";
 import { track } from "@/lib/analytics";
 import { cn } from "@/lib/utils";
 import JourneyProgressGarden from "@/components/JourneyProgressGarden";
 import { resolveJourneyDayAction } from "@/lib/journeyActions";
+import { getJourneyDayPosition } from "@/lib/journeyDay";
+
+function formatJourneyDate(date: string) {
+  return new Date(`${date}T00:00:00`).toLocaleDateString("en-IN", {
+    day: "numeric",
+    month: "short",
+  });
+}
+
+interface JourneyDayTaskProps {
+  day: JourneyDay;
+  durationDays: number;
+  progress: JourneyProgress[];
+  pendingDayId: string | null;
+  onAction: (day: JourneyDay) => void;
+  onComplete: (day: JourneyDay, completed: boolean) => void;
+  completionLabel: string;
+}
+
+function JourneyDayTask({
+  day,
+  durationDays,
+  progress,
+  pendingDayId,
+  onAction,
+  onComplete,
+  completionLabel,
+}: JourneyDayTaskProps) {
+  const dayProgress = progress.find((item) => item.journey_day_id === day.id);
+  const completed = dayProgress?.completion_status === "COMPLETED";
+
+  return (
+    <div className="rounded-2xl border border-border bg-card p-5 shadow-peacock">
+      <p className="font-sans text-xs uppercase tracking-wide text-muted-foreground">
+        Day {day.day_number} of {durationDays}
+        {day.estimated_minutes ? ` • ~${day.estimated_minutes} min` : ""}
+      </p>
+      <h2 className="mt-1 font-display text-xl font-bold text-foreground">{day.title}</h2>
+      {day.hook && <p className="mt-2 font-sans text-sm text-muted-foreground">{day.hook}</p>}
+      {day.task_instruction && <p className="mt-3 font-sans text-sm text-foreground">{day.task_instruction}</p>}
+
+      {day.action_type !== "NONE" && (
+        <button
+          type="button"
+          onClick={() => onAction(day)}
+          className="mt-4 w-full rounded-lg bg-primary py-3 font-sans text-sm font-semibold text-primary-foreground transition-opacity hover:opacity-90"
+        >
+          {day.cta_label || "Start"}
+        </button>
+      )}
+
+      {day.reflection_text && (
+        <p className="mt-4 rounded-lg bg-muted/50 px-3 py-2 font-sans text-sm text-muted-foreground">
+          {day.reflection_text}
+        </p>
+      )}
+
+      <label className="mt-5 flex items-center gap-2 font-sans text-sm text-foreground">
+        <input
+          type="checkbox"
+          checked={completed}
+          disabled={pendingDayId === day.id}
+          onChange={() => onComplete(day, completed)}
+          className="h-5 w-5 rounded border-border text-primary focus:ring-primary"
+        />
+        {completionLabel}
+      </label>
+    </div>
+  );
+}
 
 export default function JourneyDashboardPage() {
   const { slug } = useParams<{ slug: string }>();
   const navigate = useNavigate();
   const { user } = useAuth();
-  const { journey, days, defaultRun, isLoading: journeyLoading, error: journeyError } = useJourney(slug);
+  const { journey, days, availableRuns, defaultRun, isLoading: journeyLoading, error: journeyError } = useJourney(slug);
   const {
     enrollment,
+    enrolledRun,
     currentDay,
     isLoading: enrollmentLoading,
     isPending: enrollmentPending,
@@ -39,12 +112,26 @@ export default function JourneyDashboardPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [journey?.id]);
 
-  // Fire-and-forget: record today's day as opened as soon as we know which one it is.
+  const todayDate = new Date().toISOString().split("T")[0];
+  const rawDayPosition = enrollment
+    ? getJourneyDayPosition(enrollment.effective_start_date, todayDate)
+    : null;
+  const isClosed = !!(enrolledRun?.end_date && todayDate > enrolledRun.end_date);
+  const isGrace = !!(
+    enrolledRun?.end_date &&
+    todayDate <= enrolledRun.end_date &&
+    rawDayPosition !== null &&
+    journey &&
+    rawDayPosition > journey.duration_days
+  );
+  const isNotStarted = currentDay === 0;
+
+  // Fire-and-forget: record today's day only while a new day is actively unlocking.
   useEffect(() => {
-    if (!currentDay || !days.length) return;
+    if (!currentDay || !days.length || isGrace || isClosed) return;
     const todayDay = days.find((d) => d.day_number === currentDay);
     if (todayDay) openDay(todayDay.id);
-  }, [currentDay, days, openDay]);
+  }, [currentDay, days, isClosed, isGrace, openDay]);
 
   if (journeyLoading || (!enrollment && enrollmentLoading)) {
     return (
@@ -66,16 +153,39 @@ export default function JourneyDashboardPage() {
 
   const isCompleted = enrollment?.status === "COMPLETED";
   const isLeft = enrollment?.status === "LEFT";
+  const alternateRun = availableRuns.find((run) => run.id !== enrollment?.run_id) ?? null;
 
   const handleJoin = async () => {
     if (!defaultRun) return;
     await join(defaultRun.id);
   };
 
-  const todayDay = currentDay ? days.find((d) => d.day_number === currentDay) : null;
-  const isLastDay = todayDay?.day_number === journey.duration_days;
-  const todayProgress = todayDay ? progress.find((p) => p.journey_day_id === todayDay.id) : undefined;
-  const todayDone = todayProgress?.completion_status === "COMPLETED";
+  const todayDay = currentDay && !isGrace && !isClosed ? days.find((d) => d.day_number === currentDay) : null;
+  const graceDays = isGrace
+    ? days.filter(
+        (day) =>
+          day.day_number <= journey.duration_days &&
+          !progress.some(
+            (item) => item.journey_day_id === day.id && item.completion_status === "COMPLETED",
+          ),
+      )
+    : [];
+
+  const handleDayCompletion = (day: JourneyDay, completed: boolean) => {
+    if (completed) {
+      void unmarkDayComplete(day.id);
+      return;
+    }
+
+    const allOtherDaysComplete = days
+      .filter((candidate) => candidate.id !== day.id)
+      .every((candidate) =>
+        progress.some(
+          (item) => item.journey_day_id === candidate.id && item.completion_status === "COMPLETED",
+        ),
+      );
+    void markDayComplete(day.id, day.day_number === journey.duration_days && allOtherDaysComplete);
+  };
 
   return (
     <div className="mx-auto max-w-2xl px-4 py-8">
@@ -111,6 +221,29 @@ export default function JourneyDashboardPage() {
             {enrollmentPending ? "Joining…" : "Start this journey"}
           </button>
         </div>
+      ) : isClosed ? (
+        <div className="mt-6 rounded-2xl border border-border bg-card p-5 shadow-peacock">
+          <p className="font-display text-lg font-bold text-foreground">This cycle has ended</p>
+          {alternateRun ? (
+            <>
+              <p className="mt-2 font-sans text-sm text-muted-foreground">
+                {alternateRun.start_date
+                  ? `Another cycle starts ${formatJourneyDate(alternateRun.start_date)}.`
+                  : "Another cycle is available to join."}
+              </p>
+              <button
+                type="button"
+                onClick={() => void join(alternateRun.id)}
+                disabled={enrollmentPending}
+                className="mt-4 w-full rounded-lg bg-primary py-3 font-sans text-sm font-semibold text-primary-foreground transition-opacity hover:opacity-90 disabled:opacity-60"
+              >
+                {enrollmentPending ? "Joining…" : "Join the next cycle"}
+              </button>
+            </>
+          ) : (
+            <p className="mt-2 font-sans text-sm text-muted-foreground">There is no new cycle available yet.</p>
+          )}
+        </div>
       ) : isLeft ? (
         <div className="mt-6 rounded-2xl border border-border bg-card p-5 shadow-peacock">
           <p className="font-sans text-sm text-muted-foreground">You stepped away from this journey.</p>
@@ -133,7 +266,13 @@ export default function JourneyDashboardPage() {
             />
           </div>
 
-          {isCompleted ? (
+          {isNotStarted ? (
+            <div className="mt-6 rounded-2xl border border-border bg-card p-5 text-center shadow-peacock">
+              <p className="font-display text-lg font-bold text-foreground">
+                Starts {formatJourneyDate(enrollment.effective_start_date)}
+              </p>
+            </div>
+          ) : isCompleted ? (
             <div className="mt-6 rounded-2xl border border-border bg-card p-6 text-center shadow-peacock">
               <CheckCircle2 className="mx-auto h-8 w-8 text-primary" />
               <p className="mt-2 font-display text-lg font-bold text-foreground">Journey complete</p>
@@ -141,54 +280,45 @@ export default function JourneyDashboardPage() {
                 Every one of the {journey.duration_days} days is done.
               </p>
             </div>
+          ) : isGrace ? (
+            <div className="mt-6 space-y-4">
+              {graceDays.length > 0 ? (
+                <>
+                  <p className="font-sans text-sm text-muted-foreground">
+                    This cycle is in its grace period. You can still complete your remaining days.
+                  </p>
+                  {graceDays.map((day) => (
+                    <JourneyDayTask
+                      key={day.id}
+                      day={day}
+                      durationDays={journey.duration_days}
+                      progress={progress}
+                      pendingDayId={pendingDayId}
+                      onAction={(selectedDay) => resolveJourneyDayAction(selectedDay, navigate)}
+                      onComplete={handleDayCompletion}
+                      completionLabel="Mark this journey day complete"
+                    />
+                  ))}
+                </>
+              ) : (
+                <p className="font-sans text-sm text-muted-foreground">All journey days are complete.</p>
+              )}
+            </div>
           ) : todayDay ? (
-            <div className="mt-6 rounded-2xl border border-border bg-card p-5 shadow-peacock">
-              <p className="font-sans text-xs uppercase tracking-wide text-muted-foreground">
-                Day {todayDay.day_number} of {journey.duration_days}
-                {todayDay.estimated_minutes ? ` • ~${todayDay.estimated_minutes} min` : ""}
-              </p>
-              <h2 className="mt-1 font-display text-xl font-bold text-foreground">{todayDay.title}</h2>
-              {todayDay.hook && <p className="mt-2 font-sans text-sm text-muted-foreground">{todayDay.hook}</p>}
-              {todayDay.task_instruction && (
-                <p className="mt-3 font-sans text-sm text-foreground">{todayDay.task_instruction}</p>
-              )}
-
-              {todayDay.action_type !== "NONE" && (
-                <button
-                  type="button"
-                  onClick={() => resolveJourneyDayAction(todayDay, navigate)}
-                  className="mt-4 w-full rounded-lg bg-primary py-3 font-sans text-sm font-semibold text-primary-foreground transition-opacity hover:opacity-90"
-                >
-                  {todayDay.cta_label || "Start"}
-                </button>
-              )}
-
-              {todayDay.reflection_text && (
-                <p className="mt-4 rounded-lg bg-muted/50 px-3 py-2 font-sans text-sm text-muted-foreground">
-                  {todayDay.reflection_text}
-                </p>
-              )}
-
-              {/* The only control that writes completion -- separate from the
-                  garden visual above, so nothing blooms by accident (§15). */}
-              <label className="mt-5 flex items-center gap-2 font-sans text-sm text-foreground">
-                <input
-                  type="checkbox"
-                  checked={todayDone}
-                  disabled={pendingDayId === todayDay.id}
-                  onChange={() =>
-                    void (todayDone
-                      ? unmarkDayComplete(todayDay.id)
-                      : markDayComplete(todayDay.id, isLastDay))
-                  }
-                  className="h-5 w-5 rounded border-border text-primary focus:ring-primary"
-                />
-                Mark today's journey complete
-              </label>
+            <div className="mt-6">
+              <JourneyDayTask
+                day={todayDay}
+                durationDays={journey.duration_days}
+                progress={progress}
+                pendingDayId={pendingDayId}
+                onAction={(selectedDay) => resolveJourneyDayAction(selectedDay, navigate)}
+                onComplete={handleDayCompletion}
+                completionLabel="Mark today's journey complete"
+              />
             </div>
           ) : null}
 
-          <div className="mt-6 grid gap-4 sm:grid-cols-2">
+          {!isNotStarted && !isCompleted && <div className="mt-6 grid gap-4 sm:grid-cols-2">
             <div className="rounded-2xl border border-border bg-card p-4">
               <p className="font-sans text-xs uppercase tracking-wide text-muted-foreground">Completed</p>
               <ul className="mt-2 space-y-1">
@@ -204,7 +334,7 @@ export default function JourneyDashboardPage() {
             <div className="rounded-2xl border border-border bg-card p-4">
               <p className="font-sans text-xs uppercase tracking-wide text-muted-foreground">Upcoming</p>
               <ul className={cn("mt-2 space-y-2")}>
-                {currentDay &&
+                {!isGrace && currentDay &&
                   days
                     .filter((d) => d.day_number > currentDay)
                     .map((d) => (
@@ -221,7 +351,7 @@ export default function JourneyDashboardPage() {
                     ))}
               </ul>
             </div>
-          </div>
+          </div>}
 
           <button
             type="button"
