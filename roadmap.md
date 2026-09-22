@@ -20,4 +20,4 @@
 
 - [x] Merge Help & Support and Settings & Guide into one Help & Settings entry.
 - [x] Keep Guided Journeys clearly present and both destination pages reachable.
-- [ ] Verify types and navigation.
+- [x] Verify types and navigation.
