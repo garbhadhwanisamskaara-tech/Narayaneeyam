@@ -177,14 +177,7 @@ export default function JourneyDashboardPage() {
       return;
     }
 
-    const allOtherDaysComplete = days
-      .filter((candidate) => candidate.id !== day.id)
-      .every((candidate) =>
-        progress.some(
-          (item) => item.journey_day_id === candidate.id && item.completion_status === "COMPLETED",
-        ),
-      );
-    void markDayComplete(day.id, day.day_number === journey.duration_days && allOtherDaysComplete);
+    void markDayComplete(day.id, day.day_number === journey.duration_days);
   };
 
   return (

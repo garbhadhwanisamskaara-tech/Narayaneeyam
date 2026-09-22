@@ -10,8 +10,8 @@
 
 # Guided Journey timing and Home prompt
 
-- [ ] Return day 0 before a journey cycle starts.
-- [ ] Distinguish not-started, active, grace, and closed journey states.
-- [ ] Keep grace-period days completable and offer another eligible run after closure.
-- [ ] Replace the inline Journey Home card with a floating, dismissible prompt.
-- [ ] Verify types, tests, and available browser states.
+- [x] Return day 0 before a journey cycle starts.
+- [x] Distinguish not-started, active, grace, and closed journey states.
+- [x] Keep grace-period days completable and offer another eligible run after closure.
+- [x] Replace the inline Journey Home card with a floating, dismissible prompt.
+- [x] Verify types, tests, and available browser states.
