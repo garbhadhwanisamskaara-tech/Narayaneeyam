@@ -7,3 +7,11 @@
 - [x] Remove the Home “Verses Chanted” tile while preserving live sessions.
 - [x] Validate types, tests, source-level guardrails, and available browser views.
 - [x] Refine Progress tooltips and visuals; remove its duplicate and daily-parayanam cards.
+
+# Guided Journey timing and Home prompt
+
+- [ ] Return day 0 before a journey cycle starts.
+- [ ] Distinguish not-started, active, grace, and closed journey states.
+- [ ] Keep grace-period days completable and offer another eligible run after closure.
+- [ ] Replace the inline Journey Home card with a floating, dismissible prompt.
+- [ ] Verify types, tests, and available browser states.
