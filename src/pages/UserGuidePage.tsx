@@ -1,4 +1,5 @@
 import { motion } from "framer-motion";
+import { Link } from "react-router-dom";
 import {
   BookOpen,
   Headphones,
@@ -17,6 +18,7 @@ import {
   ListMusic,
 } from "lucide-react";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
+import { Button } from "@/components/ui/button";
 import SEO from "@/components/SEO";
 
 const sections = [
@@ -338,6 +340,15 @@ const UserGuidePage = () => {
             </motion.div>
           ))}
         </Accordion>
+
+        <div className="mt-8 flex justify-center">
+          <Button asChild variant="outline">
+            <Link to="/support">
+              <LifeBuoy className="mr-2 h-4 w-4" />
+              Help & Support
+            </Link>
+          </Button>
+        </div>
 
         <div className="text-center mt-10 mb-6">
           <p className="text-muted-foreground italic text-sm">

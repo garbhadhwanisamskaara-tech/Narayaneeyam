@@ -15,3 +15,9 @@
 - [x] Keep grace-period days completable and offer another eligible run after closure.
 - [x] Replace the inline Journey Home card with a floating, dismissible prompt.
 - [x] Verify types, tests, and available browser states.
+
+# More menu help consolidation
+
+- [x] Merge Help & Support and Settings & Guide into one Help & Settings entry.
+- [x] Keep Guided Journeys clearly present and both destination pages reachable.
+- [x] Verify types and navigation.
