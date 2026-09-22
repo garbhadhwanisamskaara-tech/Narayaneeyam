@@ -34,7 +34,7 @@ import UpcomingLiveSessionCard from "@/components/UpcomingLiveSessionCard";
 import PastLiveSessionsCard from "@/components/PastLiveSessionsCard";
 import TodaysDashakamCard from "@/components/TodaysDashakamCard";
 import SelfJoinParayanamPrompt from "@/components/SelfJoinParayanamPrompt";
-import JourneyHomePrompt from "@/components/JourneyHomePrompt";
+import JourneyHomeFloatingPrompt from "@/components/JourneyHomeFloatingPrompt";
 
 import { SUBSCRIPTION_ENABLED } from "@/config/features";
 import { useAuth } from "@/contexts/AuthContext";
@@ -245,9 +245,7 @@ export default function Index() {
         <SelfJoinParayanamPrompt />
       </section>
 
-      <section className="container mx-auto px-4 mt-4 relative z-20">
-        <JourneyHomePrompt />
-      </section>
+      <JourneyHomeFloatingPrompt />
 
       <section className="container mx-auto px-4 mt-4 relative z-20">
         <UpcomingLiveSessionCard />

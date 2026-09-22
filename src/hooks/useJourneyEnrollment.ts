@@ -5,6 +5,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { track } from "@/lib/analytics";
 import { friendlyError } from "@/lib/errorMessages";
 import { getCurrentDay } from "@/lib/journeyDay";
+import type { JourneyRun } from "@/hooks/useJourney";
 
 export interface JourneyEnrollment {
   id: string;
@@ -23,6 +24,8 @@ interface UseJourneyEnrollmentResult {
   /** The user's most recent attempt at this journey (any status), or null
    *  if they've never enrolled. Only one row can be ACTIVE at a time. */
   enrollment: JourneyEnrollment | null;
+  /** The run referenced by the latest enrollment, including closed runs. */
+  enrolledRun: JourneyRun | null;
   /** null until there's an ACTIVE enrollment and a duration_days to clamp against. */
   currentDay: number | null;
   isLoading: boolean;
@@ -47,23 +50,38 @@ export function useJourneyEnrollment(
 
   const queryKey = ["journey-enrollment", journeyId, user?.id];
 
-  const { data: enrollment, isLoading } = useQuery({
+  const { data, isLoading } = useQuery({
     queryKey,
     enabled: !!journeyId && !!user,
-    queryFn: async (): Promise<JourneyEnrollment | null> => {
-      const { data, error } = await (supabase as any)
+    queryFn: async (): Promise<{ enrollment: JourneyEnrollment | null; enrolledRun: JourneyRun | null }> => {
+      if (!journeyId || !user) return { enrollment: null, enrolledRun: null };
+
+      const { data: enrollmentData, error } = await (supabase as any)
         .from("journey_enrollments")
         .select("*")
-        .eq("journey_id", journeyId!)
-        .eq("user_id", user!.id)
+        .eq("journey_id", journeyId)
+        .eq("user_id", user.id)
         .order("attempt_number", { ascending: false })
         .limit(1)
         .maybeSingle();
 
       if (error) throw error;
-      return (data ?? null) as JourneyEnrollment | null;
+      const enrollment = (enrollmentData ?? null) as JourneyEnrollment | null;
+      if (!enrollment) return { enrollment: null, enrolledRun: null };
+
+      const { data: runData, error: runError } = await (supabase as any)
+        .from("journey_runs")
+        .select("*")
+        .eq("id", enrollment.run_id)
+        .maybeSingle();
+
+      if (runError) throw runError;
+      return { enrollment, enrolledRun: (runData ?? null) as JourneyRun | null };
     },
   });
+
+  const enrollment = data?.enrollment ?? null;
+  const enrolledRun = data?.enrolledRun ?? null;
 
   const join = useCallback(
     async (runId: string): Promise<boolean> => {
@@ -143,5 +161,5 @@ export function useJourneyEnrollment(
       ? getCurrentDay(enrollment.effective_start_date, durationDays)
       : null;
 
-  return { enrollment: enrollment ?? null, currentDay, isLoading, error, isPending, join, leave, resume };
+  return { enrollment, enrolledRun, currentDay, isLoading, error, isPending, join, leave, resume };
 }
