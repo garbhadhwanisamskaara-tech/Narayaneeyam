@@ -14,6 +14,9 @@ export interface JourneyDay {
   cta_label: string | null;
   action_type: "NONE" | "OPEN_DASHAKAM" | "OPEN_VERSE" | "OPEN_MEANING" | "OPEN_AUDIO" | "OPEN_PRASADAM" | "OPEN_PAGE" | "EXTERNAL_LINK";
   action_payload: Record<string, unknown>;
+  secondary_action_type?: "NONE" | "OPEN_DASHAKAM" | "OPEN_VERSE" | "OPEN_MEANING" | "OPEN_AUDIO" | "OPEN_PRASADAM" | "OPEN_PAGE" | "EXTERNAL_LINK";
+  secondary_action_payload?: Record<string, unknown> | null;
+  secondary_cta_label?: string | null;
   image_url: string | null;
   estimated_minutes: number | null;
   completion_method: "MANUAL" | "AUTOMATIC";

@@ -21,3 +21,9 @@
 - [x] Merge Help & Support and Settings & Guide into one Help & Settings entry.
 - [x] Keep Guided Journeys clearly present and both destination pages reachable.
 - [x] Verify types and navigation.
+
+# Journey card actions and affordance
+
+- [x] Add optional two-step actions to journey day cards without changing single-step days.
+- [x] Add a clear View journey affordance to every journey list card.
+- [x] Verify types, tests, and both card states.

@@ -1,6 +1,8 @@
 import type { NavigateFunction } from "react-router-dom";
 import type { JourneyDay } from "@/hooks/useJourney";
 
+export type JourneyActionType = JourneyDay["action_type"];
+
 /**
  * The single place a new action_type gets a new `case` (§15/§13).
  *
@@ -10,10 +12,14 @@ import type { JourneyDay } from "@/hooks/useJourney";
  *  - ScriptPage and PodcastPage take no query params today, so OPEN_MEANING
  *    and the audio fallback navigate to the bare route.
  */
-export function resolveJourneyDayAction(day: JourneyDay, navigate: NavigateFunction): void {
-  const payload = (day.action_payload ?? {}) as Record<string, unknown>;
+export function resolveJourneyAction(
+  actionType: JourneyActionType,
+  actionPayload: Record<string, unknown> | null | undefined,
+  navigate: NavigateFunction,
+): void {
+  const payload = actionPayload ?? {};
 
-  switch (day.action_type) {
+  switch (actionType) {
     case "OPEN_DASHAKAM":
       navigate(`/chant/${payload.dashakam_no}`);
       return;
@@ -49,4 +55,8 @@ export function resolveJourneyDayAction(day: JourneyDay, navigate: NavigateFunct
     default:
       return;
   }
+}
+
+export function resolveJourneyDayAction(day: JourneyDay, navigate: NavigateFunction): void {
+  resolveJourneyAction(day.action_type, day.action_payload, navigate);
 }
