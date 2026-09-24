@@ -35,6 +35,7 @@ import PastLiveSessionsCard from "@/components/PastLiveSessionsCard";
 import TodaysDashakamCard from "@/components/TodaysDashakamCard";
 import SelfJoinParayanamPrompt from "@/components/SelfJoinParayanamPrompt";
 import JourneyHomeFloatingPrompt from "@/components/JourneyHomeFloatingPrompt";
+import ContinueJourneyCard from "@/components/ContinueJourneyCard";
 
 import { SUBSCRIPTION_ENABLED } from "@/config/features";
 import { useAuth } from "@/contexts/AuthContext";
@@ -242,6 +243,9 @@ export default function Index() {
           )}
           <div className="mt-4">
             <TodaysDashakamCard />
+          </div>
+          <div className="mt-4">
+            <ContinueJourneyCard />
           </div>
         </div>
       </section>
