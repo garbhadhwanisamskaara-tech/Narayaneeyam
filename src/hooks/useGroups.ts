@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { track } from "@/lib/analytics";
 import { supabase } from "@/integrations/supabase/client";
+import { fetchAllPages } from "@/lib/fetchAllPages";
 import { useAuth } from "@/contexts/AuthContext";
 import { HIDDEN_GROUP_STATUSES_FILTER } from "@/lib/parayanamFilters";
 import { friendlyError } from "@/lib/errorMessages";
@@ -148,13 +149,23 @@ export function useGroupMembers(groupId: string | undefined, sessionId: string |
   const refresh = useCallback(async () => {
     if (!groupId) return;
     setLoading(true);
+    setError(null);
 
-    const { data, error: err } = await (supabase as any)
-      .from("group_members")
-      .select("id, group_id, user_id, role, joined_at, left_at")
-      .eq("group_id", groupId)
-      .is("left_at", null)
-      .order("joined_at", { ascending: true });
+    let data: any[] | null = null;
+    let err: any = null;
+    try {
+      data = await fetchAllPages<any>(() =>
+        (supabase as any)
+          .from("group_members")
+          .select("id, group_id, user_id, role, joined_at, left_at")
+          .eq("group_id", groupId)
+          .is("left_at", null)
+          .order("joined_at", { ascending: true })
+          .order("id", { ascending: true }),
+      );
+    } catch (e) {
+      err = e;
+    }
 
     if (err) {
       setError(friendlyError(err, "We couldn't load group members right now. Please try again."));
@@ -187,17 +198,27 @@ export function useGroupMembers(groupId: string | undefined, sessionId: string |
     const scheduleIds = ((scheduleRes.data ?? []) as any[]).map((r) => r.id as string);
     const counts = new Map<string, number>();
     if (scheduleIds.length) {
-      const { data: progRows } = await (supabase as any)
-        .from("parayanam_member_progress")
-        .select("user_id, schedule_id")
-        .in("schedule_id", scheduleIds)
-        .in("user_id", ids);
-      for (const row of (progRows ?? []) as any[]) {
+      // Paginated and without a giant user_id list: many members x 100
+      // dashakams easily passes the 1,000-row cap.
+      const memberSet = new Set(ids);
+      let progRows: any[] = [];
+      try {
+        progRows = await fetchAllPages<any>(() =>
+          (supabase as any)
+            .from("parayanam_member_progress")
+            .select("user_id, schedule_id")
+            .in("schedule_id", scheduleIds)
+            .order("schedule_id", { ascending: true })
+            .order("user_id", { ascending: true }),
+        );
+      } catch (e: any) {
+        setError(friendlyError(e, "We couldn't load member progress right now. Please try again."));
+      }
+      for (const row of progRows.filter((r) => memberSet.has(r.user_id))) {
         counts.set(row.user_id, (counts.get(row.user_id) ?? 0) + 1);
       }
     }
 
-    setError(null);
     setMembers(
       rows
         .map((r) => ({

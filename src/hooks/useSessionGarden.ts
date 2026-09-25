@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useCompleteDashakam } from "@/hooks/useCompleteDashakam";
-import { useSessionParticipants } from "@/hooks/useParayanamParticipants";
+import { toast } from "@/hooks/use-toast";
 import { isParticipantEligible } from "@/lib/parayanamEligibility";
 
 interface ScheduleRow {
@@ -25,6 +25,8 @@ export interface GardenTile {
   /** Expected completions once everyone confirmed has chanted it. */
   total: number;
   canTap: boolean;
+  /** Why the tile can't be tapped, if known. */
+  disabledReason?: string | null;
   /** 0–100 bloom intensity. */
   percent: number;
   /** Scheduled date for this occurrence, if any. */
@@ -45,7 +47,6 @@ export interface GardenOccurrence {
  */
 export function useSessionGarden(sessionId: string | null | undefined) {
   const { user } = useAuth();
-  const { participants } = useSessionParticipants(sessionId ?? undefined);
   const { markDashakamComplete, unmarkDashakamComplete } = useCompleteDashakam();
 
   const [rows, setRows] = useState<ScheduleRow[]>([]);
@@ -54,36 +55,59 @@ export function useSessionGarden(sessionId: string | null | undefined) {
   const [pending, setPending] = useState<string | null>(null);
   const [startDate, setStartDate] = useState<string | null>(null);
 
-  const [participationType, setParticipationType] = useState<string | null>(null);
-
-  // FREE: accepted is enough. PAID: the Guru must have approved the
-  // contribution (contribution_status confirmed + access_status active).
-  const eligibleParticipants = useMemo(
-    () => participants.filter((p) => isParticipantEligible(p, participationType)),
-    [participants, participationType],
-  );
-  const confirmedCount = eligibleParticipants.length;
-  const isConfirmedParticipant = useMemo(
-    () => !!user && eligibleParticipants.some((p) => p.user_id === user.id),
-    [eligibleParticipants, user],
-  );
+  // Eligibility comes from the user's OWN participant row and the total from a
+  // count query — never from the full participant list, which the API caps at
+  // 1,000 rows (members past that cap were wrongly treated as outsiders).
+  const [confirmedCount, setConfirmedCount] = useState(0);
+  const [isConfirmedParticipant, setIsConfirmedParticipant] = useState(false);
+  const [isPersonal, setIsPersonal] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const refresh = useCallback(async () => {
     if (!sessionId) {
       setRows([]);
       setProgress([]);
       setStartDate(null);
+      setConfirmedCount(0);
+      setIsConfirmedParticipant(false);
+      setIsPersonal(false);
+      setError(null);
       setLoading(false);
       return;
     }
     setLoading(true);
-    const { data: sess } = await (supabase as any)
-      .from("challenge_sessions")
-      .select("participation_type, start_date")
-      .eq("id", sessionId)
-      .maybeSingle();
-    setParticipationType((sess as any)?.participation_type ?? null);
+    setError(null);
+    const [{ data: sess }, ownRes] = await Promise.all([
+      (supabase as any)
+        .from("challenge_sessions")
+        .select("participation_type, start_date, group_id")
+        .eq("id", sessionId)
+        .maybeSingle(),
+      user
+        ? (supabase as any)
+            .from("parayanam_participants")
+            .select("status, contribution_status, access_status")
+            .eq("challenge_session_id", sessionId)
+            .eq("user_id", user.id)
+            .maybeSingle()
+        : Promise.resolve({ data: null }),
+    ]);
+    const participationType = (sess as any)?.participation_type ?? null;
     setStartDate((sess as any)?.start_date ?? null);
+    // A personal session is one with no group.
+    setIsPersonal(!!sess && !(sess as any).group_id);
+    setIsConfirmedParticipant(isParticipantEligible(ownRes?.data ?? null, participationType));
+
+    let countQuery = (supabase as any)
+      .from("parayanam_participants")
+      .select("id", { count: "exact", head: true })
+      .eq("challenge_session_id", sessionId)
+      .eq("status", "confirmed");
+    if (participationType === "PAID") {
+      countQuery = countQuery.eq("contribution_status", "confirmed").eq("access_status", "active");
+    }
+    const { count } = await countQuery;
+    setConfirmedCount(count ?? 0);
     const { data } = await (supabase as any)
       .from("parayanam_schedule")
       .select("id, dashakam_no, scheduled_date, assigned_user_id")
@@ -101,6 +125,7 @@ export function useSessionGarden(sessionId: string | null | undefined) {
       // Page through the rows until every completion is in hand.
       const all: { schedule_id: string; user_id: string }[] = [];
       const PAGE = 1000;
+      let failed = false;
       for (let from = 0; ; from += PAGE) {
         const { data: page, error: pageErr } = await (supabase as any)
           .from("parayanam_member_progress")
@@ -108,16 +133,29 @@ export function useSessionGarden(sessionId: string | null | undefined) {
           .in("schedule_id", ids)
           .order("schedule_id", { ascending: true })
           .range(from, from + PAGE - 1);
+        if (pageErr) {
+          failed = true;
+          break;
+        }
         const rowsPage = (page ?? []) as { schedule_id: string; user_id: string }[];
         all.push(...rowsPage);
-        if (pageErr || rowsPage.length < PAGE) break;
+        if (rowsPage.length < PAGE) break;
       }
-      setProgress(all);
+      if (failed) {
+        // Never show a truncated garden as buds.
+        const msg = "Couldn't load the full garden, please retry.";
+        setError(msg);
+        setRows([]);
+        setProgress([]);
+        toast({ variant: "destructive", title: msg });
+      } else {
+        setProgress(all);
+      }
     } else {
       setProgress([]);
     }
     setLoading(false);
-  }, [sessionId]);
+  }, [sessionId, user]);
 
   useEffect(() => {
     void refresh();
@@ -142,14 +180,19 @@ export function useSessionGarden(sessionId: string | null | undefined) {
       const mine = mineRows.has(r.id);
       // Split mode assigns one chanter per row; synchronized expects everyone.
       const total = r.assigned_user_id ? 1 : Math.max(confirmedCount, 1);
-      // Personal sessions have no parayanam_participants rows at all, so
-      // participants.length === 0 means "personal".
       const canTap =
         !!user &&
         hasStarted &&
         (r.assigned_user_id
           ? r.assigned_user_id === user.id
-          : isConfirmedParticipant || participants.length === 0);
+          : isConfirmedParticipant || isPersonal);
+      const disabledReason = canTap
+        ? null
+        : !hasStarted
+          ? "This parayanam hasn't started yet"
+          : r.assigned_user_id
+            ? "This dashakam is assigned to another member"
+            : "Only confirmed participants can mark this dashakam";
       map.set(r.id, {
         dashakam_no: r.dashakam_no,
         scheduleIds: [r.id],
@@ -158,12 +201,13 @@ export function useSessionGarden(sessionId: string | null | undefined) {
         done,
         total,
         canTap,
+        disabledReason,
         percent: total > 0 ? Math.min(100, (done / total) * 100) : 0,
         scheduled_date: r.scheduled_date ?? null,
       });
     }
     return map;
-  }, [rows, progress, user, confirmedCount, isConfirmedParticipant, participants.length, startDate]);
+  }, [rows, progress, user, confirmedCount, isConfirmedParticipant, isPersonal, startDate]);
 
   const blooms = useMemo(() => {
     const m = new Map<string, number>();
@@ -182,12 +226,20 @@ export function useSessionGarden(sessionId: string | null | undefined) {
       const tile = tiles.get(occurrenceKey);
       if (!tile || !tile.canTap || !user) return;
       setPending(occurrenceKey);
-      if (tile.mineDone > 0) {
-        await unmarkDashakamComplete(occurrenceKey);
-      } else {
-        await markDashakamComplete(occurrenceKey);
-      }
+      const ok =
+        tile.mineDone > 0
+          ? await unmarkDashakamComplete(occurrenceKey)
+          : await markDashakamComplete(occurrenceKey);
       setPending(null);
+      if (!ok) {
+        toast({
+          variant: "destructive",
+          title:
+            tile.mineDone > 0
+              ? "Could not update this dashakam. Please try again."
+              : "Could not mark this dashakam complete. Please try again.",
+        });
+      }
       await refresh();
     },
     [tiles, user, markDashakamComplete, unmarkDashakamComplete, refresh],
@@ -200,6 +252,7 @@ export function useSessionGarden(sessionId: string | null | undefined) {
     confirmedCount,
     loading,
     pending,
+    error,
     refresh,
     toggleDashakam,
     hasSchedule: rows.length > 0,

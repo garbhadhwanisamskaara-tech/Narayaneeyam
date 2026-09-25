@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { CheckCircle2, ChevronDown, ChevronUp, Loader2, MailQuestion, RotateCcw, Users } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import { fetchAllPages } from "@/lib/fetchAllPages";
 import { useCapabilities } from "@/hooks/useCapabilities";
 import { notifyParayanamConfirmed } from "@/hooks/useParayanamParticipants";
 import { friendlyError } from "@/lib/errorMessages";
@@ -62,12 +63,15 @@ export default function ParayanamParticipantManager({ sessionId, isOwner }: Prop
     }
     setLoading(true);
 
-    const [{ data: session }, { data: parts }] = await Promise.all([
+    const [{ data: session }, parts] = await Promise.all([
       (supabase as any).from("challenge_sessions").select("participation_type").eq("id", sessionId).maybeSingle(),
-      (supabase as any)
-        .from("parayanam_participants")
-        .select("id, user_id, status, contribution_status, access_status")
-        .eq("challenge_session_id", sessionId),
+      fetchAllPages<any>(() =>
+        (supabase as any)
+          .from("parayanam_participants")
+          .select("id, user_id, status, contribution_status, access_status")
+          .eq("challenge_session_id", sessionId)
+          .order("id", { ascending: true }),
+      ).catch(() => [] as any[]),
     ]);
 
     setPaid(session?.participation_type === "PAID");

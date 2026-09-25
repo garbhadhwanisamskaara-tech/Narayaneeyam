@@ -9,6 +9,8 @@ export interface GardenTileInfo {
   done: number;
   total: number;
   canTap: boolean;
+  /** Why the tile can't be tapped, if known. */
+  disabledReason?: string | null;
   scheduled_date?: string | null;
 }
 
@@ -71,10 +73,10 @@ function GardenCell({
       onClick={clickable ? () => onTap?.(occurrenceKey) : undefined}
       title={`${dashakamNo}. ${getDashakamName(dashakamNo, lang)} — ${Math.round(percent)}% bloomed${
         label ? ` (${label} done)` : ""
-      }${dateLabel ? ` — ${dateLabel}` : ""}${clickable ? " — tap to mark done" : ""}`}
+      }${dateLabel ? ` — ${dateLabel}` : ""}${clickable ? " — tap to mark done" : tile?.disabledReason ? ` — ${tile.disabledReason}` : ""}`}
       aria-label={`Dashakam ${dashakamNo}${label ? `, ${label} done` : ""}${
         dateLabel ? `, ${dateLabel}` : ""
-      }${clickable ? ", tap to mark complete" : ""}`}
+      }${clickable ? ", tap to mark complete" : tile?.disabledReason ? `, ${tile.disabledReason}` : ""}`}
       className={cn(
         "relative flex aspect-square flex-col items-center justify-center rounded-lg border border-border/60 bg-muted/40 p-0.5 transition-transform",
         clickable ? "cursor-pointer hover:scale-110 hover:border-primary/50" : "cursor-default hover:scale-110",

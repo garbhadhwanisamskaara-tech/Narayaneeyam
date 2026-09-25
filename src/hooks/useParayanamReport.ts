@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { fetchAllPages } from "@/lib/fetchAllPages";
 import { useAuth } from "@/contexts/AuthContext";
 
 export interface CompletedDashakam {
@@ -145,27 +146,27 @@ export function useParayanamReport(groupIdFilter?: string) {
       const sessionIds = sessions.map((s) => s.id);
 
       // 3. Schedule, participants and completions for all of them at once.
-      const [schedRes, partRes] = await Promise.all([
+      // Paginated: both can pass the 1,000-row response cap.
+      const [schedule, participants] = await Promise.all([
         sessionIds.length
-          ? (supabase as any)
-              .from("parayanam_schedule")
-              .select("id, challenge_session_id, dashakam_no, assigned_user_id, scheduled_date")
-              .in("challenge_session_id", sessionIds)
-          : Promise.resolve({ data: [] }),
+          ? fetchAllPages<ScheduleRow & { challenge_session_id: string }>(() =>
+              (supabase as any)
+                .from("parayanam_schedule")
+                .select("id, challenge_session_id, dashakam_no, assigned_user_id, scheduled_date")
+                .in("challenge_session_id", sessionIds)
+                .order("id", { ascending: true }),
+            )
+          : Promise.resolve([]),
         sessionIds.length
-          ? (supabase as any)
-              .from("parayanam_participants")
-              .select("challenge_session_id, user_id, status")
-              .in("challenge_session_id", sessionIds)
-          : Promise.resolve({ data: [] }),
+          ? fetchAllPages<{ challenge_session_id: string; user_id: string; status: string }>(() =>
+              (supabase as any)
+                .from("parayanam_participants")
+                .select("challenge_session_id, user_id, status")
+                .in("challenge_session_id", sessionIds)
+                .order("id", { ascending: true }),
+            )
+          : Promise.resolve([]),
       ]);
-
-      const schedule = (schedRes.data ?? []) as (ScheduleRow & { challenge_session_id: string })[];
-      const participants = (partRes.data ?? []) as {
-        challenge_session_id: string;
-        user_id: string;
-        status: string;
-      }[];
 
       // Completions come from parayanam_member_progress, which records one
       // row per (schedule row, user) -- so each scheduled occurrence of a
@@ -175,11 +176,15 @@ export function useParayanamReport(groupIdFilter?: string) {
       // Chunked so long-running groups do not overflow the URL length.
       for (let i = 0; i < scheduleIds.length; i += 500) {
         const chunk = scheduleIds.slice(i, i + 500);
-        const { data } = await (supabase as any)
-          .from("parayanam_member_progress")
-          .select("schedule_id, user_id, completed_at")
-          .in("schedule_id", chunk);
-        progress = progress.concat((data ?? []) as ProgressRow[]);
+        const data = await fetchAllPages<ProgressRow>(() =>
+          (supabase as any)
+            .from("parayanam_member_progress")
+            .select("schedule_id, user_id, completed_at")
+            .in("schedule_id", chunk)
+            .order("schedule_id", { ascending: true })
+            .order("user_id", { ascending: true }),
+        );
+        progress = progress.concat(data);
       }
 
       // 4. Display names for everyone involved.
