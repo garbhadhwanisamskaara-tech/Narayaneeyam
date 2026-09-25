@@ -13,7 +13,7 @@ export default function Lotus({ percent, className = "h-full w-full", petalColor
   const petalFill = petalColor === "gold" ? "hsl(var(--secondary))" : "hsl(var(--lotus-petal))";
 
   return (
-    <svg viewBox="0 0 32 32" className={className} aria-hidden="true">
+    <svg viewBox="-4 -6 40 40" className={className} aria-hidden="true">
       {[-2, -1, 0, 1, 2].map((i) => (
         <ellipse
           key={i}
