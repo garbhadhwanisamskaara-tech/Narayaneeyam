@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import { Check, ChevronDown, ChevronRight } from "lucide-react";
 import { useMyDashakamQueue, type QueueRow } from "@/hooks/useMyDashakamQueue";
 import { useCompleteDashakam } from "@/hooks/useCompleteDashakam";
+import { toast } from "@/hooks/use-toast";
 
 function shortDate(d: string) {
   return new Date(`${d}T00:00:00Z`).toLocaleDateString("en-IN", {
@@ -80,9 +81,16 @@ export default function DashakamQueueList({
   const { todayRows, pendingRows, pendingCount, removeItem } = useMyDashakamQueue();
   const { markDashakamComplete, pendingId } = useCompleteDashakam();
 
-  const complete = (scheduleId: string) => {
-    removeItem(scheduleId);
-    void markDashakamComplete(scheduleId);
+  const complete = async (scheduleId: string) => {
+    const ok = await markDashakamComplete(scheduleId);
+    if (ok) {
+      removeItem(scheduleId);
+    } else {
+      toast({
+        variant: "destructive",
+        title: "Could not mark this dashakam complete. Please try again.",
+      });
+    }
   };
 
   if (!todayRows.length && !pendingRows.length) return null;

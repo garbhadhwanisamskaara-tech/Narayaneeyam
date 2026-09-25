@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Check, ChevronDown, ChevronRight } from "lucide-react";
 import { useMyDashakamQueue, type SourceSummary } from "@/hooks/useMyDashakamQueue";
 import { useCompleteDashakam } from "@/hooks/useCompleteDashakam";
+import { toast } from "@/hooks/use-toast";
 
 function Row({
   summary,
@@ -74,9 +75,16 @@ export default function GroupProgressSummaryList({
   const { sourceSummaries, removeItem } = useMyDashakamQueue();
   const { markDashakamComplete, pendingId } = useCompleteDashakam();
 
-  const complete = (scheduleId: string) => {
-    removeItem(scheduleId);
-    void markDashakamComplete(scheduleId);
+  const complete = async (scheduleId: string) => {
+    const ok = await markDashakamComplete(scheduleId);
+    if (ok) {
+      removeItem(scheduleId);
+    } else {
+      toast({
+        variant: "destructive",
+        title: "Could not mark this dashakam complete. Please try again.",
+      });
+    }
   };
 
   if (!sourceSummaries.length) return null;
