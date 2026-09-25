@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { AlertTriangle, LogOut, Trash2, UserMinus } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import { fetchAllPages } from "@/lib/fetchAllPages";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "@/hooks/use-toast";
 import {
@@ -58,13 +59,22 @@ export default function GroupDangerZone({ groupId, groupName, isOwner }: GroupDa
   const loadGroupMembers = async () => {
     setLoadingMembers(true);
     setGroupMembers([]);
-    const { data: rows, error } = await (supabase as any)
-      .from("group_members")
-      .select("user_id, joined_at")
-      .eq("group_id", groupId)
-      .neq("user_id", user?.id ?? "")
-      .is("left_at", null)
-      .order("joined_at", { ascending: true });
+    let rows: any[] = [];
+    let error: any = null;
+    try {
+      rows = await fetchAllPages<any>(() =>
+        (supabase as any)
+          .from("group_members")
+          .select("user_id, joined_at")
+          .eq("group_id", groupId)
+          .neq("user_id", user?.id ?? "")
+          .is("left_at", null)
+          .order("joined_at", { ascending: true })
+          .order("user_id", { ascending: true }),
+      );
+    } catch (e) {
+      error = e;
+    }
     if (error) {
       setLoadingMembers(false);
       toast({ title: "Could not load members", description: error.message, variant: "destructive" });
@@ -73,11 +83,13 @@ export default function GroupDangerZone({ groupId, groupName, isOwner }: GroupDa
     const ids = (rows ?? []).map((r: any) => r.user_id);
     let profilesById = new Map<string, any>();
     if (ids.length > 0) {
-      const { data: profiles } = await (supabase as any)
-        .from("profiles")
-        .select("id, display_name, email")
-        .in("id", ids);
-      profilesById = new Map((profiles ?? []).map((p: any) => [p.id, p]));
+      // Chunked: one .in() with hundreds of ids overflows the URL.
+      const chunks: string[][] = [];
+      for (let i = 0; i < ids.length; i += 100) chunks.push(ids.slice(i, i + 100));
+      const results = await Promise.all(
+        chunks.map((c) => (supabase as any).from("profiles").select("id, display_name, email").in("id", c)),
+      );
+      profilesById = new Map(results.flatMap((r: any) => r.data ?? []).map((p: any) => [p.id, p]));
     }
     setGroupMembers(
       (rows ?? []).map((r: any) => ({

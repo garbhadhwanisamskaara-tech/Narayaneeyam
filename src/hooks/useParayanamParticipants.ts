@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
+import { fetchAllPages } from "@/lib/fetchAllPages";
 
 export type ParticipantStatus = "invited" | "confirmed" | "declined" | "left";
 
@@ -46,42 +47,61 @@ export async function inviteParticipants(
   ownerUserId?: string | null,
 ): Promise<void> {
   const now = new Date().toISOString();
-  const rows: Record<string, unknown>[] = [];
+  const targetIds = Array.from(new Set([...invitedUserIds, ...(ownerUserId ? [ownerUserId] : [])]));
+  if (!targetIds.length) return;
 
-  for (const uid of Array.from(new Set(invitedUserIds))) {
-    if (ownerUserId && uid === ownerUserId) continue;
-    rows.push({ challenge_session_id: sessionId, user_id: uid, status: "invited", invited_at: now });
+  // Non-destructive: never delete participant rows. Existing invited/confirmed
+  // rows (including PAID contribution/access state) are left untouched.
+  const existing = new Map<string, { id: string; status: string }>();
+  for (let i = 0; i < targetIds.length; i += 100) {
+    const chunk = targetIds.slice(i, i + 100);
+    const { data, error } = await (supabase as any)
+      .from("parayanam_participants")
+      .select("id, user_id, status")
+      .eq("challenge_session_id", sessionId)
+      .in("user_id", chunk);
+    if (error) throw new Error(error.message);
+    for (const r of (data ?? []) as { id: string; user_id: string; status: string }[]) existing.set(r.user_id, r);
   }
-  if (ownerUserId) {
-    rows.push({
-      challenge_session_id: sessionId,
-      user_id: ownerUserId,
-      status: "confirmed",
-      invited_at: now,
-      responded_at: now,
-    });
+
+  const inserts: Record<string, unknown>[] = [];
+  const reinviteIds: string[] = [];
+  for (const uid of targetIds) {
+    const row = existing.get(uid);
+    const isOwner = !!ownerUserId && uid === ownerUserId;
+    if (!row) {
+      inserts.push(
+        isOwner
+          ? { challenge_session_id: sessionId, user_id: uid, status: "confirmed", invited_at: now, responded_at: now }
+          : { challenge_session_id: sessionId, user_id: uid, status: "invited", invited_at: now },
+      );
+    } else if (!isOwner && (row.status === "declined" || row.status === "left")) {
+      reinviteIds.push(row.id);
+    }
   }
-  if (!rows.length) return;
 
-  // Replace any earlier invites for these people on this parayanam.
-  await (supabase as any)
-    .from("parayanam_participants")
-    .delete()
-    .eq("challenge_session_id", sessionId)
-    .in(
-      "user_id",
-      rows.map((r) => r.user_id as string),
-    );
-
-  const { data: inserted, error } = await (supabase as any)
-    .from("parayanam_participants")
-    .insert(rows)
-    .select("id, status");
-  if (error) throw new Error(error.message);
+  const toEmail: string[] = [];
+  if (inserts.length) {
+    const { data: inserted, error } = await (supabase as any)
+      .from("parayanam_participants")
+      .insert(inserts)
+      .select("id, status");
+    if (error) throw new Error(error.message);
+    for (const r of (inserted ?? []) as { id: string; status: string }[]) if (r.status === "invited") toEmail.push(r.id);
+  }
+  for (let i = 0; i < reinviteIds.length; i += 100) {
+    const chunk = reinviteIds.slice(i, i + 100);
+    const { error } = await (supabase as any)
+      .from("parayanam_participants")
+      .update({ status: "invited", invited_at: now })
+      .in("id", chunk);
+    if (error) throw new Error(error.message);
+    toEmail.push(...chunk);
+  }
 
   // Invitation emails are best-effort: a failure here must never invalidate the
   // invitation that was just created.
-  const invited = ((inserted ?? []) as { id: string; status: string }[]).filter((r) => r.status === "invited");
+  const invited = toEmail.map((id) => ({ id }));
   await Promise.all(
     invited.map(async (participant) => {
       try {
@@ -193,11 +213,19 @@ export function useSessionParticipants(sessionId: string | null | undefined) {
       return;
     }
     setLoading(true);
-    const { data } = await (supabase as any)
-      .from("parayanam_participants")
-      .select(COLS)
-      .eq("challenge_session_id", sessionId);
-    setParticipants((data ?? []) as Participant[]);
+    // Paginated: a large parayanam has more than the 1,000-row response cap.
+    try {
+      const all = await fetchAllPages<Participant>(() =>
+        (supabase as any)
+          .from("parayanam_participants")
+          .select(COLS)
+          .eq("challenge_session_id", sessionId)
+          .order("id", { ascending: true }),
+      );
+      setParticipants(all);
+    } catch (e) {
+      console.error("Failed to load participants", e);
+    }
     setLoading(false);
   }, [sessionId]);
 
