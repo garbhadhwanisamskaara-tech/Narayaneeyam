@@ -157,12 +157,19 @@ function SelfJoinCard({ item, onResolved }: { item: Discoverable; onResolved: ()
       <div className="flex items-start gap-4">
         <Sparkles className="h-6 w-6 text-primary shrink-0 mt-0.5" />
         <div className="flex-1 min-w-0">
-          <p className="font-display text-base font-semibold text-foreground">Join {item.parayanam_name}?</p>
+          <p className="font-display text-base font-semibold text-foreground">
+            {alreadyAcceptedPending
+              ? `Complete your joining: ${item.parayanam_name}`
+              : `Join ${item.parayanam_name}?`}
+          </p>
           <p className="mt-1 text-sm text-muted-foreground font-sans">
             {item.group_name}
             {item.participation_type === "PAID" && item.contribution_amount != null
               ? ` · Contribution ₹${item.contribution_amount}`
               : " · Free to join"}
+          </p>
+          <p className="mt-1 text-sm text-muted-foreground font-sans break-words">
+            Joining parayanam is optional.
           </p>
           {error && <p className="mt-2 text-sm text-destructive font-sans">{error}</p>}
           <div className="mt-4 flex flex-wrap gap-2">
