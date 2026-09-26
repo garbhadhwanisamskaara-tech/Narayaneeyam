@@ -103,11 +103,25 @@ function SelfJoinCard({ item, onResolved }: { item: Discoverable; onResolved: ()
     setBusy(true);
     setError(null);
     try {
-      const { data: joinData, error: joinErr } = await supabase.functions.invoke("self-join-parayanam", {
-        body: { session_id: item.session_id },
-      });
-      if (joinErr || joinData?.error) {
-        throw new Error(joinData?.error || joinErr?.message || "Could not join this parayanam");
+      // Members who already accepted (status confirmed) but haven't finished
+      // their contribution skip the join step and pay directly — re-running
+      // the join flow for them is unnecessary and can surface errors.
+      const { data: ownRow } = await (supabase as any)
+        .from("parayanam_participants")
+        .select("status, contribution_status")
+        .eq("challenge_session_id", item.session_id)
+        .eq("user_id", user.id)
+        .maybeSingle();
+      const alreadyAccepted =
+        ownRow?.status === "confirmed" && ownRow?.contribution_status === "pending";
+
+      if (!alreadyAccepted) {
+        const { data: joinData, error: joinErr } = await supabase.functions.invoke("self-join-parayanam", {
+          body: { session_id: item.session_id },
+        });
+        if (joinErr || joinData?.error) {
+          throw new Error(joinData?.error || joinErr?.message || "Could not join this parayanam");
+        }
       }
 
       if (item.participation_type === "PAID") {
