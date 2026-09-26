@@ -57,6 +57,30 @@ function SelfJoinCard({ item, onResolved }: { item: Discoverable; onResolved: ()
   const { pay } = useParayanamPayment();
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [alreadyAcceptedPending, setAlreadyAcceptedPending] = useState(false);
+
+  // On mount, check whether the user already accepted this parayanam and is
+  // only waiting to complete their contribution — such members skip the join
+  // step entirely and go straight to payment.
+  useEffect(() => {
+    let cancelled = false;
+    const checkOwnRow = async () => {
+      if (!user) return;
+      const { data } = await (supabase as any)
+        .from("parayanam_participants")
+        .select("status, contribution_status")
+        .eq("challenge_session_id", item.session_id)
+        .eq("user_id", user.id)
+        .maybeSingle();
+      if (!cancelled && data?.status === "confirmed" && data?.contribution_status === "pending") {
+        setAlreadyAcceptedPending(true);
+      }
+    };
+    void checkOwnRow();
+    return () => {
+      cancelled = true;
+    };
+  }, [user, item.session_id]);
 
   const decline = async () => {
     if (!user) return;
@@ -79,11 +103,25 @@ function SelfJoinCard({ item, onResolved }: { item: Discoverable; onResolved: ()
     setBusy(true);
     setError(null);
     try {
-      const { data: joinData, error: joinErr } = await supabase.functions.invoke("self-join-parayanam", {
-        body: { session_id: item.session_id },
-      });
-      if (joinErr || joinData?.error) {
-        throw new Error(joinData?.error || joinErr?.message || "Could not join this parayanam");
+      // Members who already accepted (status confirmed) but haven't finished
+      // their contribution skip the join step and pay directly — re-running
+      // the join flow for them is unnecessary and can surface errors.
+      const { data: ownRow } = await (supabase as any)
+        .from("parayanam_participants")
+        .select("status, contribution_status")
+        .eq("challenge_session_id", item.session_id)
+        .eq("user_id", user.id)
+        .maybeSingle();
+      const alreadyAccepted =
+        ownRow?.status === "confirmed" && ownRow?.contribution_status === "pending";
+
+      if (!alreadyAccepted) {
+        const { data: joinData, error: joinErr } = await supabase.functions.invoke("self-join-parayanam", {
+          body: { session_id: item.session_id },
+        });
+        if (joinErr || joinData?.error) {
+          throw new Error(joinData?.error || joinErr?.message || "Could not join this parayanam");
+        }
       }
 
       if (item.participation_type === "PAID") {
@@ -119,12 +157,19 @@ function SelfJoinCard({ item, onResolved }: { item: Discoverable; onResolved: ()
       <div className="flex items-start gap-4">
         <Sparkles className="h-6 w-6 text-primary shrink-0 mt-0.5" />
         <div className="flex-1 min-w-0">
-          <p className="font-display text-base font-semibold text-foreground">Join {item.parayanam_name}?</p>
+          <p className="font-display text-base font-semibold text-foreground">
+            {alreadyAcceptedPending
+              ? `Complete your joining: ${item.parayanam_name}`
+              : `Join ${item.parayanam_name}?`}
+          </p>
           <p className="mt-1 text-sm text-muted-foreground font-sans">
             {item.group_name}
             {item.participation_type === "PAID" && item.contribution_amount != null
               ? ` · Contribution ₹${item.contribution_amount}`
               : " · Free to join"}
+          </p>
+          <p className="mt-1 text-sm text-muted-foreground font-sans break-words">
+            Joining parayanam is optional.
           </p>
           {error && <p className="mt-2 text-sm text-destructive font-sans">{error}</p>}
           <div className="mt-4 flex flex-wrap gap-2">
