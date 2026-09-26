@@ -7,6 +7,57 @@ interface Props {
   progressVisualType: "LOTUS_CONCENTRIC_RINGS" | "LOTUS_GARDEN" | "FEATHER" | "SIMPLE_PROGRESS";
   days: JourneyDay[];
   progress: JourneyProgress[];
+  /** Highest unlocked day number; tiles at or below it that aren't done become tappable. */
+  unlockedDay?: number;
+  selectedDayId?: string | null;
+  onSelectDay?: (day: JourneyDay) => void;
+}
+
+type TileState = "done" | "open" | "locked";
+function tileState(day: JourneyDay, progress: JourneyProgress[], unlockedDay?: number): TileState {
+  if (isDone(day, progress)) return "done";
+  if (unlockedDay && day.day_number <= unlockedDay) return "open";
+  return "locked";
+}
+
+function DayTile({ day, progress, unlockedDay, selectedDayId, onSelectDay, compact }: {
+  day: JourneyDay; progress: JourneyProgress[]; unlockedDay?: number;
+  selectedDayId?: string | null; onSelectDay?: (d: JourneyDay) => void; compact?: boolean;
+}) {
+  const state = tileState(day, progress, unlockedDay);
+  const tappable = state === "open" && !!onSelectDay;
+  const selected = selectedDayId === day.id;
+  const title = `Day ${day.day_number}: ${day.title}${
+    state === "done" ? " — complete" : state === "open" ? " — open, tap to view" : ""
+  }`;
+  const className = cn(
+    "flex aspect-square flex-col items-center justify-center rounded-lg border p-0.5",
+    state === "open"
+      ? "border-dashed border-secondary bg-card transition-colors hover:bg-secondary/10 cursor-pointer"
+      : "border-border/60 bg-muted/40",
+    selected && "ring-2 ring-primary ring-offset-1 ring-offset-background",
+    compact && "w-9 sm:w-10"
+  );
+  const inner = (
+    <>
+      <span className={cn("block w-full flex-1", state === "open" && "opacity-60")}>
+        <Lotus percent={state === "done" ? 100 : 0} />
+      </span>
+      <span className={cn(
+        "font-display text-[9px] font-semibold leading-none",
+        state === "open" ? "text-secondary" : "text-muted-foreground"
+      )}>
+        {day.day_number}
+      </span>
+    </>
+  );
+  if (!tappable) return <div title={title} className={className}>{inner}</div>;
+  return (
+    <button type="button" title={title} aria-label={title} aria-pressed={selected}
+      onClick={() => onSelectDay!(day)} className={className}>
+      {inner}
+    </button>
+  );
 }
 
 function isDone(day: JourneyDay, progress: JourneyProgress[]): boolean {
@@ -22,7 +73,7 @@ function isDone(day: JourneyDay, progress: JourneyProgress[]): boolean {
  * single gold circle -- one flourish for finishing the whole journey, not
  * one per week.
  */
-function ConcentricRings({ days, progress }: Omit<Props, "progressVisualType">) {
+function ConcentricRings({ days, progress, ...tileProps }: Omit<Props, "progressVisualType">) {
   const weekCount = Math.ceil(days.length / 7);
   const rings = Array.from({ length: weekCount }, (_, weekIndex) => {
     const weekDays = days.slice(weekIndex * 7, weekIndex * 7 + 7);
@@ -38,6 +89,7 @@ function ConcentricRings({ days, progress }: Omit<Props, "progressVisualType">) 
   const outerSize = baseSize + Math.max(0, weekCount - 1) * sizeStep;
 
   return (
+    <div>
     <div
       className="relative mx-auto flex items-center justify-center"
       style={{ height: outerSize, width: outerSize }}
@@ -68,44 +120,38 @@ function ConcentricRings({ days, progress }: Omit<Props, "progressVisualType">) 
         aria-hidden="true"
       />
     </div>
+    {tileProps.onSelectDay && (
+      <div className="mt-4 flex flex-wrap justify-center gap-1 sm:gap-2">
+        {days.map((day) => (
+          <DayTile key={day.id} day={day} progress={progress} compact {...tileProps} />
+        ))}
+      </div>
+    )}
+    </div>
   );
 }
 
 /** Flat per-day grid, same bud/bloom visual language as DashakamGarden.tsx. */
-function FlatGarden({ days, progress }: Omit<Props, "progressVisualType">) {
+function FlatGarden({ days, progress, ...tileProps }: Omit<Props, "progressVisualType">) {
   return (
     <div className="grid grid-cols-7 gap-1 sm:gap-2">
-      {days.map((day) => {
-        const done = isDone(day, progress);
-        return (
-          <div
-            key={day.id}
-            title={`Day ${day.day_number}: ${day.title}${done ? " — complete" : ""}`}
-            className="flex aspect-square flex-col items-center justify-center rounded-lg border border-border/60 bg-muted/40 p-0.5"
-          >
-            <span className="block w-full flex-1">
-              <Lotus percent={done ? 100 : 0} />
-            </span>
-            <span className="font-display text-[9px] font-semibold leading-none text-muted-foreground">
-              {day.day_number}
-            </span>
-          </div>
-        );
-      })}
+      {days.map((day) => (
+        <DayTile key={day.id} day={day} progress={progress} {...tileProps} />
+      ))}
     </div>
   );
 }
 
 /**
- * Display-only (§13/§15): no tile here is ever a tap target, and nothing
- * in this component writes to journey_progress -- it only re-renders in
+ * Unlocked-but-incomplete tiles may be tapped to select that day (via
+ * onSelectDay); locked tiles stay inert. Nothing in this component writes to journey_progress -- it only re-renders in
  * response to a completion write made elsewhere (the day checkbox).
  */
-export default function JourneyProgressGarden({ progressVisualType, days, progress }: Props) {
-  if (progressVisualType === "LOTUS_CONCENTRIC_RINGS" && days.length % 7 === 0) {
-    return <ConcentricRings days={days} progress={progress} />;
+export default function JourneyProgressGarden({ progressVisualType, ...rest }: Props) {
+  if (progressVisualType === "LOTUS_CONCENTRIC_RINGS" && rest.days.length % 7 === 0) {
+    return <ConcentricRings {...rest} />;
   }
   // LOTUS_GARDEN, FEATHER (no distinct visual built yet, falls back), and
   // any duration not a clean multiple of 7 (§13's stated fallback rule).
-  return <FlatGarden days={days} progress={progress} />;
+  return <FlatGarden {...rest} />;
 }
