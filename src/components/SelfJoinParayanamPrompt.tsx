@@ -57,6 +57,30 @@ function SelfJoinCard({ item, onResolved }: { item: Discoverable; onResolved: ()
   const { pay } = useParayanamPayment();
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [alreadyAcceptedPending, setAlreadyAcceptedPending] = useState(false);
+
+  // On mount, check whether the user already accepted this parayanam and is
+  // only waiting to complete their contribution — such members skip the join
+  // step entirely and go straight to payment.
+  useEffect(() => {
+    let cancelled = false;
+    const checkOwnRow = async () => {
+      if (!user) return;
+      const { data } = await (supabase as any)
+        .from("parayanam_participants")
+        .select("status, contribution_status")
+        .eq("challenge_session_id", item.session_id)
+        .eq("user_id", user.id)
+        .maybeSingle();
+      if (!cancelled && data?.status === "confirmed" && data?.contribution_status === "pending") {
+        setAlreadyAcceptedPending(true);
+      }
+    };
+    void checkOwnRow();
+    return () => {
+      cancelled = true;
+    };
+  }, [user, item.session_id]);
 
   const decline = async () => {
     if (!user) return;
