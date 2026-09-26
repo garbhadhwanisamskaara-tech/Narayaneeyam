@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import { Loader2, Lock, CheckCircle2 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
@@ -42,6 +42,8 @@ export default function JourneyDashboardPage() {
     markDayComplete,
     unmarkDayComplete,
   } = useJourneyProgress(enrollment?.id, journey?.id);
+
+  const [selectedDayId, setSelectedDayId] = useState<string | null>(null);
 
   useEffect(() => {
     if (journey) track("journey_viewed", { journey_id: journey.id });
@@ -97,6 +99,13 @@ export default function JourneyDashboardPage() {
   };
 
   const todayDay = currentDay && !isGrace && !isClosed ? days.find((d) => d.day_number === currentDay) : null;
+  const selectedDay =
+    todayDay && selectedDayId && selectedDayId !== todayDay.id
+      ? days.find((d) => d.id === selectedDayId && d.day_number < todayDay.day_number) ?? null
+      : null;
+  const viewDay = selectedDay ?? todayDay;
+  const handleSelectDay = (day: JourneyDay) =>
+    setSelectedDayId(todayDay && day.id === todayDay.id ? null : day.id);
   const graceDays = isGrace
     ? days.filter(
         (day) =>
@@ -192,6 +201,9 @@ export default function JourneyDashboardPage() {
               progressVisualType={journey.progress_visual_type}
               days={days}
               progress={progress}
+              unlockedDay={todayDay ? todayDay.day_number : undefined}
+              selectedDayId={viewDay?.id ?? null}
+              onSelectDay={todayDay ? handleSelectDay : undefined}
             />
           </div>
 
@@ -232,15 +244,29 @@ export default function JourneyDashboardPage() {
                 <p className="font-sans text-sm text-muted-foreground">All journey days are complete.</p>
               )}
             </div>
-          ) : todayDay ? (
+          ) : viewDay ? (
             <div className="mt-6">
+              {selectedDay && (
+                <div className="mb-2 flex items-center justify-between gap-2">
+                  <p className="font-sans text-xs text-muted-foreground">
+                    Viewing an earlier day: Day {selectedDay.day_number}
+                  </p>
+                  <button
+                    type="button"
+                    onClick={() => setSelectedDayId(null)}
+                    className="font-sans text-xs font-semibold text-primary underline-offset-2 hover:underline"
+                  >
+                    Back to today
+                  </button>
+                </div>
+              )}
               <JourneyDayCard
-                day={todayDay}
+                day={viewDay}
                 durationDays={journey.duration_days}
                 progress={progress}
                 pendingDayId={pendingDayId}
                 onComplete={handleDayCompletion}
-                completionLabel="Mark today's journey complete"
+                completionLabel={selectedDay ? "Mark this journey day complete" : "Mark today's journey complete"}
               />
             </div>
           ) : null}
