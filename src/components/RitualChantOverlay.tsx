@@ -293,10 +293,9 @@ export default function RitualChantOverlay({ chants, useLearnAudio = false, titl
                 onComplete();
               }}
               aria-label="Skip ritual chant"
-              title="Skip"
-              className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-border bg-card text-foreground hover:bg-muted transition-colors"
+              className="inline-flex h-9 items-center justify-center gap-1.5 rounded-lg border border-border bg-card px-3 text-xs font-sans font-medium text-foreground hover:bg-muted transition-colors"
             >
-              <SkipForward className="h-4 w-4" />
+              <SkipForward className="h-4 w-4" /> Skip
             </button>
           </div>
         </div>
@@ -311,13 +310,8 @@ export default function RitualChantOverlay({ chants, useLearnAudio = false, titl
             {chants
               .filter((c) => !!c.transliteration_text)
               .map((c, i) => (
-                <div
-                  key={`${c.chant_key}-${i}`}
-                  className={i > 0 ? "border-t border-border/60 pt-6" : undefined}
-                >
-                  <h3 className="font-sans font-bold text-foreground mb-2">
-                    {c.ritual_chant_name || c.chant_key}
-                  </h3>
+                <div key={`${c.chant_key}-${i}`} className={i > 0 ? "border-t border-border/60 pt-6" : undefined}>
+                  <h3 className="font-sans font-bold text-foreground mb-2">{c.ritual_chant_name || c.chant_key}</h3>
                   <p className="font-body text-base text-foreground leading-relaxed whitespace-pre-line">
                     {c.transliteration_text}
                   </p>
