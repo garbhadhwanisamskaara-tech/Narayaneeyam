@@ -152,6 +152,7 @@ export default function ChantPage() {
   const isSlokaPlayingRef = useRef(isSlokaPlaying);
   isSlokaPlayingRef.current = isSlokaPlaying;
   const activeSlokaVerseRef = useRef<number | null>(null);
+  const slokaTranslationLangRef = useRef(translationLang);
 
   // Member progress tracking
   const {
@@ -668,11 +669,14 @@ export default function ChantPage() {
     activeSlokaVerseRef.current = verseIndex;
     setHighlightedVerse(verseIndex);
     setShowSlokaMeaning(showMeaning);
+    slokaTranslationLangRef.current = translationLang;
     handlePostVerse(verse.sloka_audio_id, selectedLanguage, translationLang, speed, () => {});
   }, [displayVerses, engine, handlePostVerse, selectedLanguage, showMeaning, speed, stopSloka, translationLang]);
 
   useEffect(() => {
-    if (isSlokaOpen) refreshSlokaTranslation(translationLang);
+    if (!isSlokaOpen || slokaTranslationLangRef.current === translationLang) return;
+    slokaTranslationLangRef.current = translationLang;
+    refreshSlokaTranslation(translationLang);
   }, [isSlokaOpen, refreshSlokaTranslation, translationLang]);
 
   const closeSloka = useCallback(() => {
