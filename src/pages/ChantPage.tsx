@@ -68,6 +68,7 @@ export default function ChantPage() {
   const [selectedDashakam, setSelectedDashakam] = useState(DEFAULT_DASHAKAM);
   const [selectedPara, setSelectedPara] = useState<number | null>(null);
   const [showMeaning, setShowMeaning] = useState(false);
+  const [showSlokaMeaning, setShowSlokaMeaning] = useState(false);
   const [showGist, setShowGist] = useState(false);
   const [showBenefit, setShowBenefit] = useState(false);
   const [isPlaying, setIsPlaying] = useState(false);
@@ -130,6 +131,7 @@ export default function ChantPage() {
   const {
     activeSlokaScript,
     activeSlokaTranslation,
+    isSlokaTranslationEnglishFallback,
     isSlokaPlaying,
     isSlokaOpen,
     slokaStatus,
@@ -144,6 +146,7 @@ export default function ChantPage() {
     seekSloka,
     setSlokaSpeed,
     setSlokaLoopCount,
+    refreshSlokaTranslation,
     stopSloka,
   } = useSlokaPlayback();
   const isSlokaPlayingRef = useRef(isSlokaPlaying);
@@ -664,8 +667,13 @@ export default function ChantPage() {
     stopSloka();
     activeSlokaVerseRef.current = verseIndex;
     setHighlightedVerse(verseIndex);
-    handlePostVerse(verse.sloka_audio_id, selectedLanguage, speed, () => {});
-  }, [displayVerses, engine, handlePostVerse, selectedLanguage, speed, stopSloka]);
+    setShowSlokaMeaning(showMeaning);
+    handlePostVerse(verse.sloka_audio_id, selectedLanguage, translationLang, speed, () => {});
+  }, [displayVerses, engine, handlePostVerse, selectedLanguage, showMeaning, speed, stopSloka, translationLang]);
+
+  useEffect(() => {
+    if (isSlokaOpen) refreshSlokaTranslation(translationLang);
+  }, [isSlokaOpen, refreshSlokaTranslation, translationLang]);
 
   const closeSloka = useCallback(() => {
     const verseIndex = activeSlokaVerseRef.current;
@@ -1488,6 +1496,15 @@ export default function ChantPage() {
                       <option value={5}>Loop 5×</option>
                       <option value="infinite">Loop ∞</option>
                     </select>
+                    {activeSlokaTranslation && (
+                      <button
+                        type="button"
+                        onClick={() => setShowSlokaMeaning((current) => !current)}
+                        className={`h-7 rounded-lg px-2.5 text-[11px] font-sans transition-colors ${showSlokaMeaning ? "bg-primary text-primary-foreground" : "border border-border bg-background text-foreground hover:bg-muted"}`}
+                      >
+                        Meaning
+                      </button>
+                    )}
                     {muted && (
                       <button
                         type="button"
@@ -1508,10 +1525,18 @@ export default function ChantPage() {
                       {activeSlokaScript}
                     </p>
                   )}
-                  {activeSlokaTranslation && (
-                    <p className="border-t border-border pt-2 text-sm font-sans leading-relaxed text-muted-foreground">
-                      {activeSlokaTranslation}
-                    </p>
+                  {showSlokaMeaning && activeSlokaTranslation && (
+                    <div className="border-t border-border pt-3">
+                      <h3 className="mb-2 text-sm font-sans font-semibold text-foreground">
+                        Meaning
+                        {isSlokaTranslationEnglishFallback && (
+                          <span className="ml-1 font-normal text-xs text-muted-foreground">(English)</span>
+                        )}
+                      </h3>
+                      <p className="text-sm font-sans leading-relaxed text-muted-foreground">
+                        {activeSlokaTranslation}
+                      </p>
+                    </div>
                   )}
                 </div>
               </motion.div>

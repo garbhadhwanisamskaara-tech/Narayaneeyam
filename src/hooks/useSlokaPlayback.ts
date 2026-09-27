@@ -10,6 +10,7 @@ export type SlokaLoopCount = 1 | 2 | 3 | 5 | "infinite";
 interface UseSlokaPlaybackReturn {
   activeSlokaScript: string | null;
   activeSlokaTranslation: string | null;
+  isSlokaTranslationEnglishFallback: boolean;
   isSlokaPlaying: boolean;
   isSlokaOpen: boolean;
   slokaStatus: SlokaStatus;
@@ -20,7 +21,8 @@ interface UseSlokaPlaybackReturn {
   hasSlokaAudio: boolean;
   handlePostVerse: (
     slokaAudioId: string | null,
-    languageCode: string,
+    scriptLanguageCode: string,
+    translationLanguageCode: string,
     speed: number,
     onComplete: () => void,
   ) => void;
@@ -29,12 +31,14 @@ interface UseSlokaPlaybackReturn {
   seekSloka: (seconds: number) => void;
   setSlokaSpeed: (speed: number) => void;
   setSlokaLoopCount: (count: SlokaLoopCount) => void;
+  refreshSlokaTranslation: (translationLanguageCode: string) => void;
   stopSloka: () => void;
 }
 
 export function useSlokaPlayback(): UseSlokaPlaybackReturn {
   const [activeSlokaScript, setActiveSlokaScript] = useState<string | null>(null);
   const [activeSlokaTranslation, setActiveSlokaTranslation] = useState<string | null>(null);
+  const [isSlokaTranslationEnglishFallback, setIsSlokaTranslationEnglishFallback] = useState(false);
   const [isSlokaPlaying, setIsSlokaPlaying] = useState(false);
   const [isSlokaOpen, setIsSlokaOpen] = useState(false);
   const [slokaStatus, setSlokaStatus] = useState<SlokaStatus>(null);
@@ -50,6 +54,7 @@ export function useSlokaPlayback(): UseSlokaPlaybackReturn {
   const sessionRef = useRef(0);
   const completedLoopsRef = useRef(0);
   const loopCountRef = useRef<SlokaLoopCount>(1);
+  const translationRequestRef = useRef(0);
 
   const releaseAudio = useCallback(() => {
     const audio = audioRef.current;
@@ -82,6 +87,7 @@ export function useSlokaPlayback(): UseSlokaPlaybackReturn {
     activeSlokaIdRef.current = null;
     setActiveSlokaScript(null);
     setActiveSlokaTranslation(null);
+    setIsSlokaTranslationEnglishFallback(false);
     setIsSlokaPlaying(false);
     setIsSlokaOpen(false);
     setSlokaStatus(null);
@@ -173,10 +179,38 @@ export function useSlokaPlayback(): UseSlokaPlaybackReturn {
     setSlokaLoopCountState(count);
   }, []);
 
+  const refreshSlokaTranslation = useCallback(async (translationLanguageCode: string) => {
+    const slokaAudioId = activeSlokaIdRef.current;
+    if (!slokaAudioId) return;
+
+    translationRequestRef.current += 1;
+    const request = translationRequestRef.current;
+    const { data } = await supabase
+      .from("sloka_scripts")
+      .select("language_code, translation_text")
+      .eq("sloka_audio_id", slokaAudioId)
+      .in("language_code", [translationLanguageCode, "en"]);
+
+    if (request !== translationRequestRef.current || activeSlokaIdRef.current !== slokaAudioId) return;
+    const rows = data ?? [];
+    const preferredMeaning = rows.find(
+      (row) => row.language_code === translationLanguageCode && row.translation_text?.trim(),
+    );
+    const englishMeaning = rows.find(
+      (row) => row.language_code === "en" && row.translation_text?.trim(),
+    );
+    const meaning = preferredMeaning ?? englishMeaning;
+    setActiveSlokaTranslation(meaning?.translation_text?.trim() || null);
+    setIsSlokaTranslationEnglishFallback(
+      translationLanguageCode !== "en" && !preferredMeaning && Boolean(englishMeaning),
+    );
+  }, []);
+
   const handlePostVerse = useCallback(
     async (
       slokaAudioId: string | null,
-      languageCode: string,
+      scriptLanguageCode: string,
+      translationLanguageCode: string,
       speed: number,
       onComplete: () => void,
     ) => {
@@ -190,7 +224,7 @@ export function useSlokaPlayback(): UseSlokaPlaybackReturn {
         return;
       }
 
-      console.info("[Sloka] start", { id: slokaAudioId, language: languageCode });
+      console.info("[Sloka] start", { id: slokaAudioId, language: scriptLanguageCode });
       cancelledRef.current = false;
       activeSlokaIdRef.current = slokaAudioId;
       completedLoopsRef.current = 0;
@@ -209,7 +243,7 @@ export function useSlokaPlayback(): UseSlokaPlaybackReturn {
             .from("sloka_scripts")
             .select("language_code, script_text, translation_text")
             .eq("sloka_audio_id", slokaAudioId)
-            .in("language_code", [languageCode, "en"]),
+            .in("language_code", [scriptLanguageCode, translationLanguageCode, "en"]),
           supabase
             .from("sloka_audio")
             .select("chant_audio_file, is_active")
@@ -232,10 +266,20 @@ export function useSlokaPlayback(): UseSlokaPlaybackReturn {
         }
 
         const scripts = scriptRes.data ?? [];
-        const script = scripts.find((row) => row.language_code === languageCode)
+        const script = scripts.find((row) => row.language_code === scriptLanguageCode)
           ?? scripts.find((row) => row.language_code === "en");
+        const preferredMeaning = scripts.find(
+          (row) => row.language_code === translationLanguageCode && row.translation_text?.trim(),
+        );
+        const englishMeaning = scripts.find(
+          (row) => row.language_code === "en" && row.translation_text?.trim(),
+        );
+        const meaning = preferredMeaning ?? englishMeaning;
         setActiveSlokaScript(script?.script_text || "");
-        setActiveSlokaTranslation(script?.translation_text || "");
+        setActiveSlokaTranslation(meaning?.translation_text?.trim() || null);
+        setIsSlokaTranslationEnglishFallback(
+          translationLanguageCode !== "en" && !preferredMeaning && Boolean(englishMeaning),
+        );
 
         const resolvedAudioFile = getStorageUrl(audioData?.chant_audio_file);
         console.info("[Sloka] resolved audio URL", { id: slokaAudioId, url: resolvedAudioFile });
@@ -320,6 +364,7 @@ export function useSlokaPlayback(): UseSlokaPlaybackReturn {
   return {
     activeSlokaScript,
     activeSlokaTranslation,
+    isSlokaTranslationEnglishFallback,
     isSlokaPlaying,
     isSlokaOpen,
     slokaStatus,
@@ -334,6 +379,7 @@ export function useSlokaPlayback(): UseSlokaPlaybackReturn {
     seekSloka,
     setSlokaSpeed,
     setSlokaLoopCount,
+    refreshSlokaTranslation,
     stopSloka,
   };
 }
