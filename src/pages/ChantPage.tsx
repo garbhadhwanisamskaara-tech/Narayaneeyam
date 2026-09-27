@@ -14,6 +14,7 @@ import {
   VolumeX,
   Square,
   ListMusic,
+  X,
 } from "lucide-react";
 import PlaylistBuilder from "@/components/PlaylistBuilder";
 import PlaylistBar from "@/components/PlaylistBar";
@@ -125,9 +126,18 @@ export default function ChantPage() {
   const [ritualPhase, setRitualPhase] = useState<RitualPhase>("idle");
 
   // Sloka playback
-  const { activeSlokaScript, activeSlokaTranslation, isSlokaPlaying, handlePostVerse, stopSloka } = useSlokaPlayback();
+  const {
+    activeSlokaScript,
+    activeSlokaTranslation,
+    isSlokaPlaying,
+    isSlokaOpen,
+    slokaStatus,
+    handlePostVerse,
+    stopSloka,
+  } = useSlokaPlayback();
   const isSlokaPlayingRef = useRef(isSlokaPlaying);
   isSlokaPlayingRef.current = isSlokaPlaying;
+  const activeSlokaVerseRef = useRef<number | null>(null);
 
   // Member progress tracking
   const {
@@ -609,7 +619,7 @@ export default function ChantPage() {
     savePlaylistProgress,
   ]);
 
-  // After verse audio ends, check for sloka before advancing
+  // Verse completion advances normally; supplementary slokas are user-triggered.
   const handleVerseEnded = useCallback(() => {
     const currentVerse = displayVerses[highlightedVerse];
 
@@ -622,29 +632,58 @@ export default function ChantPage() {
       checkDashakamCompletion(selectedDashakam, allVerses.length);
     });
 
-    if (currentVerse.sloka_audio_id) {
-      handlePostVerse(
-        currentVerse.sloka_audio_id,
-        selectedLanguage,
-        "chant",
-        speed,
-        () => advanceToNextVerse(),
-      );
-    } else {
-      advanceToNextVerse();
-    }
+    advanceToNextVerse();
   }, [
     highlightedVerse,
     displayVerses,
     selectedDashakam,
-    selectedLanguage,
-    speed,
-    handlePostVerse,
     advanceToNextVerse,
     markVerseFinished,
     checkDashakamCompletion,
     allVerses.length,
   ]);
+
+  const playSlokaForVerse = useCallback((verseIndex: number) => {
+    const verse = displayVerses[verseIndex];
+    if (!verse?.sloka_audio_id) return;
+    engine.pause();
+    pausedRef.current = false;
+    setIsPlaying(false);
+    setIsPaused(true);
+    stopSloka();
+    activeSlokaVerseRef.current = verseIndex;
+    setHighlightedVerse(verseIndex);
+    handlePostVerse(verse.sloka_audio_id, selectedLanguage, "chant", speed, () => {});
+  }, [displayVerses, engine, handlePostVerse, selectedLanguage, speed, stopSloka]);
+
+  const closeSloka = useCallback(() => {
+    const verseIndex = activeSlokaVerseRef.current;
+    stopSloka();
+    activeSlokaVerseRef.current = null;
+    setVerseProgress(0);
+
+    if (verseIndex !== null && verseIndex < displayVerses.length - 1) {
+      const nextIndex = verseIndex + 1;
+      setHighlightedVerse(nextIndex);
+      setIsPaused(false);
+      setIsPlaying(true);
+      setTimeout(() => scrollToVerse(nextIndex), 0);
+      return;
+    }
+
+    stopAudio();
+    setIsPlaying(false);
+    setIsPaused(false);
+  }, [displayVerses.length, scrollToVerse, stopAudio, stopSloka]);
+
+  useEffect(() => {
+    if (!isSlokaOpen) return;
+    const handleEscape = (event: KeyboardEvent) => {
+      if (event.key === "Escape") closeSloka();
+    };
+    window.addEventListener("keydown", handleEscape);
+    return () => window.removeEventListener("keydown", handleEscape);
+  }, [closeSloka, isSlokaOpen]);
 
   // Stable ref so the audio effect doesn't re-run when callbacks change
   const handleVerseEndedRef = useRef(handleVerseEnded);
@@ -1314,9 +1353,23 @@ export default function ChantPage() {
             )}
           </AnimatePresence>
         )}
-        {dashakamMeta?.remarks && (
-          <p className="mb-3 text-xs text-muted-foreground font-sans leading-relaxed">{dashakamMeta.remarks}</p>
-        )}
+        {dashakamMeta?.remarks && (() => {
+          const verseMatch = dashakamMeta.remarks.match(/after Verse\s+(\d+)/i);
+          const slokaVerseIndex = verseMatch
+            ? displayVerses.findIndex((verse) => verse.paragraph === Number(verseMatch[1]) && !!verse.sloka_audio_id)
+            : -1;
+          return slokaVerseIndex >= 0 ? (
+            <button
+              type="button"
+              onClick={() => playSlokaForVerse(slokaVerseIndex)}
+              className="mb-3 block text-left text-xs font-sans leading-relaxed text-muted-foreground underline decoration-secondary/50 underline-offset-2 hover:text-foreground"
+            >
+              {dashakamMeta.remarks}
+            </button>
+          ) : (
+            <p className="mb-3 text-xs text-muted-foreground font-sans leading-relaxed">{dashakamMeta.remarks}</p>
+          );
+        })()}
 
 
         {/* Loading state */}
@@ -1328,25 +1381,63 @@ export default function ChantPage() {
 
         {/* Sloka Overlay */}
         <AnimatePresence>
-          {activeSlokaScript && (
+          {isSlokaOpen && (
             <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -20 }}
-              className="fixed inset-x-4 top-1/4 z-50 mx-auto max-w-lg rounded-2xl border border-secondary/40 bg-card/95 backdrop-blur-md p-6 shadow-gold"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="fixed inset-0 z-50 flex items-start justify-center bg-foreground/20 px-4 pt-[20vh]"
             >
-              <p className="text-xs text-muted-foreground font-sans uppercase tracking-wide mb-2">📿 Sloka</p>
-              <p className="font-body text-lg leading-relaxed text-foreground whitespace-pre-line mb-3">
-                {activeSlokaScript}
-              </p>
-              {activeSlokaTranslation && (
-                <p className="text-sm text-muted-foreground font-sans leading-relaxed border-t border-border pt-2">
-                  {activeSlokaTranslation}
-                </p>
-              )}
-              {isSlokaPlaying && (
-                <p className="text-xs text-secondary font-sans mt-2 animate-pulse">♪ Playing sloka audio…</p>
-              )}
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -20 }}
+                role="dialog"
+                aria-modal="true"
+                aria-label="Sloka"
+                className="relative w-full max-w-lg rounded-2xl border border-secondary/40 bg-card/95 p-6 shadow-gold backdrop-blur-md"
+              >
+                <button
+                  type="button"
+                  onClick={closeSloka}
+                  aria-label="Close sloka"
+                  className="absolute right-3 top-3 inline-flex h-8 w-8 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+                >
+                  <X className="h-4 w-4" />
+                </button>
+                <p className="mb-2 pr-8 text-xs font-sans uppercase tracking-wide text-muted-foreground">📿 Sloka</p>
+                {activeSlokaScript && (
+                  <p className="mb-3 whitespace-pre-line font-body text-lg leading-relaxed text-foreground">
+                    {activeSlokaScript}
+                  </p>
+                )}
+                {activeSlokaTranslation && (
+                  <p className="border-t border-border pt-2 text-sm font-sans leading-relaxed text-muted-foreground">
+                    {activeSlokaTranslation}
+                  </p>
+                )}
+                {slokaStatus === "playing" && (
+                  <p className="mt-2 animate-pulse text-xs font-sans text-secondary">♪ Playing sloka…</p>
+                )}
+                {slokaStatus === "complete" && (
+                  <div className="mt-3 flex items-center gap-3">
+                    <p className="text-xs font-sans text-muted-foreground">Sloka complete</p>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const verseIndex = activeSlokaVerseRef.current;
+                        if (verseIndex !== null) playSlokaForVerse(verseIndex);
+                      }}
+                      className="rounded-lg border border-border bg-background px-2.5 py-1 text-xs font-sans text-foreground hover:bg-muted"
+                    >
+                      Play again
+                    </button>
+                  </div>
+                )}
+                {slokaStatus === "unavailable" && (
+                  <p className="mt-2 text-xs font-sans text-muted-foreground">Audio unavailable</p>
+                )}
+              </motion.div>
             </motion.div>
           )}
         </AnimatePresence>
@@ -1402,7 +1493,11 @@ export default function ChantPage() {
                       {verse.meter ? ` · Meter ${verse.meter}` : ""}
                     </span>
                     <div className="flex items-center gap-1">
-                      <VerseIcons prasadam={verse.prasadam} slokaAudioId={verse.sloka_audio_id} />
+                      <VerseIcons
+                        prasadam={verse.prasadam}
+                        slokaAudioId={verse.sloka_audio_id}
+                        onPlaySloka={() => playSlokaForVerse(idx)}
+                      />
                       <BookmarkButton
                         active={isBookmarked(verse.id)}
                         onClick={() => {
