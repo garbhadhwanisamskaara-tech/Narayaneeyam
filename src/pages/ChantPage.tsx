@@ -648,6 +648,8 @@ export default function ChantPage() {
     if (!verse?.sloka_audio_id) return;
     engine.pause();
     pausedRef.current = false;
+    setIsPlaying(false);
+    setIsPaused(true);
     stopSloka();
     activeSlokaVerseRef.current = verseIndex;
     setHighlightedVerse(verseIndex);
