@@ -101,6 +101,8 @@ export default function ChantPage() {
   const versesContainerRef = useRef<HTMLDivElement | null>(null);
   const programmaticScrollRef = useRef(false);
   const scrollTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const userScrollIntentRef = useRef(false);
+  const userScrollIntentTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   // Live-measured sticky offset (app header + chant control bar + safe-area inset)
   const stickyBarRef = useRef<HTMLDivElement | null>(null);
   const measureStickyOffsetRef = useRef<() => number>(() => 0);
@@ -124,6 +126,8 @@ export default function ChantPage() {
 
   // Sloka playback
   const { activeSlokaScript, activeSlokaTranslation, isSlokaPlaying, handlePostVerse, stopSloka } = useSlokaPlayback();
+  const isSlokaPlayingRef = useRef(isSlokaPlaying);
+  isSlokaPlayingRef.current = isSlokaPlaying;
 
   // Member progress tracking
   const {
@@ -472,11 +476,29 @@ export default function ChantPage() {
   useEffect(() => {
     if (!isPlaying) return;
 
+    const markUserScrollIntent = () => {
+      userScrollIntentRef.current = true;
+      if (userScrollIntentTimerRef.current) clearTimeout(userScrollIntentTimerRef.current);
+      userScrollIntentTimerRef.current = setTimeout(() => {
+        userScrollIntentRef.current = false;
+      }, 1000);
+    };
+
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (["ArrowUp", "ArrowDown", "PageUp", "PageDown"].includes(event.key)) {
+        markUserScrollIntent();
+      }
+    };
+
     const handleScroll = () => {
+      if (isSlokaPlayingRef.current) return;
+      if (!userScrollIntentRef.current) return;
       if (programmaticScrollRef.current) return;
       if (manualScrollTimerRef.current) clearTimeout(manualScrollTimerRef.current);
 
       manualScrollTimerRef.current = setTimeout(() => {
+        if (isSlokaPlayingRef.current) return;
+        if (!userScrollIntentRef.current) return;
         const viewCenter = window.innerHeight / 2;
         let closestIdx = highlightedVerse;
         let closestDist = Infinity;
@@ -500,10 +522,20 @@ export default function ChantPage() {
       }, 150);
     };
 
+    window.addEventListener("wheel", markUserScrollIntent, { passive: true });
+    window.addEventListener("touchstart", markUserScrollIntent, { passive: true });
+    window.addEventListener("touchmove", markUserScrollIntent, { passive: true });
+    window.addEventListener("keydown", handleKeyDown);
     window.addEventListener("scroll", handleScroll, { passive: true });
     return () => {
+      window.removeEventListener("wheel", markUserScrollIntent);
+      window.removeEventListener("touchstart", markUserScrollIntent);
+      window.removeEventListener("touchmove", markUserScrollIntent);
+      window.removeEventListener("keydown", handleKeyDown);
       window.removeEventListener("scroll", handleScroll);
       if (manualScrollTimerRef.current) clearTimeout(manualScrollTimerRef.current);
+      if (userScrollIntentTimerRef.current) clearTimeout(userScrollIntentTimerRef.current);
+      userScrollIntentRef.current = false;
     };
   }, [isPlaying, highlightedVerse, stopSloka, stopAudio]);
 
