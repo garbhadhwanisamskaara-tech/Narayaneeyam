@@ -17,10 +17,10 @@ interface UseSlokaPlaybackReturn {
   slokaDuration: number;
   slokaSpeed: number;
   slokaLoopCount: SlokaLoopCount;
+  hasSlokaAudio: boolean;
   handlePostVerse: (
     slokaAudioId: string | null,
     languageCode: string,
-    mode: "chant" | "learn",
     speed: number,
     onComplete: () => void,
   ) => void;
@@ -42,6 +42,7 @@ export function useSlokaPlayback(): UseSlokaPlaybackReturn {
   const [slokaDuration, setSlokaDuration] = useState(0);
   const [slokaSpeed, setSlokaSpeedState] = useState(1);
   const [slokaLoopCount, setSlokaLoopCountState] = useState<SlokaLoopCount>(1);
+  const [hasSlokaAudio, setHasSlokaAudio] = useState(false);
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const unregisterRef = useRef<(() => void) | null>(null);
   const cancelledRef = useRef(false);
@@ -66,6 +67,7 @@ export function useSlokaPlayback(): UseSlokaPlaybackReturn {
       }
     }
     audioRef.current = null;
+    setHasSlokaAudio(false);
     unregisterRef.current?.();
     unregisterRef.current = null;
   }, []);
@@ -175,7 +177,6 @@ export function useSlokaPlayback(): UseSlokaPlaybackReturn {
     async (
       slokaAudioId: string | null,
       languageCode: string,
-      mode: "chant" | "learn",
       speed: number,
       onComplete: () => void,
     ) => {
@@ -211,7 +212,7 @@ export function useSlokaPlayback(): UseSlokaPlaybackReturn {
             .in("language_code", [languageCode, "en"]),
           supabase
             .from("sloka_audio")
-            .select("chant_audio_file, learn_audio_file, is_active")
+            .select("chant_audio_file, is_active")
             .eq("sloka_audio_id", slokaAudioId)
             .limit(1)
             .single(),
@@ -236,8 +237,7 @@ export function useSlokaPlayback(): UseSlokaPlaybackReturn {
         setActiveSlokaScript(script?.script_text || "");
         setActiveSlokaTranslation(script?.translation_text || "");
 
-        const audioFile = mode === "learn" ? audioData?.learn_audio_file : audioData?.chant_audio_file;
-        const resolvedAudioFile = getStorageUrl(audioFile);
+        const resolvedAudioFile = getStorageUrl(audioData?.chant_audio_file);
         console.info("[Sloka] resolved audio URL", { id: slokaAudioId, url: resolvedAudioFile });
 
         if (!resolvedAudioFile || isStale()) {
@@ -248,6 +248,7 @@ export function useSlokaPlayback(): UseSlokaPlaybackReturn {
         releaseAudio();
         const audio = new Audio(resolvedAudioFile);
         audioRef.current = audio;
+        setHasSlokaAudio(true);
         unregisterRef.current = registerAudioElement(audio);
         audio.defaultPlaybackRate = speed;
         audio.playbackRate = speed;
@@ -285,7 +286,11 @@ export function useSlokaPlayback(): UseSlokaPlaybackReturn {
           setSlokaStatus("complete");
         };
         audio.onerror = () => {
-          console.warn("[Sloka] audio error", resolvedAudioFile, audio.error);
+          console.warn("[Sloka] audio error", {
+            url: resolvedAudioFile,
+            code: audio.error?.code,
+            message: audio.error?.message,
+          });
           console.info("[Sloka] audio error", { id: slokaAudioId, url: resolvedAudioFile });
           setIsSlokaPlaying(false);
           setSlokaStatus("unavailable");
@@ -322,6 +327,7 @@ export function useSlokaPlayback(): UseSlokaPlaybackReturn {
     slokaDuration,
     slokaSpeed,
     slokaLoopCount,
+    hasSlokaAudio,
     handlePostVerse,
     toggleSlokaPlayback,
     restartSloka,
