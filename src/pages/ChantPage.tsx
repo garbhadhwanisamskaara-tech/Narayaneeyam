@@ -15,6 +15,7 @@ import {
   Square,
   ListMusic,
   X,
+  Loader2,
 } from "lucide-react";
 import PlaylistBuilder from "@/components/PlaylistBuilder";
 import PlaylistBar from "@/components/PlaylistBar";
@@ -132,7 +133,16 @@ export default function ChantPage() {
     isSlokaPlaying,
     isSlokaOpen,
     slokaStatus,
+    slokaCurrentTime,
+    slokaDuration,
+    slokaSpeed,
+    slokaLoopCount,
     handlePostVerse,
+    toggleSlokaPlayback,
+    restartSloka,
+    seekSloka,
+    setSlokaSpeed,
+    setSlokaLoopCount,
     stopSloka,
   } = useSlokaPlayback();
   const isSlokaPlayingRef = useRef(isSlokaPlaying);
@@ -927,6 +937,12 @@ export default function ChantPage() {
 
   const getMeaning = (verse: (typeof allVerses)[0]) => verse.meaning_english;
 
+  const formatSlokaTime = (seconds: number) => {
+    if (!Number.isFinite(seconds) || seconds < 0) return "0:00";
+    const minutes = Math.floor(seconds / 60);
+    return `${minutes}:${Math.floor(seconds % 60).toString().padStart(2, "0")}`;
+  };
+
   // --- Compact sticky control bar: measure the real app header height ---
   const [headerH, setHeaderH] = useState(56);
   useEffect(() => {
@@ -1386,7 +1402,8 @@ export default function ChantPage() {
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              className="fixed inset-0 z-50 flex items-start justify-center bg-foreground/20 px-4 pt-[20vh]"
+              className="fixed inset-0 z-50 flex items-start justify-center bg-foreground/20 px-3"
+              style={{ paddingTop: headerH + 8, paddingBottom: "calc(5rem + env(safe-area-inset-bottom))" }}
             >
               <motion.div
                 initial={{ opacity: 0, y: 20 }}
@@ -1395,7 +1412,7 @@ export default function ChantPage() {
                 role="dialog"
                 aria-modal="true"
                 aria-label="Sloka"
-                className="relative w-full max-w-lg rounded-2xl border border-secondary/40 bg-card/95 p-6 shadow-gold backdrop-blur-md"
+                className="relative flex max-h-full w-full max-w-lg flex-col overflow-hidden rounded-2xl border border-secondary/40 bg-card/95 shadow-gold backdrop-blur-md"
               >
                 <button
                   type="button"
@@ -1405,38 +1422,97 @@ export default function ChantPage() {
                 >
                   <X className="h-4 w-4" />
                 </button>
-                <p className="mb-2 pr-8 text-xs font-sans uppercase tracking-wide text-muted-foreground">📿 Sloka</p>
-                {activeSlokaScript && (
-                  <p className="mb-3 whitespace-pre-line font-body text-lg leading-relaxed text-foreground">
-                    {activeSlokaScript}
-                  </p>
-                )}
-                {activeSlokaTranslation && (
-                  <p className="border-t border-border pt-2 text-sm font-sans leading-relaxed text-muted-foreground">
-                    {activeSlokaTranslation}
-                  </p>
-                )}
-                {slokaStatus === "playing" && (
-                  <p className="mt-2 animate-pulse text-xs font-sans text-secondary">♪ Playing sloka…</p>
-                )}
-                {slokaStatus === "complete" && (
-                  <div className="mt-3 flex items-center gap-3">
-                    <p className="text-xs font-sans text-muted-foreground">Sloka complete</p>
+                <div className="shrink-0 border-b border-border bg-card px-4 pb-3 pt-4 sm:px-6">
+                  <p className="mb-3 pr-8 text-xs font-sans uppercase tracking-wide text-muted-foreground">📿 Sloka</p>
+                  <div className="flex flex-wrap items-center gap-2">
                     <button
                       type="button"
-                      onClick={() => {
-                        const verseIndex = activeSlokaVerseRef.current;
-                        if (verseIndex !== null) playSlokaForVerse(verseIndex);
-                      }}
-                      className="rounded-lg border border-border bg-background px-2.5 py-1 text-xs font-sans text-foreground hover:bg-muted"
+                      onClick={toggleSlokaPlayback}
+                      disabled={slokaStatus === "unavailable"}
+                      aria-label={isSlokaPlaying ? "Pause sloka" : "Play sloka"}
+                      className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-gradient-gold text-primary shadow-gold transition-transform hover:scale-105 disabled:cursor-not-allowed disabled:opacity-50"
                     >
-                      Play again
+                      {slokaStatus === "loading" ? (
+                        <Loader2 className="h-5 w-5 animate-spin" />
+                      ) : isSlokaPlaying ? (
+                        <Pause className="h-5 w-5" />
+                      ) : (
+                        <Play className="ml-0.5 h-5 w-5" />
+                      )}
                     </button>
+                    <button
+                      type="button"
+                      onClick={restartSloka}
+                      disabled={slokaStatus === "unavailable"}
+                      aria-label="Restart sloka"
+                      className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-border bg-background text-foreground hover:bg-muted disabled:cursor-not-allowed disabled:opacity-50"
+                    >
+                      <RotateCcw className="h-4 w-4" />
+                    </button>
+                    <div className="flex min-w-[11rem] flex-1 items-center gap-2">
+                      <Slider
+                        value={[slokaCurrentTime]}
+                        onValueChange={(value) => seekSloka(value[0])}
+                        max={Math.max(slokaDuration, 1)}
+                        step={0.1}
+                        disabled={!slokaDuration || slokaStatus === "unavailable"}
+                        aria-label="Sloka progress"
+                        className="min-w-0 flex-1"
+                      />
+                      <span className="shrink-0 text-[11px] font-sans text-muted-foreground">
+                        {formatSlokaTime(slokaCurrentTime)} / {formatSlokaTime(slokaDuration)}
+                      </span>
+                    </div>
                   </div>
-                )}
-                {slokaStatus === "unavailable" && (
-                  <p className="mt-2 text-xs font-sans text-muted-foreground">Audio unavailable</p>
-                )}
+                  <div className="mt-2 flex flex-wrap items-center gap-1.5">
+                    {[0.6, 0.75, 1, 1.25, 1.5].map((option) => (
+                      <button
+                        key={option}
+                        type="button"
+                        onClick={() => setSlokaSpeed(option)}
+                        className={`rounded-full px-2 py-1 text-[11px] font-sans transition-colors ${slokaSpeed === option ? "bg-secondary text-secondary-foreground font-semibold" : "border border-border bg-background text-muted-foreground hover:bg-muted"}`}
+                      >
+                        {option}×
+                      </button>
+                    ))}
+                    <select
+                      aria-label="Sloka loop count"
+                      value={slokaLoopCount}
+                      onChange={(event) => setSlokaLoopCount(event.target.value === "infinite" ? "infinite" : Number(event.target.value) as 1 | 2 | 3 | 5)}
+                      className="ml-auto h-7 rounded-lg border border-border bg-background px-2 text-[11px] font-sans text-foreground"
+                    >
+                      <option value={1}>Loop 1×</option>
+                      <option value={2}>Loop 2×</option>
+                      <option value={3}>Loop 3×</option>
+                      <option value={5}>Loop 5×</option>
+                      <option value="infinite">Loop ∞</option>
+                    </select>
+                    {muted && (
+                      <button
+                        type="button"
+                        onClick={toggleMuted}
+                        className="basis-full text-left text-xs font-sans text-secondary underline underline-offset-2 sm:basis-auto"
+                      >
+                        Muted — tap to unmute
+                      </button>
+                    )}
+                  </div>
+                  <p className="mt-2 text-xs font-sans text-muted-foreground">
+                    {slokaStatus === "complete" ? "Sloka complete" : slokaStatus === "unavailable" ? "Audio unavailable" : isSlokaPlaying ? "♪ Playing sloka…" : "Ready to play"}
+                  </p>
+                </div>
+                <div className="min-h-0 overflow-y-auto p-4 sm:p-6">
+                  {activeSlokaScript && (
+                    <p className="mb-3 whitespace-pre-line font-body text-lg leading-relaxed text-foreground">
+                      {activeSlokaScript}
+                    </p>
+                  )}
+                  {activeSlokaTranslation && (
+                    <p className="border-t border-border pt-2 text-sm font-sans leading-relaxed text-muted-foreground">
+                      {activeSlokaTranslation}
+                    </p>
+                  )}
+                </div>
               </motion.div>
             </motion.div>
           )}

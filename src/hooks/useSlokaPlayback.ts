@@ -4,28 +4,19 @@ import { getStorageUrl } from "@/lib/storageUrl";
 import { registerAudioElement } from "@/lib/globalMute";
 import { fadeOutElement } from "@/lib/audiofade";
 
-export interface SlokaData {
-  sloka_audio_id: string;
-  script_text: string;
-  translation_text: string;
-  chant_audio_file: string;
-  learn_audio_file: string;
-}
+type SlokaStatus = "loading" | "playing" | "paused" | "complete" | "unavailable" | null;
+export type SlokaLoopCount = 1 | 2 | 3 | 5 | "infinite";
 
 interface UseSlokaPlaybackReturn {
-  /** Currently displayed sloka script (null = not showing) */
   activeSlokaScript: string | null;
   activeSlokaTranslation: string | null;
-  /** Whether sloka audio is currently playing */
   isSlokaPlaying: boolean;
-  /** Whether the sloka overlay is open */
   isSlokaOpen: boolean;
-  slokaStatus: "playing" | "complete" | "unavailable" | null;
-  /**
-   * Called after verse audio ends. Checks sloka_audio_id,
-   * fetches sloka data, plays sloka audio, then calls onComplete.
-   * If no sloka, calls onComplete immediately.
-   */
+  slokaStatus: SlokaStatus;
+  slokaCurrentTime: number;
+  slokaDuration: number;
+  slokaSpeed: number;
+  slokaLoopCount: SlokaLoopCount;
   handlePostVerse: (
     slokaAudioId: string | null,
     languageCode: string,
@@ -33,7 +24,11 @@ interface UseSlokaPlaybackReturn {
     speed: number,
     onComplete: () => void,
   ) => void;
-  /** Stop any in-progress sloka playback */
+  toggleSlokaPlayback: () => void;
+  restartSloka: () => void;
+  seekSloka: (seconds: number) => void;
+  setSlokaSpeed: (speed: number) => void;
+  setSlokaLoopCount: (count: SlokaLoopCount) => void;
   stopSloka: () => void;
 }
 
@@ -42,21 +37,28 @@ export function useSlokaPlayback(): UseSlokaPlaybackReturn {
   const [activeSlokaTranslation, setActiveSlokaTranslation] = useState<string | null>(null);
   const [isSlokaPlaying, setIsSlokaPlaying] = useState(false);
   const [isSlokaOpen, setIsSlokaOpen] = useState(false);
-  const [slokaStatus, setSlokaStatus] = useState<"playing" | "complete" | "unavailable" | null>(null);
+  const [slokaStatus, setSlokaStatus] = useState<SlokaStatus>(null);
+  const [slokaCurrentTime, setSlokaCurrentTime] = useState(0);
+  const [slokaDuration, setSlokaDuration] = useState(0);
+  const [slokaSpeed, setSlokaSpeedState] = useState(1);
+  const [slokaLoopCount, setSlokaLoopCountState] = useState<SlokaLoopCount>(1);
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const unregisterRef = useRef<(() => void) | null>(null);
   const cancelledRef = useRef(false);
   const activeSlokaIdRef = useRef<string | null>(null);
-  /** Monotonic id of the current sloka playback session. */
   const sessionRef = useRef(0);
+  const completedLoopsRef = useRef(0);
+  const loopCountRef = useRef<SlokaLoopCount>(1);
 
-  /** Detach handlers, unregister from the global mute set and drop the element. */
   const releaseAudio = useCallback(() => {
     const audio = audioRef.current;
     if (audio) {
+      audio.onloadedmetadata = null;
+      audio.ontimeupdate = null;
+      audio.onplay = null;
+      audio.onpause = null;
       audio.onended = null;
       audio.onerror = null;
-      audio.onpause = null;
       try {
         audio.pause();
       } catch {
@@ -81,11 +83,10 @@ export function useSlokaPlayback(): UseSlokaPlaybackReturn {
     setIsSlokaPlaying(false);
     setIsSlokaOpen(false);
     setSlokaStatus(null);
+    setSlokaCurrentTime(0);
+    setSlokaDuration(0);
   }, [releaseAudio]);
 
-  // True unmount only (navigating away from the Chant screen entirely) — fade
-  // out over 2s instead of cutting off. stopSloka() (used for every in-page
-  // transition) is untouched and stays instant.
   useEffect(() => {
     return () => {
       if (activeSlokaIdRef.current) {
@@ -98,9 +99,12 @@ export function useSlokaPlayback(): UseSlokaPlaybackReturn {
       audioRef.current = null;
       unregisterRef.current = null;
       if (audio) {
+        audio.onloadedmetadata = null;
+        audio.ontimeupdate = null;
+        audio.onplay = null;
+        audio.onpause = null;
         audio.onended = null;
         audio.onerror = null;
-        audio.onpause = null;
         fadeOutElement(audio, 2000, () => {
           try {
             audio.pause();
@@ -113,6 +117,60 @@ export function useSlokaPlayback(): UseSlokaPlaybackReturn {
     };
   }, []);
 
+  const playCurrentAudio = useCallback(async () => {
+    const audio = audioRef.current;
+    if (!audio) return;
+    if (slokaStatus === "complete") {
+      completedLoopsRef.current = 0;
+      audio.currentTime = 0;
+      setSlokaCurrentTime(0);
+    }
+    setSlokaStatus("loading");
+    try {
+      await audio.play();
+    } catch {
+      setIsSlokaPlaying(false);
+      setSlokaStatus("paused");
+    }
+  }, [slokaStatus]);
+
+  const toggleSlokaPlayback = useCallback(() => {
+    const audio = audioRef.current;
+    if (!audio) return;
+    if (audio.paused) {
+      void playCurrentAudio();
+    } else {
+      audio.pause();
+    }
+  }, [playCurrentAudio]);
+
+  const restartSloka = useCallback(() => {
+    const audio = audioRef.current;
+    if (!audio) return;
+    completedLoopsRef.current = 0;
+    audio.currentTime = 0;
+    setSlokaCurrentTime(0);
+    void playCurrentAudio();
+  }, [playCurrentAudio]);
+
+  const seekSloka = useCallback((seconds: number) => {
+    const audio = audioRef.current;
+    if (!audio || !Number.isFinite(seconds)) return;
+    audio.currentTime = Math.max(0, Math.min(seconds, audio.duration || seconds));
+    setSlokaCurrentTime(audio.currentTime);
+  }, []);
+
+  const setSlokaSpeed = useCallback((nextSpeed: number) => {
+    setSlokaSpeedState(nextSpeed);
+    if (audioRef.current) audioRef.current.playbackRate = nextSpeed;
+  }, []);
+
+  const setSlokaLoopCount = useCallback((count: SlokaLoopCount) => {
+    loopCountRef.current = count;
+    completedLoopsRef.current = 0;
+    setSlokaLoopCountState(count);
+  }, []);
+
   const handlePostVerse = useCallback(
     async (
       slokaAudioId: string | null,
@@ -121,27 +179,30 @@ export function useSlokaPlayback(): UseSlokaPlaybackReturn {
       speed: number,
       onComplete: () => void,
     ) => {
-      // Each invocation owns a session id; stale events can never touch the UI
       sessionRef.current += 1;
       const session = sessionRef.current;
       const isStale = () => cancelledRef.current || sessionRef.current !== session;
 
       if (!slokaAudioId) {
         cancelledRef.current = false;
-        if (sessionRef.current !== session) return;
-        onComplete();
+        if (sessionRef.current === session) onComplete();
         return;
       }
 
       console.info("[Sloka] start", { id: slokaAudioId, language: languageCode });
       cancelledRef.current = false;
       activeSlokaIdRef.current = slokaAudioId;
+      completedLoopsRef.current = 0;
+      loopCountRef.current = 1;
+      setSlokaLoopCountState(1);
+      setSlokaSpeedState(speed);
+      setSlokaCurrentTime(0);
+      setSlokaDuration(0);
       setIsSlokaOpen(true);
-      setIsSlokaPlaying(true);
-      setSlokaStatus("playing");
+      setIsSlokaPlaying(false);
+      setSlokaStatus("loading");
 
       try {
-        // Fetch sloka script and audio in parallel
         const [scriptRes, audioRes] = await Promise.all([
           supabase
             .from("sloka_scripts")
@@ -164,92 +225,91 @@ export function useSlokaPlayback(): UseSlokaPlaybackReturn {
         const audioData = audioRes.data;
         if (audioData?.is_active === false) {
           console.info("[Sloka] cancelled", { id: slokaAudioId, reason: "inactive" });
-          activeSlokaIdRef.current = null;
-          setActiveSlokaScript(null);
-          setActiveSlokaTranslation(null);
-          setIsSlokaPlaying(false);
-          setIsSlokaOpen(false);
-          setSlokaStatus(null);
+          stopSloka();
           onComplete();
           return;
         }
 
-        // Display script on screen
         const scripts = scriptRes.data ?? [];
         const script = scripts.find((row) => row.language_code === languageCode)
           ?? scripts.find((row) => row.language_code === "en");
-        if (script) {
-          setActiveSlokaScript(script.script_text || "");
-          setActiveSlokaTranslation(script.translation_text || "");
-        }
+        setActiveSlokaScript(script?.script_text || "");
+        setActiveSlokaTranslation(script?.translation_text || "");
 
-        // Play sloka audio
         const audioFile = mode === "learn" ? audioData?.learn_audio_file : audioData?.chant_audio_file;
-
         const resolvedAudioFile = getStorageUrl(audioFile);
         console.info("[Sloka] resolved audio URL", { id: slokaAudioId, url: resolvedAudioFile });
 
-        // Guarded completion: only ever runs once per session, no matter how many
-        // completion paths (ended / error / rejected play / stop) fire.
-        let finished = false;
-        const finishOnce = (status: "complete" | "unavailable") => {
-          if (finished) return;
-          finished = true;
-          releaseAudio();
-          if (isStale()) {
-            console.info("[Sloka] cancelled", { id: slokaAudioId, reason: "stale before completion" });
+        if (!resolvedAudioFile || isStale()) {
+          setSlokaStatus("unavailable");
+          return;
+        }
+
+        releaseAudio();
+        const audio = new Audio(resolvedAudioFile);
+        audioRef.current = audio;
+        unregisterRef.current = registerAudioElement(audio);
+        audio.defaultPlaybackRate = speed;
+        audio.playbackRate = speed;
+
+        audio.onloadedmetadata = () => {
+          audio.playbackRate = speed;
+          setSlokaDuration(Number.isFinite(audio.duration) ? audio.duration : 0);
+        };
+        audio.ontimeupdate = () => setSlokaCurrentTime(audio.currentTime);
+        audio.onplay = () => {
+          setIsSlokaPlaying(true);
+          setSlokaStatus("playing");
+        };
+        audio.onpause = () => {
+          if (!audio.ended && !isStale()) {
+            setIsSlokaPlaying(false);
+            setSlokaStatus((current) => current === "unavailable" ? current : "paused");
+          }
+        };
+        audio.onended = () => {
+          console.info("[Sloka] audio ended", { id: slokaAudioId });
+          completedLoopsRef.current += 1;
+          const target = loopCountRef.current;
+          if (!isStale() && (target === "infinite" || completedLoopsRef.current < target)) {
+            audio.currentTime = 0;
+            setSlokaCurrentTime(0);
+            void audio.play().catch(() => {
+              setIsSlokaPlaying(false);
+              setSlokaStatus("paused");
+            });
             return;
           }
           setIsSlokaPlaying(false);
-          setSlokaStatus(status);
+          setSlokaCurrentTime(audio.duration || 0);
+          setSlokaStatus("complete");
+        };
+        audio.onerror = () => {
+          console.warn("[Sloka] audio error", resolvedAudioFile, audio.error);
+          console.info("[Sloka] audio error", { id: slokaAudioId, url: resolvedAudioFile });
+          setIsSlokaPlaying(false);
+          setSlokaStatus("unavailable");
         };
 
-        if (resolvedAudioFile && !isStale()) {
-          const audio = new Audio(resolvedAudioFile);
-          releaseAudio(); // drop any previous temporary element first
-          audioRef.current = audio;
-          unregisterRef.current = registerAudioElement(audio);
-          audio.defaultPlaybackRate = speed;
-          audio.playbackRate = speed;
-          const onLoadedMetadata = () => {
-            audio.playbackRate = speed;
-          };
-          audio.addEventListener("loadedmetadata", onLoadedMetadata);
-
-          audio.onended = () => {
-            console.info("[Sloka] audio ended", { id: slokaAudioId });
-            audio.removeEventListener("loadedmetadata", onLoadedMetadata);
-            finishOnce("complete");
-          };
-
-          audio.onerror = () => {
-            console.info("[Sloka] audio error", { id: slokaAudioId, url: resolvedAudioFile });
-            audio.removeEventListener("loadedmetadata", onLoadedMetadata);
-            finishOnce("unavailable");
-          };
-
-          audio.play()
-            .then(() => {
-              console.info("[Sloka] audio started", { id: slokaAudioId });
-            })
-            .catch(() => {
-              console.info("[Sloka] audio error", { id: slokaAudioId, url: resolvedAudioFile });
-              audio.removeEventListener("loadedmetadata", onLoadedMetadata);
-              finishOnce("unavailable");
-            });
-        } else {
-          finishOnce("unavailable");
+        try {
+          await audio.play();
+          if (!isStale()) console.info("[Sloka] audio started", { id: slokaAudioId });
+        } catch {
+          if (!isStale()) {
+            setIsSlokaPlaying(false);
+            setSlokaStatus("paused");
+          }
         }
       } catch (error) {
+        console.warn("[Sloka] audio error", "", error);
         console.info("[Sloka] audio error", { id: slokaAudioId, url: "", error });
-        releaseAudio();
         if (!isStale()) {
           setIsSlokaPlaying(false);
           setSlokaStatus("unavailable");
         }
       }
     },
-    [releaseAudio],
+    [releaseAudio, stopSloka],
   );
 
   return {
@@ -258,7 +318,16 @@ export function useSlokaPlayback(): UseSlokaPlaybackReturn {
     isSlokaPlaying,
     isSlokaOpen,
     slokaStatus,
+    slokaCurrentTime,
+    slokaDuration,
+    slokaSpeed,
+    slokaLoopCount,
     handlePostVerse,
+    toggleSlokaPlayback,
+    restartSloka,
+    seekSloka,
+    setSlokaSpeed,
+    setSlokaLoopCount,
     stopSloka,
   };
 }
