@@ -4,9 +4,10 @@ import { Flame } from "lucide-react";
 interface VerseIconsProps {
   prasadam?: string;
   slokaAudioId?: string | null;
+  onPlaySloka?: () => void;
 }
 
-export default function VerseIcons({ prasadam, slokaAudioId }: VerseIconsProps) {
+export default function VerseIcons({ prasadam, slokaAudioId, onPlaySloka }: VerseIconsProps) {
   const [showPrasadam, setShowPrasadam] = useState(false);
   const prasadamRef = useRef<HTMLDivElement>(null);
 
@@ -53,13 +54,15 @@ export default function VerseIcons({ prasadam, slokaAudioId }: VerseIconsProps) 
       )}
 
       {slokaAudioId && (
-        <span
-          className="flex items-center justify-center text-gold text-base cursor-default"
+        <button
+          type="button"
+          onClick={onPlaySloka}
+          className="flex cursor-pointer items-center justify-center text-base text-gold transition-transform hover:scale-110 hover:text-gold-light"
           title="This verse has a supplementary sloka"
-          aria-label="Sloka available"
+          aria-label="Play sloka"
         >
           📿
-        </span>
+        </button>
       )}
     </div>
   );
