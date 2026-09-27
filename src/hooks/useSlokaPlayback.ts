@@ -41,6 +41,7 @@ export function useSlokaPlayback(): UseSlokaPlaybackReturn {
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const unregisterRef = useRef<(() => void) | null>(null);
   const cancelledRef = useRef(false);
+  const activeSlokaIdRef = useRef<string | null>(null);
   /** Monotonic id of the current sloka playback session. */
   const sessionRef = useRef(0);
 
@@ -63,9 +64,13 @@ export function useSlokaPlayback(): UseSlokaPlaybackReturn {
   }, []);
 
   const stopSloka = useCallback(() => {
+    if (activeSlokaIdRef.current) {
+      console.info("[Sloka] cancelled", { id: activeSlokaIdRef.current, reason: "stopped" });
+    }
     cancelledRef.current = true;
     sessionRef.current += 1;
     releaseAudio();
+    activeSlokaIdRef.current = null;
     setActiveSlokaScript(null);
     setActiveSlokaTranslation(null);
     setIsSlokaPlaying(false);
@@ -118,7 +123,9 @@ export function useSlokaPlayback(): UseSlokaPlaybackReturn {
         return;
       }
 
+      console.info("[Sloka] start", { id: slokaAudioId, language: languageCode });
       cancelledRef.current = false;
+      activeSlokaIdRef.current = slokaAudioId;
       setIsSlokaPlaying(true);
 
       try {
@@ -126,33 +133,47 @@ export function useSlokaPlayback(): UseSlokaPlaybackReturn {
         const [scriptRes, audioRes] = await Promise.all([
           supabase
             .from("sloka_scripts")
-            .select("script_text, translation_text")
+            .select("language_code, script_text, translation_text")
             .eq("sloka_audio_id", slokaAudioId)
-            .eq("language_code", languageCode)
-            .limit(1)
-            .single(),
+            .in("language_code", [languageCode, "en"]),
           supabase
             .from("sloka_audio")
-            .select("chant_audio_file, learn_audio_file")
+            .select("chant_audio_file, learn_audio_file, is_active")
             .eq("sloka_audio_id", slokaAudioId)
             .limit(1)
             .single(),
         ]);
 
-        if (isStale()) return;
+        if (isStale()) {
+          console.info("[Sloka] cancelled", { id: slokaAudioId, reason: "stale after fetch" });
+          return;
+        }
+
+        const audioData = audioRes.data;
+        if (audioData?.is_active === false) {
+          console.info("[Sloka] cancelled", { id: slokaAudioId, reason: "inactive" });
+          activeSlokaIdRef.current = null;
+          setActiveSlokaScript(null);
+          setActiveSlokaTranslation(null);
+          setIsSlokaPlaying(false);
+          onComplete();
+          return;
+        }
 
         // Display script on screen
-        const script = scriptRes.data;
+        const scripts = scriptRes.data ?? [];
+        const script = scripts.find((row) => row.language_code === languageCode)
+          ?? scripts.find((row) => row.language_code === "en");
         if (script) {
           setActiveSlokaScript(script.script_text || "");
           setActiveSlokaTranslation(script.translation_text || "");
         }
 
         // Play sloka audio
-        const audioData = audioRes.data;
         const audioFile = mode === "learn" ? audioData?.learn_audio_file : audioData?.chant_audio_file;
 
         const resolvedAudioFile = getStorageUrl(audioFile);
+        console.info("[Sloka] resolved audio URL", { id: slokaAudioId, url: resolvedAudioFile });
 
         // Guarded completion: only ever runs once per session, no matter how many
         // completion paths (ended / error / rejected play / stop) fire.
@@ -161,7 +182,11 @@ export function useSlokaPlayback(): UseSlokaPlaybackReturn {
           if (finished) return;
           finished = true;
           releaseAudio();
-          if (isStale()) return;
+          activeSlokaIdRef.current = null;
+          if (isStale()) {
+            console.info("[Sloka] cancelled", { id: slokaAudioId, reason: "stale before completion" });
+            return;
+          }
           setActiveSlokaScript(null);
           setActiveSlokaTranslation(null);
           setIsSlokaPlaying(false);
@@ -181,26 +206,39 @@ export function useSlokaPlayback(): UseSlokaPlaybackReturn {
           audio.addEventListener("loadedmetadata", onLoadedMetadata);
 
           audio.onended = () => {
+            console.info("[Sloka] audio ended", { id: slokaAudioId });
             audio.removeEventListener("loadedmetadata", onLoadedMetadata);
             finishOnce();
           };
 
-          // Missing/broken audio — don't stall, move on immediately
+          const continueAfterAudioFailure = () => {
+            releaseAudio();
+            setTimeout(() => finishOnce(), 6000);
+          };
+
           audio.onerror = () => {
+            console.info("[Sloka] audio error", { id: slokaAudioId, url: resolvedAudioFile });
             audio.removeEventListener("loadedmetadata", onLoadedMetadata);
-            finishOnce();
+            continueAfterAudioFailure();
           };
 
-          audio.play().catch(() => {
-            audio.removeEventListener("loadedmetadata", onLoadedMetadata);
-            finishOnce();
-          });
+          audio.play()
+            .then(() => {
+              console.info("[Sloka] audio started", { id: slokaAudioId });
+            })
+            .catch(() => {
+              console.info("[Sloka] audio error", { id: slokaAudioId, url: resolvedAudioFile });
+              audio.removeEventListener("loadedmetadata", onLoadedMetadata);
+              continueAfterAudioFailure();
+            });
         } else {
           // No sloka audio file — continue immediately, no waiting
           finishOnce();
         }
-      } catch {
+      } catch (error) {
+        console.info("[Sloka] cancelled", { id: slokaAudioId, reason: "playback setup failed", error });
         releaseAudio();
+        activeSlokaIdRef.current = null;
         if (!isStale()) {
           setActiveSlokaScript(null);
           setActiveSlokaTranslation(null);
