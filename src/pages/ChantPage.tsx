@@ -137,6 +137,7 @@ export default function ChantPage() {
     slokaDuration,
     slokaSpeed,
     slokaLoopCount,
+    hasSlokaAudio,
     handlePostVerse,
     toggleSlokaPlayback,
     restartSloka,
@@ -663,7 +664,7 @@ export default function ChantPage() {
     stopSloka();
     activeSlokaVerseRef.current = verseIndex;
     setHighlightedVerse(verseIndex);
-    handlePostVerse(verse.sloka_audio_id, selectedLanguage, "chant", speed, () => {});
+    handlePostVerse(verse.sloka_audio_id, selectedLanguage, speed, () => {});
   }, [displayVerses, engine, handlePostVerse, selectedLanguage, speed, stopSloka]);
 
   const closeSloka = useCallback(() => {
@@ -1428,7 +1429,7 @@ export default function ChantPage() {
                     <button
                       type="button"
                       onClick={toggleSlokaPlayback}
-                      disabled={slokaStatus === "unavailable"}
+                      disabled={!hasSlokaAudio}
                       aria-label={isSlokaPlaying ? "Pause sloka" : "Play sloka"}
                       className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-gradient-gold text-primary shadow-gold transition-transform hover:scale-105 disabled:cursor-not-allowed disabled:opacity-50"
                     >
