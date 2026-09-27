@@ -81,6 +81,9 @@ export function useSlokaPlayback(): UseSlokaPlaybackReturn {
   // transition) is untouched and stays instant.
   useEffect(() => {
     return () => {
+      if (activeSlokaIdRef.current) {
+        console.info("[Sloka] cancelled", { id: activeSlokaIdRef.current, reason: "unmounted" });
+      }
       cancelledRef.current = true;
       sessionRef.current += 1;
       const audio = audioRef.current;
@@ -212,8 +215,13 @@ export function useSlokaPlayback(): UseSlokaPlaybackReturn {
           };
 
           const continueAfterAudioFailure = () => {
+            if (finished) return;
+            finished = true;
             releaseAudio();
-            setTimeout(() => finishOnce(), 6000);
+            setTimeout(() => {
+              finished = false;
+              finishOnce();
+            }, 6000);
           };
 
           audio.onerror = () => {
