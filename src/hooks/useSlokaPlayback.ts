@@ -219,6 +219,10 @@ export function useSlokaPlayback(): UseSlokaPlaybackReturn {
             finished = true;
             releaseAudio();
             setTimeout(() => {
+              if (isStale()) {
+                console.info("[Sloka] cancelled", { id: slokaAudioId, reason: "stale during error delay" });
+                return;
+              }
               finished = false;
               finishOnce();
             }, 6000);
