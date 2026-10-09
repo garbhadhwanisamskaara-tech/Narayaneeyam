@@ -98,12 +98,7 @@ export default function PrivacyPage() {
                 your account and keep your progress safe.
               </li>
               <li>
-                <strong>Payment information:</strong> If you subscribe to a paid plan, your payment is processed by Razorpay. We do not store
-                your raw card numbers, CVV, or other payment instrument details. Razorpay handles
-                payment processing and shares only the payment status and subscription details
-                with us. Should in-app purchases or subscriptions be introduced
-                within the Android app in the future, they will be processed through Google Play's
-                billing system in accordance with Google Play policies.
+                <strong>Payment information:</strong> Some group parayanams ask for a contribution, which is paid outside the app through a secure payment page provided by Razorpay. We never see or store card, UPI or bank details. When a payment is made, Razorpay shares with us the payment status, amount and reference, and the email address and phone number entered by the person who paid, which we use only to confirm the participant's place and to answer questions about the payment.
               </li>
               <li>
                 <strong>Parayanam participation:</strong> We store your invitation, acceptance, and Guru approval
@@ -116,8 +111,8 @@ export default function PrivacyPage() {
               </li>
               <li>
                 <strong>Device and notification data:</strong> If you enable push reminders, we store a
-                device token so we can send you gentle reminders about your chanting practice, festivals,
-                and subscription renewal. You can disable these at any time in your device settings or in the
+                device token so we can send you gentle reminders about your chanting practice and festivals.
+                You can disable these at any time in your device settings or in the
                 app.
               </li>
             </ul>
@@ -130,7 +125,7 @@ export default function PrivacyPage() {
             <p>We use the information we collect for these purposes:</p>
             <ul className="list-disc pl-5 space-y-2">
               <li>To provide the app's core features: chanting, audio playback, progress tracking, and group parayanam.</li>
-              <li>To manage parayanam requests and approvals, subscription status, and your trial or billing period.</li>
+              <li>To confirm participation in group parayanams that ask for a contribution.</li>
               <li>To send you reminders, festival alerts, and gentle nudges about your practice (only if you opt in).</li>
               <li>To improve the app, fix issues, and understand how devotees use the features we build.</li>
               <li>To communicate with you about your account, support requests, or important policy updates.</li>
@@ -147,7 +142,7 @@ export default function PrivacyPage() {
             </p>
             <ul className="list-disc pl-5 space-y-2">
               <li>
-                <strong>Razorpay:</strong> for payment processing and subscription management.
+                <strong>Razorpay:</strong> for processing contributions made outside the app.
               </li>
               <li>
                 <strong>Supabase (via Lovable Cloud):</strong> for secure database hosting, authentication,

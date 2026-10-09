@@ -1,3 +1,9 @@
+# Approval-only help and navigation follow-up
+
+- [x] Remove Payment History access while retaining unused files, and remove the subscription support category on all platforms.
+- [x] Update FAQ, guide, and privacy wording; preserve protected subscription/admin/server files.
+- [x] Verify category behavior and audit remaining member-visible payment references.
+
 # Member parayanam approval-only flow
 
 - [x] Remove member checkout and replace payment displays with approval states on web and TWA.

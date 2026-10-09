@@ -32,7 +32,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import {
   useSupportTickets,
   useTicketDetail,
-  CATEGORY_OPTIONS,
+  NEW_TICKET_CATEGORY_OPTIONS,
   PRIORITY_OPTIONS,
   STATUS_OPTIONS,
   categoryLabel,
@@ -40,7 +40,6 @@ import {
   type TicketPriority,
   type TicketStatus,
 } from "@/hooks/useSupportTickets";
-import { useCapabilities } from "@/hooks/useCapabilities";
 import { useToast } from "@/hooks/use-toast";
 import { Link } from "react-router-dom";
 import SEO from "@/components/SEO";
@@ -88,12 +87,9 @@ function PriorityBadge({ priority }: { priority: string }) {
 function RaiseTicketForm({ onSuccess, onCancel }: { onSuccess: (id: string) => void; onCancel: () => void }) {
   const { createTicket } = useSupportTickets();
   const { toast } = useToast();
-  const { canConfigurePayments } = useCapabilities();
-  const categoryOptions = canConfigurePayments
-    ? CATEGORY_OPTIONS
-    : CATEGORY_OPTIONS.filter((c) => c.value !== "subscription");
+  const categoryOptions = NEW_TICKET_CATEGORY_OPTIONS;
   const [subject, setSubject] = useState("");
-  const [category, setCategory] = useState(CATEGORY_OPTIONS[0].value);
+  const [category, setCategory] = useState(NEW_TICKET_CATEGORY_OPTIONS[0].value);
   const [priority, setPriority] = useState("normal");
   const [description, setDescription] = useState("");
   const [files, setFiles] = useState<File[]>([]);

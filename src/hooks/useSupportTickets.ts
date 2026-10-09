@@ -54,6 +54,8 @@ export const CATEGORY_OPTIONS: { value: TicketCategory; label: string }[] = [
   { value: "other", label: "Other" },
 ];
 
+export const NEW_TICKET_CATEGORY_OPTIONS = CATEGORY_OPTIONS.filter((option) => option.value !== "subscription");
+
 export const PRIORITY_OPTIONS: { value: TicketPriority; label: string }[] = [
   { value: "low", label: "Low" },
   { value: "normal", label: "Normal" },

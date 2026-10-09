@@ -12,7 +12,6 @@ import {
   Users,
   CalendarDays,
   Bell,
-  CreditCard,
   LifeBuoy,
   UserCog,
   ListMusic,
@@ -244,21 +243,17 @@ const sections = [
     ],
   },
   {
-    id: "subscription",
-    icon: <CreditCard className="h-5 w-5 text-primary" />,
-    title: "Subscription and Payments",
+    id: "joining-parayanam",
+    icon: <Users className="h-5 w-5 text-primary" />,
+    title: "Joining a parayanam",
     items: [
       {
-        q: "What does my access include right now?",
-        a: "Every verified account is on the launch trial, which runs until 31 December 2026, followed by a 7-day grace period. The app shows a banner as the date approaches.",
+        q: "What does 'Awaiting Guru approval' mean?",
+        a: "Some parayanams need the Guru's approval. After you accept an invitation or join, your place shows as Awaiting Guru approval until it is confirmed. You will get a notification and an email once you are approved.",
       },
       {
-        q: "Where do I see plans and subscribe?",
-        a: "The Subscribe page lists the current plans, durations and prices. Payment is handled securely through Razorpay.",
-      },
-      {
-        q: "Where are my receipts?",
-        a: "Payment History in the account menu lists your payments with their dates, amounts and status.",
+        q: "Can I still use the app while I wait?",
+        a: "Yes. Chanting, listening and everything else in the app stays fully available. Joining a group parayanam is optional.",
       },
     ],
   },
