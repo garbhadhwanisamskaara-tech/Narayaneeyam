@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Check, Loader2, MailQuestion, X } from "lucide-react";
+import { MailQuestion } from "lucide-react";
 import {
   useMyAwaitingContributions,
   useMyPendingInvites,

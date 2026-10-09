@@ -324,8 +324,6 @@ export default function ManageParayanamDialog({
         });
         return;
       }
-
-
     }
 
     setBusy(true);
@@ -355,7 +353,7 @@ export default function ManageParayanamDialog({
             ...prev,
             participation_type: participationType,
             contribution_amount: participationType === "PAID" ? Number(contributionAmount) : null,
-                  }
+          }
         : prev,
     );
 

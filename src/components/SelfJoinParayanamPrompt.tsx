@@ -12,7 +12,6 @@ interface Discoverable {
   group_id: string;
   group_name: string;
   participation_type: "FREE" | "PAID";
-  contribution_amount: number | null;
 }
 
 export default function SelfJoinParayanamPrompt() {

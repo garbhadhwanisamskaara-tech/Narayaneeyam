@@ -10,9 +10,7 @@
 export const SUBSCRIPTION_ENABLED = false;
 
 /**
- * PARAYANAM_PAYMENTS_ENABLED — temporarily turned OFF because Razorpay is
- * verifying the narayaneeyam.app domain for live payments (submitted 2 Sep,
- * awaiting approval). While false, PAID parayanam invites show a maintenance
- * message instead of the in-app "Pay to Join" button. Re-enable once approved.
+ * Legacy flag kept disabled. Member parayanam flows use server-owned approval
+ * states only; checkout is not offered in the app on any platform.
  */
 export const PARAYANAM_PAYMENTS_ENABLED = false;
