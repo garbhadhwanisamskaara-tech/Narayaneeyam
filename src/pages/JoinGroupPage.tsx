@@ -3,14 +3,13 @@ import { Link, useNavigate, useParams, useSearchParams } from "react-router-dom"
 import { Loader2, Users } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
-import { useParayanamPayment } from "@/hooks/useParayanamPayment";
 import logoImg from "@/assets/logo.png";
 import SEO from "@/components/SEO";
 
 interface PendingParayanam {
   /** parayanam_participants.id -- required by respond_to_parayanam_invite. */
   participant_id: string;
-  /** challenge_sessions.id -- required by the Razorpay order/pay flow. */
+  /** challenge_sessions.id -- used to open the accepted parayanam. */
   challenge_session_id: string;
   participation_type: "FREE" | "PAID" | null;
 }
@@ -53,10 +52,8 @@ async function findSinglePendingParayanam(groupId: string, userId: string): Prom
  * Public landing for group invite links: /join/:token
  * Stage 1: validate token, show preview. If signed in → join flow.
  * If signed out → bounce to /auth?next=/join/:token.
- * Stage 2 (single-click join+pay): once the group join lands, if it revealed
- * exactly one pending parayanam invite, carry straight through -- FREE joins
- * automatically, PAID goes straight into the Razorpay checkout -- instead of
- * dropping the person on the group page to go find and accept it themselves.
+ * Stage 2: accept a single pending parayanam invite automatically. Parayanams
+ * that need Guru approval remain in the awaiting state on the group page.
  */
 export default function JoinGroupPage() {
   const { token } = useParams<{ token: string }>();
@@ -70,7 +67,6 @@ export default function JoinGroupPage() {
   const [joinError, setJoinError] = useState<string | null>(null);
   const [stepLabel, setStepLabel] = useState<string | null>(null);
   const autoAttempted = useRef(false);
-  const { pay } = useParayanamPayment();
 
   useEffect(() => {
     if (!token) {
@@ -133,30 +129,7 @@ export default function JoinGroupPage() {
         return;
       }
 
-      if (pending.participation_type === "PAID") {
-        setStepLabel("Taking you to payment…");
-        // pay() resolves as soon as the Razorpay modal opens, not when payment
-        // completes -- keep the "joining" state alive until onPaid/onError,
-        // handled in their own finally below, so the page doesn't flash back
-        // to a clickable "Join Group" button underneath the open modal.
-        await pay(pending.challenge_session_id, {
-          onPaid: () => {
-            setJoining(false);
-            setStepLabel(null);
-            navigate(`/groups/${groupId}?session=${pending!.challenge_session_id}`, { replace: true });
-          },
-          onError: () => {
-            // Payment didn't complete (or the popup was dismissed) -- land on
-            // the group page, where the Pending Invites card lets them retry.
-            setJoining(false);
-            setStepLabel(null);
-            navigate(`/groups/${groupId}`, { replace: true });
-          },
-        });
-        return;
-      }
-
-      // FREE: accept the invite outright, no separate click needed.
+      // Accept both types; the server keeps approval-required access pending.
       setStepLabel("Joining your parayanam…");
       const { error: respondErr } = await (supabase as any).rpc("respond_to_parayanam_invite", {
         p_participant_id: pending.participant_id,
@@ -164,7 +137,7 @@ export default function JoinGroupPage() {
       });
       if (respondErr) {
         // Non-fatal: they're in the group either way, and can accept from there.
-        console.error("Auto-accept of FREE parayanam invite failed", respondErr);
+        console.error("Auto-accept of parayanam invite failed", respondErr);
       }
       navigate(`/groups/${groupId}?session=${pending.challenge_session_id}`, { replace: true });
     } catch (e: any) {
@@ -172,7 +145,7 @@ export default function JoinGroupPage() {
       setJoining(false);
       setStepLabel(null);
     }
-  }, [user, token, navigate, pay]);
+  }, [user, token, navigate]);
 
   // Returning from sign-in: continue the join automatically.
   useEffect(() => {

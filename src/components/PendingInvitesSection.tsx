@@ -3,9 +3,7 @@ import { Check, Loader2, MailQuestion, X } from "lucide-react";
 import {
   useMyAwaitingContributions,
   useMyPendingInvites,
-  type PendingInvite,
 } from "@/hooks/useParayanamParticipants";
-import { useParayanamPayment } from "@/hooks/useParayanamPayment";
 import ParayanamInviteCard, { AwaitingContributionCard } from "@/components/ParayanamInviteCard";
 import PushRemindersPrompt from "@/components/PushRemindersPrompt";
 import { track } from "@/lib/analytics";
@@ -14,13 +12,12 @@ const NUDGE_KEY = "push-nudge-shown";
 
 /** Invites to group parayanams that are waiting for the current user's answer. */
 export default function PendingInvitesSection({ groupId }: { groupId?: string }) {
-  const { invites, loading, busyId, respond, refresh } = useMyPendingInvites();
+  const { invites, loading, busyId, respond } = useMyPendingInvites();
   const {
     invites: awaiting,
     loading: awaitingLoading,
     refresh: refreshAwaiting,
   } = useMyAwaitingContributions();
-  const { pay, payingId } = useParayanamPayment();
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
   const [showNudge, setShowNudge] = useState(false);
@@ -72,26 +69,6 @@ export default function PendingInvitesSection({ groupId }: { groupId?: string })
     }
   };
 
-  const payToJoin = (invite: PendingInvite) => {
-    setError(null);
-    setSuccess(null);
-    void pay(invite.challenge_session_id, {
-      // Payment verified — the server (verify + webhook) confirms the
-      // participant; reflect it immediately, same as the free-accept flow.
-      onPaid: () => {
-        track("parayanam_joined");
-        setSuccess(
-          invite.parayanam_name
-            ? `Payment received — you have joined “${invite.parayanam_name}”.`
-            : "Payment received — you have joined.",
-        );
-        void refresh();
-        void refreshAwaiting();
-      },
-      onError: (message) => setError(message),
-    });
-  };
-
   const awaitingList = groupId ? awaiting.filter((i) => i.group_id === groupId) : awaiting;
 
   if (loading || awaitingLoading || (list.length === 0 && awaitingList.length === 0 && !showNudge)) return null;
@@ -107,28 +84,15 @@ export default function PendingInvitesSection({ groupId }: { groupId?: string })
           <li key={i.id}>
             <ParayanamInviteCard
               invite={i}
-              busy={busyId === i.id || payingId === i.challenge_session_id}
+              busy={busyId === i.id}
               onAccept={() => void answer(i.id, "confirmed")}
               onDecline={() => void answer(i.id, "declined")}
-              onPay={i.contribution_amount != null ? () => payToJoin(i) : undefined}
             />
           </li>
         ))}
         {awaitingList.map((i) => (
           <li key={`awaiting-${i.id}`}>
-            <AwaitingContributionCard
-              invite={i}
-              onPaid={() => {
-                track("parayanam_joined");
-                setSuccess(
-                  i.parayanam_name
-                    ? `Payment received — you have joined “${i.parayanam_name}”.`
-                    : "Payment received — you have joined.",
-                );
-                void refresh();
-                void refreshAwaiting();
-              }}
-            />
+            <AwaitingContributionCard invite={i} />
           </li>
         ))}
       </ul>
