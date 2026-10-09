@@ -3,12 +3,13 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import SelfJoinParayanamPrompt from "./SelfJoinParayanamPrompt";
 
 const mocks = vi.hoisted(() => ({
+  user: { id: "member-1" },
   rpc: vi.fn(),
   invoke: vi.fn(),
   navigate: vi.fn(),
 }));
 
-vi.mock("@/contexts/AuthContext", () => ({ useAuth: () => ({ user: { id: "member-1" } }) }));
+vi.mock("@/contexts/AuthContext", () => ({ useAuth: () => ({ user: mocks.user }) }));
 vi.mock("react-router-dom", () => ({ useNavigate: () => mocks.navigate }));
 vi.mock("@/integrations/supabase/client", () => ({
   supabase: { rpc: mocks.rpc, functions: { invoke: mocks.invoke } },
