@@ -78,7 +78,6 @@ export default function NotificationBell() {
     invites: awaiting,
     busyId: awaitingBusyId,
     decline: declineAwaiting,
-    refresh: refreshAwaiting,
   } = useMyAwaitingContributions();
   const { alerts } = useTicketReplyAlerts();
   const { todayRows, pendingRows } = useMyDashakamQueue();
@@ -205,30 +204,14 @@ export default function NotificationBell() {
                           {i.end_date ? ` to ${i.end_date}` : ""}
                         </p>
                         <div className="mt-2 flex gap-2">
-                          {i.participation_type === "PAID" ? (
-                            <button
-                              onClick={() => {
-                                setOpen(false);
-                                navigate(i.group_id ? `/groups/${i.group_id}` : "/dashboard");
-                              }}
-                              className="inline-flex items-center gap-1.5 rounded-lg bg-gradient-peacock px-3 py-1.5 font-sans text-xs font-semibold text-primary-foreground hover:opacity-90"
-                            >
-                              Review & Pay to Join
-                            </button>
-                          ) : (
-                            <button
-                              onClick={() => void answer(i.id, "confirmed")}
-                              disabled={busyId === i.id}
-                              className="inline-flex items-center gap-1.5 rounded-lg bg-gradient-peacock px-3 py-1.5 font-sans text-xs font-semibold text-primary-foreground hover:opacity-90 disabled:opacity-60"
-                            >
-                              {busyId === i.id ? (
-                                <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                              ) : (
-                                <Check className="h-3.5 w-3.5" />
-                              )}
-                              Confirm
-                            </button>
-                          )}
+                          <button
+                            onClick={() => void answer(i.id, "confirmed")}
+                            disabled={busyId === i.id}
+                            className="inline-flex items-center gap-1.5 rounded-lg bg-gradient-peacock px-3 py-1.5 font-sans text-xs font-semibold text-primary-foreground hover:opacity-90 disabled:opacity-60"
+                          >
+                            {busyId === i.id ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Check className="h-3.5 w-3.5" />}
+                            Accept Invitation
+                          </button>
                           <button
                             onClick={() => void answer(i.id, "declined")}
                             disabled={busyId === i.id}
@@ -245,7 +228,7 @@ export default function NotificationBell() {
 
               {visibleAwaiting.length > 0 && (
                 <div>
-                  <h4 className="font-display text-sm font-semibold text-foreground">Awaiting your contribution</h4>
+                  <h4 className="font-display text-sm font-semibold text-foreground">Awaiting Guru approval</h4>
                   <div className="mt-1">
                     {visibleAwaiting.map((i) => (
                       <CollapsibleItem
@@ -253,30 +236,13 @@ export default function NotificationBell() {
                         summary={
                           <>
                             <span className="font-semibold">{i.parayanam_name ?? "A parayanam"}</span>
-                            <span className="text-muted-foreground"> · pay to join</span>
+                            <span className="text-muted-foreground"> · awaiting Guru approval</span>
                           </>
                         }
                         onDismiss={() => dismiss(`awaiting:${i.id}`)}
                       >
-                        <AwaitingContributionCard
-                          invite={i}
-                          onPaid={() => {
-                            toast.success("Payment received — you have joined.");
-                            void refreshAwaiting();
-                          }}
-                        />
+                        <AwaitingContributionCard invite={i} />
                         <div className="mt-2 flex items-center gap-3">
-                          {i.payment_url && (
-                            <button
-                              onClick={() => {
-                                setOpen(false);
-                                navigate(i.group_id ? `/groups/${i.group_id}` : "/dashboard");
-                              }}
-                              className="inline-flex items-center gap-1.5 rounded-lg bg-gradient-peacock px-3 py-1.5 font-sans text-xs font-semibold text-primary-foreground hover:opacity-90"
-                            >
-                              <Check className="h-3.5 w-3.5" /> Review &amp; Pay to Join
-                            </button>
-                          )}
                           <button
                             onClick={() => {
                               setDeclineError(null);

@@ -1,8 +1,7 @@
-import { useState } from "react";
-import { Check, Clock, ExternalLink, HandCoins, Loader2, Users, X } from "lucide-react";
+import { Check, Clock, Loader2, Users, X } from "lucide-react";
 import type { PendingInvite } from "@/hooks/useParayanamParticipants";
 import { useCapabilities } from "@/hooks/useCapabilities";
-import { useParayanamPayment } from "@/hooks/useParayanamPayment";
+import { Button } from "@/components/ui/button";
 
 const fmt = (d: string | null) => {
   if (!d) return null;
@@ -10,29 +9,20 @@ const fmt = (d: string | null) => {
   if (Number.isNaN(dt.getTime())) return d;
   return dt.toLocaleDateString(undefined, { day: "numeric", month: "short", year: "numeric" });
 };
-const isPaymentLink = (value: string | null | undefined) => !!value && /^https?:\/\//i.test(value.trim());
 
 interface Props {
   invite: PendingInvite;
   busy?: boolean;
   onAccept: () => void;
   onDecline: () => void;
-  /** When provided, a PAID invite shows "Pay ₹… to Join" instead of Accept. */
-  onPay?: () => void;
 }
 
 /**
  * The member-facing invitation card for one parayanam. The meeting link is never
  * shown here — even for Live parayanams — it only appears once access is active.
  */
-export default function ParayanamInviteCard({ invite: i, busy, onAccept, onDecline, onPay }: Props) {
-  // Once the Guru has confirmed the contribution, the participant is never
-  // asked to pay again for this parayanam — Accept/Decline stay available.
-  const contributionSettled = i.contribution_status === "confirmed" || i.contribution_status === "not_required";
-  const paid = i.participation_type === "PAID" && !contributionSettled;
+export default function ParayanamInviteCard({ invite: i, busy, onAccept, onDecline }: Props) {
   const live = i.delivery_mode === "LIVE";
-  const { canViewExternalPaymentLinks, canPayInApp: canPayInAppCapability } = useCapabilities();
-  const canPayInApp = paid && !!onPay && canPayInAppCapability;
 
   return (
     <div className="rounded-xl border border-border bg-background p-4">
@@ -70,160 +60,49 @@ export default function ParayanamInviteCard({ invite: i, busy, onAccept, onDecli
             })}
           </div>
         )}
-        {paid && (canPayInApp || canViewExternalPaymentLinks) && (
-          <>
-            <div>
-              <span className="text-foreground/80">Contribution:</span>{" "}
-              {i.contribution_amount != null ? `₹${i.contribution_amount}` : "As advised by the Guru"}
-            </div>
-            {!canPayInApp && canViewExternalPaymentLinks && i.payment_url && (
-              <div>
-                {isPaymentLink(i.payment_url) ? (
-                  <a
-                    href={i.payment_url.trim()}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="inline-flex items-center gap-1 text-primary underline underline-offset-2"
-                  >
-                    <HandCoins className="h-3.5 w-3.5" /> Make Payment
-                    <ExternalLink className="h-3 w-3" />
-                  </a>
-                ) : (
-                  <p className="whitespace-pre-wrap font-sans text-xs text-foreground/80">{i.payment_url}</p>
-                )}
-              </div>
-            )}
-            {!canPayInApp && canViewExternalPaymentLinks && (
-              <p className="font-sans text-[11px] leading-snug text-muted-foreground">
-                This contribution goes directly to the Guru — narayaneeyam.app does not process, verify, or hold this
-                payment.
-              </p>
-            )}
-            {i.payment_note && <div className="italic">{i.payment_note}</div>}
-          </>
-        )}
         {i.general_note && <div className="italic">{i.general_note}</div>}
       </dl>
 
       <div className="mt-4 flex gap-2">
-        {canPayInApp ? (
-          <button
-            onClick={onPay}
-            disabled={busy}
-            className="inline-flex items-center gap-1.5 rounded-lg bg-gradient-peacock px-4 py-2 font-sans text-xs font-semibold text-primary-foreground hover:opacity-90 disabled:opacity-60"
-          >
-            {busy ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <HandCoins className="h-3.5 w-3.5" />}
-            {i.contribution_amount != null ? `Pay ₹${i.contribution_amount}` : "Pay"}
-          </button>
-        ) : (
-          <button
-            onClick={onAccept}
-            disabled={busy}
-            className="inline-flex items-center gap-1.5 rounded-lg bg-gradient-peacock px-4 py-2 font-sans text-xs font-semibold text-primary-foreground hover:opacity-90 disabled:opacity-60"
-          >
-            {busy ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Check className="h-3.5 w-3.5" />}
-            Accept Invitation
-          </button>
-        )}
-        <button
+        <Button
+          onClick={onAccept}
+          disabled={busy}
+          className="inline-flex h-auto items-center gap-1.5 rounded-lg bg-gradient-peacock px-4 py-2 font-sans text-xs font-semibold text-primary-foreground hover:opacity-90 disabled:opacity-60"
+        >
+          {busy ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Check className="h-3.5 w-3.5" />}
+          Accept Invitation
+        </Button>
+        <Button
+          variant="outline"
           onClick={onDecline}
           disabled={busy}
           className="inline-flex items-center gap-1.5 rounded-lg border border-border px-4 py-2 font-sans text-xs font-semibold text-muted-foreground hover:border-destructive hover:text-destructive disabled:opacity-60"
         >
           <X className="h-3.5 w-3.5" /> Decline
-        </button>
+        </Button>
       </div>
     </div>
   );
 }
 
-/** Shown after a member accepts a contribution-based parayanam. */
-export function AwaitingContributionCard({ invite: i, onPaid }: { invite: PendingInvite; onPaid?: () => void }) {
-  const { canViewExternalPaymentLinks, canPayInApp } = useCapabilities();
-  const { pay, payingId } = useParayanamPayment();
-  const [payError, setPayError] = useState<string | null>(null);
-  const contributionSettled = i.contribution_status === "confirmed" || i.contribution_status === "not_required";
-  const paying = payingId === i.challenge_session_id;
-
-  const payNow = async () => {
-    setPayError(null);
-    await pay(i.challenge_session_id, {
-      onPaid: () => onPaid?.(),
-      onError: () => setPayError("Payment not completed"),
-    });
-  };
-
-  if (contributionSettled) return null;
-
-  const paidPending = i.participation_type === "PAID" && i.contribution_status === "pending";
-
-  if (!canPayInApp && !canViewExternalPaymentLinks) {
-    return (
-      <div className="rounded-xl border border-primary/40 bg-primary/5 p-4">
-        <p className="flex items-center gap-2 font-display text-base font-semibold text-foreground">
-          <Clock className="h-4 w-4 text-primary" /> {paidPending ? "Complete your contribution" : "Awaiting Guru approval"}
-        </p>
-        <p className="mt-1 font-sans text-xs text-muted-foreground">
-          {paidPending
-            ? `Complete your contribution below to join ${i.parayanam_name ?? "this parayanam"}.`
-            : `Your participation in ${i.parayanam_name ?? "this parayanam"} is awaiting approval from the Guru.`}
-        </p>
-        {paidPending && (
-          <p className="mt-2 font-sans text-[11px] leading-snug text-muted-foreground">
-            To complete your contribution, message your Guru directly, or open narayaneeyam.app in your phone's
-            browser to pay online.
-          </p>
-        )}
-      </div>
-    );
-  }
+/** Shown after a member accepts a parayanam that needs Guru approval. */
+export function AwaitingContributionCard({ invite: i }: { invite: PendingInvite }) {
+  const { canViewExternalPaymentLinks } = useCapabilities();
+  if (i.contribution_status === "confirmed" || i.contribution_status === "not_required") return null;
 
   return (
     <div className="rounded-xl border border-primary/40 bg-primary/5 p-4">
       <p className="flex items-center gap-2 font-display text-base font-semibold text-foreground">
-        <Clock className="h-4 w-4 text-primary" /> {paidPending ? "Complete your contribution" : "Awaiting Guru approval"}
+        <Clock className="h-4 w-4 text-primary" /> Awaiting Guru approval
       </p>
       <p className="mt-1 font-sans text-xs text-muted-foreground">
-        {paidPending
-          ? `Complete your contribution below to join ${i.parayanam_name ?? "this parayanam"}.`
-          : `You have accepted the invitation to ${i.parayanam_name ?? "this parayanam"}. Your access opens once${i.guru_name ? ` ${i.guru_name}` : " your Guru"} approves your contribution.`}
+        Your request to join {i.parayanam_name ?? "this parayanam"} has been received. You will be notified as soon as your place is confirmed.
       </p>
-      {i.contribution_amount != null && (
-        <p className="mt-2 font-sans text-xs text-foreground/80">Contribution: ₹{i.contribution_amount}</p>
+      {canViewExternalPaymentLinks && (
+        <p className="mt-2 font-sans text-xs text-muted-foreground">
+          Please check your email, including spam, for details.
+        </p>
       )}
-      {i.payment_url && canViewExternalPaymentLinks ? (
-        isPaymentLink(i.payment_url) ? (
-          <a
-            href={i.payment_url.trim()}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="mt-2 inline-flex items-center gap-1 font-sans text-xs text-primary underline underline-offset-2"
-          >
-            <HandCoins className="h-3.5 w-3.5" /> Make Payment
-            <ExternalLink className="h-3 w-3" />
-          </a>
-        ) : (
-          <p className="mt-2 whitespace-pre-wrap font-sans text-xs text-foreground/80">{i.payment_url}</p>
-        )
-      ) : (
-        paidPending && canPayInApp && (
-          <div className="mt-3">
-            <button
-              onClick={() => void payNow()}
-              disabled={paying}
-              className="inline-flex items-center gap-1.5 rounded-lg bg-gradient-peacock px-4 py-2 font-sans text-xs font-semibold text-primary-foreground hover:opacity-90 disabled:opacity-60"
-            >
-              {paying ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <HandCoins className="h-3.5 w-3.5" />}
-              {i.contribution_amount != null ? `Pay ₹${i.contribution_amount}` : "Pay"}
-            </button>
-            {payError && <p className="mt-2 font-sans text-xs text-destructive">{payError}</p>}
-          </div>
-        )
-      )}
-      <p className="mt-2 font-sans text-[11px] leading-snug text-muted-foreground">
-        This contribution goes directly to the Guru — narayaneeyam.app does not process, verify, or hold this payment.
-      </p>
-      {i.payment_note && <p className="mt-2 font-sans text-xs italic text-muted-foreground">{i.payment_note}</p>}
       {i.general_note && <p className="mt-2 font-sans text-xs italic text-muted-foreground">{i.general_note}</p>}
     </div>
   );

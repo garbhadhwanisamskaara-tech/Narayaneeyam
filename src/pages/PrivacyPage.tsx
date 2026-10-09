@@ -22,7 +22,7 @@ const jsonLd = {
       contactType: "Privacy",
     },
   },
-  dateModified: "2026-09-06",
+  dateModified: "2026-10-09",
 };
 
 export default function PrivacyPage() {
@@ -60,7 +60,7 @@ export default function PrivacyPage() {
           <span className="text-xs font-sans uppercase tracking-[0.2em] text-secondary">Legal</span>
           <h1 className="font-display text-3xl sm:text-4xl text-primary mt-3 mb-3">Privacy Policy</h1>
           <div className="mx-auto h-[2px] w-20 bg-gradient-gold rounded-full mb-3" />
-          <p className="text-sm font-sans text-muted-foreground">Last updated: 6 September 2026</p>
+          <p className="text-sm font-sans text-muted-foreground">Last updated: 9 October 2026</p>
         </header>
 
         <p className="text-sm font-sans text-muted-foreground mb-8">
@@ -98,13 +98,16 @@ export default function PrivacyPage() {
                 your account and keep your progress safe.
               </li>
               <li>
-                <strong>Payment information:</strong> If you subscribe to a paid plan or make a contribution
-                to join a paid group parayanam, your payment is processed by Razorpay. We do not store
+                <strong>Payment information:</strong> If you subscribe to a paid plan, your payment is processed by Razorpay. We do not store
                 your raw card numbers, CVV, or other payment instrument details. Razorpay handles
-                payment processing and shares only the payment status, subscription details, and
-                contribution status with us. Should in-app purchases or subscriptions be introduced
+                payment processing and shares only the payment status and subscription details
+                with us. Should in-app purchases or subscriptions be introduced
                 within the Android app in the future, they will be processed through Google Play's
                 billing system in accordance with Google Play policies.
+              </li>
+              <li>
+                <strong>Parayanam participation:</strong> We store your invitation, acceptance, and Guru approval
+                status so we can confirm your place and notify you when access is available.
               </li>
               <li>
                 <strong>Usage data:</strong> We record your progress through the Dashakams, chanting
@@ -127,7 +130,7 @@ export default function PrivacyPage() {
             <p>We use the information we collect for these purposes:</p>
             <ul className="list-disc pl-5 space-y-2">
               <li>To provide the app's core features: chanting, audio playback, progress tracking, and group parayanam.</li>
-              <li>To process your subscription payments and parayanam contributions, and manage your trial or billing period.</li>
+              <li>To manage parayanam requests and approvals, subscription status, and your trial or billing period.</li>
               <li>To send you reminders, festival alerts, and gentle nudges about your practice (only if you opt in).</li>
               <li>To improve the app, fix issues, and understand how devotees use the features we build.</li>
               <li>To communicate with you about your account, support requests, or important policy updates.</li>

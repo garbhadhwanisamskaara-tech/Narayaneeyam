@@ -84,8 +84,6 @@ export default function ManageParayanamDialog({
 
   const [participationType, setParticipationType] = useState<"FREE" | "PAID">("FREE");
   const [contributionAmount, setContributionAmount] = useState("");
-  const [paymentDetails, setPaymentDetails] = useState("");
-  const [paymentNote, setPaymentNote] = useState("");
   const [autoInvite, setAutoInvite] = useState(false);
   const [autoInviteConfirmOpen, setAutoInviteConfirmOpen] = useState(false);
   const [loadingDetails, setLoadingDetails] = useState(false);
@@ -110,8 +108,6 @@ export default function ManageParayanamDialog({
         delivery_mode,
         participation_type,
         contribution_amount,
-        payment_url,
-        payment_note,
         distribution_mode,
         schedule_pattern,
         schedule_weekdays,
@@ -148,8 +144,6 @@ export default function ManageParayanamDialog({
 
           setContributionAmount(sessionData.contribution_amount != null ? String(sessionData.contribution_amount) : "");
 
-          setPaymentDetails(sessionData.payment_url ?? "");
-          setPaymentNote(sessionData.payment_note ?? "");
           setAutoInvite(sessionData.auto_invite_group_members === true);
         }
 
@@ -330,15 +324,6 @@ export default function ManageParayanamDialog({
         });
         return;
       }
-
-      if (!paymentDetails.trim()) {
-        toast({
-          title: "Add payment / contribution details",
-          description: "You can enter a payment link, GPay number, UPI ID or other payment instructions.",
-          variant: "destructive",
-        });
-        return;
-      }
     }
 
     setBusy(true);
@@ -348,8 +333,6 @@ export default function ManageParayanamDialog({
       .update({
         participation_type: participationType,
         contribution_amount: participationType === "PAID" ? Number(contributionAmount) : null,
-        payment_url: participationType === "PAID" ? paymentDetails.trim() || null : null,
-        payment_note: paymentNote.trim() || null,
       })
       .eq("id", sessionId);
 
@@ -370,8 +353,6 @@ export default function ManageParayanamDialog({
             ...prev,
             participation_type: participationType,
             contribution_amount: participationType === "PAID" ? Number(contributionAmount) : null,
-            payment_url: participationType === "PAID" ? paymentDetails.trim() || null : null,
-            payment_note: paymentNote.trim() || null,
           }
         : prev,
     );
@@ -640,40 +621,8 @@ export default function ManageParayanamDialog({
                     />
                   </div>
 
-                  {/* Payment details */}
-                  <div>
-                    <label className="font-sans text-xs font-semibold text-foreground">
-                      Payment / contribution details
-                    </label>
-
-                    <textarea
-                      value={paymentDetails}
-                      onChange={(e) => setPaymentDetails(e.target.value)}
-                      rows={3}
-                      placeholder="Razorpay link, GPay number, UPI ID or other payment instructions"
-                      className="mt-2 w-full resize-y rounded-lg border border-border bg-background px-3 py-2 font-sans text-sm text-foreground outline-none focus:ring-2 focus:ring-primary"
-                    />
-
-                    <p className="mt-1 font-sans text-xs text-muted-foreground">
-                      If you enter an http/https link, participants will see a clickable Make Payment link. Other
-                      payment details will be shown as text.
-                    </p>
-                  </div>
                 </>
               )}
-
-              {/* Remarks / instructions */}
-              <div>
-                <label className="font-sans text-xs font-semibold text-foreground">Remarks / instructions</label>
-
-                <textarea
-                  value={paymentNote}
-                  onChange={(e) => setPaymentNote(e.target.value)}
-                  rows={3}
-                  placeholder="Any instructions or information for participants"
-                  className="mt-2 w-full resize-y rounded-lg border border-border bg-background px-3 py-2 font-sans text-sm text-foreground outline-none focus:ring-2 focus:ring-primary"
-                />
-              </div>
 
               {participationType === "PAID" && (
                 <div className="rounded-lg border border-border bg-muted/40 p-3">

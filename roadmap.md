@@ -1,3 +1,9 @@
+# Member parayanam approval-only flow
+
+- [x] Remove member checkout and replace payment displays with approval states on web and TWA.
+- [x] Remove Manage's legacy link/note inputs; preserve owner tools, subscriptions, and server/database objects.
+- [x] Test joining rules and audit every remaining requested payment reference.
+
 # Progress dashboard redesign
 
 - [x] Reuse the existing lotus and visual tokens.
