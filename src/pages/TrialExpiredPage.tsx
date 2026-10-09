@@ -1,17 +1,16 @@
 import { motion } from "framer-motion";
-import { Clock, Mail, LogOut } from "lucide-react";
+import { Clock, LogOut } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 import logoImg from "@/assets/logo.png";
 import SEO from "@/components/SEO";
-import { SUBSCRIPTION_ENABLED } from "@/config/features";
 
 export default function TrialExpiredPage() {
-  const { user, signOut } = useAuth();
+  const { signOut } = useAuth();
 
   return (
     <div className="min-h-screen bg-background flex items-center justify-center px-4">
-      <SEO path="/trial-expired" title="Trial Ended — Sriman Narayaneeyam" description="Your free trial has ended. Upgrade to continue your devotional journey through Sriman Narayaneeyam." />
+      <SEO path="/trial-expired" title="Your access has paused" description="Thank you for chanting with Sriman Narayaneeyam. If you think this is a mistake or would like to continue, please write to namaste@narayaneeyam.app." />
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
@@ -27,40 +26,20 @@ export default function TrialExpiredPage() {
           </div>
 
           <h1 className="font-display text-2xl font-bold text-foreground mb-2">
-            Your Trial Has Ended
+            Your access has paused
           </h1>
           <p className="text-sm text-muted-foreground font-sans mb-6">
-            Thank you for exploring Sriman Narayaneeyam. Your free trial period has concluded.
-            To continue your devotional journey, please upgrade to a paid plan.
+            Thank you for chanting with Sriman Narayaneeyam. If you think this is a mistake or would like to continue, please write to namaste@narayaneeyam.app.
           </p>
 
-          <div className="rounded-xl bg-gradient-peacock p-5 mb-6 text-center">
-            <p className="font-display text-sm text-primary-foreground/80 mb-1">
-              Unlock the full experience
-            </p>
-            <p className="text-xs text-gold-light font-sans">
-              All 100 Dashakams · Chant & Learn modes · Listen · Script Library
-            </p>
-          </div>
-
           <div className="space-y-3">
-            {SUBSCRIPTION_ENABLED && (
-              <a
-                href="mailto:support@narayaneeyam.app?subject=Upgrade%20Request"
-                className="flex items-center justify-center gap-2 w-full rounded-lg bg-gradient-peacock px-4 py-3 text-sm font-sans font-semibold text-primary-foreground hover:opacity-90 transition-opacity"
-              >
-                <Mail className="h-4 w-4" />
-                Contact Us to Upgrade
-              </a>
-            )}
-
             <Button
               variant="outline"
               onClick={() => signOut()}
               className="w-full font-sans"
             >
               <LogOut className="mr-2 h-4 w-4" />
-              Sign Out
+              Sign out
             </Button>
           </div>
         </div>
