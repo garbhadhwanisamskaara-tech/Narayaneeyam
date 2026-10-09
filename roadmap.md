@@ -1,8 +1,8 @@
 # Approval-only help and navigation follow-up
 
-- [ ] Remove Payment History access while retaining unused files, and remove the subscription support category on all platforms.
-- [ ] Update FAQ, guide, and privacy wording; preserve protected subscription/admin/server files.
-- [ ] Verify category behavior and audit remaining member-visible payment references.
+- [x] Remove Payment History access while retaining unused files, and remove the subscription support category on all platforms.
+- [x] Update FAQ, guide, and privacy wording; preserve protected subscription/admin/server files.
+- [x] Verify category behavior and audit remaining member-visible payment references.
 
 # Member parayanam approval-only flow
 
