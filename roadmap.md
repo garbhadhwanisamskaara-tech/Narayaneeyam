@@ -1,5 +1,11 @@
 # Progress dashboard redesign
 
+# Member parayanam approval-only flow
+
+- [ ] Remove member checkout and replace payment displays with approval states on web and TWA.
+- [ ] Remove Manage's legacy link/note inputs; preserve owner tools, subscriptions, and server/database objects.
+- [ ] Test joining rules and audit every remaining requested payment reference.
+
 - [x] Reuse the existing lotus and visual tokens.
 - [x] Redesign Progress summary, recent completions, and parayanam garden access.
 - [x] Add the owner-only searchable, filterable, sortable member progress table.
