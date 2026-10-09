@@ -49,7 +49,6 @@ import AdminUploadPage from "./pages/AdminUploadPage";
 import SupportPage from "./pages/SupportPage";
 import SubscribePage from "./pages/SubscribePage";
 import { SUBSCRIPTION_ENABLED } from "@/config/features";
-import PaymentHistoryPage from "./pages/PaymentHistoryPage";
 import UserGuidePage from "./pages/UserGuidePage";
 import VerifyEmailPage from "./pages/VerifyEmailPage";
 import TrialExpiredPage from "./pages/TrialExpiredPage";
@@ -125,7 +124,6 @@ const App = () => {
                     path="/subscribe"
                     element={SUBSCRIPTION_ENABLED ? <SubscribePage /> : <Navigate to="/" replace />}
                   />
-                  <Route path="/payment-history" element={<RequireCapability capability="canViewPaymentHistory"><PaymentHistoryPage /></RequireCapability>} />
                   <Route path="/user-guide" element={<UserGuidePage />} />
                   <Route path="/preferences" element={<PreferencesPage />} />
                   <Route path="/shlokas" element={<ShlokasPage />} />

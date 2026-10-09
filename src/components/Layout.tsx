@@ -17,7 +17,6 @@ import {
   SlidersHorizontal,
   ChevronDown,
   Shield,
-  Receipt,
 } from "lucide-react";
 
 import { useState, useEffect } from "react";
@@ -29,7 +28,6 @@ import SubscriptionBanner from "@/components/SubscriptionBanner";
 import PwaInstallBanner from "@/components/PwaInstallBanner";
 import PaidParayanamBadge from "@/components/PaidParayanamBadge";
 import { SUBSCRIPTION_ENABLED } from "@/config/features";
-import { useCapabilities } from "@/hooks/useCapabilities";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -56,7 +54,6 @@ export default function Layout({ children }: { children: React.ReactNode }) {
     return false;
   });
   const { user, displayName, signOut, loading, isEmailVerified, isAccessLocked } = useAuth();
-  const { canViewPaymentHistory } = useCapabilities();
 
   const toggleTheme = () => {
     const next = !isDark;
@@ -202,14 +199,6 @@ export default function Layout({ children }: { children: React.ReactNode }) {
                       <Link to="/subscribe">
                         <CreditCard className="mr-2 h-4 w-4" />
                         Subscription
-                      </Link>
-                    </DropdownMenuItem>
-                  )}
-                  {canViewPaymentHistory && (
-                    <DropdownMenuItem asChild className="cursor-pointer">
-                      <Link to="/payment-history">
-                        <Receipt className="mr-2 h-4 w-4" />
-                        Payment History
                       </Link>
                     </DropdownMenuItem>
                   )}
