@@ -163,13 +163,16 @@ export default function PrivacyPage() {
           </div>
         </section>
 
-        <section className="mb-8">
+        <section id="delete-account" className="mb-8">
           <h2 className="font-display text-xl text-primary mb-3">5. Data Retention</h2>
           <div className="font-sans text-foreground/80 leading-relaxed space-y-3">
             <p>
               We keep your account and progress data for as long as your account is active. If you delete
               your account, we will remove or anonymize your personal information within a reasonable time,
               except where we need to retain it for legal, security, or fraud-prevention purposes.
+            </p>
+            <p>
+              To delete your Sriman Narayaneeyam account, sign in and go to My Preferences → Delete My Account. If you can’t sign in, email namaste@narayaneeyam.app from your registered email address and we will delete your account and data.
             </p>
             <p>
               You can request account deletion at any time through the "Delete My Account" option in
