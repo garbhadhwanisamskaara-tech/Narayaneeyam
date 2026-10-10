@@ -1,7 +1,7 @@
 # Trial date and member wording
 
 - [x] Update only the fixed trial end date to 2099-12-31T23:59:59+05:30.
-- [ ] Audit requested date references and verify the date rule; keep SubscribePage, admin, and access/grace logic unchanged.
+- [x] Audit requested date references and verify the date rule; keep SubscribePage, admin, and access/grace logic unchanged.
 
 # Approval-only help and navigation follow-up
 
