@@ -1,3 +1,8 @@
+# Trial date and member wording
+
+- [x] Update only the fixed trial end date to 2099-12-31T23:59:59+05:30.
+- [x] Audit requested date references and verify the date rule; keep SubscribePage, admin, and access/grace logic unchanged.
+
 # Approval-only help and navigation follow-up
 
 - [x] Remove Payment History access while retaining unused files, and remove the subscription support category on all platforms.
