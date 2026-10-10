@@ -41,17 +41,11 @@ export default function TrialStatusLine() {
     plan.duration_label ? `/${plan.duration_label}` : ""
   }`;
 
-  const expiryDate = new Date(profile.subscription_end!).toLocaleDateString("en-GB", {
-    day: "numeric",
-    month: "short",
-    year: "numeric",
-  });
-
   return (
     <div className="w-full bg-background border-b border-border px-4 py-2 text-center">
       <p className="text-[11px] sm:text-xs text-muted-foreground leading-snug">
         <span className="line-through">{priceText}</span>
-        <span className="text-secondary-foreground">{" — you're on free trial till "}{expiryDate}</span>
+        <span className="text-secondary-foreground"> — chanting is free to use</span>
       </p>
     </div>
   );

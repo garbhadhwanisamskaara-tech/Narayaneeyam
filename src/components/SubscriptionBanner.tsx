@@ -97,18 +97,12 @@ export default function SubscriptionBanner() {
 
   if (isTrialActive && trialExpiresAt) {
     const left = daysUntil(trialExpiresAt);
-    const expiryDate = new Date(trialExpiresAt).toLocaleDateString("en-IN", {
-      day: "numeric",
-      month: "long",
-      year: "numeric",
-    });
 
     if (left <= REMINDER_WINDOW_DAYS) {
       return (
         <div className="bg-amber-50 dark:bg-amber-900/20 border-b border-amber-200 dark:border-amber-800 px-4 py-2 flex flex-wrap items-center justify-center gap-3 text-xs font-sans text-foreground">
           <span>
-            🙏 Your free trial ends in {left} {left === 1 ? "day" : "days"} ({expiryDate}) — subscribe to keep
-            chanting.
+            🙏 Have a question? Check our FAQ
           </span>
           <div className="flex items-center gap-2">
             <Link
@@ -125,7 +119,7 @@ export default function SubscriptionBanner() {
 
     return (
       <div className="bg-amber-50 dark:bg-amber-900/20 border-b border-amber-200 dark:border-amber-800 px-4 py-2 flex items-center justify-center gap-3 text-xs font-sans text-foreground">
-        <span>🙏 You are on a free trial valid until {expiryDate}</span>
+        <span>🙏 Have a question? Check our FAQ</span>
         {supportButton}
       </div>
     );
