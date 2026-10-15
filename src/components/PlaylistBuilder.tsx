@@ -129,7 +129,7 @@ export default function PlaylistBuilder({ mode, open, onClose, onStartPlaylist }
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
-        className="fixed inset-0 z-50 bg-black/50 flex items-end lg:items-center justify-center"
+        className="fixed inset-0 z-[60] bg-black/50 flex items-end lg:items-center justify-center"
         onClick={onClose}
       >
         <motion.div
@@ -284,7 +284,7 @@ export default function PlaylistBuilder({ mode, open, onClose, onStartPlaylist }
 
           {/* Footer actions */}
           {!showSaved && (
-            <div className="border-t border-border px-5 py-3 flex items-center gap-2 flex-wrap">
+            <div className="border-t border-border px-5 pt-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] flex items-center gap-2 flex-wrap">
               <button
                 onClick={() => setIsShuffle(!isShuffle)}
                 className={`flex items-center gap-1 rounded-lg px-3 py-1.5 text-xs font-sans transition-colors ${
