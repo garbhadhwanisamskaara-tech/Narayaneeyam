@@ -44,3 +44,8 @@
 - [x] Add optional two-step actions to journey day cards without changing single-step days.
 - [x] Add a clear View journey affordance to every journey list card.
 - [x] Verify types, tests, and both card states.
+# Custom Playlist action bar on phones
+
+- [x] Raise the playlist panel above the bottom navigation and add gesture-bar safe-area padding to its action bar.
+- [x] Keep the header and Shuffle / Save / Play bar fixed while only the dashakam grid and selected list scroll.
+- [x] Verify on a phone-sized Listen and Chant screen that Save and Play are visible without scrolling.
