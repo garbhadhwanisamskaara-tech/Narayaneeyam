@@ -59,7 +59,7 @@ export default function VerseIcons({ prasadam, slokaAudioId, onPlaySloka }: Vers
           onClick={onPlaySloka}
           title="This verse has a supplementary sloka"
           aria-label="Play supplementary sloka"
-          className="relative inline-flex cursor-pointer items-center rounded-full border border-gold-dark bg-gold-dark px-2 py-0.5 text-xs font-sans font-medium leading-tight text-gold-light transition-colors hover:bg-gold-dark/90 focus:outline-none focus-visible:ring-2 focus-visible:ring-gold-dark/50"
+          className="relative inline-flex cursor-pointer items-center whitespace-nowrap rounded-full border border-gold-dark bg-gold-dark px-2 py-0.5 text-xs font-sans font-medium leading-tight text-gold-light transition-colors hover:bg-gold-dark/90 focus:outline-none focus-visible:ring-2 focus-visible:ring-gold-dark/50"
           style={{
             boxShadow: "0 0 10px -2px hsl(42 70% 40% / 0.45), 0 0 18px -6px hsl(42 70% 40% / 0.25)",
           }}
