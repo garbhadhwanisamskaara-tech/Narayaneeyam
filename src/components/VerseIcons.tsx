@@ -57,11 +57,14 @@ export default function VerseIcons({ prasadam, slokaAudioId, onPlaySloka }: Vers
         <button
           type="button"
           onClick={onPlaySloka}
-          className="flex cursor-pointer items-center justify-center text-base text-gold transition-transform hover:scale-110 hover:text-gold-light"
           title="This verse has a supplementary sloka"
-          aria-label="Play sloka"
+          aria-label="Play supplementary sloka"
+          className="relative inline-flex cursor-pointer items-center rounded-full border border-gold-dark bg-gold-dark px-2 py-0.5 text-xs font-sans font-medium leading-tight text-gold-light transition-colors hover:bg-gold-dark/90 focus:outline-none focus-visible:ring-2 focus-visible:ring-gold-dark/50 before:absolute before:left-0 before:top-1/2 before:h-11 before:w-full before:-translate-y-1/2 before:content-['']"
+          style={{
+            boxShadow: "0 0 10px -2px hsl(42 70% 40% / 0.45), 0 0 18px -6px hsl(42 70% 40% / 0.25)",
+          }}
         >
-          📿
+          + Sloka
         </button>
       )}
     </div>
