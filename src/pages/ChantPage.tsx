@@ -1436,7 +1436,7 @@ export default function ChantPage() {
                   <X className="h-4 w-4" />
                 </button>
                 <div className="shrink-0 border-b border-border bg-card px-4 pb-3 pt-4 sm:px-6">
-                  <p className="mb-3 pr-8 text-xs font-sans uppercase tracking-wide text-muted-foreground">📿 Sloka</p>
+                  <p className="mb-3 pr-8 text-xs font-sans uppercase tracking-wide text-muted-foreground">Sloka</p>
                   <div className="flex flex-wrap items-center gap-2">
                     <button
                       type="button"
