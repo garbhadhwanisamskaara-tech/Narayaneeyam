@@ -67,14 +67,14 @@ export default function FestivalBanner() {
         {/* Dismiss button */}
         <button
           onClick={handleDismiss}
-          className="absolute top-3 right-3 rounded-full p-1 text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
+          className="absolute top-3 right-3 z-10 rounded-full p-1 text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
           title="Dismiss for today"
         >
           <X className="h-4 w-4" />
         </button>
 
         {/* Decorative glow */}
-        <div className="absolute -top-10 -right-10 h-32 w-32 rounded-full bg-secondary/10 blur-3xl animate-glow-pulse" />
+        <div className="pointer-events-none absolute -top-10 -right-10 h-32 w-32 rounded-full bg-secondary/10 blur-3xl animate-glow-pulse" />
 
         <div className="relative">
           <div className="flex items-center gap-2 mb-3">
