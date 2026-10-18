@@ -54,3 +54,10 @@
 
 - [x] Make the decorative glow ignore pointer events and raise the dismiss button above it.
 - [x] Verify dismiss, pill collapse, reopen, and same-day persistence on phone and desktop sizes.
+
+# Today's Dashakam card controls
+
+- [x] Add a top-right × that hides the card for the rest of the Kolkata day, stored locally.
+- [x] Add an outline Listen button beside Chant Now that opens the same dashakam, and a "+N more" line that opens the queue list.
+- [x] Verify on phone and desktop sizes that the card, its buttons, and the queue panel behave, with no page errors.
+
