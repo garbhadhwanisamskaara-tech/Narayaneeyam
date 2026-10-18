@@ -185,7 +185,7 @@ export default function Index() {
       <TrialStatusLine />
       {/* Hero Section */}
       <section className="relative overflow-hidden">
-        <div className="absolute inset-0">
+        <div className="pointer-events-none absolute inset-0">
           <img src={heroBg} alt="Lord Mahavishnu at Guruvayur" className="h-full w-full object-contain object-top" />
           <div className="absolute inset-0 bg-gradient-to-b from-peacock-dark/80 via-peacock/60 to-background" />
         </div>
