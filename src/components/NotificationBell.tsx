@@ -106,6 +106,14 @@ export default function NotificationBell() {
     return () => document.removeEventListener("mousedown", onDown);
   }, [open]);
 
+  // "+N more" on the home card jumps straight to this panel's queue list.
+  useEffect(() => {
+    const openQueue = () => setOpen(true);
+    window.addEventListener("open-dashakam-queue", openQueue);
+    return () => window.removeEventListener("open-dashakam-queue", openQueue);
+  }, []);
+
+
   const declineContribution = async (id: string) => {
     setDeclineError(null);
     try {

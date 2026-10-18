@@ -1,4 +1,6 @@
 import { useState, useRef, useEffect, useCallback, useMemo } from "react";
+import { useSearchParams } from "react-router-dom";
+
 import { motion } from "framer-motion";
 import { Play, Pause, SkipBack, SkipForward, ListMusic, Volume2 } from "lucide-react";
 import { useDashakam, getDashakamName, prefetchDashakamList } from "@/hooks/useDashakam";
@@ -30,6 +32,13 @@ export default function PodcastPage() {
   const [muted, toggleMuted] = useGlobalMute();
   const engine = useAudioEngine();
   const [currentDashakam, setCurrentDashakam] = useState(1);
+  /** Dashakam named in the URL (?dashakam=N) — "Listen" from a card opens that one. */
+  const [searchParams] = useSearchParams();
+  const dashakamFromUrl = useMemo(() => {
+    const n = Number(searchParams.get("dashakam"));
+    return Number.isInteger(n) && n >= 1 && n <= 100 ? n : null;
+  }, [searchParams]);
+
   /** User intent to play. The visible state always comes from the engine. */
   const [wantsPlay, setWantsPlay] = useState(false);
   const isPlaying = engine.state.isPlaying;
@@ -176,8 +185,13 @@ export default function PodcastPage() {
     setPlayMode("single");
   };
 
-  // Restore last position
+  // Restore last position — an explicit ?dashakam= link wins over what was
+  // played last, so a card's Listen button opens the dashakam it names.
   useEffect(() => {
+    if (dashakamFromUrl) {
+      setCurrentDashakam(dashakamFromUrl);
+      return;
+    }
     const saved = getProgress();
     if (saved.podcastState) {
       setCurrentDashakam(saved.podcastState.dashakam);
@@ -185,7 +199,8 @@ export default function PodcastPage() {
     } else if (saved.lastDashakam) {
       setCurrentDashakam(saved.lastDashakam);
     }
-  }, []);
+  }, [dashakamFromUrl]);
+
 
   // Save position
   useEffect(() => {
