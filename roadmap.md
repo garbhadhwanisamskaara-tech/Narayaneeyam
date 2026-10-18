@@ -49,3 +49,8 @@
 - [x] Raise the playlist panel above the bottom navigation and add gesture-bar safe-area padding to its action bar.
 - [x] Keep the header and Shuffle / Save / Play bar fixed while only the dashakam grid and selected list scroll.
 - [x] Verify on a phone-sized Listen and Chant screen that Save and Play are visible without scrolling.
+
+# Festival card dismiss fix
+
+- [x] Make the decorative glow ignore pointer events and raise the dismiss button above it.
+- [x] Verify dismiss, pill collapse, reopen, and same-day persistence on phone and desktop sizes.
