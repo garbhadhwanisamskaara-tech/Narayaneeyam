@@ -3,24 +3,11 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { usePwaInstall } from "@/hooks/usePwaInstall";
 
-const VISIT_KEY = "pwa_visit_count";
-const SESSION_KEY = "pwa_visit_counted";
-
-/** Counts one visit per browser session (no existing app-wide visit counter exists). */
-function bumpVisitCount(): number {
-  if (typeof window === "undefined") return 0;
-  try {
-    const current = Number(localStorage.getItem(VISIT_KEY) ?? "0") || 0;
-    if (sessionStorage.getItem(SESSION_KEY)) return current;
-    const next = current + 1;
-    localStorage.setItem(VISIT_KEY, String(next));
-    sessionStorage.setItem(SESSION_KEY, "1");
-    return next;
-  } catch {
-    return 0;
-  }
-}
-
+/**
+ * The install prompt is offered from a member's very first signed-in visit.
+ * It stays hidden only for people who already have the app (installed or the
+ * Play Store app), or who chose "No" or "Maybe later".
+ */
 export function usePwaPromptEligibility() {
   const { user } = useAuth();
   const { isInstalled, isTwa } = usePwaInstall();
@@ -28,7 +15,6 @@ export function usePwaPromptEligibility() {
 
   useEffect(() => {
     let cancelled = false;
-    const visits = bumpVisitCount();
 
     if (!user || isInstalled || isTwa) {
       setEligible(false);
@@ -52,18 +38,7 @@ export function usePwaPromptEligibility() {
           return;
         }
 
-        if (visits >= 2) {
-          if (!cancelled) setEligible(true);
-          return;
-        }
-
-        // Otherwise: has the user ever completed a Dashakam?
-        const { count } = await (supabase as any)
-          .from("user_progress")
-          .select("id", { count: "exact", head: true })
-          .eq("user_id", user.id);
-
-        if (!cancelled && (count ?? 0) > 0) setEligible(true);
+        if (!cancelled) setEligible(true);
       } catch {
         // silent — never block the app on the install prompt
       }
