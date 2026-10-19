@@ -53,25 +53,6 @@ export default function FestivalReminder() {
 
   if (loading) return null;
 
-  // On the day — "have you read?"
-  if (todayFestival) {
-    return (
-      <div className="mb-4 flex flex-wrap items-center gap-3 rounded-xl border border-secondary/40 bg-secondary/10 px-4 py-3 text-sm font-sans text-foreground">
-        <Sparkles className="h-4 w-4 text-secondary" />
-        <span>
-          Today is {todayFestival.festival_name} — have you read Dashakam{" "}
-          {todayFestival.dashakams.join(", ")}?
-        </span>
-        <Link
-          to={`/chant?dashakam=${todayFestival.dashakams[0] ?? 1}`}
-          className="rounded-md bg-primary px-3 py-1 text-xs font-semibold text-primary-foreground hover:opacity-90"
-        >
-          Read now
-        </Link>
-      </div>
-    );
-  }
-
   // 4 days (or fewer) before — gentle in-app alert.
   const upcoming = upcomingFestivals.find((f) => f.daysUntil > 0 && f.daysUntil <= 4);
   if (!upcoming) return null;
