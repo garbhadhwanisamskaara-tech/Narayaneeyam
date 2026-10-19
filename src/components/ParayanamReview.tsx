@@ -1,4 +1,5 @@
 import { Check, X } from "lucide-react";
+import { participationLabel } from "@/lib/participationLabel";
 
 type Row = { label: string; value: string; ok?: boolean };
 
@@ -66,9 +67,7 @@ export default function ParayanamReview(props: ParayanamReviewProps) {
   }
 
   rows.push(
-    contribution
-      ? { label: "Participation", value: `${contribution.amount} to join` }
-      : { label: "Participation", value: "Free to join" },
+    { label: "Participation", value: participationLabel(contribution ? "PAID" : "FREE") },
   );
   if (contribution && contribution.hasPaymentLink !== undefined) {
     rows.push({

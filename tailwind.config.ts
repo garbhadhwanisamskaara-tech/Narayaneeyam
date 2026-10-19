@@ -67,6 +67,8 @@ export default {
           dark: "hsl(var(--cream-dark))",
         },
         "bookmark-gold": "hsl(var(--bookmark-gold))",
+        "character-warning": "hsl(var(--character-warning))",
+        "character-limit": "hsl(var(--character-limit))",
         "favourite-rose": "hsl(var(--favourite-rose))",
         "feather-chant": "hsl(var(--feather-chant))",
         "feather-learn": "hsl(var(--feather-learn))",

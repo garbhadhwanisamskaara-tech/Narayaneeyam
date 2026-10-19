@@ -38,6 +38,8 @@ import LiveScheduleEditor, {
 } from "@/components/LiveScheduleEditor";
 import ParayanamReview from "@/components/ParayanamReview";
 import SEO from "@/components/SEO";
+import CharacterCounter from "@/components/CharacterCounter";
+import { participationLabel } from "@/lib/participationLabel";
 import { toast } from "@/hooks/use-toast";
 
 const today = () => new Date().toISOString().slice(0, 10);
@@ -677,6 +679,7 @@ export default function CreateParayanamPage() {
               className="mt-2 w-full rounded-lg border border-border bg-background px-3 py-2 font-sans text-sm text-foreground outline-none focus:ring-2 focus:ring-primary"
             />
             {nameError && <p className="mt-2 font-sans text-xs text-destructive">{nameError}</p>}
+            <CharacterCounter value={parayanamName} maximum={80} />
           </div>
         )}
 
@@ -694,6 +697,7 @@ export default function CreateParayanamPage() {
               placeholder="Anything you'd like members to know about this parayanam."
               className="mt-2 w-full rounded-lg border border-border bg-background px-3 py-2 font-sans text-sm text-foreground outline-none focus:ring-2 focus:ring-primary"
             />
+            <CharacterCounter value={generalNote} maximum={500} />
           </div>
         )}
 
@@ -1196,8 +1200,8 @@ export default function CreateParayanamPage() {
                     Show this parayanam on the home screen?
                   </span>
                   <span className="mt-1 block font-sans text-xs text-muted-foreground">
-                    Any signed-in user — not just people you've invited — can see and join it from there (paying
-                    first, if this is a paid Parayanam). Declining is remembered, so they won't be asked again.
+                    Any signed-in user — not just people you've invited — can see and join it from there ({participationLabel(participationType)}).
+                    Declining is remembered, so they won't be asked again.
                   </span>
                 </span>
               </label>

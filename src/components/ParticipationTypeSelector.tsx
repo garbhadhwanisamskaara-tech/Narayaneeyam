@@ -1,4 +1,5 @@
 import { HandHeart, Gift } from "lucide-react";
+import { participationLabel } from "@/lib/participationLabel";
 
 /** Stored as 'FREE' | 'PAID'. "PAID" is never shown to the user. */
 export type ParticipationType = "FREE" | "PAID";
@@ -6,14 +7,14 @@ export type ParticipationType = "FREE" | "PAID";
 const OPTIONS: { value: ParticipationType; label: string; hint: string; Icon: typeof Gift }[] = [
   {
     value: "FREE",
-    label: "Free",
+    label: participationLabel("FREE"),
     hint: "Everyone invited can join.",
     Icon: Gift,
   },
   {
     value: "PAID",
-    label: "Contribution required",
-    hint: "Members offer a contribution to take part.",
+    label: participationLabel("PAID"),
+    hint: "Members need the Guru's approval to take part.",
     Icon: HandHeart,
   },
 ];

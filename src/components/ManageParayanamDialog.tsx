@@ -6,6 +6,8 @@ import { toast } from "@/hooks/use-toast";
 import { useCapabilities } from "@/hooks/useCapabilities";
 import BulkConfirmContributions from "@/components/BulkConfirmContributions";
 import type { GroupMember } from "@/hooks/useGroups";
+import { participationLabel } from "@/lib/participationLabel";
+import CharacterCounter from "@/components/CharacterCounter";
 
 import {
   countIncompleteAssignments,
@@ -466,11 +468,7 @@ export default function ManageParayanamDialog({
                 <div>
                   <p className="font-sans text-xs uppercase text-muted-foreground">Participation</p>
                   <p className="font-sans text-sm text-foreground">
-                    {details.participation_type === "PAID"
-                      ? `Contribution required${
-                          details.contribution_amount ? ` · ₹${details.contribution_amount}` : ""
-                        }`
-                      : "Free"}
+                    {participationLabel(details.participation_type)}
                   </p>
                 </div>
 
@@ -548,6 +546,7 @@ export default function ManageParayanamDialog({
                     Save name
                   </button>
                 </div>
+                <CharacterCounter value={name} maximum={80} />
               </div>
 
               {/* Automatic member invitations */}
@@ -587,7 +586,7 @@ export default function ManageParayanamDialog({
                         onChange={() => setParticipationType("FREE")}
                         className="accent-primary"
                       />
-                      Free
+                      {participationLabel("FREE")}
                     </label>
 
                     <label className="flex items-center gap-2 font-sans text-sm text-foreground">
@@ -599,7 +598,7 @@ export default function ManageParayanamDialog({
                         onChange={() => setParticipationType("PAID")}
                         className="accent-primary"
                       />
-                      Contribution required
+                      {participationLabel("PAID")}
                     </label>
                   </div>
                 </div>
