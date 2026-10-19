@@ -31,12 +31,17 @@ function Row({
         onClick={() => setOpen((o) => !o)}
         className="flex w-full items-center justify-between gap-2 py-2 text-left"
       >
-        <span className="min-w-0 truncate font-sans text-sm text-foreground">
-          <span className="font-semibold">{row.sourceName}</span>
-          {showDate && row.scheduledDate && (
-            <span className="text-muted-foreground"> · {shortDate(row.scheduledDate)}</span>
+        <span className="min-w-0">
+          <span className="block truncate font-sans text-sm text-foreground">
+            <span className="font-semibold">{row.parayanamName ?? row.sourceName}</span>
+            {showDate && row.scheduledDate && (
+              <span className="text-muted-foreground"> · {shortDate(row.scheduledDate)}</span>
+            )}
+            <span className="text-muted-foreground"> · {row.items.length}</span>
+          </span>
+          {row.parayanamName && row.sourceName && (
+            <span className="block truncate font-sans text-xs text-muted-foreground">{row.sourceName}</span>
           )}
-          <span className="text-muted-foreground"> · {row.items.length}</span>
         </span>
         {open ? (
           <ChevronDown className="h-4 w-4 shrink-0 text-muted-foreground" />

@@ -13,12 +13,14 @@ export interface QueueItem {
   dashakamNo: number;
   scheduledDate: string;
   sourceName: string;
+  parayanamName?: string | null;
   sessionId: string;
 }
 
 export interface QueueRow {
   key: string;
   sourceName: string;
+  parayanamName?: string | null;
   /** Only set for pending (past-due) rows. */
   scheduledDate?: string;
   items: QueueItem[];
@@ -39,12 +41,17 @@ function todayIso() {
 function groupRows(items: QueueItem[], withDate: boolean): QueueRow[] {
   const map = new Map<string, QueueRow>();
   for (const it of items) {
-    const key = withDate ? `${it.sourceName}|${it.scheduledDate}` : it.sourceName;
+    // One row per parayanam (per date for pending), so members of more than
+    // one parayanam in the same group can tell the rows apart.
+    const key = withDate
+      ? `${it.sourceName}|${it.parayanamName ?? ""}|${it.scheduledDate}`
+      : `${it.sourceName}|${it.parayanamName ?? ""}`;
     let row = map.get(key);
     if (!row) {
       row = {
         key,
         sourceName: it.sourceName,
+        parayanamName: it.parayanamName,
         scheduledDate: withDate ? it.scheduledDate : undefined,
         items: [],
       };
@@ -116,7 +123,7 @@ export function useMyDashakamQueue() {
       const sessionQueries: Promise<any>[] = [
         (supabase as any)
           .from("challenge_sessions")
-          .select("id, group_id, user_id")
+          .select("id, group_id, user_id, parayanam_name")
           .eq("user_id", user.id)
           .is("completed_at", null)
           .not("technical_state", "in", HIDDEN_SESSION_STATES_FILTER),
@@ -125,14 +132,14 @@ export function useMyDashakamQueue() {
         sessionQueries.push(
           (supabase as any)
             .from("challenge_sessions")
-            .select("id, group_id, user_id")
+            .select("id, group_id, user_id, parayanam_name")
             .in("group_id", groupIds)
             .is("completed_at", null)
             .not("technical_state", "in", HIDDEN_SESSION_STATES_FILTER),
         );
       }
       const sessionRes = await Promise.all(sessionQueries);
-      const sessions = new Map<string, { id: string; group_id: string | null; user_id: string }>();
+      const sessions = new Map<string, { id: string; group_id: string | null; user_id: string; parayanam_name: string | null }>();
       for (const res of sessionRes) {
         for (const s of (res.data ?? []) as any[]) sessions.set(s.id, s);
       }
@@ -207,6 +214,7 @@ export function useMyDashakamQueue() {
             scheduledDate: r.scheduled_date,
             sessionId: s.id,
             sourceName,
+            parayanamName: s.parayanam_name ?? null,
           });
         }
         summaryMap.set(sourceName, entry);
@@ -228,6 +236,7 @@ export function useMyDashakamQueue() {
               scheduledDate: r.scheduled_date,
               sessionId: s.id,
               sourceName: s.group_id ? (groupNames.get(s.group_id) ?? "Group") : "Personal",
+              parayanamName: s.parayanam_name ?? null,
             };
           }),
       );

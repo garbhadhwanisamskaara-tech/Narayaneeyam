@@ -15,10 +15,13 @@ import { participationLabel } from "@/lib/participationLabel";
 
 function CollapsibleItem({
   summary,
+  subtitle,
   children,
   onDismiss,
 }: {
   summary: React.ReactNode;
+  /** Optional small muted line shown under the summary. */
+  subtitle?: React.ReactNode;
   children: React.ReactNode;
   /** Optional × next to this row — hides it from the bell on this device only. */
   onDismiss?: () => void;
@@ -31,7 +34,14 @@ function CollapsibleItem({
           onClick={() => setOpen((o) => !o)}
           className="flex min-w-0 flex-1 items-center justify-between gap-2 py-2 text-left"
         >
-          <span className="min-w-0 truncate font-sans text-sm text-foreground">{summary}</span>
+          {subtitle ? (
+            <span className="min-w-0">
+              <span className="block truncate font-sans text-sm text-foreground">{summary}</span>
+              <span className="block truncate font-sans text-xs text-muted-foreground">{subtitle}</span>
+            </span>
+          ) : (
+            <span className="min-w-0 truncate font-sans text-sm text-foreground">{summary}</span>
+          )}
           {open ? (
             <ChevronDown className="h-4 w-4 shrink-0 text-muted-foreground" />
           ) : (
@@ -201,10 +211,11 @@ export default function NotificationBell() {
                         key={i.id}
                         summary={
                           <>
-                            <span className="font-semibold">{i.group_name ?? "A parayanam"}</span>
+                            <span className="font-semibold">{i.parayanam_name ?? i.group_name ?? "A parayanam"}</span>
                             <span className="text-muted-foreground"> · confirm participation</span>
                           </>
                         }
+                        subtitle={i.parayanam_name ? (i.group_name ?? undefined) : undefined}
                         onDismiss={() => dismiss(`invite:${i.id}`)}
                       >
                         <p className="font-sans text-xs text-muted-foreground">
@@ -245,10 +256,11 @@ export default function NotificationBell() {
                         key={`awaiting-${i.id}`}
                         summary={
                           <>
-                            <span className="font-semibold">{i.parayanam_name ?? "A parayanam"}</span>
+                            <span className="font-semibold">{i.parayanam_name ?? i.group_name ?? "A parayanam"}</span>
                             <span className="text-muted-foreground"> · awaiting Guru approval</span>
                           </>
                         }
+                        subtitle={i.parayanam_name ? (i.group_name ?? undefined) : undefined}
                         onDismiss={() => dismiss(`awaiting:${i.id}`)}
                       >
                         <AwaitingContributionCard invite={i} />
