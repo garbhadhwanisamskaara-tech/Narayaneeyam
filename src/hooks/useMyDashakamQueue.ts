@@ -123,7 +123,7 @@ export function useMyDashakamQueue() {
       const sessionQueries: Promise<any>[] = [
         (supabase as any)
           .from("challenge_sessions")
-          .select("id, group_id, user_id")
+          .select("id, group_id, user_id, parayanam_name")
           .eq("user_id", user.id)
           .is("completed_at", null)
           .not("technical_state", "in", HIDDEN_SESSION_STATES_FILTER),
@@ -132,7 +132,7 @@ export function useMyDashakamQueue() {
         sessionQueries.push(
           (supabase as any)
             .from("challenge_sessions")
-            .select("id, group_id, user_id")
+            .select("id, group_id, user_id, parayanam_name")
             .in("group_id", groupIds)
             .is("completed_at", null)
             .not("technical_state", "in", HIDDEN_SESSION_STATES_FILTER),
