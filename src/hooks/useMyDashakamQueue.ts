@@ -139,7 +139,7 @@ export function useMyDashakamQueue() {
         );
       }
       const sessionRes = await Promise.all(sessionQueries);
-      const sessions = new Map<string, { id: string; group_id: string | null; user_id: string }>();
+      const sessions = new Map<string, { id: string; group_id: string | null; user_id: string; parayanam_name: string | null }>();
       for (const res of sessionRes) {
         for (const s of (res.data ?? []) as any[]) sessions.set(s.id, s);
       }
