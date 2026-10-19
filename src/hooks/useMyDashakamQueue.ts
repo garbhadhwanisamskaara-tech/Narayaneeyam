@@ -41,12 +41,17 @@ function todayIso() {
 function groupRows(items: QueueItem[], withDate: boolean): QueueRow[] {
   const map = new Map<string, QueueRow>();
   for (const it of items) {
-    const key = withDate ? `${it.sourceName}|${it.scheduledDate}` : it.sourceName;
+    // One row per parayanam (per date for pending), so members of more than
+    // one parayanam in the same group can tell the rows apart.
+    const key = withDate
+      ? `${it.sourceName}|${it.parayanamName ?? ""}|${it.scheduledDate}`
+      : `${it.sourceName}|${it.parayanamName ?? ""}`;
     let row = map.get(key);
     if (!row) {
       row = {
         key,
         sourceName: it.sourceName,
+        parayanamName: it.parayanamName,
         scheduledDate: withDate ? it.scheduledDate : undefined,
         items: [],
       };
