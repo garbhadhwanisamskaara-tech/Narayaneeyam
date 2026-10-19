@@ -13,14 +13,14 @@ export interface QueueItem {
   dashakamNo: number;
   scheduledDate: string;
   sourceName: string;
-  parayanamName: string | null;
+  parayanamName?: string | null;
   sessionId: string;
 }
 
 export interface QueueRow {
   key: string;
   sourceName: string;
-  parayanamName: string | null;
+  parayanamName?: string | null;
   /** Only set for pending (past-due) rows. */
   scheduledDate?: string;
   items: QueueItem[];
