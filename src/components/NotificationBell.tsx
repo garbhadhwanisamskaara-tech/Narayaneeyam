@@ -256,10 +256,11 @@ export default function NotificationBell() {
                         key={`awaiting-${i.id}`}
                         summary={
                           <>
-                            <span className="font-semibold">{i.parayanam_name ?? "A parayanam"}</span>
+                            <span className="font-semibold">{i.parayanam_name ?? i.group_name ?? "A parayanam"}</span>
                             <span className="text-muted-foreground"> · awaiting Guru approval</span>
                           </>
                         }
+                        subtitle={i.parayanam_name ? (i.group_name ?? undefined) : undefined}
                         onDismiss={() => dismiss(`awaiting:${i.id}`)}
                       >
                         <AwaitingContributionCard invite={i} />
