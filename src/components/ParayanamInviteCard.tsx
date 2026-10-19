@@ -2,6 +2,7 @@ import { Check, Clock, Loader2, Users, X } from "lucide-react";
 import type { PendingInvite } from "@/hooks/useParayanamParticipants";
 import { useCapabilities } from "@/hooks/useCapabilities";
 import { Button } from "@/components/ui/button";
+import { participationLabel } from "@/lib/participationLabel";
 
 const fmt = (d: string | null) => {
   if (!d) return null;
@@ -47,6 +48,9 @@ export default function ParayanamInviteCard({ invite: i, busy, onAccept, onDecli
         <div>
           <span className="text-foreground/80">Mode:</span>{" "}
           {live ? "Live — scheduled online sessions" : "Self-paced — chant at your own time"}
+        </div>
+        <div>
+          <span className="text-foreground/80">Participation:</span> {participationLabel(i.participation_type)}
         </div>
         {live && i.first_session_at && (
           <div>
