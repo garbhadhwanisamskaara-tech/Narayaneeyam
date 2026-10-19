@@ -236,6 +236,7 @@ export function useMyDashakamQueue() {
               scheduledDate: r.scheduled_date,
               sessionId: s.id,
               sourceName: s.group_id ? (groupNames.get(s.group_id) ?? "Group") : "Personal",
+              parayanamName: s.parayanam_name ?? null,
             };
           }),
       );
