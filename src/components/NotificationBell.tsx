@@ -211,10 +211,11 @@ export default function NotificationBell() {
                         key={i.id}
                         summary={
                           <>
-                            <span className="font-semibold">{i.group_name ?? "A parayanam"}</span>
+                            <span className="font-semibold">{i.parayanam_name ?? i.group_name ?? "A parayanam"}</span>
                             <span className="text-muted-foreground"> · confirm participation</span>
                           </>
                         }
+                        subtitle={i.parayanam_name ? (i.group_name ?? undefined) : undefined}
                         onDismiss={() => dismiss(`invite:${i.id}`)}
                       >
                         <p className="font-sans text-xs text-muted-foreground">
