@@ -214,6 +214,7 @@ export function useMyDashakamQueue() {
             scheduledDate: r.scheduled_date,
             sessionId: s.id,
             sourceName,
+            parayanamName: s.parayanam_name ?? null,
           });
         }
         summaryMap.set(sourceName, entry);
