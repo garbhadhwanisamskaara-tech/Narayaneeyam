@@ -11,6 +11,7 @@ import DashakamQueueList from "@/components/DashakamQueueList";
 import MyGardenDialog from "@/components/MyGardenDialog";
 import { track } from "@/lib/analytics";
 import { toast } from "sonner";
+import { participationLabel } from "@/lib/participationLabel";
 
 function CollapsibleItem({
   summary,
@@ -210,6 +211,7 @@ export default function NotificationBell() {
                           {i.dashakams_target ? `${i.dashakams_target} dashakams` : "Parayanam"}
                           {i.start_date ? ` · from ${i.start_date}` : ""}
                           {i.end_date ? ` to ${i.end_date}` : ""}
+                          {` · ${participationLabel(i.participation_type)}`}
                         </p>
                         <div className="mt-2 flex gap-2">
                           <button

@@ -1,3 +1,9 @@
+# Participation labels and field counters
+
+- [x] Centralize participation display labels without changing stored values, queries, or access logic.
+- [x] Add and verify live counters below create/resumed-draft name and remarks fields and the existing Manage name field.
+- [ ] Existing-parayanam remarks counter: blocked because Manage has no remarks editor; adding one requires reading/saving remarks, outside the no-query/logic-change scope.
+
 # Trial date and member wording
 
 - [x] Update only the fixed trial end date to 2099-12-31T23:59:59+05:30.

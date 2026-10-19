@@ -5,6 +5,7 @@ import { motion } from "framer-motion";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
+import { participationLabel } from "@/lib/participationLabel";
 
 interface Discoverable {
   session_id: string;
@@ -114,7 +115,7 @@ function SelfJoinCard({ item, onResolved }: { item: Discoverable; onResolved: ()
           </p>
           <p className="mt-1 text-sm text-muted-foreground font-sans">
             {item.group_name}
-            {item.participation_type === "FREE" ? " · Free to join" : ""}
+            {` · ${participationLabel(item.participation_type)}`}
           </p>
           <p className="mt-1 text-sm text-muted-foreground font-sans break-words">
             Joining parayanam is optional.
