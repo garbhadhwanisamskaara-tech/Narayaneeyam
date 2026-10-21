@@ -58,6 +58,7 @@ import BlogPostPage from "./pages/blog/BlogPostPage";
 import PrivacyPage from "./pages/PrivacyPage";
 import SankalpaMomentPage from "./pages/SankalpaMomentPage";
 import ShlokasPage from "./pages/ShlokasPage";
+import GardenProbePage from "./pages/GardenProbePage";
 
 import CreateParayanamPage from "./pages/CreateParayanamPage";
 
@@ -86,6 +87,7 @@ const App = () => {
             <Route path="/blog" element={<BlogIndexPage />} />
             <Route path="/blog/:slug" element={<BlogPostPage />} />
             <Route path="/privacy" element={<PrivacyPage />} />
+            <Route path="/garden-probe" element={<GardenProbePage />} />
 
             <Route path="/challenges/sankalpa" element={<SankalpaMomentPage />} />
             <Route path="/*" element={
