@@ -52,7 +52,7 @@ describe("DashakamGarden loading state", () => {
     );
 
     expect(screen.queryByText("Tending the garden…")).toBeNull();
-    expect(screen.getByLabelText("Dashakam 7, 1/1 done, 21 Oct, tap to mark complete")).toBeInTheDocument();
-    expect(screen.getByLabelText("Dashakam 8, 0/1 done, 22 Oct, tap to mark complete")).toBeInTheDocument();
+    expect(screen.getByLabelText("Dashakam 7, 21 Oct, tap to mark complete")).toBeInTheDocument();
+    expect(screen.getByLabelText("Dashakam 8, 22 Oct, tap to mark complete")).toBeInTheDocument();
   });
 });
