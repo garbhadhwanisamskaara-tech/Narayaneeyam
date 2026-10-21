@@ -67,3 +67,8 @@
 - [x] Add an outline Listen button beside Chant Now that opens the same dashakam, and a "+N more" line that opens the queue list.
 - [x] Verify on phone and desktop sizes that the card, its buttons, and the queue panel behave, with no page errors.
 
+# Garden loading state
+
+- [x] While the garden is loading, show only its title and the tending message with a small spinner — no grid and no compact preview.
+- [x] Verify in the live preview that no lotus cells appear until the real occurrences arrive, and that the grid then renders them.
+
