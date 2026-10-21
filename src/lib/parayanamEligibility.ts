@@ -4,8 +4,9 @@ import { supabase } from "@/integrations/supabase/client";
  * One consistent concept of "may this member take part in this parayanam".
  *
  * FREE: status = 'confirmed' is enough.
- * PAID: status = 'confirmed' AND contribution_status = 'confirmed'
- *       AND access_status = 'active'. Accepting the invite alone never
+ * PAID: status = 'confirmed' AND access_status = 'active' AND contribution_status
+ *       is 'confirmed' (the Guru approved the contribution) or 'not_required'
+ *       (owner/Guru, exempt from contributing). Accepting the invite alone never
  *       grants access — the Guru must approve the contribution
  *       (manually or through bulk confirmation).
  */
@@ -21,7 +22,8 @@ export function isParticipantEligible(
 ): boolean {
   if (!row || row.status !== "confirmed") return false;
   if (participationType === "PAID") {
-    return row.contribution_status === "confirmed" && row.access_status === "active";
+    const contributes = row.contribution_status === "confirmed" || row.contribution_status === "not_required";
+    return contributes && row.access_status === "active";
   }
   if (participationType === "FREE") return true;
   // Type unknown at the call site: fall back to the row's own gates, which the

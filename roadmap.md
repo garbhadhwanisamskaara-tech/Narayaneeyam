@@ -72,3 +72,8 @@
 - [x] While the garden is loading, show only its title and the tending message with a small spinner — no grid and no compact preview.
 - [x] Verify in the live preview that no lotus cells appear until the real occurrences arrive, and that the grid then renders them.
 
+# Paid parayanam eligibility for exempt owners
+
+- [x] Accept contribution_status "not_required" alongside "confirmed" for PAID parayanams, keeping the confirmed-status and active-access checks.
+- [x] Cover the rule with tests for exempt owners, approved members, pending contributions, and locked access.
+
