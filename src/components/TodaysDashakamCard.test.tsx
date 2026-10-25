@@ -75,8 +75,10 @@ describe("today's dashakam card", () => {
     expect(screen.getByText("Dashakam 13")).toBeTruthy();
     const chantLinks = screen.getAllByRole("link", { name: "Chant" });
     expect(chantLinks.map((l) => l.getAttribute("href"))).toEqual(["/chant/7", "/chant/12", "/chant/13"]);
+    // The main card's own Listen button also matches; it precedes the list.
     const listenLinks = screen.getAllByRole("link", { name: "Listen" });
     expect(listenLinks.map((l) => l.getAttribute("href"))).toEqual([
+      "/listen?dashakam=7",
       "/listen?dashakam=7",
       "/listen?dashakam=12",
       "/listen?dashakam=13",
