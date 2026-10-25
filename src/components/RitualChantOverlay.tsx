@@ -216,10 +216,26 @@ export default function RitualChantOverlay({ chants, useLearnAudio = false, titl
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
-      className="fixed inset-0 z-40 overflow-y-auto overscroll-contain bg-background/95 backdrop-blur-sm"
+      className="fixed inset-0 z-[60] overflow-y-auto overscroll-contain bg-background/95 backdrop-blur-sm pt-[calc(env(safe-area-inset-top)+0.75rem)] pb-[calc(env(safe-area-inset-bottom)+6rem)]"
       style={{ WebkitOverflowScrolling: "touch" }}
     >
+      {/* Fixed Skip: always visible in the top-right corner, clear of the notch */}
+      <button
+        onClick={() => {
+          if (audioRef.current) {
+            audioRef.current.pause();
+            audioRef.current = null;
+          }
+          onComplete();
+        }}
+        aria-label="Skip ritual chant"
+        className="fixed right-4 top-[calc(env(safe-area-inset-top)+0.75rem)] z-10 inline-flex h-9 items-center justify-center gap-1.5 rounded-lg border border-border bg-card px-3 text-xs font-sans font-medium text-foreground hover:bg-muted transition-colors shadow-sm"
+      >
+        <SkipForward className="h-4 w-4" /> Skip
+      </button>
+
       <div className="flex min-h-full items-center justify-center p-4">
+
         <div className="max-w-lg w-full text-center space-y-6">
           <p className="text-xs uppercase tracking-widest text-muted-foreground font-sans">{displayName}</p>
           <p className="text-sm text-muted-foreground font-sans">
@@ -255,7 +271,7 @@ export default function RitualChantOverlay({ chants, useLearnAudio = false, titl
             <span className="font-sans">{isPlaying ? "Playing…" : "Paused"}</span>
           </div>
 
-          <div className="flex items-center justify-center gap-3">
+          <div className="flex flex-wrap items-center justify-center gap-2 sm:gap-3">
             <button
               onClick={togglePlayPause}
               aria-label={isPlaying ? "Pause" : "Play"}
