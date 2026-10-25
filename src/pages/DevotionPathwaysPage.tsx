@@ -77,7 +77,7 @@ export default function DevotionPathwaysPage() {
         </div>
       )}
 
-      <div className="grid gap-4">
+      <div className="grid grid-cols-1 gap-4">
         {activePathways.map((pathway, idx) => {
           const IconComp = iconMap[pathway.icon] || BookOpen;
           return (
@@ -88,7 +88,7 @@ export default function DevotionPathwaysPage() {
               transition={{ delay: idx * 0.07 }}
             >
               <Card
-                className="cursor-pointer hover:shadow-md transition-shadow border-border"
+                className="cursor-pointer hover:shadow-md transition-shadow border-border min-w-0 w-full"
                 onClick={() => setSelectedPathway(pathway)}
               >
                 <CardContent className="flex items-center gap-4 p-4">
@@ -97,7 +97,7 @@ export default function DevotionPathwaysPage() {
                   </div>
                   <div className="flex-1 min-w-0">
                     <h3 className="font-display text-base font-semibold text-foreground">{pathway.name}</h3>
-                    <p className="text-sm text-muted-foreground font-sans truncate">{pathway.description}</p>
+                    <p className="text-sm text-muted-foreground font-sans break-words">{pathway.description}</p>
                   </div>
                   <ChevronRight className="h-5 w-5 text-muted-foreground shrink-0" />
                 </CardContent>
