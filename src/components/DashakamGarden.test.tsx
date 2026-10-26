@@ -56,7 +56,7 @@ describe("DashakamGarden loading state", () => {
     expect(screen.getByLabelText("Dashakam 8, 22 Oct, tap to mark complete")).toBeInTheDocument();
     expect(
       screen.getByText(
-        "Each lotus shows the dashakam to chant that day. Tap it once you've chanted it — tap again to undo.",
+        "Each lotus shows the dashakam to chant that day. It blooms automatically when you finish it in Chant with me or Listen, or tap it once you've chanted — tap again to undo.",
       ),
     ).toBeInTheDocument();
   });
@@ -82,7 +82,7 @@ describe("DashakamGarden loading state", () => {
     ).toBeInTheDocument();
     expect(
       screen.queryByText(
-        "Each lotus shows the dashakam to chant that day. Tap it once you've chanted it — tap again to undo.",
+        "Each lotus shows the dashakam to chant that day. It blooms automatically when you finish it in Chant with me or Listen, or tap it once you've chanted — tap again to undo.",
       ),
     ).toBeNull();
     expect(screen.getByLabelText("Dashakam 8, 22 Oct, tap to mark complete")).toBeEnabled();
