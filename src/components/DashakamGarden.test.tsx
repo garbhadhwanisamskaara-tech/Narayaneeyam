@@ -54,5 +54,54 @@ describe("DashakamGarden loading state", () => {
     expect(screen.queryByText("Tending the garden…")).toBeNull();
     expect(screen.getByLabelText("Dashakam 7, 21 Oct, tap to mark complete")).toBeInTheDocument();
     expect(screen.getByLabelText("Dashakam 8, 22 Oct, tap to mark complete")).toBeInTheDocument();
+    expect(
+      screen.getByText(
+        "Each lotus shows the dashakam to chant that day. Tap it once you've chanted it — tap again to undo.",
+      ),
+    ).toBeInTheDocument();
+  });
+
+  it("explains automatic blooming and locks the tiles for a SESSION garden", () => {
+    render(
+      <DashakamGarden
+        blooms={new Map([["a", 100]])}
+        occurrences={occurrences}
+        tiles={new Map([
+          [
+            "a",
+            {
+              done: 1,
+              total: 1,
+              canTap: false,
+              disabledReason: "Blooms automatically after the day's session",
+            },
+          ],
+          [
+            "b",
+            {
+              done: 0,
+              total: 1,
+              canTap: false,
+              disabledReason: "Blooms automatically after the day's session",
+            },
+          ],
+        ])}
+        onTapDashakam={() => {}}
+        bloomMode="SESSION"
+      />,
+    );
+
+    expect(
+      screen.getByText(
+        "Each lotus shows the dashakam chanted that day. It blooms automatically after the day's session.",
+      ),
+    ).toBeInTheDocument();
+    expect(
+      screen.queryByText(
+        "Each lotus shows the dashakam to chant that day. Tap it once you've chanted it — tap again to undo.",
+      ),
+    ).toBeNull();
+    expect(screen.getByLabelText("Dashakam 7, 21 Oct, Blooms automatically after the day's session")).toBeDisabled();
   });
 });
+
