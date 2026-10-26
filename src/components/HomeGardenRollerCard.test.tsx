@@ -4,6 +4,7 @@ import HomeGardenRollerCard from "./HomeGardenRollerCard";
 
 const mocks = vi.hoisted(() => ({
   sessions: [] as any[],
+  groups: [] as any[],
   participants: [{ challenge_session_id: "reading" }, { challenge_session_id: "session" }],
   filters: vi.fn(),
   toggle: vi.fn(),
@@ -18,7 +19,7 @@ vi.mock("@/integrations/supabase/client", () => ({ supabase: {
       query[method] = (...args: unknown[]) => { mocks.filters(table, method, ...args); return query; };
     }
     query.then = (resolve: (value: unknown) => void) => resolve({
-      data: table === "parayanam_participants" ? mocks.participants : mocks.sessions, error: null,
+      data: table === "parayanam_participants" ? mocks.participants : table === "groups" ? mocks.groups : mocks.sessions, error: null,
     });
     return query;
   },
@@ -33,9 +34,10 @@ vi.mock("@/components/MyGardenDialog", () => ({ default: ({ initialSessionId }: 
 
 beforeEach(() => {
   mocks.user = { id: "member-1" };
+  mocks.groups = [{ id: "grp-1", group_name: "Group" }];
   mocks.sessions = [
-    { id: "reading", parayanam_name: "Morning", bloom_mode: "MY_READING", groups: { group_name: "Group" } },
-    { id: "session", parayanam_name: "Evening", bloom_mode: "SESSION", groups: { group_name: "Group" } },
+    { id: "reading", parayanam_name: "Morning", bloom_mode: "MY_READING", group_id: "grp-1", groups: { group_name: "Group" } },
+    { id: "session", parayanam_name: "Evening", bloom_mode: "SESSION", group_id: "grp-1", groups: { group_name: "Group" } },
   ];
   mocks.filters.mockClear();
   mocks.toggle.mockClear();
@@ -84,5 +86,16 @@ describe("view-only home gardens", () => {
     const { container } = render(<HomeGardenRollerCard />);
     await waitFor(() => expect(mocks.filters).toHaveBeenCalledWith("challenge_sessions", "eq", "show_garden_on_home", true));
     expect(container.childElementCount).toBe(0);
+  });
+
+  it("still shows the group name for a parayanam whose groups embed came back empty", async () => {
+    mocks.sessions = [
+      { id: "reading", parayanam_name: "Vivāha Maṅgala Saptāham", bloom_mode: "MY_READING", group_id: "grp-1", groups: null },
+      { id: "session", parayanam_name: "100DaysWithGuruvayurappan", bloom_mode: "MY_READING", group_id: "grp-1", groups: { group_name: "Group" } },
+    ];
+    render(<HomeGardenRollerCard />);
+    expect(await screen.findByText("Group – Vivāha Maṅgala Saptāham")).toBeTruthy();
+    expect(await screen.findByText("Group – 100DaysWithGuruvayurappan")).toBeTruthy();
+    expect(mocks.filters).toHaveBeenCalledWith("groups", "in", "id", ["grp-1"]);
   });
 });
