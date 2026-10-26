@@ -29,19 +29,24 @@ export function useMyDashakamGarden(sessionId: string | null | undefined) {
   // Own-row eligibility (never the capped full participant list).
   const [isConfirmedParticipant, setIsConfirmedParticipant] = useState(false);
   const [startDate, setStartDate] = useState<string | null>(null);
+  /** 'MY_READING' (default) = members tap their lotus. 'SESSION' = the garden blooms on its own. */
+  const [bloomMode, setBloomMode] = useState<string | null>(null);
+
 
   const refresh = useCallback(async () => {
     if (!sessionId) {
       setRows([]);
       setMineRowIds([]);
+      setBloomMode(null);
       setLoading(false);
+
       return;
     }
     setLoading(true);
     const [{ data: sess }, ownRes] = await Promise.all([
       (supabase as any)
         .from("challenge_sessions")
-        .select("participation_type, start_date")
+        .select("participation_type, start_date, bloom_mode")
         .eq("id", sessionId)
         .maybeSingle(),
       user
@@ -54,6 +59,8 @@ export function useMyDashakamGarden(sessionId: string | null | undefined) {
         : Promise.resolve({ data: null }),
     ]);
     setStartDate((sess as any)?.start_date ?? null);
+    setBloomMode((sess as any)?.bloom_mode ?? null);
+
     setIsConfirmedParticipant(
       isParticipantEligible(ownRes?.data ?? null, (sess as any)?.participation_type ?? null),
     );
@@ -93,18 +100,25 @@ export function useMyDashakamGarden(sessionId: string | null | undefined) {
     const map = new Map<string, GardenTile>();
     for (const r of rows) {
       const mine = mineSet.has(r.id);
+      // SESSION gardens bloom on their own once the day's session is done —
+      // nobody taps them, so no tile is ever tappable in that mode.
+      const sessionBloom = bloomMode === "SESSION";
       const canTap =
+        !sessionBloom &&
         !!user &&
         hasStarted &&
         isConfirmedParticipant &&
         (r.assigned_user_id ? r.assigned_user_id === user.id : true);
-      const disabledReason = canTap
-        ? null
-        : !hasStarted
-          ? "This parayanam hasn't started yet"
-          : !isConfirmedParticipant
-            ? "Only confirmed participants can mark this dashakam"
-            : "This dashakam is assigned to another member";
+      const disabledReason = sessionBloom
+        ? "Blooms automatically after the day's session"
+        : canTap
+          ? null
+          : !hasStarted
+            ? "This parayanam hasn't started yet"
+            : !isConfirmedParticipant
+              ? "Only confirmed participants can mark this dashakam"
+              : "This dashakam is assigned to another member";
+
       map.set(r.id, {
         dashakam_no: r.dashakam_no,
         scheduleIds: [r.id],
@@ -119,7 +133,7 @@ export function useMyDashakamGarden(sessionId: string | null | undefined) {
       });
     }
     return map;
-  }, [rows, mineRowIds, user, isConfirmedParticipant, startDate]);
+  }, [rows, mineRowIds, user, isConfirmedParticipant, startDate, bloomMode]);
 
   const blooms = useMemo(() => {
     const m = new Map<string, number>();
@@ -161,7 +175,9 @@ export function useMyDashakamGarden(sessionId: string | null | undefined) {
     tiles,
     blooms,
     occurrences,
+    bloomMode,
     loading,
+
     pending,
     refresh,
     toggleDashakam,

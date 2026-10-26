@@ -54,6 +54,9 @@ export function useSessionGarden(sessionId: string | null | undefined) {
   const [loading, setLoading] = useState(true);
   const [pending, setPending] = useState<string | null>(null);
   const [startDate, setStartDate] = useState<string | null>(null);
+  /** 'MY_READING' (default) = members tap their lotus. 'SESSION' = the garden blooms on its own. */
+  const [bloomMode, setBloomMode] = useState<string | null>(null);
+
 
   // Eligibility comes from the user's OWN participant row and the total from a
   // count query — never from the full participant list, which the API caps at
@@ -71,7 +74,9 @@ export function useSessionGarden(sessionId: string | null | undefined) {
       setConfirmedCount(0);
       setIsConfirmedParticipant(false);
       setIsPersonal(false);
+      setBloomMode(null);
       setError(null);
+
       setLoading(false);
       return;
     }
@@ -80,7 +85,7 @@ export function useSessionGarden(sessionId: string | null | undefined) {
     const [{ data: sess }, ownRes] = await Promise.all([
       (supabase as any)
         .from("challenge_sessions")
-        .select("participation_type, start_date, group_id")
+        .select("participation_type, start_date, group_id, bloom_mode")
         .eq("id", sessionId)
         .maybeSingle(),
       user
@@ -94,6 +99,8 @@ export function useSessionGarden(sessionId: string | null | undefined) {
     ]);
     const participationType = (sess as any)?.participation_type ?? null;
     setStartDate((sess as any)?.start_date ?? null);
+    setBloomMode((sess as any)?.bloom_mode ?? null);
+
     // A personal session is one with no group.
     setIsPersonal(!!sess && !(sess as any).group_id);
     setIsConfirmedParticipant(isParticipantEligible(ownRes?.data ?? null, participationType));
@@ -180,19 +187,26 @@ export function useSessionGarden(sessionId: string | null | undefined) {
       const mine = mineRows.has(r.id);
       // Split mode assigns one chanter per row; synchronized expects everyone.
       const total = r.assigned_user_id ? 1 : Math.max(confirmedCount, 1);
+      // SESSION gardens bloom on their own once the day's session is done —
+      // nobody taps them, so no tile is ever tappable in that mode.
+      const sessionBloom = bloomMode === "SESSION";
       const canTap =
+        !sessionBloom &&
         !!user &&
         hasStarted &&
         (r.assigned_user_id
           ? r.assigned_user_id === user.id
           : isConfirmedParticipant || isPersonal);
-      const disabledReason = canTap
-        ? null
-        : !hasStarted
-          ? "This parayanam hasn't started yet"
-          : r.assigned_user_id
-            ? "This dashakam is assigned to another member"
-            : "Only confirmed participants can mark this dashakam";
+      const disabledReason = sessionBloom
+        ? "Blooms automatically after the day's session"
+        : canTap
+          ? null
+          : !hasStarted
+            ? "This parayanam hasn't started yet"
+            : r.assigned_user_id
+              ? "This dashakam is assigned to another member"
+              : "Only confirmed participants can mark this dashakam";
+
       map.set(r.id, {
         dashakam_no: r.dashakam_no,
         scheduleIds: [r.id],
@@ -207,7 +221,7 @@ export function useSessionGarden(sessionId: string | null | undefined) {
       });
     }
     return map;
-  }, [rows, progress, user, confirmedCount, isConfirmedParticipant, isPersonal, startDate]);
+  }, [rows, progress, user, confirmedCount, isConfirmedParticipant, isPersonal, startDate, bloomMode]);
 
   const blooms = useMemo(() => {
     const m = new Map<string, number>();
@@ -250,7 +264,9 @@ export function useSessionGarden(sessionId: string | null | undefined) {
     blooms,
     occurrences,
     confirmedCount,
+    bloomMode,
     loading,
+
     pending,
     error,
     refresh,
