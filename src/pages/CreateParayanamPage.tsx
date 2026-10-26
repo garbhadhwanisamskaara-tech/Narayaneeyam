@@ -49,6 +49,22 @@ const plusDays = (n: number) => {
   return d.toISOString().slice(0, 10);
 };
 
+/** challenge_sessions.bloom_mode — stored values, never renamed. */
+type BloomMode = "MY_READING" | "SESSION";
+
+const BLOOM_OPTIONS: { value: BloomMode; label: string; hint: string }[] = [
+  {
+    value: "SESSION",
+    label: "After each live session",
+    hint: "Every confirmed member's lotus blooms automatically after that day's session.",
+  },
+  {
+    value: "MY_READING",
+    label: "When each member chants",
+    hint: "Each member's lotus blooms when they chant in the app or tap it.",
+  },
+];
+
 export default function CreateParayanamPage() {
   const [params] = useSearchParams();
   const groupId = params.get("group") ?? undefined;
@@ -91,6 +107,8 @@ export default function CreateParayanamPage() {
   const [includeSelf, setIncludeSelf] = useState(true);
   const [autoInvite, setAutoInvite] = useState(false);
   const [openForSelfJoin, setOpenForSelfJoin] = useState(false);
+  const [bloomMode, setBloomMode] = useState<BloomMode>("MY_READING");
+  const [showGardenOnHome, setShowGardenOnHome] = useState(false);
   const [draftId, setDraftId] = useState<string | null>(params.get("draft"));
   const [savingDraft, setSavingDraft] = useState(false);
   const [draftSaved, setDraftSaved] = useState(false);
@@ -166,6 +184,8 @@ export default function CreateParayanamPage() {
       if (typeof d.includeSelf === "boolean") setIncludeSelf(d.includeSelf);
       if (typeof data.auto_invite_group_members === "boolean") setAutoInvite(data.auto_invite_group_members);
       if (typeof data.open_for_self_join === "boolean") setOpenForSelfJoin(data.open_for_self_join);
+      if (data.bloom_mode === "SESSION" || data.bloom_mode === "MY_READING") setBloomMode(data.bloom_mode);
+      if (typeof data.show_garden_on_home === "boolean") setShowGardenOnHome(data.show_garden_on_home);
       if (d.step) setStep(d.step);
       setDraftId(id);
       setLoadingDraft(false);
@@ -407,6 +427,8 @@ export default function CreateParayanamPage() {
     challenge_type: isGroup ? (mode === "RELAY" ? "group_relay" : "group_standard") : "personal",
     auto_invite_group_members: isGroup ? autoInvite : false,
     open_for_self_join: isGroup && isMonetizationApproved ? openForSelfJoin : false,
+    bloom_mode: deliveryMode === "LIVE" ? bloomMode : "MY_READING",
+    show_garden_on_home: isGroup ? showGardenOnHome : false,
     distribution_mode: mode,
     schedule_pattern: schedulePattern,
     schedule_weekdays: schedulePattern === "WEEKDAYS" ? weekdays : null,
@@ -1205,6 +1227,48 @@ export default function CreateParayanamPage() {
                   </span>
                 </span>
               </label>
+            )}
+            {isGroup && (
+              <label className="flex cursor-pointer items-start gap-3 rounded-xl border border-border p-4 hover:border-primary">
+                <input
+                  type="checkbox"
+                  checked={showGardenOnHome}
+                  onChange={(e) => setShowGardenOnHome(e.target.checked)}
+                  className="mt-0.5 h-4 w-4 accent-primary"
+                />
+                <span>
+                  <span className="block font-sans text-sm font-semibold text-foreground">
+                    Show the lotus garden on members' home screen
+                  </span>
+                  <span className="mt-1 block font-sans text-xs text-muted-foreground">
+                    Members see their garden on their home screen, view only.
+                  </span>
+                </span>
+              </label>
+            )}
+            {isGroup && isLive && (
+              <div className="rounded-xl border border-border p-4">
+                <p className="font-sans text-sm font-semibold text-foreground">How lotuses bloom</p>
+                <div className="mt-3 grid gap-3 sm:grid-cols-2">
+                  {BLOOM_OPTIONS.map(({ value: v, label, hint }) => {
+                    const active = bloomMode === v;
+                    return (
+                      <button
+                        key={v}
+                        type="button"
+                        aria-pressed={active}
+                        onClick={() => setBloomMode(v)}
+                        className={`rounded-lg border-2 p-3 text-left transition-colors ${
+                          active ? "border-primary bg-secondary/40" : "border-border hover:border-primary"
+                        }`}
+                      >
+                        <span className="block font-sans text-sm font-semibold text-foreground">{label}</span>
+                        <span className="mt-1 block font-sans text-xs text-muted-foreground">{hint}</span>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
             )}
           </div>
         )}
