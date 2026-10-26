@@ -9,6 +9,7 @@ export type SlokaLoopCount = 1 | 2 | 3 | 5 | "infinite";
 
 interface UseSlokaPlaybackReturn {
   activeSlokaScript: string | null;
+  activeSlokaTitle: string | null;
   activeSlokaTranslation: string | null;
   isSlokaTranslationEnglishFallback: boolean;
   isSlokaPlaying: boolean;
@@ -37,6 +38,7 @@ interface UseSlokaPlaybackReturn {
 
 export function useSlokaPlayback(): UseSlokaPlaybackReturn {
   const [activeSlokaScript, setActiveSlokaScript] = useState<string | null>(null);
+  const [activeSlokaTitle, setActiveSlokaTitle] = useState<string | null>(null);
   const [activeSlokaTranslation, setActiveSlokaTranslation] = useState<string | null>(null);
   const [isSlokaTranslationEnglishFallback, setIsSlokaTranslationEnglishFallback] = useState(false);
   const [isSlokaPlaying, setIsSlokaPlaying] = useState(false);
@@ -86,6 +88,7 @@ export function useSlokaPlayback(): UseSlokaPlaybackReturn {
     releaseAudio();
     activeSlokaIdRef.current = null;
     setActiveSlokaScript(null);
+    setActiveSlokaTitle(null);
     setActiveSlokaTranslation(null);
     setIsSlokaTranslationEnglishFallback(false);
     setIsSlokaPlaying(false);
@@ -241,7 +244,7 @@ export function useSlokaPlayback(): UseSlokaPlaybackReturn {
         const [scriptRes, audioRes] = await Promise.all([
           supabase
             .from("sloka_scripts")
-            .select("language_code, script_text, translation_text")
+            .select("language_code, sloka_title, script_text, translation_text")
             .eq("sloka_audio_id", slokaAudioId)
             .in("language_code", [scriptLanguageCode, translationLanguageCode, "en"]),
           supabase
@@ -276,6 +279,7 @@ export function useSlokaPlayback(): UseSlokaPlaybackReturn {
         );
         const meaning = preferredMeaning ?? englishMeaning;
         setActiveSlokaScript(script?.script_text || "");
+        setActiveSlokaTitle(script?.sloka_title?.trim() || null);
         setActiveSlokaTranslation(meaning?.translation_text?.trim() || null);
         setIsSlokaTranslationEnglishFallback(
           translationLanguageCode !== "en" && !preferredMeaning && Boolean(englishMeaning),
@@ -363,6 +367,7 @@ export function useSlokaPlayback(): UseSlokaPlaybackReturn {
 
   return {
     activeSlokaScript,
+    activeSlokaTitle,
     activeSlokaTranslation,
     isSlokaTranslationEnglishFallback,
     isSlokaPlaying,
