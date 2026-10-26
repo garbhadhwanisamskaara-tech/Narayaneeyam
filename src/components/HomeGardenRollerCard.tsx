@@ -79,6 +79,13 @@ function GardenRoller({ session, open, onToggle, onOpenGarden }: {
         className="relative overflow-hidden"
       >
         <div ref={(node) => node?.toggleAttribute("inert", !open)} aria-hidden={!open} className="px-3 pb-5 pt-1">
+          {/* Parts are rendered separately so a long name can wrap at the dash. */}
+          <p className="break-words px-1 pb-2 font-display text-sm font-semibold">
+            {session.groups?.group_name ? <span>{session.groups.group_name}</span> : null}
+            {session.groups?.group_name && session.parayanam_name ? <span>{" – "}</span> : null}
+            {session.parayanam_name ? <span>{session.parayanam_name}</span> : null}
+          </p>
+
           {loading ? (
             <p className="flex items-center justify-center gap-2 py-4 font-sans text-xs text-muted-foreground">
               <Loader2 className="h-3.5 w-3.5 animate-spin motion-reduce:animate-none" /> Tending the garden…
