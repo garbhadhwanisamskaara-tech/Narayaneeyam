@@ -89,5 +89,10 @@
 - [x] Keep the card title as "Group name – Parayanam name" on one truncated line with the bloom count beneath it.
 - [x] Move the card out of the hero into its own section directly after it, and verify on a phone screen that opening a garden leaves the hero height unchanged.
 
+# Garden options in parayanam setup
+
+- [x] Add the home-garden opt-in and the live-only bloom-mode choice to the wizard, restored from a draft and saved on the parayanam row.
+- [x] Verify both in the live wizard: the garden opt-in shows for any Guru, the bloom choice only for live parayanams, and the saved row carries the chosen values.
+
 
 
