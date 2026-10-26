@@ -77,3 +77,10 @@
 - [x] Accept contribution_status "not_required" alongside "confirmed" for PAID parayanams, keeping the confirmed-status and active-access checks.
 - [x] Cover the rule with tests for exempt owners, approved members, pending contributions, and locked access.
 
+# Garden bloom mode
+
+- [x] Read bloom_mode from challenge_sessions in both garden hooks and return bloomMode; in SESSION mode every tile is untappable with the automatic-bloom reason.
+- [x] Show the matching helper wording in DashakamGarden and pass bloomMode from MyGardenDialog and GroupDetailPage.
+- [x] Cover the tile lock and both wordings with tests; verify types and the preview build.
+
+
