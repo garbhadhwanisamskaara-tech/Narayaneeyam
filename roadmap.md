@@ -83,5 +83,11 @@
 - [x] Show the matching helper wording in DashakamGarden and pass bloomMode from MyGardenDialog and GroupDetailPage.
 - [x] Cover tappable tiles in both modes and both wordings with tests; verify types and the preview build.
 
+# Home garden roller card
+
+- [x] Add a view-only rolling garden card per home-screen group parayanam, with exclusive expansion, roller-blind animation, and no tapping.
+- [x] Keep the card title as "Group name – Parayanam name" on one truncated line with the bloom count beneath it.
+- [x] Move the card out of the hero into its own section directly after it, and verify on a phone screen that opening a garden leaves the hero height unchanged.
+
 
 
