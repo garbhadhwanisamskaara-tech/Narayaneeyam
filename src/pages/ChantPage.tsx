@@ -130,6 +130,7 @@ export default function ChantPage() {
   // Sloka playback
   const {
     activeSlokaScript,
+    activeSlokaTitle,
     activeSlokaTranslation,
     isSlokaTranslationEnglishFallback,
     isSlokaPlaying,
@@ -1524,6 +1525,11 @@ export default function ChantPage() {
                   </p>
                 </div>
                 <div className="min-h-0 overflow-y-auto p-4 sm:p-6">
+                  {activeSlokaTitle && (
+                    <h2 className="mb-3 font-display text-xl font-semibold text-foreground">
+                      {activeSlokaTitle}
+                    </h2>
+                  )}
                   {activeSlokaScript && (
                     <p className="mb-3 whitespace-pre-line font-body text-lg leading-relaxed text-foreground">
                       {activeSlokaScript}
