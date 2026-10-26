@@ -8,5 +8,5 @@
 - Home-screen "hide for today" controls store the Asia/Kolkata calendar date in localStorage and never change the server-side assignment, so the dashakam returns by itself the next day and still appears in the queue list.
 - Card links into the Listen page carry ?dashakam=N and the Listen page honours that over the restored last-played position, so a card always opens the dashakam it names.
 - DashakamGarden renders only its title and the loading message while data is loading; the lotus grid and compact preview appear after loading finishes, so placeholder buds never flash before the real occurrences arrive.
-- Both garden hooks read bloom_mode from challenge_sessions and return bloomMode; the session's bloom mode decides whether tiles are tappable and which helper wording DashakamGarden shows, keeping tap-to-complete a MY_READING-only affordance.
+- Both garden hooks read bloom_mode from challenge_sessions and return bloomMode; the mode only selects DashakamGarden's helper wording, while tapping a lotus stays available in every mode.
 

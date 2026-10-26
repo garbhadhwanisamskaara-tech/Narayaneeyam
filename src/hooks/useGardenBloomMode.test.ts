@@ -59,42 +59,35 @@ function setTables(bloomMode: string | null) {
 }
 
 describe("garden bloom mode", () => {
-  it("locks every tile of the shared garden in SESSION mode", async () => {
+  it("reports the session's bloom mode", async () => {
     setTables("SESSION");
     const { result } = renderHook(() => useSessionGarden("c1"));
     await waitFor(() => expect(result.current.loading).toBe(false));
-
     expect(result.current.bloomMode).toBe("SESSION");
-    expect(result.current.tiles.get("s1")?.canTap).toBe(false);
-    expect(result.current.tiles.get("s1")?.disabledReason).toBe("Blooms automatically after the day's session");
-  });
 
-  it("keeps shared-garden tiles tappable in MY_READING mode", async () => {
     setTables("MY_READING");
-    const { result } = renderHook(() => useSessionGarden("c1"));
-    await waitFor(() => expect(result.current.loading).toBe(false));
-
-    expect(result.current.bloomMode).toBe("MY_READING");
-    expect(result.current.tiles.get("s1")?.canTap).toBe(true);
-    expect(result.current.tiles.get("s1")?.disabledReason).toBeNull();
+    const mine = renderHook(() => useMyDashakamGarden("c1"));
+    await waitFor(() => expect(mine.result.current.loading).toBe(false));
+    expect(mine.result.current.bloomMode).toBe("MY_READING");
   });
 
-  it("locks every tile of the personal garden in SESSION mode", async () => {
-    setTables("SESSION");
-    const { result } = renderHook(() => useMyDashakamGarden("c1"));
-    await waitFor(() => expect(result.current.loading).toBe(false));
-
-    expect(result.current.bloomMode).toBe("SESSION");
-    expect(result.current.tiles.get("s1")?.canTap).toBe(false);
-    expect(result.current.tiles.get("s1")?.disabledReason).toBe("Blooms automatically after the day's session");
+  it("keeps shared-garden tiles tappable in both bloom modes", async () => {
+    for (const mode of ["SESSION", "MY_READING"]) {
+      setTables(mode);
+      const { result } = renderHook(() => useSessionGarden("c1"));
+      await waitFor(() => expect(result.current.loading).toBe(false));
+      expect(result.current.tiles.get("s1")?.canTap).toBe(true);
+      expect(result.current.tiles.get("s1")?.disabledReason).toBeNull();
+    }
   });
 
-  it("keeps personal-garden tiles tappable in MY_READING mode", async () => {
-    setTables("MY_READING");
-    const { result } = renderHook(() => useMyDashakamGarden("c1"));
-    await waitFor(() => expect(result.current.loading).toBe(false));
-
-    expect(result.current.tiles.get("s1")?.canTap).toBe(true);
-    expect(result.current.tiles.get("s1")?.disabledReason).toBeNull();
+  it("keeps personal-garden tiles tappable in both bloom modes", async () => {
+    for (const mode of ["SESSION", "MY_READING"]) {
+      setTables(mode);
+      const { result } = renderHook(() => useMyDashakamGarden("c1"));
+      await waitFor(() => expect(result.current.loading).toBe(false));
+      expect(result.current.tiles.get("s1")?.canTap).toBe(true);
+      expect(result.current.tiles.get("s1")?.disabledReason).toBeNull();
+    }
   });
 });
