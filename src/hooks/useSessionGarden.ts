@@ -216,7 +216,7 @@ export function useSessionGarden(sessionId: string | null | undefined) {
       });
     }
     return map;
-  }, [rows, progress, user, confirmedCount, isConfirmedParticipant, isPersonal, startDate, bloomMode]);
+  }, [rows, progress, user, confirmedCount, isConfirmedParticipant, isPersonal, startDate]);
 
   const blooms = useMemo(() => {
     const m = new Map<string, number>();

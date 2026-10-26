@@ -128,7 +128,7 @@ export function useMyDashakamGarden(sessionId: string | null | undefined) {
       });
     }
     return map;
-  }, [rows, mineRowIds, user, isConfirmedParticipant, startDate, bloomMode]);
+  }, [rows, mineRowIds, user, isConfirmedParticipant, startDate]);
 
   const blooms = useMemo(() => {
     const m = new Map<string, number>();
