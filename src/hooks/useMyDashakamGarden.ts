@@ -100,24 +100,19 @@ export function useMyDashakamGarden(sessionId: string | null | undefined) {
     const map = new Map<string, GardenTile>();
     for (const r of rows) {
       const mine = mineSet.has(r.id);
-      // SESSION gardens bloom on their own once the day's session is done —
-      // nobody taps them, so no tile is ever tappable in that mode.
-      const sessionBloom = bloomMode === "SESSION";
       const canTap =
-        !sessionBloom &&
         !!user &&
         hasStarted &&
         isConfirmedParticipant &&
         (r.assigned_user_id ? r.assigned_user_id === user.id : true);
-      const disabledReason = sessionBloom
-        ? "Blooms automatically after the day's session"
-        : canTap
-          ? null
-          : !hasStarted
-            ? "This parayanam hasn't started yet"
-            : !isConfirmedParticipant
-              ? "Only confirmed participants can mark this dashakam"
-              : "This dashakam is assigned to another member";
+      const disabledReason = canTap
+        ? null
+        : !hasStarted
+          ? "This parayanam hasn't started yet"
+          : !isConfirmedParticipant
+            ? "Only confirmed participants can mark this dashakam"
+            : "This dashakam is assigned to another member";
+
 
       map.set(r.id, {
         dashakam_no: r.dashakam_no,

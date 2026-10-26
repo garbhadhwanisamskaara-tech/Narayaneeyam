@@ -287,7 +287,7 @@ export default function DashakamGarden({
       {!loading && (interactive ? (
         <p className="mt-3 text-center font-sans text-xs text-muted-foreground">
           {bloomMode === "SESSION"
-            ? "Each lotus shows the dashakam chanted that day. It blooms automatically after the day's session."
+            ? "Each lotus shows the dashakam chanted that day. It blooms automatically after the day's session, or tap it once you've chanted — tap again to undo."
             : "Each lotus shows the dashakam to chant that day. Tap it once you've chanted it — tap again to undo."}
         </p>
       ) : (
