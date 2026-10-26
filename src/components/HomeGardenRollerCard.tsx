@@ -13,6 +13,7 @@ interface HomeGardenSession {
   id: string;
   parayanam_name: string | null;
   bloom_mode: string | null;
+  group_id: string | null;
   groups: { group_name: string } | null;
 }
 
@@ -141,7 +142,7 @@ export default function HomeGardenRollerCard() {
         }).format(new Date(Date.now() - 24 * 60 * 60 * 1000));
         const { data, error } = await supabase
           .from("challenge_sessions")
-          .select("id, parayanam_name, bloom_mode, groups(group_name)")
+          .select("id, parayanam_name, bloom_mode, group_id, groups(group_name)")
           .in("id", ids)
           .not("group_id", "is", null)
           .not("technical_state", "in", HIDDEN_SESSION_STATES_FILTER)
@@ -150,11 +151,26 @@ export default function HomeGardenRollerCard() {
           .or(`end_date.is.null,end_date.gte.${yesterday}`)
           .order("created_at", { ascending: false });
         if (error) throw error;
-        const sessions = (data ?? []).map((row) => {
-          const session = row as unknown as Omit<HomeGardenSession, "groups"> & {
-            groups: HomeGardenSession["groups"] | { group_name: string }[];
-          };
-          return { ...session, groups: Array.isArray(session.groups) ? session.groups[0] ?? null : session.groups };
+        const rows = (data ?? []) as unknown as (Omit<HomeGardenSession, "groups"> & {
+          groups: HomeGardenSession["groups"] | { group_name: string }[];
+        })[];
+        // The groups(...) embed only resolves for the group's currently active
+        // parayanam (the table link runs through groups.active_challenge_session_id),
+        // so look every group name up by id directly, like the other parayanam hooks.
+        const groupIds = Array.from(new Set(rows.map((row) => row.group_id).filter(Boolean))) as string[];
+        const namesById = new Map<string, string>();
+        if (groupIds.length) {
+          const { data: groupRows } = await supabase.from("groups").select("id, group_name").in("id", groupIds);
+          for (const group of (groupRows ?? []) as { id: string; group_name: string }[]) {
+            if (group.group_name) namesById.set(group.id, group.group_name);
+          }
+        }
+        const sessions = rows.map((row) => {
+          const session = { ...row };
+          const embedded = Array.isArray(session.groups) ? session.groups[0] ?? null : session.groups;
+          const groupName =
+            (session.group_id ? namesById.get(session.group_id) : undefined) ?? embedded?.group_name ?? null;
+          return { ...session, groups: groupName ? { group_name: groupName } : null };
         });
         if (!cancelled) setResult({ userId, sessions });
       } catch {

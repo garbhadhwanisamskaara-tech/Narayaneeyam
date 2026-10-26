@@ -11,5 +11,6 @@
 - Both garden hooks read bloom_mode from challenge_sessions and return bloomMode; the mode only selects DashakamGarden's helper wording, while tapping a lotus stays available in every mode.
 - Home garden previews consume only useMyDashakamGarden read state and keep exclusive expansion locally; interactive updates remain in the existing MyGardenDialog to preserve garden behaviour.
 - The home garden roller card renders in its own section directly after the hero, never inside it, so opening a garden grows the page below the hero and never changes the hero's height.
+- Home garden cards resolve group names with a direct groups-by-id lookup (with the groups(...) embed only as fallback), because the embed resolves only for the group's currently active parayanam via groups.active_challenge_session_id and silently drops the name for the rest.
 - Parayanam creation stores bloom_mode and show_garden_on_home on the session row; the bloom-mode choice is offered only for live parayanams and the home-garden opt-in only for group parayanams, both independent of monetization approval.
 
