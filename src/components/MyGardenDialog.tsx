@@ -61,8 +61,9 @@ export default function MyGardenDialog({
     if (open && !viewingPast && !selectedSessionId && sessions.length === 1) setSelectedSessionId(sessions[0].id);
   }, [open, viewingPast, selectedSessionId, sessions]);
 
-  const { tiles, blooms, occurrences, loading, pending, toggleDashakam } =
+  const { tiles, blooms, occurrences, loading, pending, toggleDashakam, bloomMode } =
     useSessionGarden(selectedSessionId);
+
 
   // Personal view on top of the shared garden data: a dashakam is fully
   // bloomed once I completed it, otherwise it's a bud — other members'
@@ -188,14 +189,18 @@ export default function MyGardenDialog({
                 loading={loading}
                 title={selectedLabel ?? "Past garden"}
                 subtitle="Completed parayanam — read-only"
+                bloomMode={bloomMode}
               />
+
             ) : ownerReport && gardenView === "group" ? (
               <DashakamGarden
                 blooms={groupBlooms}
                 occurrences={groupOccurrences}
                 title={selectedLabel ?? "Group garden"}
                 subtitle="The whole group's bloom — read-only"
+                bloomMode={bloomMode}
               />
+
             ) : sessionsLoading ? null : (
               <>
                 <DashakamGarden
@@ -206,7 +211,9 @@ export default function MyGardenDialog({
                   pendingDashakam={pending}
                   loading={loading}
                   title={selectedLabel ?? "My Dashakam Garden"}
+                  bloomMode={bloomMode}
                 />
+
                 <button
                   type="button"
                   onClick={() => {

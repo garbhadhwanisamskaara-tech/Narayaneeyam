@@ -35,7 +35,10 @@ interface Props {
   onTapDashakam?: (occurrenceKey: string) => void;
   /** Occurrence currently being written. */
   pendingDashakam?: string | null;
+  /** 'SESSION' gardens bloom on their own after the day's session; 'MY_READING' (default) are tapped. */
+  bloomMode?: string | null;
 }
+
 
 function formatShortDate(date: string | null | undefined) {
   if (!date) return null;
@@ -113,7 +116,9 @@ export default function DashakamGarden({
   tiles,
   onTapDashakam,
   pendingDashakam,
+  bloomMode,
 }: Props) {
+
   const interactive = !!tiles;
   const [expanded, setExpanded] = useState(false);
   const [capturing, setCapturing] = useState(false);
@@ -281,10 +286,12 @@ export default function DashakamGarden({
 
       {!loading && (interactive ? (
         <p className="mt-3 text-center font-sans text-xs text-muted-foreground">
-          Tap your lotus once you've chanted that dashakam — tap again to undo. The number shows how many in the
-          group have finished it.
+          {bloomMode === "SESSION"
+            ? "Each lotus shows the dashakam chanted that day. It blooms automatically after the day's session."
+            : "Each lotus shows the dashakam to chant that day. Tap it once you've chanted it — tap again to undo."}
         </p>
       ) : (
+
         <button
           type="button"
           onClick={() => setExpanded((v) => !v)}

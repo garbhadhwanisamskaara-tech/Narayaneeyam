@@ -118,7 +118,9 @@ export default function GroupDetailPage() {
     blooms: gardenBlooms,
     tiles: gardenTiles,
     occurrences: gardenOccurrences,
+    bloomMode: gardenBloomMode,
     loading: gardenLoading,
+
     pending: gardenPending,
     refresh: refreshGarden,
     toggleDashakam,
@@ -129,7 +131,9 @@ export default function GroupDetailPage() {
     blooms: myBlooms,
     tiles: myTiles,
     occurrences: myOccurrences,
+    bloomMode: myGardenBloomMode,
     loading: myGardenLoading,
+
     pending: myGardenPending,
     toggleDashakam: toggleMyDashakam,
   } = useMyDashakamGarden(selectedSessionId);
@@ -872,7 +876,9 @@ export default function GroupDetailPage() {
                           title="Parayanam Dashakam Garden"
                           subtitle={parayanamName || undefined}
                           loading={gardenLoading}
+                          bloomMode={gardenBloomMode}
                         />
+
                       ) : (
                         <>
                           <DashakamGarden
@@ -884,7 +890,9 @@ export default function GroupDetailPage() {
                             title="My Parayanam Garden"
                             subtitle={parayanamName || undefined}
                             loading={myGardenLoading}
+                            bloomMode={myGardenBloomMode}
                           />
+
                           <FeatherCollection tiles={myTiles} />
                         </>
                       )}
@@ -900,7 +908,9 @@ export default function GroupDetailPage() {
                         title="My Parayanam Garden"
                         subtitle={parayanamName || undefined}
                         loading={myGardenLoading}
+                        bloomMode={myGardenBloomMode}
                       />
+
                       <FeatherCollection tiles={myTiles} />
                     </>
                   )
