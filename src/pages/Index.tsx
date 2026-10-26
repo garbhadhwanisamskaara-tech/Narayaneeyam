@@ -33,6 +33,7 @@ import TrialStatusLine from "@/components/TrialStatusLine";
 import UpcomingLiveSessionCard from "@/components/UpcomingLiveSessionCard";
 import PastLiveSessionsCard from "@/components/PastLiveSessionsCard";
 import TodaysDashakamCard from "@/components/TodaysDashakamCard";
+import HomeGardenRollerCard from "@/components/HomeGardenRollerCard";
 import SelfJoinParayanamPrompt from "@/components/SelfJoinParayanamPrompt";
 import JourneyHomeFloatingPrompt from "@/components/JourneyHomeFloatingPrompt";
 import ContinueJourneyCard from "@/components/ContinueJourneyCard";
@@ -243,6 +244,9 @@ export default function Index() {
           )}
           <div className="mt-4">
             <TodaysDashakamCard />
+          </div>
+          <div className="mt-4">
+            <HomeGardenRollerCard />
           </div>
           <div className="mt-4">
             <ContinueJourneyCard />
