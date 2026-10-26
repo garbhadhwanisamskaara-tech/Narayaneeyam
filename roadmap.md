@@ -79,8 +79,9 @@
 
 # Garden bloom mode
 
-- [x] Read bloom_mode from challenge_sessions in both garden hooks and return bloomMode; in SESSION mode every tile is untappable with the automatic-bloom reason.
+- [x] Read bloom_mode from challenge_sessions in both garden hooks and return bloomMode, keeping every lotus tappable in both modes.
 - [x] Show the matching helper wording in DashakamGarden and pass bloomMode from MyGardenDialog and GroupDetailPage.
-- [x] Cover the tile lock and both wordings with tests; verify types and the preview build.
+- [x] Cover tappable tiles in both modes and both wordings with tests; verify types and the preview build.
+
 
 
