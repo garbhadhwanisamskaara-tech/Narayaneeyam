@@ -38,7 +38,7 @@ function GardenRoller({ session, open, onToggle, onOpenGarden }: {
   return (
     <article className="min-w-0 overflow-hidden rounded-lg border border-gold/40 bg-card text-left text-card-foreground shadow-gold">
       <div
-        className="flex min-h-11 cursor-pointer items-center gap-2 px-3 py-2"
+        className="flex min-h-11 cursor-pointer items-center gap-2 px-3"
         onClick={(event) => {
           // The chevron is the keyboard/AT control; the rest of the row toggles too.
           if ((event.target as HTMLElement).closest("button")) return;
