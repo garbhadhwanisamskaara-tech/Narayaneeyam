@@ -246,15 +246,19 @@ export default function Index() {
             <TodaysDashakamCard />
           </div>
           <div className="mt-4">
-            <HomeGardenRollerCard />
-          </div>
-          <div className="mt-4">
             <ContinueJourneyCard />
           </div>
         </div>
       </section>
 
+      <section className="container mx-auto px-4 mt-4 relative z-20">
+        <div className="mx-auto max-w-2xl">
+          <HomeGardenRollerCard />
+        </div>
+      </section>
+
       <section className="container mx-auto px-4 -mt-4 relative z-20">
+
         <FestivalReminder />
         <FestivalBanner />
       </section>
