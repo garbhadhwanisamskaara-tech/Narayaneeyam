@@ -65,7 +65,7 @@ function GardenRoller({ session, open, onToggle, onOpenGarden }: {
         transition={{ duration: reducedMotion ? 0 : 0.45, ease: [0.22, 1, 0.36, 1] }}
         className="relative overflow-hidden"
       >
-        <div inert={!open ? "" : undefined} aria-hidden={!open} className="px-3 pb-5 pt-1">
+        <div ref={(node) => node?.toggleAttribute("inert", !open)} aria-hidden={!open} className="px-3 pb-5 pt-1">
           {loading ? (
             <p className="flex items-center justify-center gap-2 py-4 font-sans text-xs text-muted-foreground">
               <Loader2 className="h-3.5 w-3.5 animate-spin motion-reduce:animate-none" /> Tending the garden…
