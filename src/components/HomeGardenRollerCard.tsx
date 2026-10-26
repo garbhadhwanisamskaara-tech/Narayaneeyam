@@ -37,28 +37,40 @@ function GardenRoller({ session, open, onToggle, onOpenGarden }: {
 
   return (
     <article className="min-w-0 overflow-hidden rounded-lg border border-gold/40 bg-card text-left text-card-foreground shadow-gold">
-      <div className="relative px-4 py-3">
-        <p className="truncate font-display text-sm font-semibold" title={label}>{label}</p>
-        <div className="flex min-h-11 items-center justify-between gap-2">
-          <p className="min-w-0 font-sans text-xs text-muted-foreground" aria-live="polite">
-            {loading ? "Tending the garden…" : `${bloomed} of ${occurrences.length} lotuses bloomed`}
-          </p>
-          <Button
-            type="button"
-            variant="ghost"
-            size="icon"
-            className="h-11 w-11 shrink-0 text-gold-dark"
-            aria-label={`${open ? "Collapse" : "Expand"} garden: ${label}`}
-            aria-expanded={open}
-            aria-controls={panelId}
-            onClick={onToggle}
-          >
-            <motion.span animate={{ rotate: open ? 180 : 0 }} transition={{ duration: reducedMotion ? 0 : 0.2 }}>
-              <ChevronDown className="h-4 w-4" />
-            </motion.span>
-          </Button>
-        </div>
+      <div
+        className="flex min-h-11 cursor-pointer items-center gap-2 px-3"
+        onClick={(event) => {
+          // The chevron is the keyboard/AT control; the rest of the row toggles too.
+          if ((event.target as HTMLElement).closest("button")) return;
+          onToggle();
+        }}
+      >
+        <span aria-hidden="true" className="h-5 w-5 shrink-0"><Lotus percent={100} /></span>
+        <p className="min-w-0 flex-1 truncate font-display text-sm font-semibold" title={label}>{label}</p>
+        <p
+          className="flex shrink-0 items-center gap-1 whitespace-nowrap font-sans text-xs tabular-nums text-muted-foreground"
+          aria-live="polite"
+        >
+          {loading
+            ? <Loader2 className="h-3.5 w-3.5 animate-spin motion-reduce:animate-none" />
+            : `${bloomed}/${occurrences.length}`}
+        </p>
+        <Button
+          type="button"
+          variant="ghost"
+          size="icon"
+          className="h-11 w-11 shrink-0 text-gold-dark"
+          aria-label={`${open ? "Collapse" : "Expand"} garden: ${label}`}
+          aria-expanded={open}
+          aria-controls={panelId}
+          onClick={onToggle}
+        >
+          <motion.span animate={{ rotate: open ? 180 : 0 }} transition={{ duration: reducedMotion ? 0 : 0.2 }}>
+            <ChevronDown className="h-4 w-4" />
+          </motion.span>
+        </Button>
       </div>
+
       <motion.div
         id={panelId}
         initial={false}
@@ -67,6 +79,13 @@ function GardenRoller({ session, open, onToggle, onOpenGarden }: {
         className="relative overflow-hidden"
       >
         <div ref={(node) => node?.toggleAttribute("inert", !open)} aria-hidden={!open} className="px-3 pb-5 pt-1">
+          {/* Parts are rendered separately so a long name can wrap at the dash. */}
+          <p className="break-words px-1 pb-2 font-display text-sm font-semibold">
+            {session.groups?.group_name ? <span>{session.groups.group_name}</span> : null}
+            {session.groups?.group_name && session.parayanam_name ? <span>{" – "}</span> : null}
+            {session.parayanam_name ? <span>{session.parayanam_name}</span> : null}
+          </p>
+
           {loading ? (
             <p className="flex items-center justify-center gap-2 py-4 font-sans text-xs text-muted-foreground">
               <Loader2 className="h-3.5 w-3.5 animate-spin motion-reduce:animate-none" /> Tending the garden…
