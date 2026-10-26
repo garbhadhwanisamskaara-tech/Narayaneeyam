@@ -10,4 +10,5 @@
 - DashakamGarden renders only its title and the loading message while data is loading; the lotus grid and compact preview appear after loading finishes, so placeholder buds never flash before the real occurrences arrive.
 - Both garden hooks read bloom_mode from challenge_sessions and return bloomMode; the mode only selects DashakamGarden's helper wording, while tapping a lotus stays available in every mode.
 - Home garden previews consume only useMyDashakamGarden read state and keep exclusive expansion locally; interactive updates remain in the existing MyGardenDialog to preserve garden behaviour.
+- The home garden roller card renders in its own section directly after the hero, never inside it, so opening a garden grows the page below the hero and never changes the hero's height.
 
