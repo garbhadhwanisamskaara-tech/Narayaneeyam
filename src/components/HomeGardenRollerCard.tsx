@@ -150,7 +150,13 @@ export default function HomeGardenRollerCard() {
           .or(`end_date.is.null,end_date.gte.${yesterday}`)
           .order("created_at", { ascending: false });
         if (error) throw error;
-        if (!cancelled) setResult({ userId, sessions: (data ?? []) as HomeGardenSession[] });
+        const sessions = (data ?? []).map((row) => {
+          const session = row as unknown as Omit<HomeGardenSession, "groups"> & {
+            groups: HomeGardenSession["groups"] | { group_name: string }[];
+          };
+          return { ...session, groups: Array.isArray(session.groups) ? session.groups[0] ?? null : session.groups };
+        });
+        if (!cancelled) setResult({ userId, sessions });
       } catch {
         if (!cancelled) setResult({ userId, sessions: [] });
       }
