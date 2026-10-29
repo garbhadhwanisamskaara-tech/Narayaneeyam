@@ -93,17 +93,16 @@ async function fetchDashakamShlokas(
   const { data, error } = await (supabase as any)
     .from("sloka_audio")
     .select(`
-      sloka_audio_id, dashakam_no, verse_no, chant_audio_file,
+      sloka_audio_id, chant_audio_file,
+      verses_audio (dashakam_no, verse_no),
       sloka_scripts!left (language_code, sloka_title, script_text, translation_text)
     `)
-    .eq("is_active", true)
-    .not("dashakam_no", "is", null)
-    .order("dashakam_no", { ascending: true })
-    .order("verse_no", { ascending: true });
+    .eq("is_active", true);
 
   if (error || !data) return [];
 
-  return data.map((row: any) => {
+  const shlokas: DashakamShloka[] = [];
+  for (const row of data) {
     const scripts = Array.isArray(row.sloka_scripts) ? row.sloka_scripts : [];
     const fallback = scripts.find((script: any) => script.language_code === "en") ?? scripts[0];
     const scriptChosen =
@@ -111,18 +110,29 @@ async function fetchDashakamShlokas(
     const translationChosen =
       scripts.find((script: any) => script.language_code === translationLang) ?? fallback;
 
-    return {
-      sloka_audio_id: row.sloka_audio_id,
-      dashakam_no: row.dashakam_no,
-      verse_no: row.verse_no ?? 0,
-      chant_key: row.sloka_audio_id,
-      ritual_chant_name:
-        scriptChosen?.sloka_title || fallback?.sloka_title || `Dashakam ${row.dashakam_no}`,
-      transliteration_text: scriptChosen?.script_text || "",
-      translation_text: translationChosen?.translation_text || "",
-      audio_file: row.chant_audio_file || "",
-    } as DashakamShloka;
-  });
+    const verses = Array.isArray(row.verses_audio)
+      ? row.verses_audio
+      : [row.verses_audio].filter(Boolean);
+    for (const verse of verses) {
+      if (!verse || verse.dashakam_no == null) continue;
+      shlokas.push({
+        sloka_audio_id: row.sloka_audio_id,
+        dashakam_no: verse.dashakam_no,
+        verse_no: verse.verse_no ?? 0,
+        chant_key: row.sloka_audio_id,
+        ritual_chant_name:
+          scriptChosen?.sloka_title || fallback?.sloka_title || `Dashakam ${verse.dashakam_no}`,
+        transliteration_text: scriptChosen?.script_text || "",
+        translation_text: translationChosen?.translation_text || "",
+        audio_file: row.chant_audio_file || "",
+      } as DashakamShloka);
+    }
+  }
+
+  shlokas.sort(
+    (a, b) => a.dashakam_no - b.dashakam_no || a.verse_no - b.verse_no,
+  );
+  return shlokas;
 }
 
 export default function ShlokasPage() {
