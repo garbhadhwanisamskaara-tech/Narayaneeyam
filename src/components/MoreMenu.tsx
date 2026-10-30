@@ -13,7 +13,7 @@ const menuItems = [
   { path: "/journeys", label: "Guided Journeys", icon: Footprints },
   { path: "/festivals", label: "Festival Parayanams", icon: Sparkles },
   { path: "/prasadam", label: "Prasadam Guide", icon: Flower2 },
-  { path: "/devotion-pathways", label: "Predefined Parayanams", icon: Route },
+  { path: "/devotion-pathways", label: "Devotion Pathways", icon: Route },
   { path: "/shlokas", label: "Shlokas", icon: BookOpen },
   { path: "/saved-places", label: "Bookmarks", icon: Bookmark },
   { path: "/heart-shelf", label: "Favourites", icon: Heart },

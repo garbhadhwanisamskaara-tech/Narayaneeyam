@@ -77,7 +77,7 @@ export default function Index() {
     {
       path: "/devotion-pathways",
       icon: Route,
-      title: "Predefined Parayanams",
+      title: "Devotion Pathways",
       desc: "Structured journeys like the 100-Day and Mini Narayaneeyam",
     },
     {
