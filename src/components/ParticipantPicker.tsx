@@ -10,6 +10,8 @@ interface Props {
   onDeselectAll: () => void;
   includeSelf: boolean;
   onIncludeSelfChange: (next: boolean) => void;
+  /** Hidden for SAME_FOR_ALL — the backend adds the owner automatically. */
+  hideIncludeSelf?: boolean;
 }
 
 /** Checkbox list of group members to invite to a parayanam. */
@@ -22,6 +24,7 @@ export default function ParticipantPicker({
   onDeselectAll,
   includeSelf,
   onIncludeSelfChange,
+  hideIncludeSelf = false,
 }: Props) {
   const others = members.filter((m) => m.user_id !== ownerId);
   const othersIds = others.map((m) => m.user_id);
