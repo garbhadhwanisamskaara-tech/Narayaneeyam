@@ -1,4 +1,5 @@
 import { usePlatform } from "@/hooks/usePlatform";
+import { useAuth } from "@/contexts/AuthContext";
 
 export interface Capabilities {
   canCreateGroup: boolean;
@@ -13,10 +14,12 @@ export interface Capabilities {
 
 export function useCapabilities(): Capabilities {
   const isWeb = usePlatform() === "WEB";
+  // Creating groups / parayanams: everyone until the premium date, then premium members only.
+  const { canCreate } = useAuth();
   return {
-    canCreateGroup: true,
+    canCreateGroup: canCreate,
     canManageGroup: true,
-    canCreateParayanam: true,
+    canCreateParayanam: canCreate,
     canManageParayanam: true,
     canConfigurePayments: isWeb,
     canPayInApp: true,

@@ -70,6 +70,8 @@ interface AuthContextType {
   unlockedOwnParayanams: string[];
   /** Paths marked members-only in feature_gates. */
   memberOnlyPaths: string[];
+  /** May create groups and parayanams (everyone until the premium date, then premium members only). */
+  canCreate: boolean;
   /** Reloads isMember / progressAccess / unlockedOwnParayanams / memberOnlyPaths. */
   refreshAccess: () => Promise<void>;
   signUp: (
@@ -127,8 +129,9 @@ interface AccessSummary {
   isMember: boolean;
   progressAccess: boolean;
   unlockedOwnParayanams: string[];
+  canCreate: boolean;
 }
-const NO_ACCESS: AccessSummary = { isMember: false, progressAccess: false, unlockedOwnParayanams: [] };
+const NO_ACCESS: AccessSummary = { isMember: false, progressAccess: false, unlockedOwnParayanams: [], canCreate: false };
 
 /** What this user may open: one server call (get_my_access). */
 async function fetchAccess(): Promise<AccessSummary> {
@@ -136,13 +139,15 @@ async function fetchAccess(): Promise<AccessSummary> {
     const { data, error } = await (supabase as any).rpc("get_my_access");
     if (error) return NO_ACCESS;
     const row = (Array.isArray(data) ? data[0] : data) as
-      | { is_member?: boolean; progress_access?: boolean; unlocked_own_parayanams?: string[] | null }
+      | { is_member?: boolean; progress_access?: boolean; unlocked_own_parayanams?: string[] | null; can_create?: boolean | null }
       | null;
     if (!row) return NO_ACCESS;
     return {
       isMember: !!row.is_member,
       progressAccess: !!row.progress_access,
       unlockedOwnParayanams: row.unlocked_own_parayanams ?? [],
+      // Older server versions do not send can_create: treat as allowed (the database still enforces it).
+      canCreate: row.can_create !== false,
     };
   } catch {
     return NO_ACCESS;
@@ -506,6 +511,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       profile, subscriptionPlan,
       isMember: access.isMember, progressAccess: access.progressAccess,
       unlockedOwnParayanams: access.unlockedOwnParayanams, memberOnlyPaths, refreshAccess,
+      canCreate: access.canCreate,
       signUp, signIn, signInWithPhone, verifyPhoneOtp, signOut, refreshProfile,
     }}>
 

@@ -69,7 +69,7 @@ export default function CreateParayanamPage() {
   const [params] = useSearchParams();
   const groupId = params.get("group") ?? undefined;
   const isGroup = !!groupId;
-  const { user, isMonetizationApproved, isAdmin } = useAuth();
+  const { user, isMonetizationApproved, progressAccess } = useAuth();
   const { canConfigurePayments } = useCapabilities();
   const navigate = useNavigate();
 
@@ -420,11 +420,7 @@ export default function CreateParayanamPage() {
    * final creation — only technical_state and draft_state differ, so the
    * activation path stays exactly what it always was.
    */
-  /** A personal parayanam by a non-admin goes to Guru for approval first. */
-  const isOwnRequest = !isGroup && !isAdmin;
-
   const sessionPayload = (state: "DRAFT" | "ACTIVE") => ({
-    ...(isOwnRequest ? { approval_status: "pending" } : {}),
     user_id: user!.id,
     group_id: groupId ?? null,
     parayanam_name: parayanamName.trim() || null,
@@ -646,13 +642,8 @@ export default function CreateParayanamPage() {
         });
         navigate(`/groups/${groupId}?session=${session.id}`);
       } else {
-        if (isOwnRequest) {
-          toast({ title: "Your parayanam has been sent to Guru." });
-          navigate("/");
-        } else {
-          toast({ title: "Parayanam created", description: "Your parayanam is ready." });
-          navigate("/progress");
-        }
+        toast({ title: "Parayanam created", description: "Your parayanam is ready." });
+        navigate(progressAccess ? "/progress" : "/");
       }
     } catch (e: any) {
       if (applyNameConstraintError(e)) {
@@ -1407,7 +1398,7 @@ export default function CreateParayanamPage() {
               className="inline-flex items-center gap-2 rounded-xl bg-gradient-gold px-6 py-3 font-sans text-base font-semibold text-primary shadow-gold disabled:opacity-50"
             >
               {busy ? <Loader2 className="h-5 w-5 animate-spin" /> : <Sparkles className="h-5 w-5" />}
-              {soloWarning ? "Continue anyway" : isOwnRequest ? "Let's proceed" : "Create Parayanam"}
+              {soloWarning ? "Continue anyway" : "Create Parayanam"}
             </button>
           )}
         </div>
