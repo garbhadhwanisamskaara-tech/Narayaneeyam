@@ -57,9 +57,10 @@ describe("view-only home gardens", () => {
         ["parayanam_participants", "eq", "access_status", "active"],
         ["challenge_sessions", "eq", "show_garden_on_home", true],
         ["challenge_sessions", "is", "completed_at", null],
-        ["challenge_sessions", "not", "group_id", "is", null],
         ["challenge_sessions", "or", "end_date.is.null,end_date.gte.2026-10-25"],
       ]) expect(mocks.filters).toHaveBeenCalledWith(...args);
+      // Own (personal) parayanams may show their garden too: no group-only filter.
+      expect(mocks.filters).not.toHaveBeenCalledWith("challenge_sessions", "not", "group_id", "is", null);
     } finally { vi.useRealTimers(); }
   });
 

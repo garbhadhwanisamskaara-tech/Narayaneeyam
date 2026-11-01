@@ -22,6 +22,7 @@ import {
   Footprints,
   Route,
   X,
+  Lock,
 } from "lucide-react";
 import { getProgress } from "@/lib/progress";
 import heroBg from "@/assets/hero-bg.jpg";
@@ -35,11 +36,13 @@ import PastLiveSessionsCard from "@/components/PastLiveSessionsCard";
 import TodaysDashakamCard from "@/components/TodaysDashakamCard";
 import HomeGardenRollerCard from "@/components/HomeGardenRollerCard";
 import SelfJoinParayanamPrompt from "@/components/SelfJoinParayanamPrompt";
+import OwnParayanamCard from "@/components/OwnParayanamCard";
 import JourneyHomeFloatingPrompt from "@/components/JourneyHomeFloatingPrompt";
 import ContinueJourneyCard from "@/components/ContinueJourneyCard";
 
 import { SUBSCRIPTION_ENABLED } from "@/config/features";
 import { useAuth } from "@/contexts/AuthContext";
+import { canOpenPath } from "@/components/RequireAccess";
 
 
 export default function Index() {
@@ -105,7 +108,7 @@ export default function Index() {
   ];
 
   const progress = getProgress();
-  const { user } = useAuth();
+  const { user, isMember, progressAccess, memberOnlyPaths } = useAuth();
   const [showAbout, setShowAbout] = useState(false);
   const [showMore, setShowMore] = useState(false);
   // Permanent dismiss flag from profiles — once true the card never shows again.
@@ -267,6 +270,12 @@ export default function Index() {
         <SelfJoinParayanamPrompt />
       </section>
 
+      <section className="container mx-auto px-4 mt-4 mb-8 relative z-20">
+        <div className="mx-auto max-w-2xl">
+          <OwnParayanamCard />
+        </div>
+      </section>
+
       <JourneyHomeFloatingPrompt />
 
       <section className="container mx-auto px-4 mt-4 relative z-20">
@@ -333,18 +342,32 @@ export default function Index() {
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: i * 0.05 }}
                   >
-                    <Link
-                      to={f.path}
-                      className="group block rounded-xl border border-border bg-card p-5 shadow-md transition-all hover:shadow-gold hover:-translate-y-1"
-                    >
-                      <div className="mb-3 flex h-10 w-10 items-center justify-center rounded-lg bg-gradient-peacock">
-                        <f.icon className="h-5 w-5 text-primary-foreground" />
+                    {canOpenPath(f.path, { isMember, progressAccess, memberOnlyPaths }) ? (
+                      <Link
+                        to={f.path}
+                        className="group block rounded-xl border border-border bg-card p-5 shadow-md transition-all hover:shadow-gold hover:-translate-y-1"
+                      >
+                        <div className="mb-3 flex h-10 w-10 items-center justify-center rounded-lg bg-gradient-peacock">
+                          <f.icon className="h-5 w-5 text-primary-foreground" />
+                        </div>
+                        <h3 className="font-display text-base font-semibold text-foreground mb-1 group-hover:text-primary transition-colors">
+                          {f.title}
+                        </h3>
+                        <p className="text-xs text-muted-foreground font-sans">{f.desc}</p>
+                      </Link>
+                    ) : (
+                      <div
+                        aria-disabled="true"
+                        className="relative block rounded-xl border border-border bg-card p-5 shadow-md opacity-50 cursor-not-allowed select-none"
+                      >
+                        <Lock className="absolute right-4 top-4 h-4 w-4 text-muted-foreground" aria-hidden="true" />
+                        <div className="mb-3 flex h-10 w-10 items-center justify-center rounded-lg bg-gradient-peacock">
+                          <f.icon className="h-5 w-5 text-primary-foreground" />
+                        </div>
+                        <h3 className="font-display text-base font-semibold text-foreground mb-1">{f.title}</h3>
+                        <p className="text-xs text-muted-foreground font-sans">{f.desc}</p>
                       </div>
-                      <h3 className="font-display text-base font-semibold text-foreground mb-1 group-hover:text-primary transition-colors">
-                        {f.title}
-                      </h3>
-                      <p className="text-xs text-muted-foreground font-sans">{f.desc}</p>
-                    </Link>
+                    )}
                   </motion.div>
                 ))}
               </div>

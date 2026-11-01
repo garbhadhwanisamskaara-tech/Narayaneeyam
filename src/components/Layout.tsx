@@ -23,6 +23,7 @@ import { useState, useEffect } from "react";
 import logoImg from "@/assets/logo.png";
 import { useAuth } from "@/contexts/AuthContext";
 import BottomNav from "@/components/BottomNav";
+import RequireAccess from "@/components/RequireAccess";
 import NotificationBell from "@/components/NotificationBell";
 import SubscriptionBanner from "@/components/SubscriptionBanner";
 import PwaInstallBanner from "@/components/PwaInstallBanner";
@@ -53,7 +54,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
     }
     return false;
   });
-  const { user, displayName, signOut, loading, isEmailVerified, isAccessLocked } = useAuth();
+  const { user, displayName, signOut, loading, isEmailVerified, progressAccess } = useAuth();
 
   const toggleTheme = () => {
     const next = !isDark;
@@ -74,14 +75,12 @@ export default function Layout({ children }: { children: React.ReactNode }) {
       navigate("/verify-email", { replace: true });
       return;
     }
-    if (isEmailVerified && isAccessLocked && path !== "/trial-expired") {
-      navigate("/trial-expired", { replace: true });
-      return;
+    // The app is never locked: without full access a user simply keeps the free
+    // features (gated screens are handled by RequireAccess).
+    if (isEmailVerified && (path === "/verify-email" || path === "/trial-expired")) {
+      navigate("/", { replace: true });
     }
-    if (isEmailVerified && !isAccessLocked) {
-      if (path === "/verify-email" || path === "/trial-expired") navigate("/", { replace: true });
-    }
-  }, [loading, user, isEmailVerified, isAccessLocked, location.pathname, navigate]);
+  }, [loading, user, isEmailVerified, location.pathname, navigate]);
 
   useEffect(() => {
     const saved = localStorage.getItem("theme");
@@ -128,7 +127,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
           </Link>
 
           <nav className="hidden lg:flex items-center gap-1">
-            {navItems.map((item) => {
+            {navItems.filter((item) => item.path !== "/progress" || progressAccess).map((item) => {
               const isActive = location.pathname === item.path;
               return (
                 <Link
@@ -342,7 +341,9 @@ export default function Layout({ children }: { children: React.ReactNode }) {
 
       <SubscriptionBanner />
       <PwaInstallBanner />
-      <main className="pb-16 lg:pb-0">{children}</main>
+      <main className="pb-16 lg:pb-0">
+        <RequireAccess>{children}</RequireAccess>
+      </main>
       <BottomNav />
     </div>
   );
