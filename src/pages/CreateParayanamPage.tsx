@@ -212,8 +212,10 @@ export default function CreateParayanamPage() {
   const selectedSet = sets.find((s) => s.id === setId);
   const dashakams = setId === "custom" ? [...custom].sort((a, b) => a - b) : (selectedSet?.dashakam_list ?? []);
   const templateLocked = selectedTemplateId !== "scratch";
-  const invitedCount = selectedParticipants.length + (includeSelf ? 1 : 0);
+  // The backend adds the group owner to SAME_FOR_ALL parayanams automatically,
+  // so the owner is never counted or invited as a participant in that mode.
   const mode: DistributionMode = isGroup ? distribution : "SAME_FOR_ALL";
+  const invitedCount = selectedParticipants.length + (includeSelf && mode !== "SAME_FOR_ALL" ? 1 : 0);
 
   /** The days this parayanam is actually conducted on. */
   const dates = useMemo(
@@ -539,7 +541,7 @@ export default function CreateParayanamPage() {
       track("parayanam_created");
 
       if (isGroup) {
-        await inviteParticipants(session.id, selectedParticipants, includeSelf ? user.id : null);
+        await inviteParticipants(session.id, selectedParticipants, mode !== "SAME_FOR_ALL" && includeSelf ? user.id : null);
 
         // Auto-invite: the backend RPC invites every group member with no
         // participant record. Best-effort — the parayanam itself stays valid
