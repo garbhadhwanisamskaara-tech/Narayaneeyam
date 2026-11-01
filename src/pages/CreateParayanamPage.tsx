@@ -212,8 +212,15 @@ export default function CreateParayanamPage() {
   const selectedSet = sets.find((s) => s.id === setId);
   const dashakams = setId === "custom" ? [...custom].sort((a, b) => a - b) : (selectedSet?.dashakam_list ?? []);
   const templateLocked = selectedTemplateId !== "scratch";
-  const invitedCount = selectedParticipants.length + (includeSelf ? 1 : 0);
   const mode: DistributionMode = isGroup ? distribution : "SAME_FOR_ALL";
+  /**
+   * The database adds the group owner automatically to SAME_FOR_ALL parayanams, so
+   * the owner is never invited, never counted, and the include-myself checkbox is
+   * hidden. RELAY (and other modes) keep the checkbox as before.
+   */
+  const ownerAddedByServer = isGroup && mode === "SAME_FOR_ALL";
+  const selfInvited = includeSelf && !ownerAddedByServer;
+  const invitedCount = selectedParticipants.length + (selfInvited ? 1 : 0);
 
   /** The days this parayanam is actually conducted on. */
   const dates = useMemo(
@@ -250,7 +257,7 @@ export default function CreateParayanamPage() {
             : [],
       })),
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [dates, planned, dashakams, mode, selectedParticipants.length, includeSelf],
+    [dates, planned, dashakams, mode, invitedCount],
   );
   const beginScheduleEdit = (date: string, currentDashakams: number[]) => {
     setEditingScheduleDate(date);
@@ -543,7 +550,7 @@ export default function CreateParayanamPage() {
       track("parayanam_created");
 
       if (isGroup) {
-        await inviteParticipants(session.id, selectedParticipants, includeSelf ? user.id : null);
+        await inviteParticipants(session.id, selectedParticipants, selfInvited ? user.id : null);
 
         // Auto-invite: the backend RPC invites every group member with no
         // participant record. Best-effort — the parayanam itself stays valid
@@ -1200,6 +1207,7 @@ export default function CreateParayanamPage() {
               onDeselectAll={() => setSelectedParticipants([])}
               includeSelf={includeSelf}
               onIncludeSelfChange={setIncludeSelf}
+              hideIncludeSelf={ownerAddedByServer}
             />
             <label className="flex cursor-pointer items-start gap-3 rounded-xl border border-border p-4 hover:border-primary">
               <input
@@ -1302,7 +1310,7 @@ export default function CreateParayanamPage() {
             }
             deliveryMode={deliveryMode}
             isGroup={isGroup}
-            invitedCount={selectedParticipants.length + (includeSelf ? 1 : 0)}
+            invitedCount={invitedCount}
             live={
               isLive
                 ? {
