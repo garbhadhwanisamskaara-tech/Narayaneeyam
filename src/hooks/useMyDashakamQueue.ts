@@ -75,7 +75,9 @@ function groupRows(items: QueueItem[], withDate: boolean): QueueRow[] {
  * now writes to (mirrored alongside parayanam_member_progress).
  */
 export function useMyDashakamQueue() {
-  const { user } = useAuth();
+  const { user, unlockedOwnParayanams } = useAuth();
+  // Own parayanams still waiting for Guru's approval stay out of the queue.
+  const unlockedKey = unlockedOwnParayanams.join(",");
   const [items, setItems] = useState<QueueItem[]>([]);
   const [sourceSummaries, setSourceSummaries] = useState<SourceSummary[]>([]);
   const [loading, setLoading] = useState(true);
@@ -123,7 +125,7 @@ export function useMyDashakamQueue() {
       const sessionQueries: Promise<any>[] = [
         (supabase as any)
           .from("challenge_sessions")
-          .select("id, group_id, user_id, parayanam_name")
+          .select("id, group_id, user_id, parayanam_name, approval_status")
           .eq("user_id", user.id)
           .is("completed_at", null)
           .not("technical_state", "in", HIDDEN_SESSION_STATES_FILTER),
@@ -140,8 +142,12 @@ export function useMyDashakamQueue() {
       }
       const sessionRes = await Promise.all(sessionQueries);
       const sessions = new Map<string, { id: string; group_id: string | null; user_id: string; parayanam_name: string | null }>();
+      const unlockedOwn = new Set(unlockedKey ? unlockedKey.split(",") : []);
       for (const res of sessionRes) {
-        for (const s of (res.data ?? []) as any[]) sessions.set(s.id, s);
+        for (const s of (res.data ?? []) as any[]) {
+          if (!s.group_id && s.approval_status && !unlockedOwn.has(s.id)) continue;
+          sessions.set(s.id, s);
+        }
       }
       const sessionIds = Array.from(sessions.keys());
       if (!sessionIds.length) {
@@ -245,7 +251,7 @@ export function useMyDashakamQueue() {
       setSourceSummaries([]);
     }
     setLoading(false);
-  }, [user]);
+  }, [user, unlockedKey]);
 
   useEffect(() => {
     void load();

@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { Home, Mic, Headphones, BarChart3, MoreHorizontal } from "lucide-react";
 import MoreMenu from "@/components/MoreMenu";
+import { useAuth } from "@/contexts/AuthContext";
 
 const bottomNavItems = [
   { path: "/", label: "Home", icon: Home },
@@ -13,6 +14,7 @@ const bottomNavItems = [
 export default function BottomNav() {
   const location = useLocation();
   const [moreOpen, setMoreOpen] = useState(false);
+  const { progressAccess } = useAuth();
 
   const morePaths = ["/script", "/festivals", "/prasadam", "/heart-shelf", "/saved-places", "/faq", "/blog", "/user-guide"];
   const isMoreActive = morePaths.includes(location.pathname);
@@ -22,7 +24,7 @@ export default function BottomNav() {
       <MoreMenu open={moreOpen} onClose={() => setMoreOpen(false)} />
       <nav className="fixed bottom-0 left-0 right-0 z-50 bg-card border-t border-border lg:hidden">
         <div className="flex items-center justify-around px-2 py-2">
-          {bottomNavItems.map((item) => {
+          {bottomNavItems.filter((item) => item.path !== "/progress" || progressAccess).map((item) => {
             const isActive = location.pathname === item.path;
             return (
               <Link

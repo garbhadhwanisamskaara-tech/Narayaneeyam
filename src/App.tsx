@@ -60,6 +60,7 @@ import SankalpaMomentPage from "./pages/SankalpaMomentPage";
 import ShlokasPage from "./pages/ShlokasPage";
 
 import CreateParayanamPage from "./pages/CreateParayanamPage";
+import AdminApprovalsPage from "./pages/AdminApprovalsPage";
 
 
 const App = () => {
@@ -130,6 +131,7 @@ const App = () => {
                   <Route path="/verify-email" element={<VerifyEmailPage />} />
                   <Route path="/trial-expired" element={<TrialExpiredPage />} />
                   <Route path="/admin/festivals" element={<AdminRoute><AdminFestivalsPage /></AdminRoute>} />
+                  <Route path="/admin/approvals" element={<AdminRoute><AdminApprovalsPage /></AdminRoute>} />
                   <Route path="/admin/content" element={<AdminRoute><AdminContentPage /></AdminRoute>} />
                   <Route path="/admin/dashboard" element={<AdminRoute><FounderDashboard /></AdminRoute>} />
                   <Route path="/admin/upload" element={<AdminRoute><AdminUploadPage /></AdminRoute>} />

@@ -1,7 +1,9 @@
 import React from "react";
 import { Link } from "react-router-dom";
-import { FileText, Bookmark, Heart, HelpCircle, BookOpen, Settings, Sparkles, Flower2, Route, Footprints, X } from "lucide-react";
+import { FileText, Bookmark, Heart, HelpCircle, BookOpen, Settings, Sparkles, Flower2, Route, Footprints, X, Lock } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
+import { useAuth } from "@/contexts/AuthContext";
+import { canOpenPath } from "@/components/RequireAccess";
 
 interface Props {
   open: boolean;
@@ -23,6 +25,7 @@ const menuItems = [
 ];
 
 export default function MoreMenu({ open, onClose }: Props) {
+  const { isMember, progressAccess, memberOnlyPaths } = useAuth();
   return (
     <AnimatePresence>
       {open && (
@@ -44,13 +47,22 @@ export default function MoreMenu({ open, onClose }: Props) {
               </button>
             </div>
             <nav className="px-3 pb-2 space-y-1">
-              {menuItems.map((item) => (
-                <Link key={item.path} to={item.path} onClick={onClose}
-                  className="flex items-center gap-3 rounded-lg px-4 py-3 text-sm font-sans text-foreground hover:bg-muted/60 transition-colors">
-                  <item.icon className="h-5 w-5 text-muted-foreground" />
-                  {item.label}
-                </Link>
-              ))}
+              {menuItems.map((item) =>
+                canOpenPath(item.path, { isMember, progressAccess, memberOnlyPaths }) ? (
+                  <Link key={item.path} to={item.path} onClick={onClose}
+                    className="flex items-center gap-3 rounded-lg px-4 py-3 text-sm font-sans text-foreground hover:bg-muted/60 transition-colors">
+                    <item.icon className="h-5 w-5 text-muted-foreground" />
+                    {item.label}
+                  </Link>
+                ) : (
+                  <div key={item.path} aria-disabled="true"
+                    className="flex items-center gap-3 rounded-lg px-4 py-3 text-sm font-sans text-foreground opacity-50 cursor-not-allowed select-none">
+                    <item.icon className="h-5 w-5 text-muted-foreground" />
+                    <span className="flex-1">{item.label}</span>
+                    <Lock className="h-4 w-4 text-muted-foreground" aria-hidden="true" />
+                  </div>
+                ),
+              )}
             </nav>
             <div className="pb-6" />
           </motion.div>

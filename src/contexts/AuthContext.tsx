@@ -62,6 +62,16 @@ interface AuthContextType {
   isAccessLocked: boolean;
   profile: UserProfile | null;
   subscriptionPlan: SubscriptionPlanSummary | null;
+  /** Full access (from get_my_access). Admins and founders are always true. */
+  isMember: boolean;
+  /** May open the Progress tab: members, plus people in a running group / own parayanam. */
+  progressAccess: boolean;
+  /** Own parayanams (challenge_sessions ids) that are unlocked. */
+  unlockedOwnParayanams: string[];
+  /** Paths marked members-only in feature_gates. */
+  memberOnlyPaths: string[];
+  /** Reloads isMember / progressAccess / unlockedOwnParayanams / memberOnlyPaths. */
+  refreshAccess: () => Promise<void>;
   signUp: (
     email: string,
     password: string,
@@ -110,6 +120,45 @@ async function fetchProfile(userId: string): Promise<UserProfile | null> {
     return (data as UserProfile) ?? null;
   } catch {
     return null;
+  }
+}
+
+interface AccessSummary {
+  isMember: boolean;
+  progressAccess: boolean;
+  unlockedOwnParayanams: string[];
+}
+const NO_ACCESS: AccessSummary = { isMember: false, progressAccess: false, unlockedOwnParayanams: [] };
+
+/** What this user may open: one server call (get_my_access). */
+async function fetchAccess(): Promise<AccessSummary> {
+  try {
+    const { data, error } = await (supabase as any).rpc("get_my_access");
+    if (error) return NO_ACCESS;
+    const row = (Array.isArray(data) ? data[0] : data) as
+      | { is_member?: boolean; progress_access?: boolean; unlocked_own_parayanams?: string[] | null }
+      | null;
+    if (!row) return NO_ACCESS;
+    return {
+      isMember: !!row.is_member,
+      progressAccess: !!row.progress_access,
+      unlockedOwnParayanams: row.unlocked_own_parayanams ?? [],
+    };
+  } catch {
+    return NO_ACCESS;
+  }
+}
+
+/** Members-only paths from feature_gates (a dozen short rows). */
+async function fetchMemberOnlyPaths(): Promise<string[]> {
+  try {
+    const { data, error } = await (supabase as any).from("feature_gates").select("path, members_only");
+    if (error) return [];
+    return ((data ?? []) as { path: string; members_only: boolean }[])
+      .filter((r) => r.members_only)
+      .map((r) => r.path);
+  } catch {
+    return [];
   }
 }
 
@@ -224,16 +273,22 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [isMonetizationApproved, setIsMonetizationApproved] = useState(false);
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [subscriptionPlan, setSubscriptionPlan] = useState<SubscriptionPlanSummary | null>(null);
+  const [access, setAccess] = useState<AccessSummary>(NO_ACCESS);
+  const [memberOnlyPaths, setMemberOnlyPaths] = useState<string[]>([]);
 
   const loadUserData = async (currentUser: User | null) => {
     if (currentUser) {
-      const [roles, prof] = await Promise.all([
+      const [roles, prof, nextAccess, gates] = await Promise.all([
         fetchRoles(currentUser.id),
         fetchProfile(currentUser.id),
+        fetchAccess(),
+        fetchMemberOnlyPaths(),
       ]);
       setIsAdmin(roles.isAdmin);
       setIsFounder(roles.isFounder);
       setIsMonetizationApproved(roles.isMonetizationApproved);
+      setAccess(nextAccess);
+      setMemberOnlyPaths(gates);
       const nextProfile = await initialiseNewProfile(currentUser, prof);
       setProfile(nextProfile);
       setSubscriptionPlan(await fetchPlan(nextProfile?.subscription_plan_id));
@@ -243,6 +298,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setIsMonetizationApproved(false);
       setProfile(null);
       setSubscriptionPlan(null);
+      setAccess(NO_ACCESS);
+      setMemberOnlyPaths([]);
     }
   };
 
@@ -253,6 +310,31 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setSubscriptionPlan(await fetchPlan(prof?.subscription_plan_id));
     }
   };
+
+  const refreshAccess = async () => {
+    if (!user) return;
+    const [nextAccess, gates] = await Promise.all([fetchAccess(), fetchMemberOnlyPaths()]);
+    setAccess(nextAccess);
+    setMemberOnlyPaths(gates);
+  };
+
+  // Coming back to the app (e.g. after a payment made outside it): re-check access,
+  // at most once a minute.
+  useEffect(() => {
+    if (!user) return;
+    let last = Date.now();
+    const onVisible = () => {
+      if (document.visibilityState !== "visible") return;
+      if (Date.now() - last < 60000) return;
+      last = Date.now();
+      void Promise.all([fetchAccess(), fetchMemberOnlyPaths()]).then(([nextAccess, gates]) => {
+        setAccess(nextAccess);
+        setMemberOnlyPaths(gates);
+      });
+    };
+    document.addEventListener("visibilitychange", onVisible);
+    return () => document.removeEventListener("visibilitychange", onVisible);
+  }, [user]);
 
 
   useEffect(() => {
@@ -401,6 +483,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setIsMonetizationApproved(false);
       setProfile(null);
       setSubscriptionPlan(null);
+      setAccess(NO_ACCESS);
+      setMemberOnlyPaths([]);
       setLoading(false);
       setSentryUser(null);
       resetAnalytics();
@@ -420,6 +504,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       isEmailVerified, isTrialActive, isTrialExpired, trialExpiresAt,
       accessEndsAt, isInGracePeriod, graceDaysRemaining, isAccessLocked,
       profile, subscriptionPlan,
+      isMember: access.isMember, progressAccess: access.progressAccess,
+      unlockedOwnParayanams: access.unlockedOwnParayanams, memberOnlyPaths, refreshAccess,
       signUp, signIn, signInWithPhone, verifyPhoneOtp, signOut, refreshProfile,
     }}>
 

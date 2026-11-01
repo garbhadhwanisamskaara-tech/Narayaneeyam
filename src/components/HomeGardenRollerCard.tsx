@@ -163,7 +163,6 @@ export default function HomeGardenRollerCard() {
           .from("challenge_sessions")
           .select("id, parayanam_name, bloom_mode, group_id, groups(group_name)")
           .in("id", ids)
-          .not("group_id", "is", null)
           .not("technical_state", "in", HIDDEN_SESSION_STATES_FILTER)
           .eq("show_garden_on_home", true)
           .is("completed_at", null)
