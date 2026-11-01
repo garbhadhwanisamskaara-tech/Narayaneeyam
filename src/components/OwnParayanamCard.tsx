@@ -16,21 +16,21 @@ export default function OwnParayanamCard() {
       <div className="flex items-start gap-4">
         <Flower2 className="h-6 w-6 text-primary shrink-0 mt-0.5" />
         <div className="flex-1 min-w-0">
-          <p className="font-display text-base font-semibold text-foreground">Your own parayanam</p>
+          <p className="font-display text-base font-semibold text-foreground">Your sadhana plan</p>
           <div className="mt-4">
             {canCreate ? (
               <Link
                 to="/parayanam/new"
                 className="inline-flex items-center gap-1.5 rounded-lg bg-gradient-peacock px-4 py-2 font-sans text-sm font-semibold text-primary-foreground hover:opacity-90"
               >
-                Create your own parayanam
+                Create your sadhana plan
               </Link>
             ) : (
               <span
                 aria-disabled="true"
                 className="inline-flex items-center gap-1.5 rounded-lg bg-gradient-peacock px-4 py-2 font-sans text-sm font-semibold text-primary-foreground opacity-50 cursor-not-allowed select-none"
               >
-                Create your own parayanam
+                Create your sadhana plan
                 <Lock className="h-3.5 w-3.5" aria-hidden="true" />
               </span>
             )}

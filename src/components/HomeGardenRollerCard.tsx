@@ -1,6 +1,6 @@
 import { useEffect, useId, useState } from "react";
 import { motion, useReducedMotion } from "framer-motion";
-import { ChevronDown, Loader2 } from "lucide-react";
+import { ChevronDown, Loader2, X } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { useMyDashakamGarden } from "@/hooks/useMyDashakamGarden";
@@ -8,6 +8,7 @@ import { HIDDEN_SESSION_STATES_FILTER } from "@/lib/parayanamFilters";
 import { Button } from "@/components/ui/button";
 import Lotus from "@/components/Lotus";
 import MyGardenDialog from "@/components/MyGardenDialog";
+import { hiddenHomeGardensToday, hideHomeGardenToday } from "@/lib/homeGardenDismiss";
 
 interface HomeGardenSession {
   id: string;
@@ -21,11 +22,12 @@ function sessionLabel(session: HomeGardenSession) {
   return [session.groups?.group_name, session.parayanam_name].filter(Boolean).join(" – ") || "Group parayanam";
 }
 
-function GardenRoller({ session, open, onToggle, onOpenGarden }: {
+function GardenRoller({ session, open, onToggle, onOpenGarden, onHide }: {
   session: HomeGardenSession;
   open: boolean;
   onToggle: () => void;
   onOpenGarden: () => void;
+  onHide: () => void;
 }) {
   // Intentionally consume only read state; this home preview never toggles a lotus.
   const { blooms, occurrences, loading } = useMyDashakamGarden(session.id);
@@ -68,6 +70,17 @@ function GardenRoller({ session, open, onToggle, onOpenGarden }: {
           <motion.span animate={{ rotate: open ? 180 : 0 }} transition={{ duration: reducedMotion ? 0 : 0.2 }}>
             <ChevronDown className="h-4 w-4" />
           </motion.span>
+        </Button>
+        <Button
+          type="button"
+          variant="ghost"
+          size="icon"
+          className="-ml-2 h-11 w-9 shrink-0 text-muted-foreground hover:text-foreground"
+          title="Hide for today"
+          aria-label={`Hide garden for today: ${label}`}
+          onClick={onHide}
+        >
+          <X className="h-4 w-4" />
         </Button>
       </div>
 
@@ -136,6 +149,8 @@ export default function HomeGardenRollerCard() {
   const [result, setResult] = useState<{ userId: string; sessions: HomeGardenSession[] } | null>(null);
   const [openId, setOpenId] = useState<string | null>(null);
   const [dialogSession, setDialogSession] = useState<HomeGardenSession | null>(null);
+  // Gardens hidden "for today" on this device (back by themselves tomorrow).
+  const [hiddenToday, setHiddenToday] = useState<string[]>(() => hiddenHomeGardensToday());
 
   useEffect(() => {
     let cancelled = false;
@@ -199,7 +214,8 @@ export default function HomeGardenRollerCard() {
     return () => { cancelled = true; };
   }, [userId]);
 
-  const sessions = result?.userId === userId ? result?.sessions ?? [] : [];
+  const sessions = (result?.userId === userId ? result?.sessions ?? [] : [])
+    .filter((session) => !hiddenToday.includes(session.id));
   if (!sessions.length) return null;
 
   return (
@@ -211,6 +227,11 @@ export default function HomeGardenRollerCard() {
           open={openId === session.id}
           onToggle={() => setOpenId((current) => current === session.id ? null : session.id)}
           onOpenGarden={() => setDialogSession(session)}
+          onHide={() => {
+            hideHomeGardenToday(session.id);
+            setHiddenToday(hiddenHomeGardensToday());
+            if (openId === session.id) setOpenId(null);
+          }}
         />
       ))}
       {dialogSession && (

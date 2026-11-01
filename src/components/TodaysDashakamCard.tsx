@@ -43,7 +43,7 @@ export default function TodaysDashakamCard() {
       initial={{ opacity: 0, scale: 0.95 }}
       animate={{ opacity: 1, scale: 1 }}
       transition={{ delay: 0.3 }}
-      className="relative inline-flex flex-col rounded-xl border border-secondary/40 bg-card/90 backdrop-blur-sm px-6 py-4 shadow-gold"
+      className="relative inline-flex max-w-full flex-col rounded-xl border border-secondary/40 bg-card/90 backdrop-blur-sm px-4 py-4 shadow-gold sm:px-6"
     >
       <button
         type="button"
@@ -58,8 +58,8 @@ export default function TodaysDashakamCard() {
         <X className="h-3.5 w-3.5" />
       </button>
 
-      <div className="flex items-center gap-4">
-        <div className="text-left">
+      <div className="flex flex-wrap items-center gap-x-4 gap-y-3">
+        <div className="min-w-0 text-left">
           <p className="text-sm text-muted-foreground font-sans">Today's Dashakam</p>
           <p className="font-display text-foreground font-semibold">Dashakam {first.dashakamNo}</p>
           {extra > 0 && (
@@ -79,7 +79,7 @@ export default function TodaysDashakamCard() {
             {parayanamLabel(first.sourceName, first.parayanamName)}
           </p>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2">
           <Link
             to={`/chant/${first.dashakamNo}`}
             className="inline-flex items-center gap-2 rounded-lg bg-gradient-gold px-4 py-2 font-sans text-sm font-semibold text-primary shadow-gold transition-transform hover:scale-105"
