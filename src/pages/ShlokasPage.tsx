@@ -21,6 +21,9 @@ interface Shloka {
 
 type ShlokaCategory = "session_start" | "session_end" | "dashakam";
 
+/** Speed options shown above every shloka audio player (matches the Chant page chips). */
+const SPEED_OPTIONS = [0.6, 0.75, 1, 1.25, 1.5] as const;
+
 interface DashakamShloka extends Shloka {
   sloka_audio_id: string;
   dashakam_no: number;
@@ -33,12 +36,20 @@ function ShlokaCard({
   transliteration,
   translation,
   audioFile,
+  speed,
+  onSpeedChange,
 }: {
   name: string;
   transliteration: string;
   translation: string;
   audioFile: string;
+  speed: number;
+  onSpeedChange: (speed: number) => void;
 }) {
+  const applySpeed = (element: HTMLAudioElement | null) => {
+    if (element) element.playbackRate = speed;
+  };
+
   return (
     <div className="rounded-lg border border-border bg-card px-4 py-3 space-y-2">
       <h3 className="text-base font-semibold text-foreground font-display">{name}</h3>
@@ -46,7 +57,39 @@ function ShlokaCard({
         <p className="text-sm text-foreground font-sans whitespace-pre-line">{transliteration}</p>
       )}
       <p className="text-sm text-muted-foreground font-sans whitespace-pre-line">{translation}</p>
-      <audio controls preload="none" src={getStorageUrl(audioFile)} className="w-full" />
+      <div
+        className="flex flex-wrap items-center gap-1.5 pb-1"
+        role="group"
+        aria-label={`${name} playback speed`}
+      >
+        {SPEED_OPTIONS.map((option) => (
+          <button
+            key={option}
+            type="button"
+            aria-pressed={speed === option}
+            onClick={() => {
+              onSpeedChange(option);
+              applySpeed(audioRef.current);
+            }}
+            className={`rounded-full px-2 py-0.5 text-[11px] font-sans transition-colors ${
+              speed === option
+                ? "bg-secondary text-secondary-foreground font-semibold"
+                : "border border-border bg-background text-muted-foreground hover:bg-muted"
+            }`}
+          >
+            {option}×
+          </button>
+        ))}
+      </div>
+      <audio
+        ref={audioRef}
+        controls
+        preload="none"
+        src={getStorageUrl(audioFile)}
+        className="w-full"
+        onLoadedMetadata={(event) => applySpeed(event.currentTarget)}
+        onPlay={(event) => applySpeed(event.currentTarget)}
+      />
     </div>
   );
 }
