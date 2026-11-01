@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
-import { Loader2, Plus, Users } from "lucide-react";
+import { Loader2, Lock, Plus, Users } from "lucide-react";
 import { useGroups } from "@/hooks/useGroups";
 import { useAuth } from "@/contexts/AuthContext";
 import { useCapabilities } from "@/hooks/useCapabilities";
@@ -41,8 +41,12 @@ export default function GroupsPage() {
         <GroupProgressSummaryList card />
       </div>
 
-      {canCreateGroup && (
-        <form onSubmit={handleCreate} className="mt-6 rounded-2xl border border-border bg-card p-5 shadow-peacock">
+      <form
+        onSubmit={canCreateGroup ? handleCreate : (e) => e.preventDefault()}
+        aria-disabled={!canCreateGroup}
+        className={`mt-6 rounded-2xl border border-border bg-card p-5 shadow-peacock ${canCreateGroup ? "" : "opacity-50 cursor-not-allowed select-none"}`}
+      >
+        <fieldset disabled={!canCreateGroup} className="contents">
           <label htmlFor="group_name" className="font-sans text-sm font-semibold text-foreground">
             Group name
           </label>
@@ -63,9 +67,10 @@ export default function GroupsPage() {
           >
             {creating ? <Loader2 className="h-4 w-4 animate-spin" /> : <Plus className="h-4 w-4" />}
             Create Group
+            {!canCreateGroup && <Lock className="h-3.5 w-3.5" aria-hidden="true" />}
           </button>
-        </form>
-      )}
+        </fieldset>
+      </form>
 
       <div className="mt-8">
         <h2 className="font-display text-lg font-semibold text-foreground">Your groups</h2>

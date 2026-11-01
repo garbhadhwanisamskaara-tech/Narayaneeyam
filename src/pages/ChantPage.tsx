@@ -16,6 +16,7 @@ import {
   ListMusic,
   X,
   Loader2,
+  Lock,
 } from "lucide-react";
 import PlaylistBuilder from "@/components/PlaylistBuilder";
 import PlaylistBar from "@/components/PlaylistBar";
@@ -42,6 +43,7 @@ import { getProgress, saveProgress } from "@/lib/progress";
 import { updateStreakSupabase } from "@/lib/supabaseProgress";
 import { useAudioEngine } from "@/contexts/AudioContext";
 import { useAuth } from "@/contexts/AuthContext";
+import { canOpenPath } from "@/components/RequireAccess";
 import { supabase } from "@/integrations/supabase/client";
 import { useGlobalMute } from "@/lib/globalMute";
 
@@ -92,7 +94,8 @@ export default function ChantPage() {
 
   // Global audio engine (singleton, survives navigation)
   const engine = useAudioEngine();
-  const { user } = useAuth();
+  const { user, isMember, progressAccess, memberOnlyPaths } = useAuth();
+  const canUsePlaylists = canOpenPath("/_feature/playlists", { isMember, progressAccess, memberOnlyPaths });
   const [muted, toggleMuted] = useGlobalMute();
   const { scriptLang: translitLang, translationLang } = useLanguagePrefs();
   const activeLanguages = useActiveLanguages();
@@ -1277,10 +1280,13 @@ export default function ChantPage() {
           </div>
           <div className="flex items-center gap-2">
             <button
-              onClick={() => setPlaylistOpen(true)}
-              className="flex items-center gap-2 rounded-lg border border-secondary/30 bg-secondary/10 px-4 py-2 text-sm font-sans text-foreground hover:bg-secondary/20 transition-colors"
+              onClick={() => canUsePlaylists && setPlaylistOpen(true)}
+              disabled={!canUsePlaylists}
+              aria-disabled={!canUsePlaylists}
+              className="flex items-center gap-2 rounded-lg border border-secondary/30 bg-secondary/10 px-4 py-2 text-sm font-sans text-foreground hover:bg-secondary/20 transition-colors disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-secondary/10"
             >
               <ListMusic className="h-4 w-4 text-secondary" /> Playlist
+              {!canUsePlaylists && <Lock className="h-3.5 w-3.5 text-muted-foreground" aria-hidden="true" />}
             </button>
           </div>
         </div>

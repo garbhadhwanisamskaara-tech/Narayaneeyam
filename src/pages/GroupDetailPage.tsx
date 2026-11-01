@@ -11,6 +11,7 @@ import {
   PlayCircle,
   Plus,
   BarChart3,
+  Lock,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { deriveDistributionMode } from "@/hooks/useParayanamSchedule";
@@ -654,6 +655,15 @@ export default function GroupDetailPage() {
                 >
                   <Plus className="h-4 w-4" /> Add a Parayanam
                 </Link>
+              )}
+              {isOwner && !canCreateParayanam && (
+                <span
+                  aria-disabled="true"
+                  className="inline-flex items-center gap-2 rounded-lg bg-gradient-peacock px-4 py-2 font-sans text-sm font-semibold text-primary-foreground opacity-50 cursor-not-allowed select-none"
+                >
+                  <Plus className="h-4 w-4" /> Add a Parayanam
+                  <Lock className="h-3.5 w-3.5" aria-hidden="true" />
+                </span>
               )}
             </div>
           </section>

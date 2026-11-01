@@ -2,7 +2,7 @@ import { useState, useRef, useEffect, useCallback, useMemo } from "react";
 import { useSearchParams } from "react-router-dom";
 
 import { motion } from "framer-motion";
-import { Play, Pause, SkipBack, SkipForward, ListMusic, Volume2 } from "lucide-react";
+import { Play, Pause, SkipBack, SkipForward, ListMusic, Volume2, Lock } from "lucide-react";
 import { useDashakam, getDashakamName, prefetchDashakamList } from "@/hooks/useDashakam";
 import { supabase } from "@/integrations/supabase/client";
 import { getStorageUrl } from "@/lib/storageUrl";
@@ -14,6 +14,7 @@ import { usePlaylist, type PlaylistItem } from "@/hooks/usePlaylist";
 import SEO from "@/components/SEO";
 import { awardFeather } from "@/hooks/useFeathers";
 import { useAuth } from "@/contexts/AuthContext";
+import { canOpenPath } from "@/components/RequireAccess";
 import { useGlobalMute } from "@/lib/globalMute";
 import { useAudioEngine } from "@/contexts/AudioContext";
 import { useAudioResume } from "@/hooks/useAudioResume";
@@ -28,7 +29,8 @@ interface PodcastEntry {
 }
 
 export default function PodcastPage() {
-  const { user } = useAuth();
+  const { user, isMember, progressAccess, memberOnlyPaths } = useAuth();
+  const canUsePlaylists = canOpenPath("/_feature/playlists", { isMember, progressAccess, memberOnlyPaths });
   const [muted, toggleMuted] = useGlobalMute();
   const engine = useAudioEngine();
   const [currentDashakam, setCurrentDashakam] = useState(1);
@@ -425,10 +427,13 @@ export default function PodcastPage() {
             </p>
           </div>
           <button
-            onClick={() => setPlaylistBuilderOpen(true)}
-            className="flex items-center gap-2 rounded-lg border border-secondary/30 bg-secondary/10 px-4 py-2 text-sm font-sans text-foreground hover:bg-secondary/20 transition-colors"
+            onClick={() => canUsePlaylists && setPlaylistBuilderOpen(true)}
+            disabled={!canUsePlaylists}
+            aria-disabled={!canUsePlaylists}
+            className="flex items-center gap-2 rounded-lg border border-secondary/30 bg-secondary/10 px-4 py-2 text-sm font-sans text-foreground hover:bg-secondary/20 transition-colors disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-secondary/10"
           >
             <ListMusic className="h-4 w-4 text-secondary" /> Custom Playlist
+            {!canUsePlaylists && <Lock className="h-3.5 w-3.5 text-muted-foreground" aria-hidden="true" />}
           </button>
         </div>
 
@@ -481,7 +486,7 @@ export default function PodcastPage() {
               key={mode.value}
               onClick={() => {
                 if (mode.value === "playlist") {
-                  setPlaylistBuilderOpen(true);
+                  if (canUsePlaylists) setPlaylistBuilderOpen(true);
                 } else {
                   setPlayMode(mode.value);
                   playSessionRef.current += 1; releaseAudio();
@@ -491,14 +496,18 @@ export default function PodcastPage() {
                   setCompleted(false);
                 }
               }}
+              aria-disabled={mode.value === "playlist" && !canUsePlaylists}
               className={`flex-1 rounded-xl border p-4 text-center transition-all ${
                 playMode === mode.value
                   ? "border-secondary bg-secondary/10 shadow-gold"
                   : "border-border bg-card hover:bg-muted"
-              }`}
+              } ${mode.value === "playlist" && !canUsePlaylists ? "opacity-50 cursor-not-allowed hover:bg-card" : ""}`}
             >
               <p className={`text-sm font-sans font-semibold ${playMode === mode.value ? "text-secondary" : "text-foreground"}`}>
                 {mode.label}
+                {mode.value === "playlist" && !canUsePlaylists && (
+                  <Lock className="ml-1 inline h-3.5 w-3.5 align-[-2px] text-muted-foreground" aria-hidden="true" />
+                )}
               </p>
               <p className="text-xs text-muted-foreground font-sans mt-1">{mode.desc}</p>
             </button>

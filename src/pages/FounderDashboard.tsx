@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
-import { Link, Navigate } from "react-router-dom";
+import { Navigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import {
   Users, UserCheck, Mic, Play, Clock, CheckCircle, RefreshCw,
@@ -120,12 +120,6 @@ export default function FounderDashboard() {
             </span>
           </div>
           <div className="flex items-center gap-2">
-            <Link
-              to="/admin/approvals"
-              className="rounded-lg border border-border px-3 py-1.5 text-xs font-sans font-semibold text-foreground hover:bg-muted transition-colors"
-            >
-              Own parayanam approvals
-            </Link>
             <button onClick={handleRefresh} className="p-2 rounded-lg hover:bg-muted transition-colors text-muted-foreground" title="Refresh">
               <RefreshCw className="h-4 w-4" />
             </button>
