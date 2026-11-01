@@ -16,3 +16,4 @@
 
 - Parayanam creation stores bloom_mode and show_garden_on_home on the session row; the bloom-mode choice is offered only for live parayanams and the home-garden opt-in only for group parayanams, both independent of monetization approval.
 
+- The database adds the group owner automatically to SAME_FOR_ALL parayanams, so in the wizard the owner is never invited (null passed to inviteParticipants), never counted as invited, and the include-myself checkbox is hidden; RELAY and other modes keep the checkbox as is.

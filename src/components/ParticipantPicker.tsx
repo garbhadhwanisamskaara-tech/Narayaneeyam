@@ -10,6 +10,8 @@ interface Props {
   onDeselectAll: () => void;
   includeSelf: boolean;
   onIncludeSelfChange: (next: boolean) => void;
+  /** Hidden for SAME_FOR_ALL — the backend adds the owner automatically. */
+  hideIncludeSelf?: boolean;
 }
 
 /** Checkbox list of group members to invite to a parayanam. */
@@ -22,6 +24,7 @@ export default function ParticipantPicker({
   onDeselectAll,
   includeSelf,
   onIncludeSelfChange,
+  hideIncludeSelf = false,
 }: Props) {
   const others = members.filter((m) => m.user_id !== ownerId);
   const othersIds = others.map((m) => m.user_id);
@@ -38,15 +41,17 @@ export default function ParticipantPicker({
         parayanam begins.
       </p>
 
-      <label className="mt-3 flex items-center gap-3 rounded-xl border border-border px-3 py-2">
-        <input
-          type="checkbox"
-          checked={includeSelf}
-          onChange={(e) => onIncludeSelfChange(e.target.checked)}
-          className="h-4 w-4 accent-primary"
-        />
-        <span className="font-sans text-sm text-foreground">I'm also chanting in this parayanam</span>
-      </label>
+      {!hideIncludeSelf && (
+        <label className="mt-3 flex items-center gap-3 rounded-xl border border-border px-3 py-2">
+          <input
+            type="checkbox"
+            checked={includeSelf}
+            onChange={(e) => onIncludeSelfChange(e.target.checked)}
+            className="h-4 w-4 accent-primary"
+          />
+          <span className="font-sans text-sm text-foreground">I'm also chanting in this parayanam</span>
+        </label>
+      )}
 
       {others.length === 0 ? (
         <p className="mt-3 font-sans text-xs text-muted-foreground">
