@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import SEO from "@/components/SEO";
 import { useLanguagePrefs } from "@/hooks/useLanguagePrefs";
@@ -46,6 +46,7 @@ function ShlokaCard({
   speed: number;
   onSpeedChange: (speed: number) => void;
 }) {
+  const audioRef = useRef<HTMLAudioElement | null>(null);
   const applySpeed = (element: HTMLAudioElement | null) => {
     if (element) element.playbackRate = speed;
   };
@@ -69,7 +70,7 @@ function ShlokaCard({
             aria-pressed={speed === option}
             onClick={() => {
               onSpeedChange(option);
-              applySpeed(audioRef.current);
+              if (audioRef.current) audioRef.current.playbackRate = option;
             }}
             className={`rounded-full px-2 py-0.5 text-[11px] font-sans transition-colors ${
               speed === option
@@ -185,6 +186,8 @@ export default function ShlokasPage() {
   const [category, setCategory] = useState<ShlokaCategory>("session_start");
   const [selectedDashakamShlokaId, setSelectedDashakamShlokaId] = useState<string>();
   const [loading, setLoading] = useState(true);
+  /** One playback speed for every shloka player on this page. */
+  const [speed, setSpeed] = useState<number>(1);
   const { scriptLang, translationLang } = useLanguagePrefs();
 
   useEffect(() => {
@@ -258,6 +261,8 @@ export default function ShlokasPage() {
               transliteration={shloka.transliteration_text}
               translation={shloka.translation_text}
               audioFile={shloka.audio_file}
+              speed={speed}
+              onSpeedChange={setSpeed}
             />
           ))}
         </div>
@@ -296,6 +301,8 @@ export default function ShlokasPage() {
               transliteration={selectedDashakamShloka.transliteration_text}
               translation={selectedDashakamShloka.translation_text}
               audioFile={selectedDashakamShloka.audio_file}
+              speed={speed}
+              onSpeedChange={setSpeed}
             />
           )}
         </div>
